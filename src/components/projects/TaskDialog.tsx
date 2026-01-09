@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Task, User } from "@/types";
+import { Task, User, RecurrenceSettings as RecurrenceSettingsType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,8 @@ import { Badge } from "@/components/ui/badge";
 import { X, Check } from "lucide-react";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { tagLibrary, statusLibrary } from "@/data/workManagementConfig";
+import { SearchableTagSelect } from "./SearchableTagSelect";
+import { RecurrenceSettings } from "./RecurrenceSettings";
 
 interface TaskDialogProps {
   open: boolean;
@@ -39,6 +41,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
   const [dueDate, setDueDate] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrence, setRecurrence] = useState<RecurrenceSettingsType | undefined>();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +54,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
       dueDate: dueDate ? new Date(dueDate) : undefined,
       tags: selectedTags,
       assignees: selectedAssignees,
+      isRecurring,
+      recurrence,
     });
     // Reset form
     setTitle("");
@@ -59,12 +65,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
     setDueDate("");
     setSelectedTags([]);
     setSelectedAssignees([]);
-  };
-
-  const toggleTag = (tagId: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
-    );
+    setIsRecurring(false);
+    setRecurrence(undefined);
   };
 
   const toggleAssignee = (member: User) => {
@@ -81,7 +83,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
           <DialogDescription>
@@ -179,7 +181,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
                   ))}
                 </div>
               )}
-                <div className="border rounded-lg p-2 max-h-32 overflow-y-auto space-y-1">
+              <div className="border rounded-lg p-2 max-h-32 overflow-y-auto space-y-1">
                 {availableMembers.map((member) => (
                   <button
                     key={member.id}
@@ -204,27 +206,23 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
 
             <div className="space-y-2">
               <Label>Tags</Label>
-              <div className="flex gap-2 flex-wrap">
-                {tagLibrary.map((tag) => (
-                  <Badge
-                    key={tag.id}
-                    variant={selectedTags.includes(tag.id) ? "default" : "outline"}
-                    className="cursor-pointer transition-colors"
-                    style={
-                      selectedTags.includes(tag.id)
-                        ? { backgroundColor: tag.color, borderColor: tag.color }
-                        : { borderColor: tag.color, color: tag.color }
-                    }
-                    onClick={() => toggleTag(tag.id)}
-                  >
-                    {tag.name}
-                  </Badge>
-                ))}
-              </div>
+              <SearchableTagSelect
+                tags={tagLibrary}
+                selectedTags={selectedTags}
+                onTagsChange={setSelectedTags}
+                placeholder="Search and select tags..."
+              />
               <p className="text-xs text-muted-foreground">
-                Select from the tag library above
+                Search or select from the tag library
               </p>
             </div>
+
+            <RecurrenceSettings
+              isRecurring={isRecurring}
+              onIsRecurringChange={setIsRecurring}
+              recurrence={recurrence}
+              onRecurrenceChange={setRecurrence}
+            />
           </div>
 
           <DialogFooter>

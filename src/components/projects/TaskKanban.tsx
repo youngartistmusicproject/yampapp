@@ -2,7 +2,7 @@ import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, MoreHorizontal } from "lucide-react";
+import { Calendar, MoreHorizontal, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
 import { getTagById, statusLibrary } from "@/data/workManagementConfig";
@@ -67,9 +67,14 @@ export function TaskKanban({ tasks, onTaskUpdate }: TaskKanbanProps) {
               >
                 <CardContent className="p-3">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium leading-snug">
-                      {task.title}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium leading-snug">
+                        {task.title}
+                      </p>
+                      {task.isRecurring && (
+                        <Repeat className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                      )}
+                    </div>
                     <Button variant="ghost" size="icon" className="h-6 w-6 -mr-1 -mt-1">
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
