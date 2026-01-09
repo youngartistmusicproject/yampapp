@@ -543,12 +543,13 @@ export default function Projects() {
         onOpenChange={(open) => !open && setViewingTask(null)}
         task={viewingTask}
         currentUser={currentUser}
+        availableMembers={teamMembers}
         statuses={statuses}
+        onTaskUpdate={handleTaskUpdate}
         onAddComment={handleAddComment}
         onDeleteComment={handleDeleteComment}
         onAddAttachment={handleAddAttachment}
         onDeleteAttachment={handleDeleteAttachment}
-        onEditTask={handleEditTask}
       />
 
       <ProjectDialog

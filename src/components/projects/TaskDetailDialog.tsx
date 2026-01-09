@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Task, User, TaskComment, TaskAttachment } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Tabs,
   TabsContent,
   TabsList,
@@ -26,15 +33,18 @@ import {
   FileText, 
   Image, 
   File, 
-  X, 
   Download,
   Trash2,
-  Edit2,
   Calendar,
   Clock,
-  Users
+  Users,
+  Check,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
+import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
+import { SearchableTagSelect } from "./SearchableTagSelect";
+import { tagLibrary } from "@/data/workManagementConfig";
 
 interface StatusItem {
   id: string;
@@ -47,12 +57,13 @@ interface TaskDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   task: Task | null;
   currentUser: User;
+  availableMembers: User[];
   statuses: StatusItem[];
+  onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onAddComment: (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>) => void;
   onDeleteComment: (taskId: string, commentId: string) => void;
   onAddAttachment: (taskId: string, attachment: Omit<TaskAttachment, 'id' | 'uploadedAt'>) => void;
   onDeleteAttachment: (taskId: string, attachmentId: string) => void;
-  onEditTask: (task: Task) => void;
 }
 
 const getFileIcon = (type: string) => {
@@ -67,17 +78,108 @@ const formatFileSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+// Inline editable text component
+function EditableText({ 
+  value, 
+  onSave, 
+  className = "",
+  placeholder = "Click to add...",
+  multiline = false
+}: { 
+  value: string; 
+  onSave: (value: string) => void; 
+  className?: string;
+  placeholder?: string;
+  multiline?: boolean;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setEditValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleSave = () => {
+    if (editValue.trim() !== value) {
+      onSave(editValue.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditValue(value);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !multiline) {
+      e.preventDefault();
+      handleSave();
+    }
+    if (e.key === 'Escape') {
+      handleCancel();
+    }
+  };
+
+  if (isEditing) {
+    if (multiline) {
+      return (
+        <div className="space-y-2">
+          <Textarea
+            ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleSave}
+            className="min-h-[80px] resize-none"
+            placeholder={placeholder}
+          />
+        </div>
+      );
+    }
+    return (
+      <Input
+        ref={inputRef as React.RefObject<HTMLInputElement>}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={handleSave}
+        className={className}
+        placeholder={placeholder}
+      />
+    );
+  }
+
+  return (
+    <div
+      onClick={() => setIsEditing(true)}
+      className={`cursor-pointer hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors ${className}`}
+    >
+      {value || <span className="text-muted-foreground italic">{placeholder}</span>}
+    </div>
+  );
+}
+
 export function TaskDetailDialog({
   open,
   onOpenChange,
   task,
   currentUser,
+  availableMembers,
   statuses,
+  onTaskUpdate,
   onAddComment,
   onDeleteComment,
   onAddAttachment,
   onDeleteAttachment,
-  onEditTask,
 }: TaskDetailDialogProps) {
   const [newComment, setNewComment] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -123,7 +225,6 @@ export function TaskDetailDialog({
       reader.readAsDataURL(file);
     });
 
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -149,34 +250,63 @@ export function TaskDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <DialogTitle className="text-xl font-semibold mb-2">
-                {task.title}
-              </DialogTitle>
-              <div className="flex items-center gap-2 flex-wrap">
-                {taskStatus && (
-                  <Badge 
-                    variant="outline"
-                    style={{ borderColor: taskStatus.color, color: taskStatus.color }}
-                  >
-                    {taskStatus.name}
+          <div className="space-y-3">
+            <DialogTitle className="text-xl font-semibold">
+              <EditableText
+                value={task.title}
+                onSave={(value) => onTaskUpdate(task.id, { title: value })}
+                placeholder="Task title"
+                className="text-xl font-semibold"
+              />
+            </DialogTitle>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select 
+                value={task.status} 
+                onValueChange={(value) => onTaskUpdate(task.id, { status: value })}
+              >
+                <SelectTrigger className="w-auto h-7 text-xs gap-1 border-dashed">
+                  {taskStatus && (
+                    <>
+                      <div 
+                        className="w-2 h-2 rounded-full" 
+                        style={{ backgroundColor: taskStatus.color }}
+                      />
+                      {taskStatus.name}
+                    </>
+                  )}
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  {statuses.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-2 h-2 rounded-full" 
+                          style={{ backgroundColor: s.color }}
+                        />
+                        {s.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select 
+                value={task.priority} 
+                onValueChange={(value: Task['priority']) => onTaskUpdate(task.id, { priority: value })}
+              >
+                <SelectTrigger className="w-auto h-7 text-xs gap-1 border-dashed">
+                  <Badge className={`${priorityColors[task.priority]} text-xs`}>
+                    {task.priority}
                   </Badge>
-                )}
-                <Badge className={priorityColors[task.priority]}>
-                  {task.priority}
-                </Badge>
-                {task.tags?.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => onEditTask(task)}>
-              <Edit2 className="w-4 h-4" />
-              Edit
-            </Button>
           </div>
         </DialogHeader>
 
@@ -207,27 +337,34 @@ export function TaskDetailDialog({
             <TabsContent value="details" className="flex-1 px-6 pb-6 mt-4">
               <ScrollArea className="h-[300px] pr-4">
                 <div className="space-y-4">
-                  {task.description && (
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">Description</h4>
-                      <p className="text-sm whitespace-pre-wrap">{task.description}</p>
-                    </div>
-                  )}
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Description</h4>
+                    <EditableText
+                      value={task.description || ""}
+                      onSave={(value) => onTaskUpdate(task.id, { description: value })}
+                      placeholder="Add a description..."
+                      multiline
+                      className="text-sm whitespace-pre-wrap"
+                    />
+                  </div>
 
                   <Separator />
 
                   <div className="grid grid-cols-2 gap-4">
-                    {task.dueDate && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">Due Date</p>
-                          <p className="text-sm font-medium">
-                            {format(new Date(task.dueDate), "MMM d, yyyy")}
-                          </p>
-                        </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground">Due Date</p>
+                        <Input
+                          type="date"
+                          value={task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : ""}
+                          onChange={(e) => onTaskUpdate(task.id, { 
+                            dueDate: e.target.value ? new Date(e.target.value) : undefined 
+                          })}
+                          className="h-8 text-sm border-dashed"
+                        />
                       </div>
-                    )}
+                    </div>
 
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-muted-foreground" />
@@ -240,25 +377,32 @@ export function TaskDetailDialog({
                     </div>
                   </div>
 
-                  {task.assignees && task.assignees.length > 0 && (
-                    <>
-                      <Separator />
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Users className="w-4 h-4 text-muted-foreground" />
-                          <h4 className="text-sm font-medium text-muted-foreground">Assignees</h4>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {task.assignees.map((user) => (
-                            <div key={user.id} className="flex items-center gap-2 bg-secondary rounded-full pl-1 pr-3 py-1">
-                              <UserAvatar user={user} className="w-6 h-6 text-xs" />
-                              <span className="text-sm">{user.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  <Separator />
+
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <h4 className="text-sm font-medium text-muted-foreground">Assignees</h4>
+                    </div>
+                    <SearchableAssigneeSelect
+                      members={availableMembers}
+                      selectedAssignees={task.assignees || []}
+                      onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })}
+                      placeholder="Add assignees..."
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Tags</h4>
+                    <SearchableTagSelect
+                      tags={tagLibrary}
+                      selectedTags={task.tags || []}
+                      onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
+                      placeholder="Add tags..."
+                    />
+                  </div>
                 </div>
               </ScrollArea>
             </TabsContent>
