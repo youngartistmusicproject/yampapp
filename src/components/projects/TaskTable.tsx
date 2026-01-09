@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { MoreHorizontal, ArrowUpDown } from "lucide-react";
+import { MoreHorizontal, ArrowUpDown, Repeat } from "lucide-react";
 import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,9 +70,14 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
-                  <p className={`font-medium ${task.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>
-                    {task.title}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className={`font-medium ${task.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>
+                      {task.title}
+                    </p>
+                    {task.isRecurring && (
+                      <Repeat className="w-3.5 h-3.5 text-muted-foreground" />
+                    )}
+                  </div>
                   {task.description && (
                     <p className="text-xs text-muted-foreground line-clamp-1">
                       {task.description}

@@ -6,6 +6,14 @@ export interface User {
   role: 'admin' | 'staff' | 'faculty' | 'parent' | 'student';
 }
 
+export interface RecurrenceSettings {
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval: number; // e.g., every 2 weeks
+  endDate?: Date;
+  daysOfWeek?: number[]; // 0-6 for weekly recurrence
+  dayOfMonth?: number; // for monthly recurrence
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -17,6 +25,8 @@ export interface Task {
   projectId?: string;
   tags: string[];
   isRecurring?: boolean;
+  recurrence?: RecurrenceSettings;
+  parentTaskId?: string; // for recurring task instances
   createdAt: Date;
   updatedAt: Date;
 }
