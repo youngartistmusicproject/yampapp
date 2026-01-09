@@ -22,6 +22,7 @@ interface TaskKanbanProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onEditTask: (task: Task) => void;
+  onViewTask: (task: Task) => void;
   statuses: StatusItem[];
 }
 
@@ -32,7 +33,7 @@ const priorityColors: Record<string, string> = {
   urgent: "border-l-destructive",
 };
 
-export function TaskKanban({ tasks, onTaskUpdate, onEditTask, statuses }: TaskKanbanProps) {
+export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, statuses }: TaskKanbanProps) {
   const getTasksByStatus = (status: string) =>
     tasks.filter((task) => task.status === status);
 
@@ -77,6 +78,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, statuses }: TaskKa
                 className={`cursor-grab active:cursor-grabbing border-l-4 ${priorityColors[task.priority]} shadow-card hover:shadow-elevated transition-all`}
                 draggable
                 onDragStart={(e) => handleDragStart(e, task.id)}
+                onClick={() => onViewTask(task)}
               >
                 <CardContent className="p-3">
                   <div className="flex items-start justify-between gap-2">
@@ -89,13 +91,16 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, statuses }: TaskKa
                       )}
                     </div>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="icon" className="h-6 w-6 -mr-1 -mt-1">
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onEditTask(task)}>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewTask(task); }}>
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEditTask(task); }}>
                           <Pencil className="w-3.5 h-3.5 mr-2" />
                           Edit
                         </DropdownMenuItem>
