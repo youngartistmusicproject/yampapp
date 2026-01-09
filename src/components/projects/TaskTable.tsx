@@ -18,29 +18,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { UserAvatarGroup } from "@/components/ui/user-avatar";
+import { getTagById, getStatusById, statusLibrary } from "@/data/workManagementConfig";
 
 interface TaskTableProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
 }
 
-const priorityColors = {
+const priorityColors: Record<string, string> = {
   low: "bg-secondary text-secondary-foreground",
   medium: "bg-blue-100 text-blue-700",
   high: "bg-orange-100 text-orange-700",
   urgent: "bg-destructive text-destructive-foreground",
-};
-
-const statusColors = {
-  todo: "bg-secondary text-secondary-foreground",
-  "in-progress": "bg-primary/10 text-primary",
-  review: "bg-purple-100 text-purple-700",
-  done: "bg-green-100 text-green-700",
 };
 
 export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
@@ -91,9 +81,20 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                 </div>
               </TableCell>
               <TableCell>
-                <Badge className={statusColors[task.status]} variant="secondary">
-                  {task.status.replace("-", " ")}
-                </Badge>
+                {(() => {
+                  const status = getStatusById(task.status);
+                  return (
+                    <Badge 
+                      variant="secondary"
+                      style={{ 
+                        backgroundColor: status ? `${status.color}20` : undefined,
+                        color: status?.color 
+                      }}
+                    >
+                      {status?.name || task.status}
+                    </Badge>
+                  );
+                })()}
               </TableCell>
               <TableCell>
                 <Badge className={priorityColors[task.priority]} variant="secondary">
@@ -101,37 +102,26 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                 </Badge>
               </TableCell>
               <TableCell>
-                <div className="flex -space-x-2">
-                  {task.assignees.slice(0, 3).map((assignee) => (
-                    <Tooltip key={assignee.id}>
-                      <TooltipTrigger asChild>
-                        <div className="w-7 h-7 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center text-xs font-medium cursor-default">
-                          {assignee.name.charAt(0)}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>{assignee.name}</TooltipContent>
-                    </Tooltip>
-                  ))}
-                  {task.assignees.length > 3 && (
-                    <div className="w-7 h-7 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium">
-                      +{task.assignees.length - 3}
-                    </div>
-                  )}
-                  {task.assignees.length === 0 && (
-                    <span className="text-muted-foreground text-sm">—</span>
-                  )}
-                </div>
+                <UserAvatarGroup users={task.assignees} max={3} size="md" />
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {task.dueDate ? format(task.dueDate, "MMM d, yyyy") : "-"}
               </TableCell>
               <TableCell>
                 <div className="flex gap-1 flex-wrap">
-                  {task.tags.slice(0, 2).map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
+                  {task.tags.slice(0, 2).map((tagId) => {
+                    const tag = getTagById(tagId);
+                    return (
+                      <Badge 
+                        key={tagId} 
+                        variant="outline" 
+                        className="text-xs"
+                        style={{ borderColor: tag?.color, color: tag?.color }}
+                      >
+                        {tag?.name || tagId}
+                      </Badge>
+                    );
+                  })}
                   {task.tags.length > 2 && (
                     <Badge variant="outline" className="text-xs">
                       +{task.tags.length - 2}

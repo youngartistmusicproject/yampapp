@@ -17,14 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Mock team members
-const teamMembers: User[] = [
-  { id: "u1", name: "Sarah Johnson", email: "sarah@company.com", role: "admin" },
-  { id: "u2", name: "Mike Chen", email: "mike@company.com", role: "staff" },
-  { id: "u3", name: "Emily Davis", email: "emily@company.com", role: "faculty" },
-  { id: "u4", name: "Alex Rivera", email: "alex@company.com", role: "staff" },
-  { id: "u5", name: "Jordan Smith", email: "jordan@company.com", role: "faculty" },
-];
+import { teamMembers } from "@/data/workManagementConfig";
 
 const initialProjects: Project[] = [
   {
