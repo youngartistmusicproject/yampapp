@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Filter, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2 } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +8,7 @@ import { TaskKanban } from "@/components/projects/TaskKanban";
 import { TaskDialog } from "@/components/projects/TaskDialog";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
+import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
 import { Task, Project, User } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,7 +29,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 
-import { teamMembers, statusLibrary as defaultStatuses } from "@/data/workManagementConfig";
+import { teamMembers, statusLibrary as defaultStatuses, tagLibrary } from "@/data/workManagementConfig";
 
 const initialProjects: Project[] = [
   {
@@ -128,6 +129,21 @@ export default function Projects() {
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProject, setSelectedProject] = useState<string>("all");
+  const [filters, setFilters] = useState<TaskFilters>({
+    statuses: [],
+    priorities: [],
+    assignees: [],
+    tags: [],
+    showRecurring: null,
+    dueDateFrom: undefined,
+    dueDateTo: undefined,
+  });
+
+  // Get all available tags from tasks and tag library
+  const availableTags = Array.from(new Set([
+    ...tagLibrary.map(t => t.name.toLowerCase()),
+    ...tasks.flatMap(t => t.tags || [])
+  ]));
 
   // Active tasks (not completed)
   const activeTasks = tasks.filter(task => !task.completedAt);
@@ -139,7 +155,34 @@ export default function Projects() {
   const filteredTasks = activeTasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
-    return matchesSearch && matchesProject;
+    
+    // Status filter
+    const matchesStatus = filters.statuses.length === 0 || filters.statuses.includes(task.status);
+    
+    // Priority filter
+    const matchesPriority = filters.priorities.length === 0 || filters.priorities.includes(task.priority);
+    
+    // Assignee filter
+    const matchesAssignee = filters.assignees.length === 0 || 
+      task.assignees?.some(a => filters.assignees.includes(a.id));
+    
+    // Tags filter
+    const matchesTags = filters.tags.length === 0 || 
+      task.tags?.some(t => filters.tags.includes(t));
+    
+    // Recurring filter
+    const matchesRecurring = filters.showRecurring === null || 
+      (filters.showRecurring === true && task.recurrence) ||
+      (filters.showRecurring === false && !task.recurrence);
+    
+    // Due date range filter
+    const matchesDueDateFrom = !filters.dueDateFrom || 
+      (task.dueDate && new Date(task.dueDate) >= filters.dueDateFrom);
+    const matchesDueDateTo = !filters.dueDateTo || 
+      (task.dueDate && new Date(task.dueDate) <= filters.dueDateTo);
+    
+    return matchesSearch && matchesProject && matchesStatus && matchesPriority && 
+           matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo;
   });
 
   // Find the "done" status ID dynamically
@@ -275,10 +318,13 @@ export default function Projects() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Filter className="w-4 h-4" />
-          Filter
-        </Button>
+        <TaskFilterPanel
+          filters={filters}
+          onFiltersChange={setFilters}
+          statuses={statuses}
+          availableMembers={teamMembers}
+          availableTags={availableTags}
+        />
         
         <Button variant="outline" size="sm" className="gap-2" onClick={() => setStatusManagerOpen(true)}>
           <Settings2 className="w-4 h-4" />
