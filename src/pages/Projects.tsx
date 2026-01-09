@@ -197,18 +197,28 @@ export default function Projects() {
     setTasks(tasks.map(task => {
       if (task.id !== taskId) return task;
       
+      let updatedTask: Task;
+      
       // If marking as done, add completedAt timestamp
       if (updates.status === doneStatusId && task.status !== doneStatusId) {
-        return { ...task, ...updates, completedAt: new Date(), updatedAt: new Date() };
+        updatedTask = { ...task, ...updates, completedAt: new Date(), updatedAt: new Date() };
       }
-      
       // If unmarking as done, remove completedAt
-      if (updates.status && updates.status !== doneStatusId && task.status === doneStatusId) {
-        return { ...task, ...updates, completedAt: undefined, updatedAt: new Date() };
+      else if (updates.status && updates.status !== doneStatusId && task.status === doneStatusId) {
+        updatedTask = { ...task, ...updates, completedAt: undefined, updatedAt: new Date() };
+      }
+      else {
+        updatedTask = { ...task, ...updates, updatedAt: new Date() };
       }
       
-      return { ...task, ...updates, updatedAt: new Date() };
+      return updatedTask;
     }));
+    
+    // Also update viewingTask if it's the same task
+    setViewingTask(prev => {
+      if (!prev || prev.id !== taskId) return prev;
+      return { ...prev, ...updates, updatedAt: new Date() };
+    });
   };
 
   const handleEditTask = (task: Task) => {
