@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Task, User, RecurrenceSettings as RecurrenceSettingsType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,19 +19,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { tagLibrary, statusLibrary } from "@/data/workManagementConfig";
+import { tagLibrary } from "@/data/workManagementConfig";
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { RecurrenceSettings } from "./RecurrenceSettings";
+
+export interface StatusItem {
+  id: string;
+  name: string;
+  color: string;
+}
 
 interface TaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => void;
   availableMembers: User[];
+  statuses: StatusItem[];
+  task?: Task; // For editing
 }
 
-export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: TaskDialogProps) {
+export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, statuses, task }: TaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<string>("todo");
@@ -42,20 +50,26 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceSettingsType | undefined>();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      title,
-      description,
-      status: status as Task["status"],
-      priority,
-      dueDate: dueDate ? new Date(dueDate) : undefined,
-      tags: selectedTags,
-      assignees: selectedAssignees,
-      isRecurring,
-      recurrence,
-    });
-    // Reset form
+  const isEditing = !!task;
+
+  // Populate form when editing
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title);
+      setDescription(task.description || "");
+      setStatus(task.status);
+      setPriority(task.priority);
+      setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : "");
+      setSelectedTags(task.tags);
+      setSelectedAssignees(task.assignees);
+      setIsRecurring(task.isRecurring || false);
+      setRecurrence(task.recurrence);
+    } else {
+      resetForm();
+    }
+  }, [task, open]);
+
+  const resetForm = () => {
     setTitle("");
     setDescription("");
     setStatus("todo");
@@ -67,13 +81,29 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
     setRecurrence(undefined);
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      title,
+      description,
+      status,
+      priority,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      tags: selectedTags,
+      assignees: selectedAssignees,
+      isRecurring,
+      recurrence,
+    });
+    resetForm();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Task" : "Create New Task"}</DialogTitle>
           <DialogDescription>
-            Add a new task to your project. Fill in the details below.
+            {isEditing ? "Update the task details below." : "Add a new task to your project. Fill in the details below."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -108,7 +138,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    {statusLibrary.map((s) => (
+                    {statuses.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         <div className="flex items-center gap-2">
                           <div 
@@ -184,7 +214,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Task</Button>
+            <Button type="submit">{isEditing ? "Save Changes" : "Create Task"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

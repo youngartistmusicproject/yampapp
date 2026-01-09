@@ -2,14 +2,27 @@ import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, MoreHorizontal, Repeat } from "lucide-react";
+import { Calendar, MoreHorizontal, Repeat, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
-import { getTagById, statusLibrary } from "@/data/workManagementConfig";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+export interface StatusItem {
+  id: string;
+  name: string;
+  color: string;
+}
 
 interface TaskKanbanProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
+  onEditTask: (task: Task) => void;
+  statuses: StatusItem[];
 }
 
 const priorityColors: Record<string, string> = {
@@ -19,7 +32,7 @@ const priorityColors: Record<string, string> = {
   urgent: "border-l-destructive",
 };
 
-export function TaskKanban({ tasks, onTaskUpdate }: TaskKanbanProps) {
+export function TaskKanban({ tasks, onTaskUpdate, onEditTask, statuses }: TaskKanbanProps) {
   const getTasksByStatus = (status: string) =>
     tasks.filter((task) => task.status === status);
 
@@ -39,7 +52,7 @@ export function TaskKanban({ tasks, onTaskUpdate }: TaskKanbanProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-      {statusLibrary.map((column) => (
+      {statuses.map((column) => (
         <div
           key={column.id}
           className="bg-secondary/30 rounded-lg p-3"
@@ -75,9 +88,21 @@ export function TaskKanban({ tasks, onTaskUpdate }: TaskKanbanProps) {
                         <Repeat className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                       )}
                     </div>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 -mr-1 -mt-1">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 -mr-1 -mt-1">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEditTask(task)}>
+                          <Pencil className="w-3.5 h-3.5 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>Duplicate</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   {task.description && (

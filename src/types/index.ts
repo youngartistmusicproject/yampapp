@@ -18,7 +18,7 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: 'todo' | 'in-progress' | 'review' | 'done';
+  status: string; // Now dynamic based on custom statuses
   priority: 'low' | 'medium' | 'high' | 'urgent';
   dueDate?: Date;
   assignees: User[];
