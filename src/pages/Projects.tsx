@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Filter, Search, FolderPlus, CheckCircle2, RotateCcw } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Filter, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,6 +7,7 @@ import { TaskTable } from "@/components/projects/TaskTable";
 import { TaskKanban } from "@/components/projects/TaskKanban";
 import { TaskDialog } from "@/components/projects/TaskDialog";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
+import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { Task, Project, User } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,7 +28,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 
-import { teamMembers } from "@/data/workManagementConfig";
+import { teamMembers, statusLibrary as defaultStatuses } from "@/data/workManagementConfig";
 
 const initialProjects: Project[] = [
   {
@@ -120,8 +121,11 @@ const initialTasks: Task[] = [
 export default function Projects() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [statusManagerOpen, setStatusManagerOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProject, setSelectedProject] = useState<string>("all");
 
@@ -138,22 +142,30 @@ export default function Projects() {
     return matchesSearch && matchesProject;
   });
 
+  // Find the "done" status ID dynamically
+  const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
+
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
     setTasks(tasks.map(task => {
       if (task.id !== taskId) return task;
       
       // If marking as done, add completedAt timestamp
-      if (updates.status === 'done' && task.status !== 'done') {
+      if (updates.status === doneStatusId && task.status !== doneStatusId) {
         return { ...task, ...updates, completedAt: new Date(), updatedAt: new Date() };
       }
       
       // If unmarking as done, remove completedAt
-      if (updates.status && updates.status !== 'done' && task.status === 'done') {
+      if (updates.status && updates.status !== doneStatusId && task.status === doneStatusId) {
         return { ...task, ...updates, completedAt: undefined, updatedAt: new Date() };
       }
       
       return { ...task, ...updates, updatedAt: new Date() };
     }));
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setTaskDialogOpen(true);
   };
 
   const handleRestoreTask = (taskId: string) => {
@@ -164,16 +176,34 @@ export default function Projects() {
     ));
   };
 
-  const handleAddTask = (newTask: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const task: Task = {
-      ...newTask,
-      id: Date.now().toString(),
-      projectId: selectedProject !== "all" ? selectedProject : undefined,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setTasks([...tasks, task]);
+  const handleTaskSubmit = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (editingTask) {
+      // Update existing task
+      setTasks(tasks.map(t => 
+        t.id === editingTask.id 
+          ? { ...t, ...taskData, updatedAt: new Date() }
+          : t
+      ));
+    } else {
+      // Create new task
+      const task: Task = {
+        ...taskData,
+        id: Date.now().toString(),
+        projectId: selectedProject !== "all" ? selectedProject : undefined,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      setTasks([...tasks, task]);
+    }
     setTaskDialogOpen(false);
+    setEditingTask(undefined);
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setTaskDialogOpen(open);
+    if (!open) {
+      setEditingTask(undefined);
+    }
   };
 
   const handleAddProject = (newProject: Omit<Project, 'id' | 'createdAt' | 'tasks'>) => {
@@ -250,7 +280,10 @@ export default function Projects() {
           Filter
         </Button>
         
-        {/* Completed Tasks Sheet */}
+        <Button variant="outline" size="sm" className="gap-2" onClick={() => setStatusManagerOpen(true)}>
+          <Settings2 className="w-4 h-4" />
+          Statuses
+        </Button>
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2">
@@ -330,12 +363,13 @@ export default function Projects() {
         </TabsList>
 
         <TabsContent value="table" className="mt-4">
-          <TaskTable tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} />
+          <TaskTable tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} onEditTask={handleEditTask} statuses={statuses} />
         </TabsContent>
 
         <TabsContent value="kanban" className="mt-4">
-          <TaskKanban tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} />
+          <TaskKanban tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} onEditTask={handleEditTask} statuses={statuses} />
         </TabsContent>
+
 
         <TabsContent value="timeline" className="mt-4">
           <div className="flex items-center justify-center h-64 bg-secondary/30 rounded-lg border-2 border-dashed border-border">
@@ -346,9 +380,11 @@ export default function Projects() {
 
       <TaskDialog
         open={taskDialogOpen}
-        onOpenChange={setTaskDialogOpen}
-        onSubmit={handleAddTask}
+        onOpenChange={handleDialogClose}
+        onSubmit={handleTaskSubmit}
         availableMembers={teamMembers}
+        statuses={statuses}
+        task={editingTask}
       />
 
       <ProjectDialog
@@ -356,6 +392,13 @@ export default function Projects() {
         onOpenChange={setProjectDialogOpen}
         onSubmit={handleAddProject}
         availableMembers={teamMembers}
+      />
+
+      <StatusManager
+        open={statusManagerOpen}
+        onOpenChange={setStatusManagerOpen}
+        statuses={statuses}
+        onStatusesChange={setStatuses}
       />
     </div>
   );

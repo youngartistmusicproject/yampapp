@@ -19,11 +19,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
-import { getTagById, getStatusById, statusLibrary } from "@/data/workManagementConfig";
+import { getTagById } from "@/data/workManagementConfig";
+
+export interface StatusItem {
+  id: string;
+  name: string;
+  color: string;
+}
 
 interface TaskTableProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
+  onEditTask: (task: Task) => void;
+  statuses: StatusItem[];
 }
 
 const priorityColors: Record<string, string> = {
@@ -33,7 +41,9 @@ const priorityColors: Record<string, string> = {
   urgent: "bg-destructive text-destructive-foreground",
 };
 
-export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
+export function TaskTable({ tasks, onTaskUpdate, onEditTask, statuses }: TaskTableProps) {
+  const getStatusById = (id: string) => statuses.find(s => s.id === id);
+  const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
   return (
     <div className="rounded-lg border bg-card shadow-card">
       <Table>
@@ -62,16 +72,16 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
             <TableRow key={task.id} className="group">
               <TableCell>
                 <Checkbox
-                  checked={task.status === "done"}
+                  checked={task.status === doneStatusId}
                   onCheckedChange={(checked) =>
-                    onTaskUpdate(task.id, { status: checked ? "done" : "todo" })
+                    onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
                   }
                 />
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
-                    <p className={`font-medium ${task.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>
+                    <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
                       {task.title}
                     </p>
                     {task.isRecurring && (
@@ -146,7 +156,7 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEditTask(task)}>Edit</DropdownMenuItem>
                     <DropdownMenuItem>Duplicate</DropdownMenuItem>
                     <DropdownMenuItem className="text-destructive">
                       Delete
