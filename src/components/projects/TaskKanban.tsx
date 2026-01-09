@@ -90,17 +90,40 @@ export function TaskKanban({ tasks, onTaskUpdate }: TaskKanbanProps) {
                         {format(task.dueDate, "MMM d")}
                       </div>
                     )}
-                    <div className="flex gap-1 ml-auto">
-                      {task.tags.slice(0, 2).map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="secondary"
-                          className="text-xs px-1.5 py-0"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
+                    
+                    {/* Assignees */}
+                    {task.assignees.length > 0 && (
+                      <div className="flex -space-x-1.5 ml-auto">
+                        {task.assignees.slice(0, 2).map((assignee) => (
+                          <div
+                            key={assignee.id}
+                            className="w-5 h-5 rounded-full bg-primary/20 border border-background flex items-center justify-center text-[10px] font-medium"
+                            title={assignee.name}
+                          >
+                            {assignee.name.charAt(0)}
+                          </div>
+                        ))}
+                        {task.assignees.length > 2 && (
+                          <div className="w-5 h-5 rounded-full bg-muted border border-background flex items-center justify-center text-[10px] font-medium">
+                            +{task.assignees.length - 2}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {task.assignees.length === 0 && (
+                      <div className="flex gap-1 ml-auto">
+                        {task.tags.slice(0, 2).map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="text-xs px-1.5 py-0"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
