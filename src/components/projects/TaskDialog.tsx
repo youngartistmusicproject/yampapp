@@ -19,11 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { X, Check } from "lucide-react";
-import { UserAvatar } from "@/components/ui/user-avatar";
 import { tagLibrary, statusLibrary } from "@/data/workManagementConfig";
 import { SearchableTagSelect } from "./SearchableTagSelect";
+import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { RecurrenceSettings } from "./RecurrenceSettings";
 
 interface TaskDialogProps {
@@ -67,18 +65,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
     setSelectedAssignees([]);
     setIsRecurring(false);
     setRecurrence(undefined);
-  };
-
-  const toggleAssignee = (member: User) => {
-    setSelectedAssignees((prev) =>
-      prev.find((m) => m.id === member.id)
-        ? prev.filter((m) => m.id !== member.id)
-        : [...prev, member]
-    );
-  };
-
-  const removeAssignee = (memberId: string) => {
-    setSelectedAssignees((prev) => prev.filter((m) => m.id !== memberId));
   };
 
   return (
@@ -165,43 +151,12 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
 
             <div className="space-y-2">
               <Label>Assign To</Label>
-              {selectedAssignees.length > 0 && (
-                <div className="flex gap-2 flex-wrap mb-2">
-                  {selectedAssignees.map((member) => (
-                    <Badge key={member.id} variant="secondary" className="gap-1 pr-1">
-                      {member.name}
-                      <button
-                        type="button"
-                        onClick={() => removeAssignee(member.id)}
-                        className="ml-1 hover:bg-muted rounded-full p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              <div className="border rounded-lg p-2 max-h-32 overflow-y-auto space-y-1">
-                {availableMembers.map((member) => (
-                  <button
-                    key={member.id}
-                    type="button"
-                    onClick={() => toggleAssignee(member)}
-                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
-                      selectedAssignees.find((m) => m.id === member.id)
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-muted"
-                    }`}
-                  >
-                    <UserAvatar user={member} size="sm" showTooltip={false} />
-                    <span>{member.name}</span>
-                    <span className="text-muted-foreground text-xs ml-auto capitalize">{member.role}</span>
-                    {selectedAssignees.find((m) => m.id === member.id) && (
-                      <Check className="w-4 h-4 text-primary" />
-                    )}
-                  </button>
-                ))}
-              </div>
+              <SearchableAssigneeSelect
+                members={availableMembers}
+                selectedAssignees={selectedAssignees}
+                onAssigneesChange={setSelectedAssignees}
+                placeholder="Search and select assignees..."
+              />
             </div>
 
             <div className="space-y-2">
