@@ -20,7 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, Check } from "lucide-react";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { tagLibrary, statusLibrary } from "@/data/workManagementConfig";
 
 interface TaskDialogProps {
   open: boolean;
@@ -32,9 +34,10 @@ interface TaskDialogProps {
 export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: TaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<string>("todo");
   const [priority, setPriority] = useState<Task["priority"]>("medium");
   const [dueDate, setDueDate] = useState("");
-  const [tags, setTags] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -42,19 +45,26 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
     onSubmit({
       title,
       description,
-      status: "todo",
+      status: status as Task["status"],
       priority,
       dueDate: dueDate ? new Date(dueDate) : undefined,
-      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+      tags: selectedTags,
       assignees: selectedAssignees,
     });
     // Reset form
     setTitle("");
     setDescription("");
+    setStatus("todo");
     setPriority("medium");
     setDueDate("");
-    setTags("");
+    setSelectedTags([]);
     setSelectedAssignees([]);
+  };
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
+    );
   };
 
   const toggleAssignee = (member: User) => {
@@ -104,6 +114,28 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusLibrary.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: s.color }}
+                          />
+                          {s.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="priority">Priority</Label>
                 <Select value={priority} onValueChange={(v) => setPriority(v as Task["priority"])}>
                   <SelectTrigger>
@@ -117,16 +149,16 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="dueDate">Due Date</Label>
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Due Date</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
@@ -147,7 +179,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
                   ))}
                 </div>
               )}
-              <div className="border rounded-lg p-2 max-h-32 overflow-y-auto space-y-1">
+                <div className="border rounded-lg p-2 max-h-32 overflow-y-auto space-y-1">
                 {availableMembers.map((member) => (
                   <button
                     key={member.id}
@@ -159,24 +191,39 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
                         : "hover:bg-muted"
                     }`}
                   >
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
-                      {member.name.charAt(0)}
-                    </div>
+                    <UserAvatar user={member} size="sm" showTooltip={false} />
                     <span>{member.name}</span>
-                    <span className="text-muted-foreground text-xs ml-auto">{member.role}</span>
+                    <span className="text-muted-foreground text-xs ml-auto capitalize">{member.role}</span>
+                    {selectedAssignees.find((m) => m.id === member.id) && (
+                      <Check className="w-4 h-4 text-primary" />
+                    )}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma-separated)</Label>
-              <Input
-                id="tags"
-                placeholder="e.g., design, urgent, meeting"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-              />
+              <Label>Tags</Label>
+              <div className="flex gap-2 flex-wrap">
+                {tagLibrary.map((tag) => (
+                  <Badge
+                    key={tag.id}
+                    variant={selectedTags.includes(tag.id) ? "default" : "outline"}
+                    className="cursor-pointer transition-colors"
+                    style={
+                      selectedTags.includes(tag.id)
+                        ? { backgroundColor: tag.color, borderColor: tag.color }
+                        : { borderColor: tag.color, color: tag.color }
+                    }
+                    onClick={() => toggleTag(tag.id)}
+                  >
+                    {tag.name}
+                  </Badge>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Select from the tag library above
+              </p>
             </div>
           </div>
 
