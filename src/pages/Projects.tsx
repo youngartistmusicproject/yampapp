@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Filter, Search, FolderPlus } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Filter, Search, FolderPlus, CheckCircle2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { format } from "date-fns";
 
 import { teamMembers } from "@/data/workManagementConfig";
 
@@ -115,15 +125,42 @@ export default function Projects() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProject, setSelectedProject] = useState<string>("all");
 
-  const filteredTasks = tasks.filter(task => {
+  // Active tasks (not completed)
+  const activeTasks = tasks.filter(task => !task.completedAt);
+  
+  // Completed tasks
+  const completedTasks = tasks.filter(task => task.completedAt)
+    .sort((a, b) => (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0));
+
+  const filteredTasks = activeTasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
     return matchesSearch && matchesProject;
   });
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
+    setTasks(tasks.map(task => {
+      if (task.id !== taskId) return task;
+      
+      // If marking as done, add completedAt timestamp
+      if (updates.status === 'done' && task.status !== 'done') {
+        return { ...task, ...updates, completedAt: new Date(), updatedAt: new Date() };
+      }
+      
+      // If unmarking as done, remove completedAt
+      if (updates.status && updates.status !== 'done' && task.status === 'done') {
+        return { ...task, ...updates, completedAt: undefined, updatedAt: new Date() };
+      }
+      
+      return { ...task, ...updates, updatedAt: new Date() };
+    }));
+  };
+
+  const handleRestoreTask = (taskId: string) => {
     setTasks(tasks.map(task =>
-      task.id === taskId ? { ...task, ...updates, updatedAt: new Date() } : task
+      task.id === taskId 
+        ? { ...task, status: 'todo' as const, completedAt: undefined, updatedAt: new Date() }
+        : task
     ));
   };
 
@@ -212,6 +249,67 @@ export default function Projects() {
           <Filter className="w-4 h-4" />
           Filter
         </Button>
+        
+        {/* Completed Tasks Sheet */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              Completed
+              {completedTasks.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                  {completedTasks.length}
+                </Badge>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="w-[400px] sm:w-[540px]">
+            <SheetHeader>
+              <SheetTitle>Completed Tasks</SheetTitle>
+              <SheetDescription>
+                View and restore recently completed tasks
+              </SheetDescription>
+            </SheetHeader>
+            <ScrollArea className="h-[calc(100vh-120px)] mt-4 pr-4">
+              {completedTasks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                  <CheckCircle2 className="w-8 h-8 mb-2 opacity-50" />
+                  <p>No completed tasks yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {completedTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                    >
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm line-through text-muted-foreground">
+                          {task.title}
+                        </p>
+                        {task.completedAt && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Completed {format(task.completedAt, "MMM d, yyyy 'at' h:mm a")}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1.5 h-8"
+                        onClick={() => handleRestoreTask(task.id)}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Restore
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Views */}
