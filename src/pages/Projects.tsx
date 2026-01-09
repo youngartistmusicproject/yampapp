@@ -6,10 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TaskTable } from "@/components/projects/TaskTable";
 import { TaskKanban } from "@/components/projects/TaskKanban";
 import { TaskDialog } from "@/components/projects/TaskDialog";
+import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
-import { Task, Project, User } from "@/types";
+import { Task, Project, User, TaskComment, TaskAttachment } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -30,6 +31,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 
 import { teamMembers, statusLibrary as defaultStatuses, tagLibrary } from "@/data/workManagementConfig";
+
+// Current user for demo purposes
+const currentUser = teamMembers[0];
 
 const initialProjects: Project[] = [
   {
@@ -127,6 +131,7 @@ export default function Projects() {
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [statusManagerOpen, setStatusManagerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [filters, setFilters] = useState<TaskFilters>({
@@ -207,8 +212,108 @@ export default function Projects() {
   };
 
   const handleEditTask = (task: Task) => {
+    setViewingTask(null); // Close detail dialog if open
     setEditingTask(task);
     setTaskDialogOpen(true);
+  };
+
+  const handleViewTask = (task: Task) => {
+    // Get latest task data
+    const latestTask = tasks.find(t => t.id === task.id) || task;
+    setViewingTask(latestTask);
+  };
+
+  const handleAddComment = (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>) => {
+    setTasks(tasks.map(task => {
+      if (task.id !== taskId) return task;
+      const newComment: TaskComment = {
+        ...comment,
+        id: Date.now().toString(),
+        createdAt: new Date(),
+      };
+      return {
+        ...task,
+        comments: [...(task.comments || []), newComment],
+        updatedAt: new Date(),
+      };
+    }));
+    // Update viewing task to reflect changes
+    setViewingTask(prev => {
+      if (!prev || prev.id !== taskId) return prev;
+      const newComment: TaskComment = {
+        ...comment,
+        id: Date.now().toString(),
+        createdAt: new Date(),
+      };
+      return {
+        ...prev,
+        comments: [...(prev.comments || []), newComment],
+      };
+    });
+  };
+
+  const handleDeleteComment = (taskId: string, commentId: string) => {
+    setTasks(tasks.map(task => {
+      if (task.id !== taskId) return task;
+      return {
+        ...task,
+        comments: (task.comments || []).filter(c => c.id !== commentId),
+        updatedAt: new Date(),
+      };
+    }));
+    setViewingTask(prev => {
+      if (!prev || prev.id !== taskId) return prev;
+      return {
+        ...prev,
+        comments: (prev.comments || []).filter(c => c.id !== commentId),
+      };
+    });
+  };
+
+  const handleAddAttachment = (taskId: string, attachment: Omit<TaskAttachment, 'id' | 'uploadedAt'>) => {
+    setTasks(tasks.map(task => {
+      if (task.id !== taskId) return task;
+      const newAttachment: TaskAttachment = {
+        ...attachment,
+        id: Date.now().toString(),
+        uploadedAt: new Date(),
+      };
+      return {
+        ...task,
+        attachments: [...(task.attachments || []), newAttachment],
+        updatedAt: new Date(),
+      };
+    }));
+    setViewingTask(prev => {
+      if (!prev || prev.id !== taskId) return prev;
+      const newAttachment: TaskAttachment = {
+        ...attachment,
+        id: Date.now().toString(),
+        uploadedAt: new Date(),
+      };
+      return {
+        ...prev,
+        attachments: [...(prev.attachments || []), newAttachment],
+      };
+    });
+  };
+
+  const handleDeleteAttachment = (taskId: string, attachmentId: string) => {
+    setTasks(tasks.map(task => {
+      if (task.id !== taskId) return task;
+      return {
+        ...task,
+        attachments: (task.attachments || []).filter(a => a.id !== attachmentId),
+        updatedAt: new Date(),
+      };
+    }));
+    setViewingTask(prev => {
+      if (!prev || prev.id !== taskId) return prev;
+      return {
+        ...prev,
+        attachments: (prev.attachments || []).filter(a => a.id !== attachmentId),
+      };
+    });
   };
 
   const handleRestoreTask = (taskId: string) => {
@@ -409,11 +514,11 @@ export default function Projects() {
         </TabsList>
 
         <TabsContent value="table" className="mt-4">
-          <TaskTable tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} onEditTask={handleEditTask} statuses={statuses} />
+          <TaskTable tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} onEditTask={handleEditTask} onViewTask={handleViewTask} statuses={statuses} />
         </TabsContent>
 
         <TabsContent value="kanban" className="mt-4">
-          <TaskKanban tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} onEditTask={handleEditTask} statuses={statuses} />
+          <TaskKanban tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} onEditTask={handleEditTask} onViewTask={handleViewTask} statuses={statuses} />
         </TabsContent>
 
 
@@ -431,6 +536,19 @@ export default function Projects() {
         availableMembers={teamMembers}
         statuses={statuses}
         task={editingTask}
+      />
+
+      <TaskDetailDialog
+        open={!!viewingTask}
+        onOpenChange={(open) => !open && setViewingTask(null)}
+        task={viewingTask}
+        currentUser={currentUser}
+        statuses={statuses}
+        onAddComment={handleAddComment}
+        onDeleteComment={handleDeleteComment}
+        onAddAttachment={handleAddAttachment}
+        onDeleteAttachment={handleDeleteAttachment}
+        onEditTask={handleEditTask}
       />
 
       <ProjectDialog

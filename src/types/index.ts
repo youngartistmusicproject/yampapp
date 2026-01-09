@@ -14,6 +14,23 @@ export interface RecurrenceSettings {
   dayOfMonth?: number; // for monthly recurrence
 }
 
+export interface TaskComment {
+  id: string;
+  content: string;
+  author: User;
+  createdAt: Date;
+}
+
+export interface TaskAttachment {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  url: string; // data URL for demo, would be storage URL in production
+  uploadedBy: User;
+  uploadedAt: Date;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -28,6 +45,8 @@ export interface Task {
   recurrence?: RecurrenceSettings;
   parentTaskId?: string; // for recurring task instances
   completedAt?: Date; // timestamp when task was marked complete
+  comments?: TaskComment[];
+  attachments?: TaskAttachment[];
   createdAt: Date;
   updatedAt: Date;
 }

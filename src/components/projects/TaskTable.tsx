@@ -31,6 +31,7 @@ interface TaskTableProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onEditTask: (task: Task) => void;
+  onViewTask: (task: Task) => void;
   statuses: StatusItem[];
 }
 
@@ -41,7 +42,7 @@ const priorityColors: Record<string, string> = {
   urgent: "bg-destructive text-destructive-foreground",
 };
 
-export function TaskTable({ tasks, onTaskUpdate, onEditTask, statuses }: TaskTableProps) {
+export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, statuses }: TaskTableProps) {
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
   const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
   return (
@@ -69,8 +70,8 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, statuses }: TaskTab
         </TableHeader>
         <TableBody>
           {tasks.map((task) => (
-            <TableRow key={task.id} className="group">
-              <TableCell>
+            <TableRow key={task.id} className="group cursor-pointer" onClick={() => onViewTask(task)}>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <Checkbox
                   checked={task.status === doneStatusId}
                   onCheckedChange={(checked) =>
@@ -144,7 +145,7 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, statuses }: TaskTab
                   )}
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -156,6 +157,7 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, statuses }: TaskTab
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onViewTask(task)}>View Details</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onEditTask(task)}>Edit</DropdownMenuItem>
                     <DropdownMenuItem>Duplicate</DropdownMenuItem>
                     <DropdownMenuItem className="text-destructive">
