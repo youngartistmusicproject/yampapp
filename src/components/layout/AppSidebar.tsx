@@ -21,7 +21,7 @@ import { Separator } from "@/components/ui/separator";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Projects", href: "/projects", icon: FolderKanban },
+  { name: "Work Management", href: "/projects", icon: FolderKanban },
   { name: "Knowledge Base", href: "/knowledge", icon: BookOpen },
   { name: "Content Hub", href: "/content", icon: FolderOpen },
   { name: "Chat", href: "/chat", icon: MessageCircle },

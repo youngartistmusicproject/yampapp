@@ -18,6 +18,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TaskTableProps {
   tasks: Task[];
@@ -52,6 +57,7 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
             </TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Priority</TableHead>
+            <TableHead>Assignees</TableHead>
             <TableHead>
               <Button variant="ghost" size="sm" className="gap-1 -ml-3">
                 Due Date <ArrowUpDown className="w-3 h-3" />
@@ -93,6 +99,28 @@ export function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                 <Badge className={priorityColors[task.priority]} variant="secondary">
                   {task.priority}
                 </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex -space-x-2">
+                  {task.assignees.slice(0, 3).map((assignee) => (
+                    <Tooltip key={assignee.id}>
+                      <TooltipTrigger asChild>
+                        <div className="w-7 h-7 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center text-xs font-medium cursor-default">
+                          {assignee.name.charAt(0)}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>{assignee.name}</TooltipContent>
+                    </Tooltip>
+                  ))}
+                  {task.assignees.length > 3 && (
+                    <div className="w-7 h-7 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium">
+                      +{task.assignees.length - 3}
+                    </div>
+                  )}
+                  {task.assignees.length === 0 && (
+                    <span className="text-muted-foreground text-sm">—</span>
+                  )}
+                </div>
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {task.dueDate ? format(task.dueDate, "MMM d, yyyy") : "-"}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Task, User } from "@/types";
+import { Project, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,81 +12,78 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 
-interface TaskDialogProps {
+interface ProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (project: Omit<Project, 'id' | 'createdAt' | 'tasks'>) => void;
   availableMembers: User[];
 }
 
-export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: TaskDialogProps) {
-  const [title, setTitle] = useState("");
+const projectColors = [
+  "#eb5c5c", // primary coral
+  "#3b82f6", // blue
+  "#10b981", // green
+  "#f59e0b", // amber
+  "#8b5cf6", // purple
+  "#ec4899", // pink
+  "#06b6d4", // cyan
+  "#84cc16", // lime
+];
+
+export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers }: ProjectDialogProps) {
+  const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<Task["priority"]>("medium");
-  const [dueDate, setDueDate] = useState("");
-  const [tags, setTags] = useState("");
-  const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
+  const [color, setColor] = useState(projectColors[0]);
+  const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
-      title,
+      name,
       description,
-      status: "todo",
-      priority,
-      dueDate: dueDate ? new Date(dueDate) : undefined,
-      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
-      assignees: selectedAssignees,
+      color,
+      members: selectedMembers,
     });
     // Reset form
-    setTitle("");
+    setName("");
     setDescription("");
-    setPriority("medium");
-    setDueDate("");
-    setTags("");
-    setSelectedAssignees([]);
+    setColor(projectColors[0]);
+    setSelectedMembers([]);
   };
 
-  const toggleAssignee = (member: User) => {
-    setSelectedAssignees((prev) =>
+  const toggleMember = (member: User) => {
+    setSelectedMembers((prev) =>
       prev.find((m) => m.id === member.id)
         ? prev.filter((m) => m.id !== member.id)
         : [...prev, member]
     );
   };
 
-  const removeAssignee = (memberId: string) => {
-    setSelectedAssignees((prev) => prev.filter((m) => m.id !== memberId));
+  const removeMember = (memberId: string) => {
+    setSelectedMembers((prev) => prev.filter((m) => m.id !== memberId));
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
+          <DialogTitle>Create New Project</DialogTitle>
           <DialogDescription>
-            Add a new task to your project. Fill in the details below.
+            Create a new project and assign team members.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="name">Project Name</Label>
               <Input
-                id="title"
-                placeholder="Enter task title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                id="name"
+                placeholder="Enter project name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
@@ -95,50 +92,40 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                placeholder="Add more details about this task..."
+                placeholder="Describe the project..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Select value={priority} onValueChange={(v) => setPriority(v as Task["priority"])}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dueDate">Due Date</Label>
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                />
+            <div className="space-y-2">
+              <Label>Project Color</Label>
+              <div className="flex gap-2 flex-wrap">
+                {projectColors.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setColor(c)}
+                    className={`w-8 h-8 rounded-full transition-all ${
+                      color === c ? "ring-2 ring-offset-2 ring-primary" : ""
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Assign To</Label>
-              {selectedAssignees.length > 0 && (
+              <Label>Assign Members</Label>
+              {selectedMembers.length > 0 && (
                 <div className="flex gap-2 flex-wrap mb-2">
-                  {selectedAssignees.map((member) => (
+                  {selectedMembers.map((member) => (
                     <Badge key={member.id} variant="secondary" className="gap-1 pr-1">
                       {member.name}
                       <button
                         type="button"
-                        onClick={() => removeAssignee(member.id)}
+                        onClick={() => removeMember(member.id)}
                         className="ml-1 hover:bg-muted rounded-full p-0.5"
                       >
                         <X className="w-3 h-3" />
@@ -152,9 +139,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
                   <button
                     key={member.id}
                     type="button"
-                    onClick={() => toggleAssignee(member)}
+                    onClick={() => toggleMember(member)}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
-                      selectedAssignees.find((m) => m.id === member.id)
+                      selectedMembers.find((m) => m.id === member.id)
                         ? "bg-primary/10 text-primary"
                         : "hover:bg-muted"
                     }`}
@@ -168,23 +155,13 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers }: T
                 ))}
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma-separated)</Label>
-              <Input
-                id="tags"
-                placeholder="e.g., design, urgent, meeting"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-              />
-            </div>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Task</Button>
+            <Button type="submit">Create Project</Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -13,7 +13,7 @@ export interface Task {
   status: 'todo' | 'in-progress' | 'review' | 'done';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   dueDate?: Date;
-  assignee?: User;
+  assignees: User[];
   projectId?: string;
   tags: string[];
   isRecurring?: boolean;

@@ -1,12 +1,51 @@
 import { useState } from "react";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Filter, Search } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Filter, Search, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TaskTable } from "@/components/projects/TaskTable";
 import { TaskKanban } from "@/components/projects/TaskKanban";
 import { TaskDialog } from "@/components/projects/TaskDialog";
-import { Task } from "@/types";
+import { ProjectDialog } from "@/components/projects/ProjectDialog";
+import { Task, Project, User } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Mock team members
+const teamMembers: User[] = [
+  { id: "u1", name: "Sarah Johnson", email: "sarah@company.com", role: "admin" },
+  { id: "u2", name: "Mike Chen", email: "mike@company.com", role: "staff" },
+  { id: "u3", name: "Emily Davis", email: "emily@company.com", role: "faculty" },
+  { id: "u4", name: "Alex Rivera", email: "alex@company.com", role: "staff" },
+  { id: "u5", name: "Jordan Smith", email: "jordan@company.com", role: "faculty" },
+];
+
+const initialProjects: Project[] = [
+  {
+    id: "p1",
+    name: "Spring Recital 2024",
+    description: "Annual spring music recital planning and execution",
+    color: "#eb5c5c",
+    tasks: [],
+    members: [teamMembers[0], teamMembers[2], teamMembers[4]],
+    createdAt: new Date(),
+  },
+  {
+    id: "p2",
+    name: "Curriculum Update",
+    description: "Update music curriculum for the new semester",
+    color: "#3b82f6",
+    tasks: [],
+    members: [teamMembers[1], teamMembers[2]],
+    createdAt: new Date(),
+  },
+];
 
 const initialTasks: Task[] = [
   {
@@ -17,6 +56,8 @@ const initialTasks: Task[] = [
     priority: "high",
     dueDate: new Date("2024-01-20"),
     tags: ["teaching", "planning"],
+    assignees: [teamMembers[2]],
+    projectId: "p1",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -28,6 +69,8 @@ const initialTasks: Task[] = [
     priority: "medium",
     dueDate: new Date("2024-01-25"),
     tags: ["admin", "reports"],
+    assignees: [teamMembers[0], teamMembers[1]],
+    projectId: "p1",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -39,6 +82,7 @@ const initialTasks: Task[] = [
     priority: "high",
     dueDate: new Date("2024-01-22"),
     tags: ["communication", "parents"],
+    assignees: [teamMembers[3]],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -50,6 +94,8 @@ const initialTasks: Task[] = [
     priority: "low",
     dueDate: new Date("2024-01-15"),
     tags: ["supplies"],
+    assignees: [teamMembers[1]],
+    projectId: "p2",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -61,6 +107,8 @@ const initialTasks: Task[] = [
     priority: "medium",
     dueDate: new Date("2024-02-01"),
     tags: ["recital", "design"],
+    assignees: [teamMembers[2], teamMembers[4]],
+    projectId: "p1",
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -68,12 +116,17 @@ const initialTasks: Task[] = [
 
 export default function Projects() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProject, setSelectedProject] = useState<string>("all");
 
-  const filteredTasks = tasks.filter(task =>
-    task.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
+    return matchesSearch && matchesProject;
+  });
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
     setTasks(tasks.map(task =>
@@ -85,11 +138,23 @@ export default function Projects() {
     const task: Task = {
       ...newTask,
       id: Date.now().toString(),
+      projectId: selectedProject !== "all" ? selectedProject : undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     setTasks([...tasks, task]);
-    setDialogOpen(false);
+    setTaskDialogOpen(false);
+  };
+
+  const handleAddProject = (newProject: Omit<Project, 'id' | 'createdAt' | 'tasks'>) => {
+    const project: Project = {
+      ...newProject,
+      id: Date.now().toString(),
+      tasks: [],
+      createdAt: new Date(),
+    };
+    setProjects([...projects, project]);
+    setProjectDialogOpen(false);
   };
 
   return (
@@ -97,13 +162,46 @@ export default function Projects() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Projects & Tasks</h1>
-          <p className="text-muted-foreground mt-1">Manage all your tasks and projects in one place</p>
+          <h1 className="text-2xl font-semibold text-foreground">Work Management</h1>
+          <p className="text-muted-foreground mt-1">Manage all your projects and tasks in one place</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          New Task
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setProjectDialogOpen(true)} className="gap-2">
+            <FolderPlus className="w-4 h-4" />
+            New Project
+          </Button>
+          <Button onClick={() => setTaskDialogOpen(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            New Task
+          </Button>
+        </div>
+      </div>
+
+      {/* Projects Bar */}
+      <div className="flex gap-2 flex-wrap items-center">
+        <span className="text-sm font-medium text-muted-foreground mr-2">Projects:</span>
+        <Badge
+          variant={selectedProject === "all" ? "default" : "outline"}
+          className="cursor-pointer"
+          onClick={() => setSelectedProject("all")}
+        >
+          All Tasks
+        </Badge>
+        {projects.map((project) => (
+          <Badge
+            key={project.id}
+            variant={selectedProject === project.id ? "default" : "outline"}
+            className="cursor-pointer gap-1.5"
+            onClick={() => setSelectedProject(project.id)}
+            style={selectedProject === project.id ? { backgroundColor: project.color } : {}}
+          >
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: selectedProject === project.id ? "white" : project.color }}
+            />
+            {project.name}
+          </Badge>
+        ))}
       </div>
 
       {/* Filters */}
@@ -124,15 +222,15 @@ export default function Projects() {
       </div>
 
       {/* Views */}
-      <Tabs defaultValue="kanban" className="space-y-4">
+      <Tabs defaultValue="table" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="kanban" className="gap-2">
-            <LayoutGrid className="w-4 h-4" />
-            Kanban
-          </TabsTrigger>
           <TabsTrigger value="table" className="gap-2">
             <List className="w-4 h-4" />
             Table
+          </TabsTrigger>
+          <TabsTrigger value="kanban" className="gap-2">
+            <LayoutGrid className="w-4 h-4" />
+            Kanban
           </TabsTrigger>
           <TabsTrigger value="timeline" className="gap-2">
             <CalendarIcon className="w-4 h-4" />
@@ -140,12 +238,12 @@ export default function Projects() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="kanban" className="mt-4">
-          <TaskKanban tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} />
-        </TabsContent>
-
         <TabsContent value="table" className="mt-4">
           <TaskTable tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} />
+        </TabsContent>
+
+        <TabsContent value="kanban" className="mt-4">
+          <TaskKanban tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} />
         </TabsContent>
 
         <TabsContent value="timeline" className="mt-4">
@@ -156,9 +254,17 @@ export default function Projects() {
       </Tabs>
 
       <TaskDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        open={taskDialogOpen}
+        onOpenChange={setTaskDialogOpen}
         onSubmit={handleAddTask}
+        availableMembers={teamMembers}
+      />
+
+      <ProjectDialog
+        open={projectDialogOpen}
+        onOpenChange={setProjectDialogOpen}
+        onSubmit={handleAddProject}
+        availableMembers={teamMembers}
       />
     </div>
   );
