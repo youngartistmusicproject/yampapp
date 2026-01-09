@@ -27,6 +27,7 @@ export interface Task {
   isRecurring?: boolean;
   recurrence?: RecurrenceSettings;
   parentTaskId?: string; // for recurring task instances
+  completedAt?: Date; // timestamp when task was marked complete
   createdAt: Date;
   updatedAt: Date;
 }
