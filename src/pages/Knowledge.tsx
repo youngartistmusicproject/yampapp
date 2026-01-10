@@ -1,54 +1,39 @@
-import { useState } from "react";
-import { Plus, Search, FolderOpen, FileText, ChevronRight, MoreHorizontal } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Plus, Search, FolderOpen, FileText, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { KnowledgeEditor } from "@/components/knowledge/KnowledgeEditor";
-
-interface DocItem {
-  id: string;
-  title: string;
-  type: "folder" | "doc";
-  children?: DocItem[];
-  lastModified?: Date;
-}
-
-const sampleDocs: DocItem[] = [
-  {
-    id: "1",
-    title: "Getting Started",
-    type: "folder",
-    children: [
-      { id: "1-1", title: "Welcome Guide", type: "doc", lastModified: new Date() },
-      { id: "1-2", title: "Quick Start", type: "doc", lastModified: new Date() },
-    ],
-  },
-  {
-    id: "2",
-    title: "SOPs & Policies",
-    type: "folder",
-    children: [
-      { id: "2-1", title: "Attendance Policy", type: "doc", lastModified: new Date() },
-      { id: "2-2", title: "Lesson Planning Guide", type: "doc", lastModified: new Date() },
-      { id: "2-3", title: "Parent Communication", type: "doc", lastModified: new Date() },
-    ],
-  },
-  {
-    id: "3",
-    title: "Teaching Resources",
-    type: "folder",
-    children: [
-      { id: "3-1", title: "Music Theory Basics", type: "doc", lastModified: new Date() },
-      { id: "3-2", title: "Practice Techniques", type: "doc", lastModified: new Date() },
-    ],
-  },
-  { id: "4", title: "Staff Handbook", type: "doc", lastModified: new Date() },
-];
+import { CreateDocDialog } from "@/components/knowledge/CreateDocDialog";
+import { useKnowledgeDocs, DocItem } from "@/hooks/useKnowledgeDocs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Knowledge() {
-  const [selectedDoc, setSelectedDoc] = useState<string | null>("1-1");
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(["1", "2"]));
+  const { docs, flatDocs, loading, getDocById, createDoc, updateDoc, deleteDoc } = useKnowledgeDocs();
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  // Get list of folders for the create dialog
+  const folders = flatDocs.filter((d) => d.type === "folder");
+
+  // Get selected document
+  const selectedDoc = selectedDocId ? getDocById(selectedDocId) : null;
+
+  // Auto-select first document when docs load
+  useEffect(() => {
+    if (!selectedDocId && flatDocs.length > 0) {
+      const firstDoc = flatDocs.find((d) => d.type === "doc");
+      if (firstDoc) {
+        setSelectedDocId(firstDoc.id);
+        // Expand parent folder if exists
+        if (firstDoc.parent_id) {
+          setExpandedFolders((prev) => new Set([...prev, firstDoc.parent_id!]));
+        }
+      }
+    }
+  }, [flatDocs, selectedDocId]);
 
   const toggleFolder = (folderId: string) => {
     const newExpanded = new Set(expandedFolders);
@@ -60,9 +45,52 @@ export default function Knowledge() {
     setExpandedFolders(newExpanded);
   };
 
+  const handleCreateDoc = async (
+    title: string,
+    type: "folder" | "doc",
+    parentId: string | null
+  ) => {
+    const newDoc = await createDoc(title, type, parentId);
+    if (newDoc && type === "doc") {
+      setSelectedDocId(newDoc.id);
+      if (parentId) {
+        setExpandedFolders((prev) => new Set([...prev, parentId]));
+      }
+    }
+  };
+
+  const handleDeleteDoc = async (id: string) => {
+    const success = await deleteDoc(id);
+    if (success && selectedDocId === id) {
+      setSelectedDocId(null);
+    }
+    return success;
+  };
+
+  // Filter docs based on search
+  const filterDocs = (items: DocItem[], query: string): DocItem[] => {
+    if (!query.trim()) return items;
+    const lowerQuery = query.toLowerCase();
+    
+    return items.reduce<DocItem[]>((acc, item) => {
+      const matchesTitle = item.title.toLowerCase().includes(lowerQuery);
+      const filteredChildren = item.children ? filterDocs(item.children, query) : [];
+      
+      if (matchesTitle || filteredChildren.length > 0) {
+        acc.push({
+          ...item,
+          children: filteredChildren.length > 0 ? filteredChildren : item.children,
+        });
+      }
+      return acc;
+    }, []);
+  };
+
+  const filteredDocs = filterDocs(docs, searchQuery);
+
   const renderDocItem = (item: DocItem, depth = 0) => {
     const isExpanded = expandedFolders.has(item.id);
-    const isSelected = selectedDoc === item.id;
+    const isSelected = selectedDocId === item.id;
 
     return (
       <div key={item.id}>
@@ -77,7 +105,7 @@ export default function Knowledge() {
             if (item.type === "folder") {
               toggleFolder(item.id);
             } else {
-              setSelectedDoc(item.id);
+              setSelectedDocId(item.id);
             }
           }}
         >
@@ -102,6 +130,27 @@ export default function Knowledge() {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="flex h-[calc(100vh-7rem)] gap-6 animate-fade-in">
+        <div className="w-72 flex-shrink-0 flex flex-col bg-card rounded-lg border shadow-card p-4 space-y-3">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-3/4" />
+        </div>
+        <Card className="flex-1 shadow-card">
+          <CardContent className="p-6 space-y-4">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-[calc(100vh-7rem)] gap-6 animate-fade-in">
       {/* Sidebar */}
@@ -109,7 +158,12 @@ export default function Knowledge() {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold">Knowledge Base</h2>
-            <Button size="icon" variant="ghost" className="h-8 w-8">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              onClick={() => setShowCreateDialog(true)}
+            >
               <Plus className="w-4 h-4" />
             </Button>
           </div>
@@ -125,20 +179,36 @@ export default function Knowledge() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
-          {sampleDocs.map((item) => renderDocItem(item))}
+          {filteredDocs.length > 0 ? (
+            filteredDocs.map((item) => renderDocItem(item))
+          ) : (
+            <div className="text-center text-muted-foreground text-sm py-8">
+              {searchQuery ? "No matching documents" : "No documents yet"}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Editor */}
       <Card className="flex-1 shadow-card overflow-hidden">
         <CardContent className="p-0 h-full">
-          <KnowledgeEditor 
-            docId={selectedDoc} 
-            docs={sampleDocs}
-            onDocSelect={(docId) => setSelectedDoc(docId)}
+          <KnowledgeEditor
+            doc={selectedDoc || null}
+            docs={docs}
+            onDocSelect={(docId) => setSelectedDocId(docId)}
+            onUpdate={updateDoc}
+            onDelete={handleDeleteDoc}
           />
         </CardContent>
       </Card>
+
+      {/* Create Document Dialog */}
+      <CreateDocDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSubmit={handleCreateDoc}
+        folders={folders}
+      />
     </div>
   );
 }
