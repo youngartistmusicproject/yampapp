@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Paperclip, Minus, SmilePlus, Reply, FileIcon, Loader2, Plus, Check, CheckCheck } from "lucide-react";
+import { X, Send, Paperclip, Minus, SmilePlus, Reply, FileIcon, Loader2, Plus, Check, CheckCheck, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -57,32 +57,88 @@ export function ChatWindow({
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [emojiPickerMessageId, setEmojiPickerMessageId] = useState<string | null>(null);
   const [showFullEmojiPicker, setShowFullEmojiPicker] = useState(false);
+  const [isScrolledUp, setIsScrolledUp] = useState(false);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const [lastSeenMessageId, setLastSeenMessageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | null>(null);
+  const prevMessagesLengthRef = useRef(messages.length);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (smooth = false) => {
     const viewport = scrollAreaRef.current;
 
     if (viewport) {
-      viewport.scrollTop = viewport.scrollHeight;
+      if (smooth) {
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+      } else {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
     }
 
     // Fallback (works even if scrolling element changes)
-    messagesEndRef.current?.scrollIntoView({ block: "end" });
+    messagesEndRef.current?.scrollIntoView({ block: "end", behavior: smooth ? "smooth" : "auto" });
+    
+    // Reset new messages state when scrolling to bottom
+    setNewMessagesCount(0);
+    setIsScrolledUp(false);
+    if (messages.length > 0) {
+      setLastSeenMessageId(messages[messages.length - 1].id);
+    }
   };
 
-  // Auto-scroll to bottom when messages change / window opens
-  useEffect(() => {
-    const t = window.setTimeout(() => {
-      // Two RAFs ensures Radix layout + React paint are done
-      requestAnimationFrame(() => requestAnimationFrame(scrollToBottom));
-    }, 0);
+  // Check if user is scrolled up
+  const checkScrollPosition = () => {
+    const viewport = scrollAreaRef.current;
+    if (!viewport) return;
+    
+    const threshold = 100; // pixels from bottom
+    const isAtBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < threshold;
+    setIsScrolledUp(!isAtBottom);
+    
+    if (isAtBottom) {
+      setNewMessagesCount(0);
+      if (messages.length > 0) {
+        setLastSeenMessageId(messages[messages.length - 1].id);
+      }
+    }
+  };
 
-    return () => window.clearTimeout(t);
+  // Set up scroll listener
+  useEffect(() => {
+    const viewport = scrollAreaRef.current;
+    if (!viewport) return;
+
+    viewport.addEventListener("scroll", checkScrollPosition);
+    return () => viewport.removeEventListener("scroll", checkScrollPosition);
+  }, [messages.length]);
+
+  // Auto-scroll to bottom when messages change / window opens (only if not scrolled up)
+  useEffect(() => {
+    const newMessagesArrived = messages.length > prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = messages.length;
+
+    if (newMessagesArrived && isScrolledUp) {
+      // User is scrolled up, increment new messages count
+      const newCount = messages.length - (messages.findIndex(m => m.id === lastSeenMessageId) + 1);
+      setNewMessagesCount(Math.max(0, newCount));
+    } else if (!isScrolledUp) {
+      // User is at bottom, auto-scroll
+      const t = window.setTimeout(() => {
+        requestAnimationFrame(() => requestAnimationFrame(() => scrollToBottom()));
+      }, 0);
+      return () => window.clearTimeout(t);
+    }
   }, [messages.length, conversationId]);
+
+  // Initialize lastSeenMessageId when conversation opens
+  useEffect(() => {
+    if (messages.length > 0 && !lastSeenMessageId) {
+      setLastSeenMessageId(messages[messages.length - 1].id);
+    }
+  }, [conversationId]);
 
   // Mark messages as read when window is visible
   useEffect(() => {
@@ -228,7 +284,8 @@ export function ChatWindow({
       </div>
 
       {/* Messages */}
-      <div ref={scrollAreaRef} className="flex-1 px-3 py-2 overflow-y-auto">
+      <div className="relative flex-1 overflow-hidden">
+        <div ref={scrollAreaRef} className="h-full px-3 py-2 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <p className="text-center text-xs text-muted-foreground py-4">
@@ -431,6 +488,18 @@ export function ChatWindow({
             ))}
             <div ref={messagesEndRef} />
           </div>
+        )}
+        </div>
+
+        {/* Jump to latest button */}
+        {isScrolledUp && newMessagesCount > 0 && (
+          <button
+            onClick={() => scrollToBottom(true)}
+            className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-full shadow-lg hover:bg-primary/90 transition-all animate-in slide-in-from-bottom-2 duration-200"
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+            {newMessagesCount} new message{newMessagesCount > 1 ? "s" : ""}
+          </button>
         )}
       </div>
 
