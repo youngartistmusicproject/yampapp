@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Paperclip, Minus, MoreHorizontal, SmilePlus, Reply, FileIcon, Loader2 } from "lucide-react";
+import { X, Send, Paperclip, Minus, SmilePlus, Reply, FileIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -10,6 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Attachment, Message, REACTION_EMOJIS } from "@/hooks/useChat";
+import { format } from "date-fns";
 
 interface ChatWindowProps {
   conversationId: string;
@@ -163,49 +164,22 @@ export function ChatWindow({
                 id={`chat-window-message-${conversationId}-${msg.id}`}
                 className={`flex ${msg.is_own ? "justify-end" : "justify-start"} group`}
               >
-                <div className={`relative flex items-start gap-1 ${msg.is_own ? "flex-row-reverse" : ""} max-w-[85%]`}>
-                  {/* Action buttons */}
-                  <div className={`flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity`}>
-                    <button
-                      onClick={() => handleReply(msg)}
-                      className="p-1 rounded-full hover:bg-muted transition-colors"
-                      title="Reply"
-                    >
-                      <Reply className="w-3 h-3 text-muted-foreground" />
-                    </button>
-                    <Popover
-                      open={emojiPickerMessageId === msg.id}
-                      onOpenChange={(open) => setEmojiPickerMessageId(open ? msg.id : null)}
-                    >
-                      <PopoverTrigger asChild>
-                        <button
-                          className="p-1 rounded-full hover:bg-muted transition-colors"
-                          title="Add reaction"
-                        >
-                          <SmilePlus className="w-3 h-3 text-muted-foreground" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 border-0" side="top" align="start">
-                        <div className="flex gap-1 p-2 bg-background border rounded-lg shadow-lg">
-                          {REACTION_EMOJIS.map((emoji) => (
-                            <button
-                              key={emoji}
-                              onClick={() => {
-                                toggleReaction(msg.id, emoji);
-                                setEmojiPickerMessageId(null);
-                              }}
-                              className="p-1 hover:bg-muted rounded transition-colors text-sm"
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                <div className={`relative flex items-end gap-2 ${msg.is_own ? "flex-row-reverse" : ""} max-w-[85%]`}>
+                  {/* Avatar */}
+                  {!msg.is_own && (
+                    <Avatar className="w-6 h-6 flex-shrink-0 mb-4">
+                      <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                        {msg.sender_name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
 
-                  {/* Message bubble */}
-                  <div>
+                  {/* Message content */}
+                  <div className="flex flex-col">
                     {/* Reply preview */}
                     {msg.replyTo && (
                       <div
@@ -231,20 +205,58 @@ export function ChatWindow({
                       </div>
                     )}
 
-                    <div
-                      className={`${
-                        msg.is_own
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary"
-                      } rounded-2xl px-3 py-1.5`}
-                    >
-                      {!msg.is_own && (
-                        <p className="text-[10px] font-medium mb-0.5 text-primary">
-                          {msg.sender_name}
-                        </p>
-                      )}
-                      {msg.content && <p className="text-sm">{msg.content}</p>}
-                      {renderAttachments(msg.attachments, msg.is_own)}
+                    <div className={`flex items-center gap-1 ${msg.is_own ? "flex-row-reverse" : ""}`}>
+                      {/* Message bubble */}
+                      <div
+                        className={`${
+                          msg.is_own
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary"
+                        } rounded-2xl px-3 py-1.5`}
+                      >
+                        {msg.content && <p className="text-sm">{msg.content}</p>}
+                        {renderAttachments(msg.attachments, msg.is_own)}
+                      </div>
+
+                      {/* Action buttons - on opposite side */}
+                      <div className={`flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity`}>
+                        <button
+                          onClick={() => handleReply(msg)}
+                          className="p-1 rounded-full hover:bg-muted transition-colors"
+                          title="Reply"
+                        >
+                          <Reply className="w-3 h-3 text-muted-foreground" />
+                        </button>
+                        <Popover
+                          open={emojiPickerMessageId === msg.id}
+                          onOpenChange={(open) => setEmojiPickerMessageId(open ? msg.id : null)}
+                        >
+                          <PopoverTrigger asChild>
+                            <button
+                              className="p-1 rounded-full hover:bg-muted transition-colors"
+                              title="Add reaction"
+                            >
+                              <SmilePlus className="w-3 h-3 text-muted-foreground" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0 border-0" side="top" align={msg.is_own ? "end" : "start"}>
+                            <div className="flex gap-1 p-2 bg-background border rounded-lg shadow-lg">
+                              {REACTION_EMOJIS.map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => {
+                                    toggleReaction(msg.id, emoji);
+                                    setEmojiPickerMessageId(null);
+                                  }}
+                                  className="p-1 hover:bg-muted rounded transition-colors text-sm"
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                     </div>
 
                     {/* Reactions */}
@@ -269,6 +281,11 @@ export function ChatWindow({
                         ))}
                       </div>
                     )}
+
+                    {/* Timestamp */}
+                    <p className={`text-[10px] text-muted-foreground mt-0.5 ${msg.is_own ? "text-right" : "text-left"}`}>
+                      {format(new Date(msg.created_at), "MMM d, h:mm a")}
+                    </p>
                   </div>
                 </div>
               </div>
