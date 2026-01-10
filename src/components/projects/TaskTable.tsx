@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { ArrowUpDown, Repeat, Copy, Trash2 } from "lucide-react";
 import { Task } from "@/types";
@@ -12,6 +13,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
 import { getTagById } from "@/data/workManagementConfig";
 
@@ -26,6 +37,7 @@ interface TaskTableProps {
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onEditTask: (task: Task) => void;
   onViewTask: (task: Task) => void;
+  onDeleteTask?: (taskId: string) => void;
   statuses: StatusItem[];
 }
 
@@ -36,136 +48,164 @@ const priorityColors: Record<string, string> = {
   urgent: "bg-destructive text-destructive-foreground",
 };
 
-export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, statuses }: TaskTableProps) {
+export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, statuses }: TaskTableProps) {
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
   const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
+
+  const handleDeleteConfirm = () => {
+    if (taskToDelete && onDeleteTask) {
+      onDeleteTask(taskToDelete.id);
+    }
+    setTaskToDelete(null);
+  };
+
   return (
-    <div className="rounded-lg border bg-card shadow-card">
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="w-12"></TableHead>
-            <TableHead>
-              <Button variant="ghost" size="sm" className="gap-1 -ml-3">
-                Task <ArrowUpDown className="w-3 h-3" />
-              </Button>
-            </TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Assignees</TableHead>
-            <TableHead>
-              <Button variant="ghost" size="sm" className="gap-1 -ml-3">
-                Due Date <ArrowUpDown className="w-3 h-3" />
-              </Button>
-            </TableHead>
-            <TableHead>Tags</TableHead>
-            <TableHead className="w-12"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tasks.map((task) => (
-            <TableRow key={task.id} className="group cursor-pointer" onClick={() => onViewTask(task)}>
-              <TableCell onClick={(e) => e.stopPropagation()}>
-                <Checkbox
-                  checked={task.status === doneStatusId}
-                  onCheckedChange={(checked) =>
-                    onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
-                  }
-                />
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
-                      {task.title}
-                    </p>
-                    {task.isRecurring && (
-                      <Repeat className="w-3.5 h-3.5 text-muted-foreground" />
+    <>
+      <div className="rounded-lg border bg-card shadow-card">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-12"></TableHead>
+              <TableHead>
+                <Button variant="ghost" size="sm" className="gap-1 -ml-3">
+                  Task <ArrowUpDown className="w-3 h-3" />
+                </Button>
+              </TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead>Assignees</TableHead>
+              <TableHead>
+                <Button variant="ghost" size="sm" className="gap-1 -ml-3">
+                  Due Date <ArrowUpDown className="w-3 h-3" />
+                </Button>
+              </TableHead>
+              <TableHead>Tags</TableHead>
+              <TableHead className="w-12"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tasks.map((task) => (
+              <TableRow key={task.id} className="group cursor-pointer" onClick={() => onViewTask(task)}>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={task.status === doneStatusId}
+                    onCheckedChange={(checked) =>
+                      onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+                    }
+                  />
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
+                        {task.title}
+                      </p>
+                      {task.isRecurring && (
+                        <Repeat className="w-3.5 h-3.5 text-muted-foreground" />
+                      )}
+                    </div>
+                    {(task.progress > 0 || task.description) && (
+                      <p className="text-xs text-muted-foreground line-clamp-1">
+                        {task.progress > 0 && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground mr-1.5">{task.progress}%</span>
+                        )}
+                        {task.description}
+                      </p>
                     )}
                   </div>
-                  {(task.progress > 0 || task.description) && (
-                    <p className="text-xs text-muted-foreground line-clamp-1">
-                      {task.progress > 0 && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground mr-1.5">{task.progress}%</span>
-                      )}
-                      {task.description}
-                    </p>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                {(() => {
-                  const status = getStatusById(task.status);
-                  return (
-                    <Badge 
-                      variant="secondary"
-                      style={{ 
-                        backgroundColor: status ? `${status.color}20` : undefined,
-                        color: status?.color 
-                      }}
-                    >
-                      {status?.name || task.status}
-                    </Badge>
-                  );
-                })()}
-              </TableCell>
-              <TableCell>
-                <Badge className={priorityColors[task.priority]} variant="secondary">
-                  {task.priority}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <UserAvatarGroup users={task.assignees} max={3} size="md" />
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {task.dueDate ? format(task.dueDate, "MMM d, yyyy") : "-"}
-              </TableCell>
-              <TableCell>
-                <div className="flex gap-1 flex-wrap">
-                  {task.tags.slice(0, 2).map((tagId) => {
-                    const tag = getTagById(tagId);
+                </TableCell>
+                <TableCell>
+                  {(() => {
+                    const status = getStatusById(task.status);
                     return (
                       <Badge 
-                        key={tagId} 
-                        variant="outline" 
-                        className="text-xs"
-                        style={{ borderColor: tag?.color, color: tag?.color }}
+                        variant="secondary"
+                        style={{ 
+                          backgroundColor: status ? `${status.color}20` : undefined,
+                          color: status?.color 
+                        }}
                       >
-                        {tag?.name || tagId}
+                        {status?.name || task.status}
                       </Badge>
                     );
-                  })}
-                  {task.tags.length > 2 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{task.tags.length - 2}
-                    </Badge>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={(e) => { e.stopPropagation(); /* duplicate logic */ }}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={(e) => { e.stopPropagation(); /* delete logic */ }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+                  })()}
+                </TableCell>
+                <TableCell>
+                  <Badge className={priorityColors[task.priority]} variant="secondary">
+                    {task.priority}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <UserAvatarGroup users={task.assignees} max={3} size="md" />
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {task.dueDate ? format(task.dueDate, "MMM d, yyyy") : "-"}
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1 flex-wrap">
+                    {task.tags.slice(0, 2).map((tagId) => {
+                      const tag = getTagById(tagId);
+                      return (
+                        <Badge 
+                          key={tagId} 
+                          variant="outline" 
+                          className="text-xs"
+                          style={{ borderColor: tag?.color, color: tag?.color }}
+                        >
+                          {tag?.name || tagId}
+                        </Badge>
+                      );
+                    })}
+                    {task.tags.length > 2 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{task.tags.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(e) => { e.stopPropagation(); /* duplicate logic */ }}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={(e) => { e.stopPropagation(); setTaskToDelete(task); }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <AlertDialog open={!!taskToDelete} onOpenChange={(open) => !open && setTaskToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{taskToDelete?.title}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
