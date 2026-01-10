@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { Search, Plus, Send, Paperclip, MoreHorizontal, Loader2 } from "lucide-react";
+import { useState, useRef } from "react";
+import { Search, Plus, Send, Paperclip, MoreHorizontal, Loader2, X, FileIcon, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -14,7 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useChat } from "@/hooks/useChat";
+import { useChat, Attachment } from "@/hooks/useChat";
 
 export default function Chat() {
   const {
@@ -33,15 +33,21 @@ export default function Chat() {
   const [searchQuery, setSearchQuery] = useState("");
   const [newChatDialogOpen, setNewChatDialogOpen] = useState(false);
   const [newChatName, setNewChatName] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isSending, setIsSending] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredConversations = conversations.filter((conv) =>
     conv.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSendMessage = async () => {
-    if (!messageInput.trim()) return;
-    await sendMessage(messageInput);
+    if (!messageInput.trim() && selectedFiles.length === 0) return;
+    setIsSending(true);
+    await sendMessage(messageInput, selectedFiles.length > 0 ? selectedFiles : undefined);
     setMessageInput("");
+    setSelectedFiles([]);
+    setIsSending(false);
   };
 
   const handleCreateConversation = async () => {
@@ -49,6 +55,61 @@ export default function Chat() {
     await createConversation(newChatName.trim());
     setNewChatName("");
     setNewChatDialogOpen(false);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedFiles((prev) => [...prev, ...files]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const isImageFile = (type: string) => type.startsWith("image/");
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const renderAttachments = (attachments: Attachment[], isOwn: boolean) => {
+    if (!attachments || attachments.length === 0) return null;
+
+    return (
+      <div className="mt-2 space-y-2">
+        {attachments.map((attachment, index) => (
+          <div key={index}>
+            {isImageFile(attachment.type) ? (
+              <a href={attachment.url} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={attachment.url}
+                  alt={attachment.name}
+                  className="max-w-full max-h-48 rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                />
+              </a>
+            ) : (
+              <a
+                href={attachment.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center gap-2 p-2 rounded-lg ${
+                  isOwn ? "bg-primary-foreground/10" : "bg-background/50"
+                } hover:opacity-80 transition-opacity`}
+              >
+                <FileIcon className="w-4 h-4" />
+                <span className="text-xs truncate">{attachment.name}</span>
+                <span className="text-xs opacity-70">({formatFileSize(attachment.size)})</span>
+              </a>
+            )}
+          </div>
+        ))}
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -215,7 +276,8 @@ export default function Chat() {
                             {msg.sender_name}
                           </p>
                         )}
-                        <p className="text-sm">{msg.content}</p>
+                        {msg.content && <p className="text-sm">{msg.content}</p>}
+                        {renderAttachments(msg.attachments, msg.is_own)}
                         <p
                           className={`text-xs mt-1 ${
                             msg.is_own
@@ -232,10 +294,53 @@ export default function Chat() {
               </div>
             </ScrollArea>
 
+            {/* Selected Files Preview */}
+            {selectedFiles.length > 0 && (
+              <div className="px-4 py-2 border-t bg-muted/30">
+                <div className="flex flex-wrap gap-2">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="relative group flex items-center gap-2 bg-background rounded-lg px-3 py-2 border"
+                    >
+                      {isImageFile(file.type) ? (
+                        <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <FileIcon className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm truncate max-w-32">{file.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        ({formatFileSize(file.size)})
+                      </span>
+                      <button
+                        onClick={() => removeFile(index)}
+                        className="ml-1 p-0.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Message Input */}
             <div className="p-4 border-t">
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="flex-shrink-0">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileSelect}
+                  accept="image/*,.pdf,.doc,.docx,.txt,.xls,.xlsx"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex-shrink-0"
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   <Paperclip className="w-5 h-5" />
                 </Button>
                 <Input
@@ -249,14 +354,19 @@ export default function Chat() {
                       handleSendMessage();
                     }
                   }}
+                  disabled={isSending}
                 />
                 <Button
                   size="icon"
                   className="flex-shrink-0"
                   onClick={handleSendMessage}
-                  disabled={!messageInput.trim()}
+                  disabled={(!messageInput.trim() && selectedFiles.length === 0) || isSending}
                 >
-                  <Send className="w-4 h-4" />
+                  {isSending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
             </div>
