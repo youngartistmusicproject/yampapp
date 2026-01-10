@@ -2,15 +2,9 @@ import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, MoreHorizontal, Repeat, Pencil } from "lucide-react";
+import { Calendar, Repeat, Copy, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export interface StatusItem {
   id: string;
@@ -75,7 +69,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, status
             {getTasksByStatus(column.id).map((task) => (
               <Card
                 key={task.id}
-                className={`cursor-grab active:cursor-grabbing border-l-4 ${priorityColors[task.priority]} shadow-card hover:shadow-elevated transition-all`}
+                className={`group cursor-grab active:cursor-grabbing border-l-4 ${priorityColors[task.priority]} shadow-card hover:shadow-elevated transition-all`}
                 draggable
                 onDragStart={(e) => handleDragStart(e, task.id)}
                 onClick={() => onViewTask(task)}
@@ -90,24 +84,24 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, status
                         <Repeat className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                       )}
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 -mr-1 -mt-1">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewTask(task); }}>
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEditTask(task); }}>
-                          <Pencil className="w-3.5 h-3.5 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6"
+                        onClick={(e) => { e.stopPropagation(); /* duplicate logic */ }}
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-destructive hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); /* delete logic */ }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
 
                   {(task.progress > 0 || task.description) && (
