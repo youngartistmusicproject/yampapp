@@ -181,6 +181,7 @@ export function TaskDetailDialog({
   const [cursorPosition, setCursorPosition] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
   // Filter members based on mention search
   const filteredMembers = availableMembers.filter(member =>
@@ -205,9 +206,17 @@ export function TaskDetailDialog({
   if (!task) return null;
 
   const taskStatus = statuses.find(s => s.id === task.status);
-  const comments = task.comments || [];
+  // Sort comments oldest first so newest appear at bottom
+  const comments = [...(task.comments || [])].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
   // Legacy attachments (attached directly to task, not through comments)
   const legacyAttachments = task.attachments || [];
+
+  // Scroll to bottom of comments
+  const scrollToBottom = () => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const handleSubmitComment = () => {
     if (!newComment.trim() && pendingAttachments.length === 0) return;
@@ -239,6 +248,9 @@ export function TaskDetailDialog({
       
       setNewComment("");
       setPendingAttachments([]);
+      
+      // Scroll to bottom after adding comment
+      setTimeout(scrollToBottom, 100);
     };
     
     processAttachments();
@@ -653,6 +665,8 @@ export function TaskDetailDialog({
                   </div>
                 </div>
               ))}
+              {/* Scroll anchor */}
+              <div ref={commentsEndRef} />
             </div>
 
             {/* Comment input - fixed at bottom */}
