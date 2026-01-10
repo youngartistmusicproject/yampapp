@@ -41,10 +41,16 @@ export function ChatWindow({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
   }, [messages]);
 
   const handleSendMessage = async () => {
@@ -151,7 +157,7 @@ export function ChatWindow({
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 px-3 py-2">
+      <ScrollArea className="flex-1 px-3 py-2" ref={scrollAreaRef}>
         <div className="space-y-2 flex flex-col">
           {messages.length === 0 ? (
             <p className="text-center text-xs text-muted-foreground py-4">
