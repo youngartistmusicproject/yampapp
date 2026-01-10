@@ -605,14 +605,32 @@ export function TaskDetailDialog({
             placeholder="Task title"
             className="text-xl font-semibold"
           />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 mt-2 text-xs text-muted-foreground hover:text-foreground gap-1.5"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            How To
-          </Button>
+          {task.howToLink ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 mt-2 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+              onClick={() => window.open(task.howToLink, '_blank')}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              How To
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 mt-2 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+              onClick={() => {
+                const link = prompt("Enter How To link (SOP URL):");
+                if (link?.trim()) {
+                  onTaskUpdate(task.id, { howToLink: link.trim() });
+                }
+              }}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add How To
+            </Button>
+          )}
         </div>
 
         {/* Main content - two column layout */}
