@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Search, Plus, Send, Paperclip, MoreHorizontal, Loader2, X, FileIcon, Image as ImageIcon, SmilePlus, Reply, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,12 @@ export default function Chat() {
   const [emojiPickerMessageId, setEmojiPickerMessageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const filteredConversations = conversations.filter((conv) =>
     conv.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -278,7 +284,7 @@ export default function Chat() {
 
             {/* Messages */}
             <ScrollArea className="flex-1 p-6">
-              <div className="space-y-4">
+              <div className="space-y-4 flex flex-col">
                 {messages.length === 0 ? (
                   <p className="text-center text-sm text-muted-foreground py-8">
                     No messages yet. Start the conversation!
@@ -429,6 +435,7 @@ export default function Chat() {
                     </div>
                   ))
                 )}
+                <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
 
