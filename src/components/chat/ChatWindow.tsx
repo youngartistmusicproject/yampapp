@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Paperclip, Minus, SmilePlus, Reply, FileIcon, Loader2 } from "lucide-react";
+import { X, Send, Paperclip, Minus, SmilePlus, Reply, FileIcon, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -11,6 +11,16 @@ import {
 import { Attachment, Message, TypingUser } from "@/hooks/useChat";
 import { format } from "date-fns";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
+
+// Facebook-style quick reactions
+const QUICK_REACTIONS = [
+  { emoji: "👍", label: "Like" },
+  { emoji: "❤️", label: "Love" },
+  { emoji: "😂", label: "Haha" },
+  { emoji: "😮", label: "Wow" },
+  { emoji: "😢", label: "Sad" },
+  { emoji: "😡", label: "Angry" },
+];
 
 interface ChatWindowProps {
   conversationId: string;
@@ -42,6 +52,7 @@ export function ChatWindow({
   const [isSending, setIsSending] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [emojiPickerMessageId, setEmojiPickerMessageId] = useState<string | null>(null);
+  const [showFullEmojiPicker, setShowFullEmojiPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -294,9 +305,10 @@ export function ChatWindow({
                         <div>
                           <Popover
                             open={emojiPickerMessageId === msg.id}
-                            onOpenChange={(open) =>
-                              setEmojiPickerMessageId(open ? msg.id : null)
-                            }
+                            onOpenChange={(open) => {
+                              setEmojiPickerMessageId(open ? msg.id : null);
+                              if (!open) setShowFullEmojiPicker(false);
+                            }}
                           >
                             <PopoverTrigger asChild>
                               <button
@@ -307,19 +319,45 @@ export function ChatWindow({
                               </button>
                             </PopoverTrigger>
                             <PopoverContent
-                              className="w-auto p-0 border-0 bg-transparent shadow-none"
+                              className="w-auto p-0 border-0"
                               side="top"
                               align={msg.is_own ? "end" : "start"}
                             >
-                              <EmojiPicker
-                                onEmojiClick={(emojiData: EmojiClickData) => {
-                                  toggleReaction(msg.id, emojiData.emoji);
-                                  setEmojiPickerMessageId(null);
-                                }}
-                                width={280}
-                                height={350}
-                                previewConfig={{ showPreview: false }}
-                              />
+                              {showFullEmojiPicker ? (
+                                <EmojiPicker
+                                  onEmojiClick={(emojiData: EmojiClickData) => {
+                                    toggleReaction(msg.id, emojiData.emoji);
+                                    setEmojiPickerMessageId(null);
+                                    setShowFullEmojiPicker(false);
+                                  }}
+                                  width={280}
+                                  height={350}
+                                  previewConfig={{ showPreview: false }}
+                                />
+                              ) : (
+                                <div className="flex items-center gap-1 p-2 bg-background border rounded-full shadow-lg">
+                                  {QUICK_REACTIONS.map((reaction) => (
+                                    <button
+                                      key={reaction.emoji}
+                                      onClick={() => {
+                                        toggleReaction(msg.id, reaction.emoji);
+                                        setEmojiPickerMessageId(null);
+                                      }}
+                                      className="p-1.5 hover:bg-muted rounded-full transition-all hover:scale-125 text-lg"
+                                      title={reaction.label}
+                                    >
+                                      {reaction.emoji}
+                                    </button>
+                                  ))}
+                                  <button
+                                    onClick={() => setShowFullEmojiPicker(true)}
+                                    className="p-1.5 hover:bg-muted rounded-full transition-colors"
+                                    title="More reactions"
+                                  >
+                                    <Plus className="w-4 h-4 text-muted-foreground" />
+                                  </button>
+                                </div>
+                              )}
                             </PopoverContent>
                           </Popover>
                         </div>
