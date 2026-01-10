@@ -595,35 +595,57 @@ export function TaskDetailDialog({
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">Estimated time</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      min={0}
-                      value={task.estimatedTime ? Math.floor(task.estimatedTime / 60) : ""}
-                      onChange={(e) => {
-                        const hours = parseInt(e.target.value) || 0;
-                        const currentMins = (task.estimatedTime || 0) % 60;
-                        onTaskUpdate(task.id, { estimatedTime: hours * 60 + currentMins });
-                      }}
-                      placeholder="0"
-                      className="h-8 w-14 text-sm text-right border-none shadow-none bg-transparent hover:bg-muted/50 rounded px-2"
-                    />
-                    <span className="text-sm text-muted-foreground">h</span>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={59}
-                      value={task.estimatedTime ? task.estimatedTime % 60 : ""}
-                      onChange={(e) => {
-                        const mins = Math.min(59, parseInt(e.target.value) || 0);
-                        const currentHours = Math.floor((task.estimatedTime || 0) / 60);
-                        onTaskUpdate(task.id, { estimatedTime: currentHours * 60 + mins });
-                      }}
-                      placeholder="0"
-                      className="h-8 w-14 text-sm text-right border-none shadow-none bg-transparent hover:bg-muted/50 rounded px-2"
-                    />
-                    <span className="text-sm text-muted-foreground">m</span>
+                  <Select 
+                    value={task.estimatedTime?.toString() || ""} 
+                    onValueChange={(value) => onTaskUpdate(task.id, { estimatedTime: value ? parseInt(value) : undefined })}
+                  >
+                    <SelectTrigger className="w-auto h-8 text-sm gap-1 border-none shadow-none bg-transparent hover:bg-muted/50">
+                      <SelectValue placeholder="No estimate" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="2">2 minutes</SelectItem>
+                      <SelectItem value="5">5 minutes</SelectItem>
+                      <SelectItem value="10">10 minutes</SelectItem>
+                      <SelectItem value="15">15 minutes</SelectItem>
+                      <SelectItem value="20">20 minutes</SelectItem>
+                      <SelectItem value="30">30 minutes</SelectItem>
+                      <SelectItem value="45">45 minutes</SelectItem>
+                      <SelectItem value="60">1 hour</SelectItem>
+                      <SelectItem value="120">2 hours</SelectItem>
+                      <SelectItem value="240">4 hours</SelectItem>
+                      <SelectItem value="480">8+ hours</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Progress */}
+                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Circle className="w-4 h-4" />
+                    <span className="text-sm">Progress</span>
                   </div>
+                  <Select 
+                    value={task.progress?.toString() || "0"} 
+                    onValueChange={(value) => onTaskUpdate(task.id, { progress: parseInt(value) })}
+                  >
+                    <SelectTrigger className="w-auto h-8 text-sm gap-1 border-none shadow-none bg-transparent hover:bg-muted/50">
+                      <SelectValue placeholder="0%" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="0">0%</SelectItem>
+                      <SelectItem value="10">10%</SelectItem>
+                      <SelectItem value="20">20%</SelectItem>
+                      <SelectItem value="30">30%</SelectItem>
+                      <SelectItem value="40">40%</SelectItem>
+                      <SelectItem value="50">50%</SelectItem>
+                      <SelectItem value="60">60%</SelectItem>
+                      <SelectItem value="70">70%</SelectItem>
+                      <SelectItem value="75">75%</SelectItem>
+                      <SelectItem value="80">80%</SelectItem>
+                      <SelectItem value="90">90%</SelectItem>
+                      <SelectItem value="100">100%</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Assignees */}

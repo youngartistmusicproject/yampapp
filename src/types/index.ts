@@ -64,6 +64,7 @@ export interface Task {
   parentTaskId?: string; // for recurring task instances
   completedAt?: Date; // timestamp when task was marked complete
   estimatedTime?: number; // in minutes
+  progress?: number; // 0-100 percentage
   comments?: TaskComment[];
   attachments?: TaskAttachment[];
   subtasks?: Subtask[];
