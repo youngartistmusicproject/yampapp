@@ -286,7 +286,7 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col p-0 gap-0">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b space-y-3">
           <EditableText
@@ -346,7 +346,7 @@ export function TaskDetailDialog({
         </div>
 
         {/* Main content - single scrollable area */}
-        <ScrollArea className="flex-1 max-h-[calc(90vh-180px)]">
+        <div className="flex-1 overflow-y-auto">
           <div className="p-6 space-y-6">
             {/* Properties grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -609,7 +609,7 @@ export function TaskDetailDialog({
               )}
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
