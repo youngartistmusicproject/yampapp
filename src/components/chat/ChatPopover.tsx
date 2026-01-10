@@ -160,13 +160,16 @@ export function ChatPopover() {
     setSelectedConversationId(chatId);
   };
 
-  // Get messages for a specific conversation
-  const getMessagesForChat = (chatId: string) => {
-    if (selectedConversationId === chatId) {
-      return messages;
+  // When a chat window is opened, ensure it's selected so messages load
+  useEffect(() => {
+    const openNonMinimized = openChats.filter((c) => !c.minimized);
+    if (openNonMinimized.length > 0) {
+      const lastOpen = openNonMinimized[openNonMinimized.length - 1];
+      if (selectedConversationId !== lastOpen.id) {
+        setSelectedConversationId(lastOpen.id);
+      }
     }
-    return [];
-  };
+  }, [openChats, selectedConversationId, setSelectedConversationId]);
 
   return (
     <>
@@ -374,7 +377,7 @@ export function ChatPopover() {
               key={chat.id}
               conversationId={chat.id}
               conversationName={chat.name}
-              messages={selectedConversationId === chat.id ? messages : []}
+              messages={chat.id === selectedConversationId ? messages : []}
               typingUsers={getTypingUsersForConversation(chat.id)}
               isOnline={isUserOnline(chat.name)}
               onClose={() => handleCloseChat(chat.id)}
