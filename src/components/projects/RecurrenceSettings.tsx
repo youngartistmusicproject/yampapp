@@ -16,6 +16,7 @@ interface RecurrenceSettingsProps {
   onIsRecurringChange: (value: boolean) => void;
   recurrence: RecurrenceSettingsType | undefined;
   onRecurrenceChange: (settings: RecurrenceSettingsType | undefined) => void;
+  compact?: boolean; // Remove border/padding for use in popovers
 }
 
 const DAYS_OF_WEEK = [
@@ -33,6 +34,7 @@ export function RecurrenceSettings({
   onIsRecurringChange,
   recurrence,
   onRecurrenceChange,
+  compact = false,
 }: RecurrenceSettingsProps) {
   const handleToggleRecurring = (value: boolean) => {
     onIsRecurringChange(value);
@@ -57,7 +59,7 @@ export function RecurrenceSettings({
   };
 
   return (
-    <div className="space-y-4 rounded-lg border p-4">
+    <div className={compact ? "space-y-4" : "space-y-4 rounded-lg border p-4"}>
       <div className="flex items-center justify-between">
         <Label htmlFor="recurring" className="font-medium">
           Repeating Task
