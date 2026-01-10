@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { X, Send, Paperclip, Minus, SmilePlus, Reply, FileIcon, Loader2, Plus, Check, CheckCheck, ChevronDown, Search, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,48 +71,66 @@ export function ChatWindow({
   const typingTimeoutRef = useRef<number | null>(null);
   const prevMessagesLengthRef = useRef(messages.length);
 
-  // Filter messages matching search query
-  const searchResults = searchQuery.trim()
-    ? messages.filter((msg) =>
-        msg.content.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
+  const normalizedQuery = searchQuery.trim().toLowerCase();
 
-  // Debug: log search state
-  console.log("Search debug:", { searchQuery, messagesCount: messages.length, searchResultsCount: searchResults.length });
+  // Filter messages matching search query (trimmed + case-insensitive)
+  const searchResults = useMemo(() => {
+    if (!normalizedQuery) return [];
+    return messages.filter((msg) => (msg.content ?? "").toLowerCase().includes(normalizedQuery));
+  }, [messages, normalizedQuery]);
 
-  // Navigate to a search result
-  const navigateToSearchResult = (index: number) => {
-    if (searchResults.length === 0) return;
-    const clampedIndex = Math.max(0, Math.min(index, searchResults.length - 1));
-    setCurrentSearchIndex(clampedIndex);
-    const msg = searchResults[clampedIndex];
-    const element = document.getElementById(`chat-window-message-${conversationId}-${msg.id}`);
-    element?.scrollIntoView({ behavior: "smooth", block: "center" });
-    element?.classList.add("ring-2", "ring-primary", "ring-offset-1");
-    setTimeout(() => element?.classList.remove("ring-2", "ring-primary", "ring-offset-1"), 2000);
-  };
+  // Navigate to a search result (wraps around)
+  const navigateToSearchResult = useCallback(
+    (index: number) => {
+      if (searchResults.length === 0) return;
+      const wrappedIndex =
+        ((index % searchResults.length) + searchResults.length) % searchResults.length;
+      setCurrentSearchIndex(wrappedIndex);
+
+      const msg = searchResults[wrappedIndex];
+      const element = document.getElementById(
+        `chat-window-message-${conversationId}-${msg.id}`
+      );
+      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      element?.classList.add("ring-2", "ring-primary", "ring-offset-1");
+      window.setTimeout(
+        () => element?.classList.remove("ring-2", "ring-primary", "ring-offset-1"),
+        1200
+      );
+    },
+    [conversationId, searchResults]
+  );
 
   // Focus search input when opening
   useEffect(() => {
-    if (showSearch) {
-      searchInputRef.current?.focus();
-    }
+    if (showSearch) searchInputRef.current?.focus();
   }, [showSearch]);
 
   // Reset search index when query changes
   useEffect(() => {
     setCurrentSearchIndex(0);
-  }, [searchQuery]);
+  }, [normalizedQuery]);
+
+  // Auto-jump to the first match when the user types (so it "pulls up" results)
+  useEffect(() => {
+    if (!showSearch) return;
+    if (!normalizedQuery) return;
+    if (searchResults.length === 0) return;
+    navigateToSearchResult(0);
+  }, [showSearch, normalizedQuery, conversationId, searchResults.length, navigateToSearchResult]);
 
   // Highlight matching text in message content
   const highlightText = (text: string, query: string) => {
-    if (!query.trim()) return text;
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    const q = query.trim();
+    if (!q) return text;
+
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escaped})`, "gi");
     const parts = text.split(regex);
+
     return parts.map((part, i) =>
-      regex.test(part) ? (
-        <mark key={i} className="bg-yellow-300 dark:bg-yellow-600 text-inherit rounded-sm px-0.5">
+      i % 2 === 1 ? (
+        <mark key={i} className="bg-accent/70 text-foreground rounded-sm px-0.5">
           {part}
         </mark>
       ) : (
