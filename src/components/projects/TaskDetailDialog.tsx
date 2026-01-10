@@ -213,6 +213,7 @@ export function TaskDetailDialog({
   const [subtasksOpen, setSubtasksOpen] = useState(true);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [activityTab, setActivityTab] = useState<'comments' | 'attachments'>('comments');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
@@ -231,6 +232,7 @@ export function TaskDetailDialog({
       setShowMentions(false);
       setMentionSearch("");
       setReplyingTo(null);
+      setActivityTab('comments');
     }
   }, [open]);
 
@@ -248,6 +250,15 @@ export function TaskDetailDialog({
   );
   // Legacy attachments (attached directly to task, not through comments)
   const legacyAttachments = task.attachments || [];
+  // Collect all attachments from comments
+  const commentAttachments = comments.flatMap(c => {
+    const mainAttachments = (c.attachments || []).map(a => ({ ...a, commentAuthor: c.author, commentDate: c.createdAt }));
+    const replyAttachments = (c.replies || []).flatMap(r => 
+      (r.attachments || []).map(a => ({ ...a, commentAuthor: r.author, commentDate: r.createdAt }))
+    );
+    return [...mainAttachments, ...replyAttachments];
+  });
+  const allAttachments = [...legacyAttachments.map(a => ({ ...a, commentAuthor: undefined, commentDate: a.uploadedAt })), ...commentAttachments];
   const subtasks = task.subtasks || [];
   const completedSubtasks = subtasks.filter(s => s.completed).length;
 
@@ -917,25 +928,53 @@ export function TaskDetailDialog({
           {/* Right side - Activity */}
           <div className="flex flex-col min-h-0 bg-muted/30">
             <div className="px-4 py-3 border-b bg-background">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                <h3 className="text-sm font-medium">Activity</h3>
-                {comments.length > 0 && (
-                  <Badge variant="secondary" className="text-xs h-5">
-                    {comments.length}
-                  </Badge>
-                )}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setActivityTab('comments')}
+                  className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    activityTab === 'comments' 
+                      ? 'bg-muted text-foreground' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Comments
+                  {comments.length > 0 && (
+                    <Badge variant="secondary" className="text-xs h-5 ml-1">
+                      {comments.length}
+                    </Badge>
+                  )}
+                </button>
+                <button
+                  onClick={() => setActivityTab('attachments')}
+                  className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    activityTab === 'attachments' 
+                      ? 'bg-muted text-foreground' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  <Paperclip className="w-4 h-4" />
+                  Attachments
+                  {allAttachments.length > 0 && (
+                    <Badge variant="secondary" className="text-xs h-5 ml-1">
+                      {allAttachments.length}
+                    </Badge>
+                  )}
+                </button>
               </div>
             </div>
 
-            {/* Comments list - scrollable */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {comments.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  No activity yet. Be the first to comment!
-                </p>
-              )}
-              {comments.filter(c => !c.parentCommentId).map((comment) => (
+            {/* Comments tab */}
+            {activityTab === 'comments' && (
+              <>
+                {/* Comments list - scrollable */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {comments.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      No activity yet. Be the first to comment!
+                    </p>
+                  )}
+                  {comments.filter(c => !c.parentCommentId).map((comment) => (
                 <div key={comment.id} className="space-y-2">
                   {/* Main comment card - ClickUp style */}
                   <div className="bg-card border rounded-lg border-l-4 border-l-primary/40 group">
@@ -1320,6 +1359,62 @@ export function TaskDetailDialog({
                 </div>
               </div>
             </div>
+              </>
+            )}
+
+            {/* Attachments tab */}
+            {activityTab === 'attachments' && (
+              <div className="flex-1 overflow-y-auto p-4">
+                {allAttachments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No attachments yet. Add files through comments.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {allAttachments.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer group"
+                        onClick={() => handleDownload(attachment)}
+                      >
+                        {attachment.type.startsWith('image/') ? (
+                          <img 
+                            src={attachment.url} 
+                            alt={attachment.name}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded bg-secondary flex items-center justify-center flex-shrink-0">
+                            {getFileIcon(attachment.type)}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{attachment.name}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{formatFileSize(attachment.size)}</span>
+                            {attachment.commentAuthor && (
+                              <>
+                                <span>•</span>
+                                <span>by {attachment.commentAuthor.name}</span>
+                              </>
+                            )}
+                            <span>•</span>
+                            <span>{format(new Date(attachment.commentDate), 'MMM d, yyyy')}</span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
