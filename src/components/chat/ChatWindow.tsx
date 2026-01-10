@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Paperclip, Minus, SmilePlus, Reply, FileIcon, Loader2, Plus, Check, CheckCheck, ChevronDown } from "lucide-react";
+import { X, Send, Paperclip, Minus, SmilePlus, Reply, FileIcon, Loader2, Plus, Check, CheckCheck, ChevronDown, Search, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -60,12 +60,63 @@ export function ChatWindow({
   const [isScrolledUp, setIsScrolledUp] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [lastSeenMessageId, setLastSeenMessageId] = useState<string | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | null>(null);
   const prevMessagesLengthRef = useRef(messages.length);
+
+  // Filter messages matching search query
+  const searchResults = searchQuery.trim()
+    ? messages.filter((msg) =>
+        msg.content.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
+  // Navigate to a search result
+  const navigateToSearchResult = (index: number) => {
+    if (searchResults.length === 0) return;
+    const clampedIndex = Math.max(0, Math.min(index, searchResults.length - 1));
+    setCurrentSearchIndex(clampedIndex);
+    const msg = searchResults[clampedIndex];
+    const element = document.getElementById(`chat-window-message-${conversationId}-${msg.id}`);
+    element?.scrollIntoView({ behavior: "smooth", block: "center" });
+    element?.classList.add("ring-2", "ring-primary", "ring-offset-1");
+    setTimeout(() => element?.classList.remove("ring-2", "ring-primary", "ring-offset-1"), 2000);
+  };
+
+  // Focus search input when opening
+  useEffect(() => {
+    if (showSearch) {
+      searchInputRef.current?.focus();
+    }
+  }, [showSearch]);
+
+  // Reset search index when query changes
+  useEffect(() => {
+    setCurrentSearchIndex(0);
+  }, [searchQuery]);
+
+  // Highlight matching text in message content
+  const highlightText = (text: string, query: string) => {
+    if (!query.trim()) return text;
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    const parts = text.split(regex);
+    return parts.map((part, i) =>
+      regex.test(part) ? (
+        <mark key={i} className="bg-yellow-300 dark:bg-yellow-600 text-inherit rounded-sm px-0.5">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
+  };
 
   const scrollToBottom = (smooth = false) => {
     const viewport = scrollAreaRef.current;
@@ -268,6 +319,14 @@ export function ChatWindow({
             variant="ghost"
             size="icon"
             className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20"
+            onClick={() => setShowSearch(!showSearch)}
+          >
+            <Search className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20"
             onClick={onMinimize}
           >
             <Minus className="w-4 h-4" />
@@ -282,6 +341,72 @@ export function ChatWindow({
           </Button>
         </div>
       </div>
+
+      {/* Search bar */}
+      {showSearch && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 border-b">
+          <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <Input
+            ref={searchInputRef}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search messages..."
+            className="h-7 text-xs flex-1"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                if (e.shiftKey) {
+                  navigateToSearchResult(currentSearchIndex - 1);
+                } else {
+                  navigateToSearchResult(currentSearchIndex + 1);
+                }
+              } else if (e.key === "Escape") {
+                setShowSearch(false);
+                setSearchQuery("");
+              }
+            }}
+          />
+          {searchQuery && (
+            <>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {searchResults.length > 0
+                  ? `${currentSearchIndex + 1}/${searchResults.length}`
+                  : "0/0"}
+              </span>
+              <div className="flex items-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => navigateToSearchResult(currentSearchIndex - 1)}
+                  disabled={searchResults.length === 0}
+                >
+                  <ChevronUp className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => navigateToSearchResult(currentSearchIndex + 1)}
+                  disabled={searchResults.length === 0}
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => {
+              setShowSearch(false);
+              setSearchQuery("");
+            }}
+          >
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="relative flex-1 overflow-hidden">
@@ -365,7 +490,11 @@ export function ChatWindow({
                           msg.is_own ? "bg-primary text-primary-foreground" : "bg-secondary"
                         } rounded-2xl px-3 py-1.5`}
                       >
-                        {msg.content && <p className="text-sm">{msg.content}</p>}
+                        {msg.content && (
+                          <p className="text-sm">
+                            {highlightText(msg.content, searchQuery)}
+                          </p>
+                        )}
                         {renderAttachments(msg.attachments, msg.is_own)}
                       </div>
 
