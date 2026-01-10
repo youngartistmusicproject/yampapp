@@ -50,6 +50,7 @@ interface TiptapEditorProps {
   content?: string;
   docs?: DocItem[];
   onDocSelect?: (docId: string) => void;
+  onUpdate?: (content: string) => void;
 }
 
 interface CommandItem {
@@ -347,7 +348,7 @@ const createSlashCommands = (docs: DocItem[]) => {
   });
 };
 
-export function TiptapEditor({ content, docs = [], onDocSelect }: TiptapEditorProps) {
+export function TiptapEditor({ content, docs = [], onDocSelect, onUpdate }: TiptapEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const editor = useEditor({
@@ -473,6 +474,29 @@ export function TiptapEditor({ content, docs = [], onDocSelect }: TiptapEditorPr
       document.removeEventListener('tiptap-image-upload', handleUploadEvent);
     };
   }, []);
+
+  // Debounced auto-save on content change
+  useEffect(() => {
+    if (!editor || !onUpdate) return;
+
+    const handler = () => {
+      const html = editor.getHTML();
+      onUpdate(html);
+    };
+
+    // Debounce the update
+    let timeout: NodeJS.Timeout;
+    const debouncedHandler = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(handler, 1000); // Save after 1 second of inactivity
+    };
+
+    editor.on('update', debouncedHandler);
+    return () => {
+      editor.off('update', debouncedHandler);
+      clearTimeout(timeout);
+    };
+  }, [editor, onUpdate]);
 
   if (!editor) {
     return null;

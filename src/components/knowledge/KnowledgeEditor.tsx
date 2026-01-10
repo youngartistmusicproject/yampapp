@@ -1,67 +1,90 @@
-import { useState } from "react";
-import {
-  Clock,
-  User,
-} from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Clock, User, Trash2, MoreHorizontal } from "lucide-react";
 import { TiptapEditor } from "./TiptapEditor";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { formatDistanceToNow } from "date-fns";
 
 interface DocItem {
   id: string;
   title: string;
   type: "folder" | "doc";
+  content?: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
   children?: DocItem[];
 }
 
 interface KnowledgeEditorProps {
-  docId: string | null;
+  doc: DocItem | null;
   docs?: DocItem[];
   onDocSelect?: (docId: string) => void;
+  onUpdate?: (id: string, updates: Partial<DocItem>) => Promise<boolean>;
+  onDelete?: (id: string) => Promise<boolean>;
 }
 
-const defaultContent = `
-<h1>Welcome Guide</h1>
-<p>Welcome to our Music School Work Operating System! This guide will help you get started with using the platform effectively.</p>
+export function KnowledgeEditor({
+  doc,
+  docs = [],
+  onDocSelect,
+  onUpdate,
+  onDelete,
+}: KnowledgeEditorProps) {
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-<h2>Getting Started</h2>
-<p>This system is designed to help our team manage daily operations, communicate effectively, and keep track of all student and parent information.</p>
+  // Update local state when doc changes
+  useEffect(() => {
+    if (doc) {
+      setTitle(doc.title);
+      setContent(doc.content || "");
+    }
+  }, [doc?.id, doc?.title, doc?.content]);
 
-<h3>Key Features</h3>
-<ul>
-  <li><strong>Project Management</strong>: Create and track tasks, set due dates, and collaborate with team members</li>
-  <li><strong>Knowledge Base</strong>: Access SOPs, guides, and important documentation</li>
-  <li><strong>Communication</strong>: Chat with colleagues and manage parent communications</li>
-  <li><strong>Calendar</strong>: View and manage schedules, lessons, and events</li>
-</ul>
+  // Debounced save for content
+  const saveContent = useCallback(
+    async (newContent: string) => {
+      if (!doc || !onUpdate) return;
+      setIsSaving(true);
+      await onUpdate(doc.id, { content: newContent });
+      setIsSaving(false);
+    },
+    [doc, onUpdate]
+  );
 
-<h2>Quick Tips</h2>
-<ol>
-  <li>Use the sidebar to navigate between different sections</li>
-  <li>Click the search bar to quickly find tasks, documents, or contacts</li>
-  <li>Check your dashboard daily for updates and pending items</li>
-</ol>
+  // Debounced save for title
+  const handleTitleBlur = useCallback(async () => {
+    if (!doc || !onUpdate || title === doc.title) return;
+    setIsSaving(true);
+    await onUpdate(doc.id, { title });
+    setIsSaving(false);
+  }, [doc, onUpdate, title]);
 
-<blockquote>
-  <p>💡 <strong>Pro Tip</strong>: You can use <code>/</code> to open the command menu and quickly add formatting!</p>
-</blockquote>
+  const handleDelete = async () => {
+    if (!doc || !onDelete) return;
+    await onDelete(doc.id);
+    setShowDeleteDialog(false);
+  };
 
-<h2>Formatting Examples</h2>
-
-<h3>Task Lists</h3>
-<ul data-type="taskList">
-  <li data-type="taskItem" data-checked="true">Read the welcome guide</li>
-  <li data-type="taskItem" data-checked="false">Set up your profile</li>
-  <li data-type="taskItem" data-checked="false">Create your first task</li>
-</ul>
-
-<hr>
-
-<p><em>Last updated by Admin on January 15, 2024</em></p>
-`;
-
-export function KnowledgeEditor({ docId, docs = [], onDocSelect }: KnowledgeEditorProps) {
-  const [title, setTitle] = useState("Welcome Guide");
-
-  if (!docId) {
+  if (!doc) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         Select a document to view or edit
@@ -69,21 +92,50 @@ export function KnowledgeEditor({ docId, docs = [], onDocSelect }: KnowledgeEdit
     );
   }
 
+  const lastEdited = doc.updated_at
+    ? formatDistanceToNow(new Date(doc.updated_at), { addSuffix: true })
+    : "just now";
+
   return (
     <div className="flex flex-col h-full">
       {/* Document Info */}
       <div className="px-4 sm:px-12 py-4 sm:py-6 border-b">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-          <User className="w-3 h-3" />
-          <span>Created by Admin</span>
-          <span>•</span>
-          <Clock className="w-3 h-3" />
-          <span>Last edited 2 days ago</span>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <User className="w-3 h-3" />
+            <span>Created by {doc.created_by || "Admin"}</span>
+            <span>•</span>
+            <Clock className="w-3 h-3" />
+            <span>Last edited {lastEdited}</span>
+            {isSaving && (
+              <>
+                <span>•</span>
+                <span className="text-primary animate-pulse">Saving...</span>
+              </>
+            )}
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Document
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          onBlur={handleTitleBlur}
           className="text-2xl sm:text-3xl font-bold bg-transparent border-none outline-none w-full placeholder:text-muted-foreground"
           placeholder="Untitled Document"
         />
@@ -91,12 +143,35 @@ export function KnowledgeEditor({ docId, docs = [], onDocSelect }: KnowledgeEdit
 
       {/* Rich Text Editor */}
       <div className="flex-1 overflow-hidden">
-        <TiptapEditor 
-          content={defaultContent} 
+        <TiptapEditor
+          key={doc.id}
+          content={doc.content || ""}
           docs={docs}
           onDocSelect={onDocSelect}
+          onUpdate={saveContent}
         />
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{doc.title}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
