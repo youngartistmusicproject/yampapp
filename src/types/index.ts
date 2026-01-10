@@ -63,6 +63,7 @@ export interface Task {
   recurrence?: RecurrenceSettings;
   parentTaskId?: string; // for recurring task instances
   completedAt?: Date; // timestamp when task was marked complete
+  estimatedTime?: number; // in minutes
   comments?: TaskComment[];
   attachments?: TaskAttachment[];
   subtasks?: Subtask[];

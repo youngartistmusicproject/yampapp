@@ -50,7 +50,11 @@ import {
   ChevronDown,
   ChevronRight,
   Plus,
-  ListTodo
+  ListTodo,
+  Clock,
+  Repeat,
+  Flag,
+  Circle
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
@@ -147,13 +151,13 @@ function EditableText({
   if (isEditing) {
     if (multiline) {
       return (
-        <Textarea
+        <textarea
           ref={inputRef as React.RefObject<HTMLTextAreaElement>}
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleSave}
-          className={`min-h-[80px] resize-none text-sm ${inputClassName}`}
+          className={`w-full min-h-[80px] resize-none text-sm bg-transparent border-none outline-none focus:outline-none focus:ring-0 ${className} ${inputClassName}`}
           placeholder={placeholder}
         />
       );
@@ -492,61 +496,13 @@ export function TaskDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[1000px] h-[90vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden">
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b space-y-3">
+        <div className="px-6 pt-6 pb-4 border-b">
           <EditableText
             value={task.title}
             onSave={(value) => onTaskUpdate(task.id, { title: value })}
             placeholder="Task title"
             className="text-xl font-semibold"
           />
-          <div className="flex items-center gap-2 flex-wrap">
-            <Select 
-              value={task.status} 
-              onValueChange={(value) => onTaskUpdate(task.id, { status: value })}
-            >
-              <SelectTrigger className="w-auto h-7 text-xs gap-1.5 border-dashed">
-                {taskStatus && (
-                  <>
-                    <div 
-                      className="w-2 h-2 rounded-full" 
-                      style={{ backgroundColor: taskStatus.color }}
-                    />
-                    {taskStatus.name}
-                  </>
-                )}
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                {statuses.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-2 h-2 rounded-full" 
-                        style={{ backgroundColor: s.color }}
-                      />
-                      {s.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select 
-              value={task.priority} 
-              onValueChange={(value: Task['priority']) => onTaskUpdate(task.id, { priority: value })}
-            >
-              <SelectTrigger className="w-auto h-7 text-xs gap-1 border-dashed">
-                <Badge className={`${priorityColors[task.priority]} text-xs`}>
-                  {task.priority}
-                </Badge>
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="urgent">Urgent</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
         {/* Main content - two column layout */}
@@ -555,9 +511,70 @@ export function TaskDetailDialog({
           <div className="overflow-y-auto border-r bg-background">
             <div className="p-6 space-y-5">
               {/* Properties as clean rows */}
-              <div className="space-y-3">
+              <div className="space-y-0">
+                {/* Status */}
+                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Circle className="w-4 h-4" />
+                    <span className="text-sm">Status</span>
+                  </div>
+                  <Select 
+                    value={task.status} 
+                    onValueChange={(value) => onTaskUpdate(task.id, { status: value })}
+                  >
+                    <SelectTrigger className="w-auto h-8 text-sm gap-1.5 border-none shadow-none bg-transparent hover:bg-muted/50">
+                      {taskStatus && (
+                        <>
+                          <div 
+                            className="w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: taskStatus.color }}
+                          />
+                          {taskStatus.name}
+                        </>
+                      )}
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      {statuses.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-2 h-2 rounded-full" 
+                              style={{ backgroundColor: s.color }}
+                            />
+                            {s.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Priority */}
+                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Flag className="w-4 h-4" />
+                    <span className="text-sm">Priority</span>
+                  </div>
+                  <Select 
+                    value={task.priority} 
+                    onValueChange={(value: Task['priority']) => onTaskUpdate(task.id, { priority: value })}
+                  >
+                    <SelectTrigger className="w-auto h-8 text-sm gap-1 border-none shadow-none bg-transparent hover:bg-muted/50">
+                      <Badge className={`${priorityColors[task.priority]} text-xs capitalize`}>
+                        {task.priority}
+                      </Badge>
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Due Date */}
-                <div className="flex items-center justify-between py-2 border-b border-border/50">
+                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="w-4 h-4" />
                     <span className="text-sm">Due date</span>
@@ -572,8 +589,45 @@ export function TaskDetailDialog({
                   />
                 </div>
 
+                {/* Estimated Time */}
+                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-sm">Estimated time</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min={0}
+                      value={task.estimatedTime ? Math.floor(task.estimatedTime / 60) : ""}
+                      onChange={(e) => {
+                        const hours = parseInt(e.target.value) || 0;
+                        const currentMins = (task.estimatedTime || 0) % 60;
+                        onTaskUpdate(task.id, { estimatedTime: hours * 60 + currentMins });
+                      }}
+                      placeholder="0"
+                      className="h-8 w-14 text-sm text-right border-none shadow-none bg-transparent hover:bg-muted/50 rounded px-2"
+                    />
+                    <span className="text-sm text-muted-foreground">h</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={59}
+                      value={task.estimatedTime ? task.estimatedTime % 60 : ""}
+                      onChange={(e) => {
+                        const mins = Math.min(59, parseInt(e.target.value) || 0);
+                        const currentHours = Math.floor((task.estimatedTime || 0) / 60);
+                        onTaskUpdate(task.id, { estimatedTime: currentHours * 60 + mins });
+                      }}
+                      placeholder="0"
+                      className="h-8 w-14 text-sm text-right border-none shadow-none bg-transparent hover:bg-muted/50 rounded px-2"
+                    />
+                    <span className="text-sm text-muted-foreground">m</span>
+                  </div>
+                </div>
+
                 {/* Assignees */}
-                <div className="flex items-center justify-between py-2 border-b border-border/50">
+                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Users className="w-4 h-4" />
                     <span className="text-sm">Assignees</span>
@@ -589,7 +643,7 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Tags */}
-                <div className="flex items-center justify-between py-2 border-b border-border/50">
+                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Tag className="w-4 h-4" />
                     <span className="text-sm">Tags</span>
@@ -602,6 +656,106 @@ export function TaskDetailDialog({
                       placeholder="Add..."
                     />
                   </div>
+                </div>
+
+                {/* Recurrence */}
+                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Repeat className="w-4 h-4" />
+                    <span className="text-sm">Recurring</span>
+                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        className="h-8 px-2 text-sm font-normal hover:bg-muted/50"
+                      >
+                        {task.isRecurring && task.recurrence ? (
+                          <span className="text-foreground">
+                            Every {task.recurrence.interval > 1 ? `${task.recurrence.interval} ` : ''}
+                            {task.recurrence.frequency.replace('ly', task.recurrence.interval > 1 ? 's' : '')}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Not set</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0" align="end">
+                      <div className="p-4 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Repeating task</span>
+                          <Button
+                            variant={task.isRecurring ? "secondary" : "outline"}
+                            size="sm"
+                            className="h-7"
+                            onClick={() => {
+                              if (task.isRecurring) {
+                                onTaskUpdate(task.id, { isRecurring: false, recurrence: undefined });
+                              } else {
+                                onTaskUpdate(task.id, { 
+                                  isRecurring: true, 
+                                  recurrence: { frequency: 'weekly', interval: 1 } 
+                                });
+                              }
+                            }}
+                          >
+                            {task.isRecurring ? 'On' : 'Off'}
+                          </Button>
+                        </div>
+                        
+                        {task.isRecurring && task.recurrence && (
+                          <div className="space-y-3 pt-2 border-t">
+                            <div className="space-y-2">
+                              <span className="text-xs text-muted-foreground">Repeat every</span>
+                              <div className="flex gap-2">
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={99}
+                                  value={task.recurrence.interval}
+                                  onChange={(e) => onTaskUpdate(task.id, {
+                                    recurrence: { ...task.recurrence!, interval: parseInt(e.target.value) || 1 }
+                                  })}
+                                  className="w-16 h-8"
+                                />
+                                <Select
+                                  value={task.recurrence.frequency}
+                                  onValueChange={(v) => onTaskUpdate(task.id, {
+                                    recurrence: { ...task.recurrence!, frequency: v as any }
+                                  })}
+                                >
+                                  <SelectTrigger className="flex-1 h-8">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="daily">Day(s)</SelectItem>
+                                    <SelectItem value="weekly">Week(s)</SelectItem>
+                                    <SelectItem value="monthly">Month(s)</SelectItem>
+                                    <SelectItem value="yearly">Year(s)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <span className="text-xs text-muted-foreground">End date (optional)</span>
+                              <Input
+                                type="date"
+                                value={task.recurrence.endDate ? format(new Date(task.recurrence.endDate), "yyyy-MM-dd") : ""}
+                                onChange={(e) => onTaskUpdate(task.id, {
+                                  recurrence: { 
+                                    ...task.recurrence!, 
+                                    endDate: e.target.value ? new Date(e.target.value) : undefined 
+                                  }
+                                })}
+                                className="h-8"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
