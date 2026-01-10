@@ -43,15 +43,25 @@ export function ChatWindow({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
+  const scrollToBottom = () => {
+    const root = scrollAreaRef.current;
+    const viewport = root?.querySelector(
+      "[data-radix-scroll-area-viewport]"
+    ) as HTMLDivElement | null;
+
+    if (viewport) {
+      viewport.scrollTop = viewport.scrollHeight;
     }
-  }, [messages]);
+
+    // Fallback (works even if selector fails)
+    messagesEndRef.current?.scrollIntoView({ block: "end" });
+  };
+
+  // Auto-scroll to bottom when messages change / window opens
+  useEffect(() => {
+    const raf = requestAnimationFrame(scrollToBottom);
+    return () => cancelAnimationFrame(raf);
+  }, [messages.length, conversationId]);
 
   const handleSendMessage = async () => {
     if (!messageInput.trim() && selectedFiles.length === 0) return;
