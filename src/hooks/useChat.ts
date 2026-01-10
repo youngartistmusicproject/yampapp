@@ -56,12 +56,18 @@ export interface Message {
 
 export const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🎉"];
 
+export interface TypingUser {
+  user_name: string;
+  conversation_id: string;
+}
+
 export function useChat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [reactions, setReactions] = useState<Map<string, Reaction[]>>(new Map());
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const { toast } = useToast();
 
   // Fetch all conversations with participants and last message
@@ -374,7 +380,7 @@ export function useChat() {
     }
   }, [selectedConversationId]);
 
-  // Set up realtime subscription for messages and reactions
+  // Set up realtime subscription for messages, reactions, and typing indicators
   useEffect(() => {
     const channel = supabase
       .channel("chat-realtime")
@@ -434,12 +440,68 @@ export function useChat() {
           }
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "typing_indicators",
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            const indicator = payload.new as any;
+            // Only show typing for others, not yourself
+            if (indicator.user_name !== "You") {
+              setTypingUsers((prev) => {
+                const exists = prev.some(
+                  (t) =>
+                    t.user_name === indicator.user_name &&
+                    t.conversation_id === indicator.conversation_id
+                );
+                if (exists) return prev;
+                return [...prev, { user_name: indicator.user_name, conversation_id: indicator.conversation_id }];
+              });
+            }
+          } else if (payload.eventType === "DELETE") {
+            const indicator = payload.old as any;
+            setTypingUsers((prev) =>
+              prev.filter(
+                (t) =>
+                  !(t.user_name === indicator.user_name && t.conversation_id === indicator.conversation_id)
+              )
+            );
+          }
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, [selectedConversationId]);
+
+  // Broadcast typing status
+  const setTyping = async (conversationId: string, isTyping: boolean) => {
+    if (isTyping) {
+      await supabase
+        .from("typing_indicators")
+        .upsert(
+          { conversation_id: conversationId, user_name: "You", updated_at: new Date().toISOString() },
+          { onConflict: "conversation_id,user_name" }
+        );
+    } else {
+      await supabase
+        .from("typing_indicators")
+        .delete()
+        .eq("conversation_id", conversationId)
+        .eq("user_name", "You");
+    }
+  };
+
+  // Get typing users for a specific conversation (excluding self)
+  const getTypingUsersForConversation = (conversationId: string) => {
+    return typingUsers.filter((t) => t.conversation_id === conversationId);
+  };
 
   const selectedConversation = conversations.find((c) => c.id === selectedConversationId);
 
@@ -454,5 +516,7 @@ export function useChat() {
     toggleReaction,
     isLoading,
     formatTime,
+    setTyping,
+    getTypingUsersForConversation,
   };
 }

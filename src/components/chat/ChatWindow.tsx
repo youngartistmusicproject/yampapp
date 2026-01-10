@@ -8,16 +8,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Attachment, Message, REACTION_EMOJIS } from "@/hooks/useChat";
+import { Attachment, Message, REACTION_EMOJIS, TypingUser } from "@/hooks/useChat";
 import { format } from "date-fns";
 
 interface ChatWindowProps {
   conversationId: string;
   conversationName: string;
   messages: Message[];
+  typingUsers: TypingUser[];
   onClose: () => void;
   onMinimize: () => void;
   onSendMessage: (content: string, files?: File[], replyToId?: string) => Promise<void>;
+  onTyping: (isTyping: boolean) => void;
   toggleReaction: (messageId: string, emoji: string) => void;
   formatTime: (date: string) => string;
 }
@@ -26,9 +28,11 @@ export function ChatWindow({
   conversationId,
   conversationName,
   messages,
+  typingUsers,
   onClose,
   onMinimize,
   onSendMessage,
+  onTyping,
   toggleReaction,
   formatTime,
 }: ChatWindowProps) {
@@ -41,6 +45,7 @@ export function ChatWindow({
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<number | null>(null);
 
   const scrollToBottom = () => {
     const viewport = scrollAreaRef.current;
@@ -62,6 +67,31 @@ export function ChatWindow({
 
     return () => window.clearTimeout(t);
   }, [messages.length, conversationId]);
+
+  // Handle typing indicator with debounce
+  const handleTyping = () => {
+    onTyping(true);
+
+    // Clear previous timeout
+    if (typingTimeoutRef.current) {
+      window.clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Stop typing after 2 seconds of inactivity
+    typingTimeoutRef.current = window.setTimeout(() => {
+      onTyping(false);
+    }, 2000);
+  };
+
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        window.clearTimeout(typingTimeoutRef.current);
+      }
+      onTyping(false);
+    };
+  }, []);
 
   const handleSendMessage = async () => {
     if (!messageInput.trim() && selectedFiles.length === 0) return;
@@ -340,6 +370,18 @@ export function ChatWindow({
         )}
       </div>
 
+      {/* Typing indicator */}
+      {typingUsers.length > 0 && (
+        <div className="px-3 py-1.5 text-xs text-muted-foreground animate-pulse">
+          {typingUsers.length === 1 
+            ? `${typingUsers[0].user_name} is typing...`
+            : typingUsers.length === 2
+            ? `${typingUsers[0].user_name} and ${typingUsers[1].user_name} are typing...`
+            : `${typingUsers.length} people are typing...`
+          }
+        </div>
+      )}
+
       {/* Reply preview */}
       {replyingTo && (
         <div className="px-3 py-2 bg-muted/50 border-t">
@@ -418,7 +460,12 @@ export function ChatWindow({
             placeholder="Aa"
             className="flex-1 h-9 bg-secondary border-0 rounded-full"
             value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
+            onChange={(e) => {
+              setMessageInput(e.target.value);
+              if (e.target.value.trim()) {
+                handleTyping();
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();

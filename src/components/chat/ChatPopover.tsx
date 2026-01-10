@@ -45,6 +45,8 @@ export function ChatPopover() {
     toggleReaction,
     isLoading,
     formatTime,
+    setTyping,
+    getTypingUsersForConversation,
   } = useChat();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -366,6 +368,7 @@ export function ChatPopover() {
               conversationId={chat.id}
               conversationName={chat.name}
               messages={selectedConversationId === chat.id ? messages : []}
+              typingUsers={getTypingUsersForConversation(chat.id)}
               onClose={() => handleCloseChat(chat.id)}
               onMinimize={() => handleMinimizeChat(chat.id)}
               onSendMessage={async (content, files, replyToId) => {
@@ -374,6 +377,7 @@ export function ChatPopover() {
                 }
                 await sendMessage(content, files, replyToId);
               }}
+              onTyping={(isTyping) => setTyping(chat.id, isTyping)}
               toggleReaction={toggleReaction}
               formatTime={formatTime}
             />
