@@ -1,52 +1,63 @@
 import { useState } from "react";
-import { Search, Plus, Send, Paperclip, MoreHorizontal } from "lucide-react";
+import { Search, Plus, Send, Paperclip, MoreHorizontal, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-interface ChatConversation {
-  id: string;
-  name: string;
-  type: "direct" | "group";
-  participants?: string[];
-  lastMessage: string;
-  lastMessageTime: string;
-  unread: number;
-}
-
-interface ChatMessage {
-  id: string;
-  sender: string;
-  content: string;
-  timestamp: string;
-  isOwn: boolean;
-}
-
-const conversations: ChatConversation[] = [
-  { id: "1", name: "Sarah Miller", type: "direct", lastMessage: "Thanks for the lesson plan!", lastMessageTime: "10:30 AM", unread: 2 },
-  { id: "2", name: "Faculty Group", type: "group", participants: ["Sarah", "John", "Emily"], lastMessage: "Meeting moved to 3pm", lastMessageTime: "9:15 AM", unread: 0 },
-  { id: "3", name: "John Davis", type: "direct", lastMessage: "Can you cover my class tomorrow?", lastMessageTime: "Yesterday", unread: 1 },
-  { id: "4", name: "Admin Team", type: "group", participants: ["Admin", "Manager"], lastMessage: "Budget approved", lastMessageTime: "Yesterday", unread: 0 },
-  { id: "5", name: "Emily Chen", type: "direct", lastMessage: "See you at the recital!", lastMessageTime: "2 days ago", unread: 0 },
-];
-
-const sampleMessages: ChatMessage[] = [
-  { id: "1", sender: "Sarah Miller", content: "Hey! Do you have the updated lesson plan for next week?", timestamp: "10:15 AM", isOwn: false },
-  { id: "2", sender: "You", content: "Yes! Let me share it with you. I've updated the theory section.", timestamp: "10:20 AM", isOwn: true },
-  { id: "3", sender: "Sarah Miller", content: "Perfect! Can you also include the practice exercises?", timestamp: "10:25 AM", isOwn: false },
-  { id: "4", sender: "You", content: "Sure thing. I'll add those and send the final version.", timestamp: "10:28 AM", isOwn: true },
-  { id: "5", sender: "Sarah Miller", content: "Thanks for the lesson plan! 🎵", timestamp: "10:30 AM", isOwn: false },
-];
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useChat } from "@/hooks/useChat";
 
 export default function Chat() {
-  const [selectedConversation, setSelectedConversation] = useState<string>("1");
-  const [message, setMessage] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const {
+    conversations,
+    messages,
+    selectedConversation,
+    selectedConversationId,
+    setSelectedConversationId,
+    sendMessage,
+    createConversation,
+    isLoading,
+    formatTime,
+  } = useChat();
 
-  const selectedChat = conversations.find((c) => c.id === selectedConversation);
+  const [messageInput, setMessageInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [newChatDialogOpen, setNewChatDialogOpen] = useState(false);
+  const [newChatName, setNewChatName] = useState("");
+
+  const filteredConversations = conversations.filter((conv) =>
+    conv.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSendMessage = async () => {
+    if (!messageInput.trim()) return;
+    await sendMessage(messageInput);
+    setMessageInput("");
+  };
+
+  const handleCreateConversation = async () => {
+    if (!newChatName.trim()) return;
+    await createConversation(newChatName.trim());
+    setNewChatName("");
+    setNewChatDialogOpen(false);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[calc(100vh-7rem)] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100vh-7rem)] gap-6 animate-fade-in">
@@ -55,7 +66,12 @@ export default function Chat() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold">Messages</h2>
-            <Button size="icon" variant="ghost" className="h-8 w-8">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              onClick={() => setNewChatDialogOpen(true)}
+            >
               <Plus className="w-4 h-4" />
             </Button>
           </div>
@@ -71,152 +87,219 @@ export default function Chat() {
         </CardHeader>
         <ScrollArea className="flex-1">
           <div className="px-2 pb-2">
-            {conversations.map((conv) => (
-              <button
-                key={conv.id}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
-                  selectedConversation === conv.id
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-secondary"
-                }`}
-                onClick={() => setSelectedConversation(conv.id)}
-              >
-                <Avatar className="w-10 h-10">
-                  <AvatarFallback
-                    className={
-                      selectedConversation === conv.id
-                        ? "bg-primary-foreground/20 text-primary-foreground"
-                        : "bg-secondary"
-                    }
-                  >
-                    {conv.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-sm truncate">{conv.name}</p>
-                    <span
-                      className={`text-xs ${
-                        selectedConversation === conv.id
-                          ? "text-primary-foreground/70"
-                          : "text-muted-foreground"
-                      }`}
+            {filteredConversations.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                No conversations found
+              </p>
+            ) : (
+              filteredConversations.map((conv) => (
+                <button
+                  key={conv.id}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
+                    selectedConversationId === conv.id
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-secondary"
+                  }`}
+                  onClick={() => setSelectedConversationId(conv.id)}
+                >
+                  <Avatar className="w-10 h-10">
+                    <AvatarFallback
+                      className={
+                        selectedConversationId === conv.id
+                          ? "bg-primary-foreground/20 text-primary-foreground"
+                          : "bg-secondary"
+                      }
                     >
-                      {conv.lastMessageTime}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p
-                      className={`text-xs truncate ${
-                        selectedConversation === conv.id
-                          ? "text-primary-foreground/70"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {conv.lastMessage}
-                    </p>
-                    {conv.unread > 0 && (
-                      <Badge
-                        className={`h-5 min-w-5 justify-center ${
-                          selectedConversation === conv.id
-                            ? "bg-primary-foreground text-primary"
-                            : ""
+                      {conv.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-sm truncate">{conv.name}</p>
+                      <span
+                        className={`text-xs ${
+                          selectedConversationId === conv.id
+                            ? "text-primary-foreground/70"
+                            : "text-muted-foreground"
                         }`}
                       >
-                        {conv.unread}
-                      </Badge>
-                    )}
+                        {conv.lastMessageTime}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p
+                        className={`text-xs truncate ${
+                          selectedConversationId === conv.id
+                            ? "text-primary-foreground/70"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {conv.lastMessage || "No messages yet"}
+                      </p>
+                      {conv.unread > 0 && (
+                        <Badge
+                          className={`h-5 min-w-5 justify-center ${
+                            selectedConversationId === conv.id
+                              ? "bg-primary-foreground text-primary"
+                              : ""
+                          }`}
+                        >
+                          {conv.unread}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))
+            )}
           </div>
         </ScrollArea>
       </Card>
 
       {/* Chat Area */}
       <Card className="flex-1 shadow-card flex flex-col overflow-hidden">
-        {/* Chat Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <div className="flex items-center gap-3">
-            <Avatar className="w-10 h-10">
-              <AvatarFallback className="bg-primary/10 text-primary">
-                {selectedChat?.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium">{selectedChat?.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {selectedChat?.type === "group"
-                  ? `${selectedChat.participants?.length} members`
-                  : "Online"}
-              </p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="w-5 h-5" />
-          </Button>
-        </div>
-
-        {/* Messages */}
-        <ScrollArea className="flex-1 p-6">
-          <div className="space-y-4">
-            {sampleMessages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${msg.isOwn ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[70%] ${
-                    msg.isOwn
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary"
-                  } rounded-2xl px-4 py-2`}
-                >
-                  {!msg.isOwn && (
-                    <p className="text-xs font-medium mb-1 text-primary">
-                      {msg.sender}
-                    </p>
-                  )}
-                  <p className="text-sm">{msg.content}</p>
-                  <p
-                    className={`text-xs mt-1 ${
-                      msg.isOwn
-                        ? "text-primary-foreground/70"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {msg.timestamp}
+        {selectedConversation ? (
+          <>
+            {/* Chat Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div className="flex items-center gap-3">
+                <Avatar className="w-10 h-10">
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {selectedConversation.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">{selectedConversation.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedConversation.type === "group"
+                      ? `${selectedConversation.participants.length} members`
+                      : "Online"}
                   </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </ScrollArea>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="w-5 h-5" />
+              </Button>
+            </div>
 
-        {/* Message Input */}
-        <div className="p-4 border-t">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="flex-shrink-0">
-              <Paperclip className="w-5 h-5" />
-            </Button>
-            <Input
-              placeholder="Type a message..."
-              className="flex-1"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && message.trim()) {
-                  setMessage("");
-                }
-              }}
-            />
-            <Button size="icon" className="flex-shrink-0">
-              <Send className="w-4 h-4" />
-            </Button>
+            {/* Messages */}
+            <ScrollArea className="flex-1 p-6">
+              <div className="space-y-4">
+                {messages.length === 0 ? (
+                  <p className="text-center text-sm text-muted-foreground py-8">
+                    No messages yet. Start the conversation!
+                  </p>
+                ) : (
+                  messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex ${msg.is_own ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[70%] ${
+                          msg.is_own
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary"
+                        } rounded-2xl px-4 py-2`}
+                      >
+                        {!msg.is_own && (
+                          <p className="text-xs font-medium mb-1 text-primary">
+                            {msg.sender_name}
+                          </p>
+                        )}
+                        <p className="text-sm">{msg.content}</p>
+                        <p
+                          className={`text-xs mt-1 ${
+                            msg.is_own
+                              ? "text-primary-foreground/70"
+                              : "text-muted-foreground"
+                          }`}
+                        >
+                          {formatTime(msg.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+
+            {/* Message Input */}
+            <div className="p-4 border-t">
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="flex-shrink-0">
+                  <Paperclip className="w-5 h-5" />
+                </Button>
+                <Input
+                  placeholder="Type a message..."
+                  className="flex-1"
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                />
+                <Button
+                  size="icon"
+                  className="flex-shrink-0"
+                  onClick={handleSendMessage}
+                  disabled={!messageInput.trim()}
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+            Select a conversation to start chatting
           </div>
-        </div>
+        )}
       </Card>
+
+      {/* New Chat Dialog */}
+      <Dialog open={newChatDialogOpen} onOpenChange={setNewChatDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New Conversation</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Contact Name</Label>
+              <Input
+                id="name"
+                placeholder="Enter contact name..."
+                value={newChatName}
+                onChange={(e) => setNewChatName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleCreateConversation();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewChatDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateConversation} disabled={!newChatName.trim()}>
+              Start Chat
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
