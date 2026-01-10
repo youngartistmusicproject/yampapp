@@ -19,10 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { tagLibrary } from "@/data/workManagementConfig";
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { RecurrenceSettings } from "./RecurrenceSettings";
+import { Repeat, BookOpen, Plus } from "lucide-react";
 
 export interface StatusItem {
   id: string;
@@ -49,6 +55,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceSettingsType | undefined>();
+  const [howToLink, setHowToLink] = useState("");
 
   const isEditing = !!task;
 
@@ -64,6 +71,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       setSelectedAssignees(task.assignees);
       setIsRecurring(task.isRecurring || false);
       setRecurrence(task.recurrence);
+      setHowToLink(task.howToLink || "");
     } else {
       resetForm();
     }
@@ -79,6 +87,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     setSelectedAssignees([]);
     setIsRecurring(false);
     setRecurrence(undefined);
+    setHowToLink("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -93,8 +102,21 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       assignees: selectedAssignees,
       isRecurring,
       recurrence,
+      howToLink: howToLink.trim() || undefined,
     });
     resetForm();
+  };
+
+  const handleToggleRecurring = (value: boolean) => {
+    setIsRecurring(value);
+    if (value && !recurrence) {
+      setRecurrence({
+        frequency: "weekly",
+        interval: 1,
+      });
+    } else if (!value) {
+      setRecurrence(undefined);
+    }
   };
 
   return (
@@ -169,14 +191,43 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
               </div>
             </div>
 
+            {/* Due Date with Recurrence */}
             <div className="space-y-2">
               <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="flex-1"
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant={isRecurring ? "default" : "outline"}
+                      size="icon"
+                      className="shrink-0"
+                    >
+                      <Repeat className="w-4 h-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80" align="end">
+                    <RecurrenceSettings
+                      isRecurring={isRecurring}
+                      onIsRecurringChange={handleToggleRecurring}
+                      recurrence={recurrence}
+                      onRecurrenceChange={setRecurrence}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              {isRecurring && recurrence && (
+                <p className="text-xs text-muted-foreground">
+                  {getRecurrenceDescription(recurrence)}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -202,12 +253,25 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
               </p>
             </div>
 
-            <RecurrenceSettings
-              isRecurring={isRecurring}
-              onIsRecurringChange={setIsRecurring}
-              recurrence={recurrence}
-              onRecurrenceChange={setRecurrence}
-            />
+            {/* How To Link */}
+            <div className="space-y-2">
+              <Label htmlFor="howToLink">How To (SOP Link)</Label>
+              <div className="flex items-center gap-2">
+                {howToLink ? (
+                  <BookOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+                ) : (
+                  <Plus className="w-4 h-4 text-muted-foreground shrink-0" />
+                )}
+                <Input
+                  id="howToLink"
+                  type="url"
+                  placeholder="Add link to SOP documentation..."
+                  value={howToLink}
+                  onChange={(e) => setHowToLink(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
@@ -220,4 +284,32 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       </DialogContent>
     </Dialog>
   );
+}
+
+function getRecurrenceDescription(recurrence: RecurrenceSettingsType): string {
+  const { frequency, interval, daysOfWeek, dayOfMonth, endDate } = recurrence;
+
+  let description = "Repeats ";
+
+  if (interval === 1) {
+    description += frequency.replace("ly", "");
+  } else {
+    description += `every ${interval} ${frequency.replace("ly", "")}s`;
+  }
+
+  if (frequency === "weekly" && daysOfWeek && daysOfWeek.length > 0) {
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const days = daysOfWeek.map((d) => dayNames[d]).join(", ");
+    description += ` on ${days}`;
+  }
+
+  if (frequency === "monthly" && dayOfMonth) {
+    description += ` on day ${dayOfMonth}`;
+  }
+
+  if (endDate) {
+    description += ` until ${endDate.toLocaleDateString()}`;
+  }
+
+  return description;
 }
