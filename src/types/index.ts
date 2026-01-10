@@ -68,6 +68,7 @@ export interface Task {
   comments?: TaskComment[];
   attachments?: TaskAttachment[];
   subtasks?: Subtask[];
+  howToLink?: string; // Link to SOP documentation
   createdAt: Date;
   updatedAt: Date;
 }
