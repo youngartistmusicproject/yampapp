@@ -8,8 +8,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Attachment, Message, REACTION_EMOJIS, TypingUser } from "@/hooks/useChat";
+import { Attachment, Message, TypingUser } from "@/hooks/useChat";
 import { format } from "date-fns";
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 
 interface ChatWindowProps {
   conversationId: string;
@@ -306,24 +307,19 @@ export function ChatWindow({
                               </button>
                             </PopoverTrigger>
                             <PopoverContent
-                              className="w-auto p-0 border-0"
+                              className="w-auto p-0 border-0 bg-transparent shadow-none"
                               side="top"
                               align={msg.is_own ? "end" : "start"}
                             >
-                              <div className="flex gap-1 p-2 bg-background border rounded-lg shadow-lg">
-                                {REACTION_EMOJIS.map((emoji) => (
-                                  <button
-                                    key={emoji}
-                                    onClick={() => {
-                                      toggleReaction(msg.id, emoji);
-                                      setEmojiPickerMessageId(null);
-                                    }}
-                                    className="p-1 hover:bg-muted rounded transition-colors text-sm"
-                                  >
-                                    {emoji}
-                                  </button>
-                                ))}
-                              </div>
+                              <EmojiPicker
+                                onEmojiClick={(emojiData: EmojiClickData) => {
+                                  toggleReaction(msg.id, emojiData.emoji);
+                                  setEmojiPickerMessageId(null);
+                                }}
+                                width={280}
+                                height={350}
+                                previewConfig={{ showPreview: false }}
+                              />
                             </PopoverContent>
                           </Popover>
                         </div>
