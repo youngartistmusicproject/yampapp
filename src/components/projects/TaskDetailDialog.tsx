@@ -624,28 +624,37 @@ export function TaskDetailDialog({
                     <Circle className="w-4 h-4" />
                     <span className="text-sm">Progress</span>
                   </div>
-                  <Select 
-                    value={task.progress?.toString() || "0"} 
-                    onValueChange={(value) => onTaskUpdate(task.id, { progress: parseInt(value) })}
-                  >
-                    <SelectTrigger className="w-auto h-8 text-sm gap-1 border-none shadow-none bg-transparent hover:bg-muted/50">
-                      <SelectValue placeholder="0%" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover z-50">
-                      <SelectItem value="0">0%</SelectItem>
-                      <SelectItem value="10">10%</SelectItem>
-                      <SelectItem value="20">20%</SelectItem>
-                      <SelectItem value="30">30%</SelectItem>
-                      <SelectItem value="40">40%</SelectItem>
-                      <SelectItem value="50">50%</SelectItem>
-                      <SelectItem value="60">60%</SelectItem>
-                      <SelectItem value="70">70%</SelectItem>
-                      <SelectItem value="75">75%</SelectItem>
-                      <SelectItem value="80">80%</SelectItem>
-                      <SelectItem value="90">90%</SelectItem>
-                      <SelectItem value="100">100%</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        className="h-8 px-2 text-sm font-normal hover:bg-muted/50 gap-2"
+                      >
+                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary rounded-full transition-all duration-300"
+                            style={{ width: `${task.progress || 0}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-muted-foreground w-8">{task.progress || 0}%</span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-2" align="end">
+                      <div className="grid grid-cols-4 gap-1">
+                        {[0, 10, 20, 30, 40, 50, 60, 70, 75, 80, 90, 100].map((value) => (
+                          <Button
+                            key={value}
+                            variant={(task.progress || 0) === value ? "secondary" : "ghost"}
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => onTaskUpdate(task.id, { progress: value })}
+                          >
+                            {value}%
+                          </Button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Assignees */}
