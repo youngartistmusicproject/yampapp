@@ -10,6 +10,7 @@ import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
+import { TeamsProjectsHeader } from "@/components/projects/TeamsProjectsHeader";
 import { Task, Project, User, TaskComment, TaskAttachment } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -571,71 +572,17 @@ export default function Projects() {
         </DropdownMenu>
       </div>
 
-      {/* Teams Bar */}
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-2 items-center pb-2">
-          <span className="text-sm font-medium text-muted-foreground mr-1 flex-shrink-0">Teams:</span>
-          <Badge
-            variant={selectedTeam === "all" ? "default" : "outline"}
-            className="cursor-pointer flex-shrink-0"
-            onClick={() => {
-              setSelectedTeam("all");
-              setSelectedProject("all");
-            }}
-          >
-            All Teams
-          </Badge>
-          {teamsLibrary.map((team) => (
-            <Badge
-              key={team.id}
-              variant={selectedTeam === team.id ? "default" : "outline"}
-              className="cursor-pointer gap-1.5 flex-shrink-0"
-              onClick={() => {
-                setSelectedTeam(team.id);
-                setSelectedProject("all");
-              }}
-              style={selectedTeam === team.id ? { backgroundColor: team.color } : {}}
-            >
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: selectedTeam === team.id ? "white" : team.color }}
-              />
-              {team.name}
-            </Badge>
-          ))}
-        </div>
-      </ScrollArea>
-
-      {/* Projects Bar */}
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-2 items-center pb-2">
-          <span className="text-sm font-medium text-muted-foreground mr-1 flex-shrink-0">Projects:</span>
-          <Badge
-            variant={selectedProject === "all" ? "default" : "outline"}
-            className="cursor-pointer flex-shrink-0"
-            onClick={() => setSelectedProject("all")}
-          >
-            All Projects
-          </Badge>
-          {projects
-            .filter(p => selectedTeam === "all" || p.teamId === selectedTeam)
-            .map((project) => (
-              <Badge
-                key={project.id}
-                variant={selectedProject === project.id ? "default" : "outline"}
-                className="cursor-pointer gap-1.5 flex-shrink-0"
-                onClick={() => setSelectedProject(project.id)}
-                style={selectedProject === project.id ? { backgroundColor: project.color } : {}}
-              >
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: selectedProject === project.id ? "white" : project.color }}
-                />
-                {project.name}
-              </Badge>
-            ))}
-        </div>
-      </ScrollArea>
+      {/* Teams & Projects Header */}
+      <TeamsProjectsHeader
+        teams={teamsLibrary}
+        projects={projects}
+        tasks={tasks}
+        selectedTeam={selectedTeam}
+        selectedProject={selectedProject}
+        onTeamSelect={setSelectedTeam}
+        onProjectSelect={setSelectedProject}
+        doneStatusId={doneStatusId}
+      />
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
