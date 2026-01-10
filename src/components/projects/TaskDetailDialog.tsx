@@ -31,7 +31,7 @@ import {
   Users,
   Tag,
   AlignLeft,
-  Plus
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
@@ -54,8 +54,6 @@ interface TaskDetailDialogProps {
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onAddComment: (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>) => void;
   onDeleteComment: (taskId: string, commentId: string) => void;
-  onAddAttachment: (taskId: string, attachment: Omit<TaskAttachment, 'id' | 'uploadedAt'>) => void;
-  onDeleteAttachment: (taskId: string, attachmentId: string) => void;
 }
 
 const getFileIcon = (type: string) => {
@@ -158,6 +156,12 @@ function EditableText({
   );
 }
 
+// Pending attachment type for before submission
+interface PendingAttachment {
+  file: File;
+  preview?: string;
+}
+
 export function TaskDetailDialog({
   open,
   onOpenChange,
@@ -168,25 +172,67 @@ export function TaskDetailDialog({
   onTaskUpdate,
   onAddComment,
   onDeleteComment,
-  onAddAttachment,
-  onDeleteAttachment,
 }: TaskDetailDialogProps) {
   const [newComment, setNewComment] = useState("");
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset pending attachments when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setPendingAttachments([]);
+      setNewComment("");
+    }
+  }, [open]);
 
   if (!task) return null;
 
   const taskStatus = statuses.find(s => s.id === task.status);
   const comments = task.comments || [];
-  const attachments = task.attachments || [];
+  // Legacy attachments (attached directly to task, not through comments)
+  const legacyAttachments = task.attachments || [];
 
   const handleSubmitComment = () => {
-    if (!newComment.trim()) return;
-    onAddComment(task.id, {
-      content: newComment.trim(),
-      author: currentUser,
+    if (!newComment.trim() && pendingAttachments.length === 0) return;
+    
+    // Convert pending attachments to TaskAttachment format
+    const attachmentsToAdd: Omit<TaskAttachment, 'id' | 'uploadedAt'>[] = [];
+    
+    const processAttachments = async () => {
+      for (const pending of pendingAttachments) {
+        const url = await readFileAsDataURL(pending.file);
+        attachmentsToAdd.push({
+          name: pending.file.name,
+          type: pending.file.type,
+          size: pending.file.size,
+          url,
+          uploadedBy: currentUser,
+        });
+      }
+      
+      onAddComment(task.id, {
+        content: newComment.trim(),
+        author: currentUser,
+        attachments: attachmentsToAdd.length > 0 ? attachmentsToAdd.map((a, i) => ({
+          ...a,
+          id: `pending-${i}`,
+          uploadedAt: new Date(),
+        })) : undefined,
+      });
+      
+      setNewComment("");
+      setPendingAttachments([]);
+    };
+    
+    processAttachments();
+  };
+
+  const readFileAsDataURL = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.readAsDataURL(file);
     });
-    setNewComment("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -200,24 +246,26 @@ export function TaskDetailDialog({
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const url = event.target?.result as string;
-        onAddAttachment(task.id, {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          url,
-          uploadedBy: currentUser,
-        });
-      };
-      reader.readAsDataURL(file);
-    });
+    const newPending: PendingAttachment[] = Array.from(files).map(file => ({
+      file,
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+    }));
+    
+    setPendingAttachments(prev => [...prev, ...newPending]);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleRemovePending = (index: number) => {
+    setPendingAttachments(prev => {
+      const item = prev[index];
+      if (item.preview) {
+        URL.revokeObjectURL(item.preview);
+      }
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const handleDownload = (attachment: TaskAttachment) => {
@@ -361,94 +409,55 @@ export function TaskDetailDialog({
               />
             </div>
 
-            <Separator />
-
-            {/* Attachments */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Paperclip className="w-4 h-4 text-muted-foreground" />
-                  <h3 className="text-sm font-medium">Attachments</h3>
-                  {attachments.length > 0 && (
+            {/* Legacy Attachments (if any exist from before) */}
+            {legacyAttachments.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Paperclip className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="text-sm font-medium">Files</h3>
                     <Badge variant="secondary" className="text-xs h-5">
-                      {attachments.length}
+                      {legacyAttachments.length}
                     </Badge>
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 text-xs"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Plus className="w-3 h-3" />
-                  Add
-                </Button>
-              </div>
-
-              {attachments.length === 0 ? (
-                <div 
-                  className="flex items-center justify-center h-16 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <p className="text-sm text-muted-foreground">Drop files here or click to upload</p>
-                </div>
-              ) : (
-                <div className="grid gap-2">
-                  {attachments.map((attachment) => (
-                    <div
-                      key={attachment.id}
-                      className="flex items-center gap-3 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
-                    >
-                      <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center flex-shrink-0">
-                        {getFileIcon(attachment.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{attachment.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatFileSize(attachment.size)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  </div>
+                  <div className="grid gap-2">
+                    {legacyAttachments.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="flex items-center gap-3 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
+                      >
+                        <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center flex-shrink-0">
+                          {getFileIcon(attachment.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{attachment.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatFileSize(attachment.size)}
+                          </p>
+                        </div>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 w-7 p-0"
+                          className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleDownload(attachment)}
                         >
                           <Download className="w-3.5 h-3.5" />
                         </Button>
-                        {attachment.uploadedBy.id === currentUser.id && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                            onClick={() => onDeleteAttachment(task.id, attachment.id)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              )}
-            </div>
+              </>
+            )}
 
             <Separator />
 
-            {/* Comments */}
-            <div className="space-y-3">
+            {/* Comments Section */}
+            <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                <h3 className="text-sm font-medium">Comments</h3>
+                <h3 className="text-sm font-medium">Activity</h3>
                 {comments.length > 0 && (
                   <Badge variant="secondary" className="text-xs h-5">
                     {comments.length}
@@ -456,26 +465,79 @@ export function TaskDetailDialog({
                 )}
               </div>
 
-              {/* Comment input */}
+              {/* Comment input with attachment support */}
               <div className="flex gap-3">
                 <UserAvatar user={currentUser} className="w-8 h-8 text-xs flex-shrink-0" />
-                <div className="flex-1 flex gap-2">
-                  <Textarea
-                    placeholder="Write a comment..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="min-h-[40px] resize-none text-sm"
-                    rows={1}
-                  />
-                  <Button 
-                    onClick={handleSubmitComment} 
-                    disabled={!newComment.trim()} 
-                    size="sm"
-                    className="self-end"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
+                <div className="flex-1 space-y-2">
+                  <div className="relative">
+                    <Textarea
+                      placeholder="Write a comment or drop files..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="min-h-[60px] resize-none text-sm pr-20"
+                      rows={2}
+                    />
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={handleFileSelect}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => fileInputRef.current?.click()}
+                        type="button"
+                      >
+                        <Paperclip className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        onClick={handleSubmitComment} 
+                        disabled={!newComment.trim() && pendingAttachments.length === 0} 
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Pending attachments preview */}
+                  {pendingAttachments.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {pendingAttachments.map((pending, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 px-2 py-1 rounded bg-secondary text-sm group"
+                        >
+                          {pending.preview ? (
+                            <img 
+                              src={pending.preview} 
+                              alt={pending.file.name} 
+                              className="w-6 h-6 object-cover rounded"
+                            />
+                          ) : (
+                            getFileIcon(pending.file.type)
+                          )}
+                          <span className="max-w-[120px] truncate text-xs">
+                            {pending.file.name}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100"
+                            onClick={() => handleRemovePending(index)}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -485,7 +547,7 @@ export function TaskDetailDialog({
                   {comments.map((comment) => (
                     <div key={comment.id} className="flex gap-3 group">
                       <UserAvatar user={comment.author} className="w-8 h-8 text-xs flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">{comment.author.name}</span>
                           <span className="text-xs text-muted-foreground">
@@ -495,14 +557,51 @@ export function TaskDetailDialog({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 ml-auto"
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive ml-auto"
                               onClick={() => onDeleteComment(task.id, comment.id)}
                             >
-                              <Trash2 className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                              <Trash2 className="w-3 h-3" />
                             </Button>
                           )}
                         </div>
-                        <p className="text-sm mt-1 whitespace-pre-wrap">{comment.content}</p>
+                        {comment.content && (
+                          <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+                        )}
+                        
+                        {/* Comment attachments */}
+                        {comment.attachments && comment.attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {comment.attachments.map((attachment) => (
+                              <div
+                                key={attachment.id}
+                                className="flex items-center gap-2 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                                onClick={() => handleDownload(attachment)}
+                              >
+                                {attachment.type.startsWith('image/') ? (
+                                  <img 
+                                    src={attachment.url} 
+                                    alt={attachment.name}
+                                    className="w-16 h-16 object-cover rounded"
+                                  />
+                                ) : (
+                                  <>
+                                    <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center flex-shrink-0">
+                                      {getFileIcon(attachment.type)}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-medium truncate max-w-[120px]">
+                                        {attachment.name}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {formatFileSize(attachment.size)}
+                                      </p>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -19,6 +19,7 @@ export interface TaskComment {
   content: string;
   author: User;
   createdAt: Date;
+  attachments?: TaskAttachment[];
 }
 
 export interface TaskAttachment {

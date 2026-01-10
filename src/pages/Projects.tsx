@@ -234,13 +234,23 @@ export default function Projects() {
   };
 
   const handleAddComment = (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>) => {
+    const commentId = Date.now().toString();
+    // Process attachments to give them proper IDs
+    const processedAttachments = comment.attachments?.map((a, i) => ({
+      ...a,
+      id: `${commentId}-att-${i}`,
+      uploadedAt: new Date(),
+    }));
+    
+    const newComment: TaskComment = {
+      ...comment,
+      id: commentId,
+      createdAt: new Date(),
+      attachments: processedAttachments,
+    };
+    
     setTasks(tasks.map(task => {
       if (task.id !== taskId) return task;
-      const newComment: TaskComment = {
-        ...comment,
-        id: Date.now().toString(),
-        createdAt: new Date(),
-      };
       return {
         ...task,
         comments: [...(task.comments || []), newComment],
@@ -250,11 +260,6 @@ export default function Projects() {
     // Update viewing task to reflect changes
     setViewingTask(prev => {
       if (!prev || prev.id !== taskId) return prev;
-      const newComment: TaskComment = {
-        ...comment,
-        id: Date.now().toString(),
-        createdAt: new Date(),
-      };
       return {
         ...prev,
         comments: [...(prev.comments || []), newComment],
@@ -558,8 +563,6 @@ export default function Projects() {
         onTaskUpdate={handleTaskUpdate}
         onAddComment={handleAddComment}
         onDeleteComment={handleDeleteComment}
-        onAddAttachment={handleAddAttachment}
-        onDeleteAttachment={handleDeleteAttachment}
       />
 
       <ProjectDialog
