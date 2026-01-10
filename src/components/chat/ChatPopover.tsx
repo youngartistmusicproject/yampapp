@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { MessageCircle, Search, SquarePen, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +57,8 @@ export function ChatPopover() {
   const [contactSearchQuery, setContactSearchQuery] = useState("");
   const [openChats, setOpenChats] = useState<OpenChat[]>([]);
 
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   // Reset view when popover closes
   useEffect(() => {
     if (!isOpen) {
@@ -66,9 +68,22 @@ export function ChatPopover() {
     }
   }, [isOpen]);
 
-  const filteredConversations = conversations.filter((conv) =>
-    conv.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // When the popover opens, focus the search input so typing immediately filters.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (view !== "conversations") return;
+    window.setTimeout(() => searchInputRef.current?.focus(), 0);
+  }, [isOpen, view]);
+
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const filteredConversations = useMemo(() => {
+    if (!normalizedSearchQuery) return conversations;
+    return conversations.filter((conv) => {
+      const haystack = `${conv.name} ${conv.lastMessage || ""}`.toLowerCase();
+      return haystack.includes(normalizedSearchQuery);
+    });
+  }, [conversations, normalizedSearchQuery]);
 
   const filteredContacts = MOCK_CONTACTS.filter((contact) =>
     contact.name.toLowerCase().includes(contactSearchQuery.toLowerCase())
@@ -178,6 +193,13 @@ export function ChatPopover() {
           className="w-80 sm:w-96 p-0 h-[450px] flex flex-col" 
           align="end"
           sideOffset={8}
+          onOpenAutoFocus={(e) => {
+            // So the user can immediately type to search without clicking the input.
+            if (view === "conversations") {
+              e.preventDefault();
+              window.setTimeout(() => searchInputRef.current?.focus(), 0);
+            }
+          }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b">
@@ -219,6 +241,7 @@ export function ChatPopover() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
+                      ref={searchInputRef}
                       placeholder="Search Messenger"
                       className="pl-9 h-9 bg-secondary border-0"
                       value={searchQuery}
