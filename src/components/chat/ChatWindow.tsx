@@ -59,8 +59,12 @@ export function ChatWindow({
 
   // Auto-scroll to bottom when messages change / window opens
   useEffect(() => {
-    const raf = requestAnimationFrame(scrollToBottom);
-    return () => cancelAnimationFrame(raf);
+    const t = window.setTimeout(() => {
+      // Two RAFs ensures Radix layout + React paint are done
+      requestAnimationFrame(() => requestAnimationFrame(scrollToBottom));
+    }, 0);
+
+    return () => window.clearTimeout(t);
   }, [messages.length, conversationId]);
 
   const handleSendMessage = async () => {
@@ -168,7 +172,7 @@ export function ChatWindow({
 
       {/* Messages */}
       <ScrollArea className="flex-1 px-3 py-2" ref={scrollAreaRef}>
-        <div className="space-y-2 flex flex-col">
+        <div className="min-h-full space-y-2 flex flex-col justify-end">
           {messages.length === 0 ? (
             <p className="text-center text-xs text-muted-foreground py-4">
               No messages yet. Start the conversation!
