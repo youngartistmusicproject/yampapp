@@ -606,15 +606,54 @@ export function TaskDetailDialog({
             className="text-xl font-semibold"
           />
           {task.howToLink ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 mt-2 text-xs text-muted-foreground hover:text-foreground gap-1.5"
-              onClick={() => window.open(task.howToLink, '_blank')}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              How To
-            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 mt-2 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  How To
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-2" align="start">
+                <div className="flex flex-col gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="justify-start h-8 px-2 text-sm"
+                    onClick={() => window.open(task.howToLink, '_blank')}
+                  >
+                    <BookOpen className="w-3.5 h-3.5 mr-2" />
+                    Open Link
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="justify-start h-8 px-2 text-sm"
+                    onClick={() => {
+                      const link = prompt("Edit How To link:", task.howToLink);
+                      if (link?.trim()) {
+                        onTaskUpdate(task.id, { howToLink: link.trim() });
+                      }
+                    }}
+                  >
+                    <AlignLeft className="w-3.5 h-3.5 mr-2" />
+                    Edit Link
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="justify-start h-8 px-2 text-sm text-destructive hover:text-destructive"
+                    onClick={() => onTaskUpdate(task.id, { howToLink: undefined })}
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-2" />
+                    Remove
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           ) : (
             <Button
               variant="ghost"
