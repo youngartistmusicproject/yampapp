@@ -11,152 +11,33 @@ import {
   ThumbsUp,
   Send,
   AtSign,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-
-interface Comment {
-  id: string;
-  author: { name: string; avatar?: string };
-  content: string;
-  timestamp: string;
-  likes: number;
-}
-
-interface Post {
-  id: string;
-  author: { name: string; role: string; avatar?: string };
-  content: string;
-  image?: string;
-  timestamp: string;
-  likes: number;
-  comments: Comment[];
-  shares: number;
-  group: string;
-  liked: boolean;
-}
-
-interface Group {
-  id: string;
-  name: string;
-  members: number;
-  description: string;
-  icon?: string;
-}
-
-const groups: Group[] = [
-  {
-    id: "1",
-    name: "Faculty Lounge",
-    members: 24,
-    description: "General discussion for all faculty members",
-  },
-  {
-    id: "2",
-    name: "Music Theory",
-    members: 18,
-    description: "Share resources and discuss theory concepts",
-  },
-  {
-    id: "3",
-    name: "Parent Community",
-    members: 156,
-    description: "Connect with other music school parents",
-  },
-  {
-    id: "4",
-    name: "Student Showcase",
-    members: 89,
-    description: "Share student achievements and performances",
-  },
-];
-
-const initialPosts: Post[] = [
-  {
-    id: "1",
-    author: { name: "Sarah Miller", role: "Faculty" },
-    content:
-      "Just finished a great lesson on chord progressions! The students are really getting it. 🎹 Anyone have tips for teaching seventh chords to beginners?",
-    timestamp: "2 hours ago",
-    likes: 12,
-    comments: [
-      {
-        id: "c1",
-        author: { name: "John Davis" },
-        content: "Try using pop songs they know - makes it stick!",
-        timestamp: "1 hour ago",
-        likes: 3,
-      },
-      {
-        id: "c2",
-        author: { name: "Emma Chen" },
-        content: "I use colored stickers on the keys, works great!",
-        timestamp: "45 min ago",
-        likes: 5,
-      },
-    ],
-    shares: 2,
-    group: "Faculty Lounge",
-    liked: false,
-  },
-  {
-    id: "2",
-    author: { name: "John Davis", role: "Faculty" },
-    content:
-      "Reminder: Spring Recital practice starts next week. Please make sure all students have their pieces selected by Friday! 🎵\n\nLet me know if you need any help with repertoire suggestions.",
-    timestamp: "5 hours ago",
-    likes: 24,
-    comments: [],
-    shares: 8,
-    group: "Faculty Lounge",
-    liked: true,
-  },
-  {
-    id: "3",
-    author: { name: "Admin", role: "Admin" },
-    content:
-      "We're excited to announce our new practice room booking system! 🎉 Check the Knowledge Base for the full guide on how to use it.\n\nKey features:\n• Real-time availability\n• Mobile-friendly booking\n• Automatic reminders",
-    timestamp: "1 day ago",
-    likes: 45,
-    comments: [
-      {
-        id: "c3",
-        author: { name: "Lisa Adams" },
-        content: "Finally! This is going to be so helpful.",
-        timestamp: "23 hours ago",
-        likes: 12,
-      },
-    ],
-    shares: 15,
-    group: "Faculty Lounge",
-    liked: false,
-  },
-];
+import { Input } from "@/components/ui/input";
+import { useCommunity } from "@/hooks/useCommunity";
 
 export default function Community() {
-  const [selectedGroup, setSelectedGroup] = useState<string>("1");
+  const {
+    groups,
+    posts,
+    selectedGroupId,
+    setSelectedGroupId,
+    isLoading,
+    createPost,
+    togglePostLike,
+    addComment,
+    toggleCommentLike,
+  } = useCommunity();
+
   const [newPost, setNewPost] = useState("");
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
-
-  const handleLike = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              liked: !post.liked,
-              likes: post.liked ? post.likes - 1 : post.likes + 1,
-            }
-          : post
-      )
-    );
-  };
+  const [isPosting, setIsPosting] = useState(false);
 
   const toggleComments = (postId: string) => {
     setExpandedComments((prev) => {
@@ -170,48 +51,29 @@ export default function Community() {
     });
   };
 
-  const handleAddComment = (postId: string) => {
+  const handleAddComment = async (postId: string) => {
     const content = commentInputs[postId]?.trim();
     if (!content) return;
 
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              comments: [
-                ...post.comments,
-                {
-                  id: `c-${Date.now()}`,
-                  author: { name: "You" },
-                  content,
-                  timestamp: "Just now",
-                  likes: 0,
-                },
-              ],
-            }
-          : post
-      )
-    );
+    await addComment(postId, content);
     setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
   };
 
-  const handleCreatePost = () => {
+  const handleCreatePost = async () => {
     if (!newPost.trim()) return;
-    const post: Post = {
-      id: `p-${Date.now()}`,
-      author: { name: "You", role: "Member" },
-      content: newPost,
-      timestamp: "Just now",
-      likes: 0,
-      comments: [],
-      shares: 0,
-      group: groups.find((g) => g.id === selectedGroup)?.name || "Faculty Lounge",
-      liked: false,
-    };
-    setPosts((prev) => [post, ...prev]);
+    setIsPosting(true);
+    await createPost(newPost);
     setNewPost("");
+    setIsPosting(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex gap-4 animate-fade-in">
@@ -231,15 +93,15 @@ export default function Community() {
               <button
                 key={group.id}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
-                  selectedGroup === group.id
+                  selectedGroupId === group.id
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-secondary"
                 }`}
-                onClick={() => setSelectedGroup(group.id)}
+                onClick={() => setSelectedGroupId(group.id)}
               >
                 <div
                   className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    selectedGroup === group.id
+                    selectedGroupId === group.id
                       ? "bg-primary-foreground/20"
                       : "bg-secondary"
                   }`}
@@ -250,12 +112,12 @@ export default function Community() {
                   <p className="font-medium text-sm truncate">{group.name}</p>
                   <p
                     className={`text-xs ${
-                      selectedGroup === group.id
+                      selectedGroupId === group.id
                         ? "text-primary-foreground/70"
                         : "text-muted-foreground"
                     }`}
                   >
-                    {group.members} members
+                    {group.memberCount} members
                   </p>
                 </div>
               </button>
@@ -303,7 +165,6 @@ export default function Community() {
                 value={newPost}
                 onChange={(e) => {
                   setNewPost(e.target.value);
-                  // Auto-resize
                   e.target.style.height = "auto";
                   e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
                 }}
@@ -342,14 +203,27 @@ export default function Community() {
               </div>
               <Button
                 size="sm"
-                disabled={!newPost.trim()}
+                disabled={!newPost.trim() || isPosting}
                 onClick={handleCreatePost}
               >
-                Post
+                {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
               </Button>
             </div>
           </CardContent>
         </Card>
+
+        {/* Empty State */}
+        {posts.length === 0 && (
+          <Card className="shadow-card">
+            <CardContent className="py-12 text-center">
+              <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+              <h3 className="font-medium text-lg mb-1">No posts yet</h3>
+              <p className="text-sm text-muted-foreground">
+                Be the first to share something with the group!
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Posts Feed */}
         {posts.map((post) => (
@@ -447,14 +321,14 @@ export default function Community() {
                   variant="ghost"
                   size="sm"
                   className={`flex-1 gap-2 ${
-                    post.liked
+                    post.hasLiked
                       ? "text-primary hover:text-primary"
                       : "text-muted-foreground"
                   }`}
-                  onClick={() => handleLike(post.id)}
+                  onClick={() => togglePostLike(post.id)}
                 >
                   <ThumbsUp
-                    className={`w-5 h-5 ${post.liked ? "fill-primary" : ""}`}
+                    className={`w-5 h-5 ${post.hasLiked ? "fill-primary" : ""}`}
                   />
                   Like
                 </Button>
@@ -501,12 +375,16 @@ export default function Community() {
                               </p>
                               <p className="text-sm">{comment.content}</p>
                             </div>
-                            <div className="flex items-center gap-3 mt-1 px-3 text-xs text-muted-foreground">
-                              <button className="font-medium hover:underline">
+                            <div className="flex items-center gap-3 mt-1 px-2 text-xs text-muted-foreground">
+                              <button
+                                className={`font-medium hover:underline ${
+                                  comment.hasLiked ? "text-primary" : ""
+                                }`}
+                                onClick={() =>
+                                  toggleCommentLike(comment.id, post.id)
+                                }
+                              >
                                 Like
-                              </button>
-                              <button className="font-medium hover:underline">
-                                Reply
                               </button>
                               <span>{comment.timestamp}</span>
                               {comment.likes > 0 && (
@@ -521,7 +399,7 @@ export default function Community() {
                       ))}
 
                     {/* Add Comment Input */}
-                    <div className="flex gap-2 items-start">
+                    <div className="flex gap-2 pt-1">
                       <Avatar className="w-8 h-8">
                         <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                           JD
@@ -530,7 +408,7 @@ export default function Community() {
                       <div className="flex-1 flex gap-2">
                         <Input
                           placeholder="Write a comment..."
-                          className="rounded-full bg-secondary border-0 h-9 text-sm"
+                          className="flex-1 h-9 rounded-full bg-secondary border-0 text-sm"
                           value={commentInputs[post.id] || ""}
                           onChange={(e) =>
                             setCommentInputs((prev) => ({
@@ -548,9 +426,9 @@ export default function Community() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-9 w-9 flex-shrink-0"
-                          disabled={!commentInputs[post.id]?.trim()}
+                          className="h-9 w-9"
                           onClick={() => handleAddComment(post.id)}
+                          disabled={!commentInputs[post.id]?.trim()}
                         >
                           <Send className="w-4 h-4" />
                         </Button>
