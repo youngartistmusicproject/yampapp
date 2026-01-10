@@ -56,6 +56,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceSettingsType | undefined>();
   const [howToLink, setHowToLink] = useState("");
+  const [howToLinkError, setHowToLinkError] = useState("");
 
   const isEditing = !!task;
 
@@ -88,10 +89,37 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     setIsRecurring(false);
     setRecurrence(undefined);
     setHowToLink("");
+    setHowToLinkError("");
+  };
+
+  const isValidUrl = (url: string): boolean => {
+    if (!url.trim()) return true; // Empty is valid (optional field)
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const handleHowToLinkChange = (value: string) => {
+    setHowToLink(value);
+    if (value.trim() && !isValidUrl(value)) {
+      setHowToLinkError("Please enter a valid URL (e.g., https://example.com)");
+    } else {
+      setHowToLinkError("");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate URL before submitting
+    if (howToLink.trim() && !isValidUrl(howToLink)) {
+      setHowToLinkError("Please enter a valid URL (e.g., https://example.com)");
+      return;
+    }
+    
     onSubmit({
       title,
       description,
@@ -257,7 +285,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             <div className="space-y-2">
               <Label htmlFor="howToLink">How To (SOP Link)</Label>
               <div className="flex items-center gap-2">
-                {howToLink ? (
+                {howToLink && !howToLinkError ? (
                   <BookOpen className="w-4 h-4 text-muted-foreground shrink-0" />
                 ) : (
                   <Plus className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -267,10 +295,13 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   type="url"
                   placeholder="Add link to SOP documentation..."
                   value={howToLink}
-                  onChange={(e) => setHowToLink(e.target.value)}
-                  className="flex-1"
+                  onChange={(e) => handleHowToLinkChange(e.target.value)}
+                  className={`flex-1 ${howToLinkError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                 />
               </div>
+              {howToLinkError && (
+                <p className="text-xs text-destructive">{howToLinkError}</p>
+              )}
             </div>
           </div>
 
