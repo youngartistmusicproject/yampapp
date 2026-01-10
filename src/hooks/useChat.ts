@@ -68,6 +68,7 @@ export function useChat() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // Fetch all conversations with participants and last message
@@ -503,6 +504,82 @@ export function useChat() {
     return typingUsers.filter((t) => t.conversation_id === conversationId);
   };
 
+  // Fetch online users
+  const fetchOnlineUsers = async () => {
+    const { data } = await supabase
+      .from("user_presence")
+      .select("user_name")
+      .eq("is_online", true);
+    
+    if (data) {
+      setOnlineUsers(new Set(data.map((u) => u.user_name)));
+    }
+  };
+
+  // Update own presence
+  const updatePresence = async () => {
+    await supabase
+      .from("user_presence")
+      .upsert(
+        { user_name: "You", last_seen: new Date().toISOString(), is_online: true },
+        { onConflict: "user_name" }
+      );
+  };
+
+  // Set up presence tracking
+  useEffect(() => {
+    // Mark self as online
+    updatePresence();
+    fetchOnlineUsers();
+
+    // Update presence every 30 seconds
+    const presenceInterval = setInterval(() => {
+      updatePresence();
+    }, 30000);
+
+    // Subscribe to presence changes
+    const presenceChannel = supabase
+      .channel("presence-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "user_presence",
+        },
+        () => {
+          fetchOnlineUsers();
+        }
+      )
+      .subscribe();
+
+    // Mark as offline when leaving
+    const handleBeforeUnload = () => {
+      navigator.sendBeacon && supabase
+        .from("user_presence")
+        .update({ is_online: false })
+        .eq("user_name", "You");
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      clearInterval(presenceInterval);
+      supabase.removeChannel(presenceChannel);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      // Mark as offline
+      supabase
+        .from("user_presence")
+        .update({ is_online: false })
+        .eq("user_name", "You");
+    };
+  }, []);
+
+  // Check if a user is online
+  const isUserOnline = (userName: string) => {
+    return onlineUsers.has(userName);
+  };
+
   const selectedConversation = conversations.find((c) => c.id === selectedConversationId);
 
   return {
@@ -518,5 +595,6 @@ export function useChat() {
     formatTime,
     setTyping,
     getTypingUsersForConversation,
+    isUserOnline,
   };
 }
