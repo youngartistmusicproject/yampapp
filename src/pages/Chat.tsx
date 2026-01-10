@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Search, Plus, Send, Paperclip, MoreHorizontal, Loader2, X, FileIcon, Image as ImageIcon, SmilePlus } from "lucide-react";
+import { Search, Plus, Send, Paperclip, MoreHorizontal, Loader2, X, FileIcon, Image as ImageIcon, SmilePlus, Reply, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -19,7 +19,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useChat, Attachment, ReactionGroup, REACTION_EMOJIS } from "@/hooks/useChat";
+import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
+import { useChat, Attachment, Message, REACTION_EMOJIS } from "@/hooks/useChat";
 
 export default function Chat() {
   const {
@@ -41,7 +42,10 @@ export default function Chat() {
   const [newChatName, setNewChatName] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [emojiPickerMessageId, setEmojiPickerMessageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const filteredConversations = conversations.filter((conv) =>
     conv.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -50,9 +54,14 @@ export default function Chat() {
   const handleSendMessage = async () => {
     if (!messageInput.trim() && selectedFiles.length === 0) return;
     setIsSending(true);
-    await sendMessage(messageInput, selectedFiles.length > 0 ? selectedFiles : undefined);
+    await sendMessage(
+      messageInput, 
+      selectedFiles.length > 0 ? selectedFiles : undefined,
+      replyingTo?.id
+    );
     setMessageInput("");
     setSelectedFiles([]);
+    setReplyingTo(null);
     setIsSending(false);
   };
 
@@ -73,6 +82,16 @@ export default function Chat() {
 
   const removeFile = (index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleReply = (msg: Message) => {
+    setReplyingTo(msg);
+    inputRef.current?.focus();
+  };
+
+  const handleEmojiSelect = (emojiData: EmojiClickData, messageId: string) => {
+    toggleReaction(messageId, emojiData.emoji);
+    setEmojiPickerMessageId(null);
   };
 
   const isImageFile = (type: string) => type.startsWith("image/");
@@ -270,82 +289,148 @@ export default function Chat() {
                       key={msg.id}
                       className={`flex ${msg.is_own ? "justify-end" : "justify-start"} group`}
                     >
-                      <div className="relative">
-                        <div
-                          className={`max-w-[70%] ${
-                            msg.is_own
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-secondary"
-                          } rounded-2xl px-4 py-2`}
-                        >
-                          {!msg.is_own && (
-                            <p className="text-xs font-medium mb-1 text-primary">
-                              {msg.sender_name}
-                            </p>
-                          )}
-                          {msg.content && <p className="text-sm">{msg.content}</p>}
-                          {renderAttachments(msg.attachments, msg.is_own)}
-                          <p
-                            className={`text-xs mt-1 ${
-                              msg.is_own
-                                ? "text-primary-foreground/70"
-                                : "text-muted-foreground"
-                            }`}
+                      <div className={`relative flex items-start gap-2 ${msg.is_own ? "flex-row-reverse" : ""}`}>
+                        {/* Action buttons - positioned inline */}
+                        <div className={`flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pt-2`}>
+                          <button
+                            onClick={() => handleReply(msg)}
+                            className="p-1.5 rounded-full hover:bg-muted transition-colors"
+                            title="Reply"
                           >
-                            {formatTime(msg.created_at)}
-                          </p>
-                        </div>
-                        
-                        {/* Reactions display */}
-                        {msg.reactions && msg.reactions.length > 0 && (
-                          <div className={`flex flex-wrap gap-1 mt-1 ${msg.is_own ? "justify-end" : "justify-start"}`}>
-                            {msg.reactions.map((reaction) => (
+                            <Reply className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                          <Popover 
+                            open={emojiPickerMessageId === msg.id} 
+                            onOpenChange={(open) => setEmojiPickerMessageId(open ? msg.id : null)}
+                          >
+                            <PopoverTrigger asChild>
                               <button
-                                key={reaction.emoji}
-                                onClick={() => toggleReaction(msg.id, reaction.emoji)}
-                                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
-                                  reaction.hasReacted
-                                    ? "bg-primary/10 border-primary/30"
-                                    : "bg-muted/50 border-border hover:bg-muted"
-                                }`}
-                                title={reaction.users.join(", ")}
+                                className="p-1.5 rounded-full hover:bg-muted transition-colors"
+                                title="Add reaction"
                               >
-                                <span>{reaction.emoji}</span>
-                                <span className="text-muted-foreground">{reaction.count}</span>
+                                <SmilePlus className="w-4 h-4 text-muted-foreground" />
                               </button>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* Add reaction button */}
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button
-                              className={`absolute ${msg.is_own ? "-left-8" : "-right-8"} top-1/2 -translate-y-1/2 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-muted transition-all`}
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 border-0" side="top" align="start">
+                              <div className="flex gap-1 p-2 bg-background border rounded-lg shadow-lg mb-2">
+                                {REACTION_EMOJIS.map((emoji) => (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => {
+                                      toggleReaction(msg.id, emoji);
+                                      setEmojiPickerMessageId(null);
+                                    }}
+                                    className="p-1.5 hover:bg-muted rounded transition-colors text-lg"
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
+                                <div className="w-px bg-border mx-1" />
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <button className="p-1.5 hover:bg-muted rounded transition-colors">
+                                      <Smile className="w-5 h-5 text-muted-foreground" />
+                                    </button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0 border-0" side="top">
+                                    <EmojiPicker
+                                      onEmojiClick={(emojiData) => handleEmojiSelect(emojiData, msg.id)}
+                                      theme={Theme.AUTO}
+                                      width={320}
+                                      height={400}
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+
+                        {/* Message bubble */}
+                        <div className="max-w-[65%]">
+                          {/* Reply preview */}
+                          {msg.replyTo && (
+                            <div 
+                              className={`text-xs px-3 py-1.5 mb-1 rounded-t-lg border-l-2 ${
+                                msg.is_own 
+                                  ? "bg-primary/20 border-primary-foreground/50" 
+                                  : "bg-muted border-primary"
+                              }`}
                             >
-                              <SmilePlus className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-2" side={msg.is_own ? "left" : "right"}>
-                            <div className="flex gap-1">
-                              {REACTION_EMOJIS.map((emoji) => (
+                              <p className="font-medium text-muted-foreground">{msg.replyTo.sender_name}</p>
+                              <p className="truncate opacity-70">{msg.replyTo.content}</p>
+                            </div>
+                          )}
+                          
+                          <div
+                            className={`${
+                              msg.is_own
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-secondary"
+                            } rounded-2xl px-4 py-2`}
+                          >
+                            {!msg.is_own && (
+                              <p className="text-xs font-medium mb-1 text-primary">
+                                {msg.sender_name}
+                              </p>
+                            )}
+                            {msg.content && <p className="text-sm">{msg.content}</p>}
+                            {renderAttachments(msg.attachments, msg.is_own)}
+                            <p
+                              className={`text-xs mt-1 ${
+                                msg.is_own
+                                  ? "text-primary-foreground/70"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {formatTime(msg.created_at)}
+                            </p>
+                          </div>
+                          
+                          {/* Reactions display */}
+                          {msg.reactions && msg.reactions.length > 0 && (
+                            <div className={`flex flex-wrap gap-1 mt-1 ${msg.is_own ? "justify-end" : "justify-start"}`}>
+                              {msg.reactions.map((reaction) => (
                                 <button
-                                  key={emoji}
-                                  onClick={() => toggleReaction(msg.id, emoji)}
-                                  className="p-1.5 hover:bg-muted rounded transition-colors text-lg"
+                                  key={reaction.emoji}
+                                  onClick={() => toggleReaction(msg.id, reaction.emoji)}
+                                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                                    reaction.hasReacted
+                                      ? "bg-primary/10 border-primary/30"
+                                      : "bg-muted/50 border-border hover:bg-muted"
+                                  }`}
+                                  title={reaction.users.join(", ")}
                                 >
-                                  {emoji}
+                                  <span>{reaction.emoji}</span>
+                                  <span className="text-muted-foreground">{reaction.count}</span>
                                 </button>
                               ))}
                             </div>
-                          </PopoverContent>
-                        </Popover>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))
                 )}
               </div>
             </ScrollArea>
+
+            {/* Reply Preview */}
+            {replyingTo && (
+              <div className="px-4 py-2 border-t bg-muted/30 flex items-center gap-3">
+                <Reply className="w-4 h-4 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-primary">Replying to {replyingTo.sender_name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{replyingTo.content}</p>
+                </div>
+                <button
+                  onClick={() => setReplyingTo(null)}
+                  className="p-1 rounded-full hover:bg-muted transition-colors"
+                >
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+            )}
 
             {/* Selected Files Preview */}
             {selectedFiles.length > 0 && (
@@ -397,6 +482,7 @@ export default function Chat() {
                   <Paperclip className="w-5 h-5" />
                 </Button>
                 <Input
+                  ref={inputRef}
                   placeholder="Type a message..."
                   className="flex-1"
                   value={messageInput}
