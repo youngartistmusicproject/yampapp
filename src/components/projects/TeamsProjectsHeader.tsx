@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Users, FolderKanban } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { ChevronDown, Users, FolderKanban } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Project, Task, Team } from "@/types";
@@ -57,25 +55,6 @@ export function TeamsProjectsHeader({
     };
   };
 
-  // Calculate team progress (aggregate of all projects)
-  const getTeamProgress = (teamId: string) => {
-    const teamProjects = projects.filter((p) => p.teamId === teamId);
-    const teamProjectIds = teamProjects.map((p) => p.id);
-    const teamTasks = tasks.filter((t) => t.projectId && teamProjectIds.includes(t.projectId));
-    
-    if (teamTasks.length === 0) return { progress: 0, completed: 0, total: 0 };
-    
-    const completed = teamTasks.filter(
-      (t) => t.status === doneStatusId || t.completedAt
-    ).length;
-    
-    return {
-      progress: Math.round((completed / teamTasks.length) * 100),
-      completed,
-      total: teamTasks.length,
-    };
-  };
-
   // Get filtered projects for a team
   const getTeamProjects = (teamId: string) => {
     if (teamId === "all") return projects;
@@ -85,10 +64,10 @@ export function TeamsProjectsHeader({
   const isTeamExpanded = (teamId: string) => expandedTeams.has(teamId);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Teams Row */}
       <ScrollArea className="w-full">
-        <div className="flex gap-2 pb-2">
+        <div className="flex gap-1.5 pb-1">
           {/* All Teams */}
           <button
             onClick={() => {
@@ -97,24 +76,17 @@ export function TeamsProjectsHeader({
               toggleTeamExpand("all");
             }}
             className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all flex-shrink-0",
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors",
               selectedTeam === "all"
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card hover:bg-secondary border-border"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
             )}
           >
-            <Users className="w-4 h-4" />
-            <span className="font-medium text-sm">All Teams</span>
-            <ChevronDown
-              className={cn(
-                "w-4 h-4 transition-transform",
-                isTeamExpanded("all") ? "rotate-0" : "-rotate-90"
-              )}
-            />
+            <Users className="w-3.5 h-3.5" />
+            <span>All</span>
           </button>
 
           {teams.map((team) => {
-            const teamProgress = getTeamProgress(team.id);
             const teamProjects = getTeamProjects(team.id);
             
             return (
@@ -126,66 +98,30 @@ export function TeamsProjectsHeader({
                   toggleTeamExpand(team.id);
                 }}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all flex-shrink-0 min-w-[140px]",
+                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors",
                   selectedTeam === team.id
-                    ? "border-transparent"
-                    : "bg-card hover:bg-secondary border-border"
+                    ? "text-white"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 )}
                 style={
                   selectedTeam === team.id
-                    ? { backgroundColor: team.color, color: "white" }
+                    ? { backgroundColor: team.color }
                     : {}
                 }
               >
                 <div
-                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  className="w-2 h-2 rounded-full"
                   style={{
                     backgroundColor: selectedTeam === team.id ? "white" : team.color,
-                    opacity: selectedTeam === team.id ? 0.9 : 1,
                   }}
                 />
-                <div className="flex flex-col items-start gap-0.5 min-w-0">
-                  <span className="font-medium text-sm truncate">{team.name}</span>
-                  <div className="flex items-center gap-1.5 w-full">
-                    <div 
-                      className="h-1 flex-1 rounded-full overflow-hidden min-w-[40px]"
-                      style={{ 
-                        backgroundColor: selectedTeam === team.id ? "rgba(255,255,255,0.3)" : "hsl(var(--secondary))" 
-                      }}
-                    >
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${teamProgress.progress}%`,
-                          backgroundColor: selectedTeam === team.id ? "white" : team.color,
-                        }}
-                      />
-                    </div>
-                    <span 
-                      className={cn(
-                        "text-[10px] tabular-nums",
-                        selectedTeam === team.id ? "text-white/80" : "text-muted-foreground"
-                      )}
-                    >
-                      {teamProgress.progress}%
-                    </span>
-                  </div>
-                </div>
-                <Badge
-                  variant="secondary"
-                  className={cn(
-                    "h-5 px-1.5 text-[10px] ml-1",
-                    selectedTeam === team.id && "bg-white/20 text-white border-0"
-                  )}
-                >
+                <span>{team.name}</span>
+                <span className={cn(
+                  "text-xs",
+                  selectedTeam === team.id ? "text-white/70" : "text-muted-foreground"
+                )}>
                   {teamProjects.length}
-                </Badge>
-                <ChevronDown
-                  className={cn(
-                    "w-4 h-4 transition-transform flex-shrink-0",
-                    isTeamExpanded(team.id) ? "rotate-0" : "-rotate-90"
-                  )}
-                />
+                </span>
               </button>
             );
           })}
@@ -193,22 +129,22 @@ export function TeamsProjectsHeader({
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
 
-      {/* Projects Row - Show when team is expanded */}
+      {/* Projects Row */}
       {(isTeamExpanded(selectedTeam) || selectedTeam === "all") && (
         <ScrollArea className="w-full">
-          <div className="flex gap-2 pb-2">
+          <div className="flex gap-1.5 pb-1">
             {/* All Projects */}
             <button
               onClick={() => onProjectSelect("all")}
               className={cn(
-                "flex items-center gap-2 px-3 py-2.5 rounded-lg border transition-all flex-shrink-0",
+                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors",
                 selectedProject === "all"
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-card hover:bg-secondary border-border"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               )}
             >
-              <FolderKanban className="w-4 h-4" />
-              <span className="font-medium text-sm">All Projects</span>
+              <FolderKanban className="w-3.5 h-3.5" />
+              <span>All Projects</span>
             </button>
 
             {getTeamProjects(selectedTeam).map((project) => {
@@ -219,32 +155,31 @@ export function TeamsProjectsHeader({
                   key={project.id}
                   onClick={() => onProjectSelect(project.id)}
                   className={cn(
-                    "group flex flex-col gap-1.5 px-3 py-2 rounded-lg border transition-all flex-shrink-0 min-w-[160px] text-left",
+                    "flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors",
                     selectedProject === project.id
-                      ? "border-transparent"
-                      : "bg-card hover:bg-secondary border-border"
+                      ? "text-white"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                   )}
                   style={
                     selectedProject === project.id
-                      ? { backgroundColor: project.color, color: "white" }
+                      ? { backgroundColor: project.color }
                       : {}
                   }
                 >
-                  <div className="flex items-center gap-2 w-full">
-                    <div
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{
-                        backgroundColor: selectedProject === project.id ? "white" : project.color,
-                      }}
-                    />
-                    <span className="font-medium text-sm truncate flex-1">{project.name}</span>
-                  </div>
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{
+                      backgroundColor: selectedProject === project.id ? "white" : project.color,
+                    }}
+                  />
+                  <span>{project.name}</span>
                   
-                  <div className="flex items-center gap-2 w-full">
+                  {/* Progress bar */}
+                  <div className="flex items-center gap-1.5">
                     <div 
-                      className="h-1.5 flex-1 rounded-full overflow-hidden"
+                      className="h-1 w-12 rounded-full overflow-hidden"
                       style={{ 
-                        backgroundColor: selectedProject === project.id ? "rgba(255,255,255,0.3)" : "hsl(var(--secondary))" 
+                        backgroundColor: selectedProject === project.id ? "rgba(255,255,255,0.3)" : "hsl(var(--border))" 
                       }}
                     >
                       <div
@@ -257,22 +192,13 @@ export function TeamsProjectsHeader({
                     </div>
                     <span 
                       className={cn(
-                        "text-xs tabular-nums font-medium min-w-[32px] text-right",
-                        selectedProject === project.id ? "text-white/90" : "text-muted-foreground"
+                        "text-xs tabular-nums",
+                        selectedProject === project.id ? "text-white/70" : "text-muted-foreground"
                       )}
                     >
                       {projectProgress.progress}%
                     </span>
                   </div>
-                  
-                  <span 
-                    className={cn(
-                      "text-[10px]",
-                      selectedProject === project.id ? "text-white/70" : "text-muted-foreground"
-                    )}
-                  >
-                    {projectProgress.completed}/{projectProgress.total} tasks
-                  </span>
                 </button>
               );
             })}
