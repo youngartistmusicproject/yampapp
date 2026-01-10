@@ -63,7 +63,94 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
 
   return (
     <>
-      <div className="rounded-lg border bg-card shadow-card">
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {tasks.map((task) => (
+          <div 
+            key={task.id}
+            className="rounded-lg border bg-card p-4 shadow-card cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={() => onViewTask(task)}
+          >
+            <div className="flex items-start gap-3">
+              <div onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={task.status === doneStatusId}
+                  onCheckedChange={(checked) =>
+                    onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+                  }
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
+                    {task.title}
+                  </p>
+                  {task.isRecurring && (
+                    <Repeat className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                  )}
+                </div>
+                {(task.progress > 0 || task.description) && (
+                  <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                    {task.progress > 0 && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground mr-1.5">{task.progress}%</span>
+                    )}
+                    {task.description}
+                  </p>
+                )}
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  {(() => {
+                    const status = getStatusById(task.status);
+                    return (
+                      <Badge 
+                        variant="secondary"
+                        className="text-xs"
+                        style={{ 
+                          backgroundColor: status ? `${status.color}20` : undefined,
+                          color: status?.color 
+                        }}
+                      >
+                        {status?.name || task.status}
+                      </Badge>
+                    );
+                  })()}
+                  <Badge className={`${priorityColors[task.priority]} text-xs`} variant="secondary">
+                    {task.priority}
+                  </Badge>
+                  {task.dueDate && (
+                    <span className="text-xs text-muted-foreground">
+                      {format(task.dueDate, "MMM d")}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <UserAvatarGroup users={task.assignees} max={3} size="sm" />
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => onDuplicateTask?.(task.id)}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => setTaskToDelete(task)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="rounded-lg border bg-card shadow-card hidden md:block">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
