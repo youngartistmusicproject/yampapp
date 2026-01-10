@@ -27,6 +27,7 @@ interface ChatWindowProps {
   conversationName: string;
   messages: Message[];
   typingUsers: TypingUser[];
+  isOnline: boolean;
   onClose: () => void;
   onMinimize: () => void;
   onSendMessage: (content: string, files?: File[], replyToId?: string) => Promise<void>;
@@ -40,6 +41,7 @@ export function ChatWindow({
   conversationName,
   messages,
   typingUsers,
+  isOnline,
   onClose,
   onMinimize,
   onSendMessage,
@@ -177,16 +179,26 @@ export function ChatWindow({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 bg-primary text-primary-foreground">
         <div className="flex items-center gap-2 min-w-0">
-          <Avatar className="w-8 h-8 border-2 border-primary-foreground/20">
-            <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-xs">
-              {conversationName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="font-medium text-sm truncate">{conversationName}</span>
+          <div className="relative">
+            <Avatar className="w-8 h-8 border-2 border-primary-foreground/20">
+              <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-xs">
+                {conversationName
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+            {isOnline && (
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-primary rounded-full" />
+            )}
+          </div>
+          <div className="min-w-0">
+            <span className="font-medium text-sm truncate block">{conversationName}</span>
+            {isOnline && (
+              <span className="text-[10px] text-primary-foreground/70">Active now</span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-0.5">
           <Button

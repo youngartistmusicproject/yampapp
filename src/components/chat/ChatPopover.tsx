@@ -47,6 +47,7 @@ export function ChatPopover() {
     formatTime,
     setTyping,
     getTypingUsersForConversation,
+    isUserOnline,
   } = useChat();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -250,15 +251,20 @@ export function ChatPopover() {
                           className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-secondary transition-colors text-left"
                           onClick={() => handleSelectConversation(conv.id)}
                         >
-                          <Avatar className="w-12 h-12">
-                            <AvatarFallback className="bg-primary/10 text-primary">
-                              {conv.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="relative">
+                            <Avatar className="w-12 h-12">
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {conv.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            {isUserOnline(conv.name) && (
+                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full" />
+                            )}
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <p className="font-medium text-sm truncate">{conv.name}</p>
@@ -369,6 +375,7 @@ export function ChatPopover() {
               conversationName={chat.name}
               messages={selectedConversationId === chat.id ? messages : []}
               typingUsers={getTypingUsersForConversation(chat.id)}
+              isOnline={isUserOnline(chat.name)}
               onClose={() => handleCloseChat(chat.id)}
               onMinimize={() => handleMinimizeChat(chat.id)}
               onSendMessage={async (content, files, replyToId) => {
