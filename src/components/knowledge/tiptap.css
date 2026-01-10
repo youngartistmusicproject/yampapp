@@ -196,3 +196,39 @@
 .tiptap tr:nth-child(even) {
   background-color: hsl(var(--secondary) / 0.2);
 }
+
+/* Image styles */
+.tiptap .tiptap-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.tiptap .tiptap-image:hover {
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.3);
+}
+
+.tiptap .tiptap-image.ProseMirror-selectednode {
+  box-shadow: 0 0 0 3px hsl(var(--primary));
+}
+
+/* Image wrapper for resizing */
+.tiptap img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  display: block;
+  margin: 1rem auto;
+}
+
+.tiptap img:hover {
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.3);
+}
+
+.tiptap img.ProseMirror-selectednode {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}

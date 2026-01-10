@@ -9,6 +9,7 @@ import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
+import Image from "@tiptap/extension-image";
 import { Extension } from "@tiptap/react";
 import Suggestion from "@tiptap/suggestion";
 import { ReactRenderer } from "@tiptap/react";
@@ -31,11 +32,12 @@ import {
   FileText,
   Undo,
   Redo,
+  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState, useRef, useCallback } from "react";
 
 interface DocItem {
   id: string;
@@ -139,6 +141,17 @@ const getCommands = (docs: DocItem[]): CommandItem[] => {
       icon: <TableIcon className="w-4 h-4" />,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+      },
+    },
+    {
+      title: "Image",
+      description: "Upload or embed an image",
+      icon: <ImageIcon className="w-4 h-4" />,
+      command: ({ editor, range }) => {
+        editor.chain().focus().deleteRange(range).run();
+        // Trigger file input click
+        const event = new CustomEvent('tiptap-image-upload');
+        document.dispatchEvent(event);
       },
     },
   ];
@@ -335,6 +348,8 @@ const createSlashCommands = (docs: DocItem[]) => {
 };
 
 export function TiptapEditor({ content, docs = [], onDocSelect }: TiptapEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -361,6 +376,13 @@ export function TiptapEditor({ content, docs = [], onDocSelect }: TiptapEditorPr
       TableRow,
       TableHeader,
       TableCell,
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: "tiptap-image",
+        },
+      }),
       createSlashCommands(docs),
     ],
     content: content || "<p></p>",
@@ -382,9 +404,75 @@ export function TiptapEditor({ content, docs = [], onDocSelect }: TiptapEditorPr
         }
         return false;
       },
+      handleDrop: (view, event, slice, moved) => {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+          const file = event.dataTransfer.files[0];
+          if (file.type.startsWith('image/')) {
+            event.preventDefault();
+            handleImageUpload(file);
+            return true;
+          }
+        }
+        return false;
+      },
+      handlePaste: (view, event, slice) => {
+        const items = event.clipboardData?.items;
+        if (items) {
+          for (const item of Array.from(items)) {
+            if (item.type.startsWith('image/')) {
+              event.preventDefault();
+              const file = item.getAsFile();
+              if (file) {
+                handleImageUpload(file);
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      },
     },
     immediatelyRender: false,
   });
+
+  const handleImageUpload = useCallback((file: File) => {
+    if (!editor) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      editor.chain().focus().setImage({ src: dataUrl, alt: file.name }).run();
+    };
+    reader.readAsDataURL(file);
+  }, [editor]);
+
+  const handleFileInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      handleImageUpload(file);
+    }
+    // Reset input so same file can be selected again
+    event.target.value = '';
+  }, [handleImageUpload]);
+
+  const insertImageFromUrl = useCallback(() => {
+    const url = window.prompt('Enter image URL');
+    if (url && editor) {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+  }, [editor]);
+
+  // Listen for custom event from slash command
+  useEffect(() => {
+    const handleUploadEvent = () => {
+      fileInputRef.current?.click();
+    };
+    
+    document.addEventListener('tiptap-image-upload', handleUploadEvent);
+    return () => {
+      document.removeEventListener('tiptap-image-upload', handleUploadEvent);
+    };
+  }, []);
 
   if (!editor) {
     return null;
@@ -392,6 +480,14 @@ export function TiptapEditor({ content, docs = [], onDocSelect }: TiptapEditorPr
 
   return (
     <div className="h-full flex flex-col">
+      {/* Hidden file input for image uploads */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileInputChange}
+        accept="image/*"
+        className="hidden"
+      />
       {/* Toolbar */}
       <div className="flex items-center gap-1 p-2 border-b bg-secondary/30 flex-wrap">
         <div className="flex items-center gap-0.5">
@@ -516,6 +612,15 @@ export function TiptapEditor({ content, docs = [], onDocSelect }: TiptapEditorPr
             title="Link"
           >
             <LinkIcon className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => fileInputRef.current?.click()}
+            title="Upload Image"
+          >
+            <ImageIcon className="w-4 h-4" />
           </Button>
         </div>
         <div className="ml-auto flex items-center gap-0.5">
