@@ -175,15 +175,32 @@ export function TaskDetailDialog({
 }: TaskDetailDialogProps) {
   const [newComment, setNewComment] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState("");
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Reset pending attachments when dialog closes
+  // Filter members based on mention search
+  const filteredMembers = availableMembers.filter(member =>
+    member.name.toLowerCase().includes(mentionSearch.toLowerCase())
+  );
+
+  // Reset state when dialog closes
   useEffect(() => {
     if (!open) {
       setPendingAttachments([]);
       setNewComment("");
+      setShowMentions(false);
+      setMentionSearch("");
     }
   }, [open]);
+
+  // Reset mention index when filtered members change
+  useEffect(() => {
+    setMentionIndex(0);
+  }, [filteredMembers.length]);
 
   if (!task) return null;
 
@@ -235,11 +252,110 @@ export function TaskDetailDialog({
     });
   };
 
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    setNewComment(value);
+    setCursorPosition(cursorPos);
+
+    // Check for @ mentions
+    const textBeforeCursor = value.slice(0, cursorPos);
+    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+    
+    if (mentionMatch) {
+      setShowMentions(true);
+      setMentionSearch(mentionMatch[1]);
+    } else {
+      setShowMentions(false);
+      setMentionSearch("");
+    }
+  };
+
+  const insertMention = (member: User) => {
+    const textBeforeCursor = newComment.slice(0, cursorPosition);
+    const textAfterCursor = newComment.slice(cursorPosition);
+    
+    // Find the @ symbol position
+    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+    if (mentionMatch) {
+      const beforeMention = textBeforeCursor.slice(0, mentionMatch.index);
+      const newText = `${beforeMention}@${member.name} ${textAfterCursor}`;
+      setNewComment(newText);
+      
+      // Move cursor after the inserted mention
+      const newCursorPos = beforeMention.length + member.name.length + 2;
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+        }
+      }, 0);
+    }
+    
+    setShowMentions(false);
+    setMentionSearch("");
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (showMentions && filteredMembers.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIndex(prev => (prev + 1) % filteredMembers.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIndex(prev => (prev - 1 + filteredMembers.length) % filteredMembers.length);
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        insertMention(filteredMembers[mentionIndex]);
+      } else if (e.key === 'Escape') {
+        setShowMentions(false);
+      }
+      return;
+    }
+    
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmitComment();
     }
+  };
+
+  // Render comment content with highlighted mentions
+  const renderCommentContent = (content: string) => {
+    const mentionRegex = /@(\w+(?:\s+\w+)*)/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = mentionRegex.exec(content)) !== null) {
+      // Add text before the mention
+      if (match.index > lastIndex) {
+        parts.push(content.slice(lastIndex, match.index));
+      }
+      
+      // Add the mention with styling
+      const mentionName = match[1];
+      const isMember = availableMembers.some(m => 
+        m.name.toLowerCase() === mentionName.toLowerCase()
+      );
+      
+      parts.push(
+        <span 
+          key={match.index} 
+          className={isMember ? "text-primary font-medium bg-primary/10 rounded px-1" : ""}
+        >
+          @{mentionName}
+        </span>
+      );
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push(content.slice(lastIndex));
+    }
+    
+    return parts.length > 0 ? parts : content;
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -471,9 +587,10 @@ export function TaskDetailDialog({
                 <div className="flex-1 space-y-2">
                   <div className="relative">
                     <Textarea
-                      placeholder="Write a comment or drop files..."
+                      ref={textareaRef}
+                      placeholder="Write a comment or drop files... Use @ to mention"
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
+                      onChange={handleCommentChange}
                       onKeyDown={handleKeyDown}
                       className="min-h-[60px] resize-none text-sm pr-20"
                       rows={2}
@@ -504,6 +621,31 @@ export function TaskDetailDialog({
                         <Send className="w-4 h-4" />
                       </Button>
                     </div>
+                    
+                    {/* Mention autocomplete dropdown */}
+                    {showMentions && filteredMembers.length > 0 && (
+                      <div className="absolute left-0 bottom-full mb-1 w-64 bg-popover border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                        {filteredMembers.map((member, index) => (
+                          <button
+                            key={member.id}
+                            type="button"
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors ${
+                              index === mentionIndex ? 'bg-muted' : ''
+                            }`}
+                            onClick={() => insertMention(member)}
+                            onMouseEnter={() => setMentionIndex(index)}
+                          >
+                            <UserAvatar user={member} className="w-6 h-6 text-xs" />
+                            <span className="font-medium">{member.name}</span>
+                            {member.role && (
+                              <span className="text-xs text-muted-foreground ml-auto">
+                                {member.role}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   
                   {/* Pending attachments preview */}
@@ -565,7 +707,7 @@ export function TaskDetailDialog({
                           )}
                         </div>
                         {comment.content && (
-                          <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+                          <p className="text-sm whitespace-pre-wrap">{renderCommentContent(comment.content)}</p>
                         )}
                         
                         {/* Comment attachments */}
