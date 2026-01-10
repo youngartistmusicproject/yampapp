@@ -7,11 +7,10 @@ import {
   MoreHorizontal,
   Users,
   Image as ImageIcon,
-  Video,
   Smile,
-  MapPin,
   ThumbsUp,
   Send,
+  AtSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -215,7 +214,7 @@ export default function Community() {
   };
 
   return (
-    <div className="flex gap-6 animate-fade-in">
+    <div className="flex gap-4 animate-fade-in">
       {/* Groups Sidebar */}
       <div className="w-72 flex-shrink-0 space-y-4 hidden lg:block">
         <Card className="shadow-card">
@@ -286,32 +285,28 @@ export default function Community() {
       </div>
 
       {/* Feed */}
-      <div className="flex-1 max-w-2xl mx-auto space-y-4">
+      <div className="flex-1 max-w-2xl space-y-4">
         {/* Create Post Box - Facebook style */}
         <Card className="shadow-card">
           <CardContent className="pt-4 pb-3">
-            <div className="flex gap-3 items-start">
+            <div className="flex gap-3 items-center">
               <Avatar className="w-10 h-10">
                 <AvatarFallback className="bg-primary text-primary-foreground font-medium">
                   JD
                 </AvatarFallback>
               </Avatar>
-              <button
-                className="flex-1 bg-secondary hover:bg-secondary/80 transition-colors rounded-full px-4 py-2.5 text-left text-muted-foreground text-sm"
-                onClick={() => document.getElementById("post-textarea")?.focus()}
-              >
-                What's on your mind?
-              </button>
-            </div>
-
-            {/* Expanded textarea */}
-            <div className="mt-3">
               <textarea
                 id="post-textarea"
-                placeholder="Share something with the group..."
-                className="w-full min-h-[100px] bg-transparent border-0 resize-none focus:outline-none focus:ring-0 text-sm placeholder:text-muted-foreground"
+                placeholder="What's on your mind, John?"
+                className="flex-1 bg-secondary hover:bg-secondary/80 transition-colors rounded-2xl px-4 py-2.5 text-sm placeholder:text-muted-foreground resize-none border-0 focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[42px] max-h-[200px]"
+                rows={1}
                 value={newPost}
-                onChange={(e) => setNewPost(e.target.value)}
+                onChange={(e) => {
+                  setNewPost(e.target.value);
+                  // Auto-resize
+                  e.target.style.height = "auto";
+                  e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
+                }}
               />
             </div>
 
@@ -326,15 +321,7 @@ export default function Community() {
                   className="gap-2 text-muted-foreground hover:text-green-600 hover:bg-green-50"
                 >
                   <ImageIcon className="w-5 h-5 text-green-600" />
-                  <span className="hidden sm:inline">Photo</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2 text-muted-foreground hover:text-red-600 hover:bg-red-50"
-                >
-                  <Video className="w-5 h-5 text-red-500" />
-                  <span className="hidden sm:inline">Video</span>
+                  <span className="hidden sm:inline">Photo/Video</span>
                 </Button>
                 <Button
                   variant="ghost"
@@ -347,10 +334,10 @@ export default function Community() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-2 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  className="gap-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
                 >
-                  <MapPin className="w-5 h-5 text-primary" />
-                  <span className="hidden sm:inline">Location</span>
+                  <AtSign className="w-5 h-5 text-blue-500" />
+                  <span className="hidden sm:inline">Tag</span>
                 </Button>
               </div>
               <Button
