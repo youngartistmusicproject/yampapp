@@ -160,16 +160,6 @@ export function ChatPopover() {
     setSelectedConversationId(chatId);
   };
 
-  // When a chat window is opened, ensure it's selected so messages load
-  useEffect(() => {
-    const openNonMinimized = openChats.filter((c) => !c.minimized);
-    if (openNonMinimized.length > 0) {
-      const lastOpen = openNonMinimized[openNonMinimized.length - 1];
-      if (selectedConversationId !== lastOpen.id) {
-        setSelectedConversationId(lastOpen.id);
-      }
-    }
-  }, [openChats, selectedConversationId, setSelectedConversationId]);
 
   return (
     <>
@@ -373,26 +363,39 @@ export function ChatPopover() {
         {openChats
           .filter((chat) => !chat.minimized)
           .map((chat) => (
-            <ChatWindow
+            <div
               key={chat.id}
-              conversationId={chat.id}
-              conversationName={chat.name}
-              messages={chat.id === selectedConversationId ? messages : []}
-              typingUsers={getTypingUsersForConversation(chat.id)}
-              isOnline={isUserOnline(chat.name)}
-              onClose={() => handleCloseChat(chat.id)}
-              onMinimize={() => handleMinimizeChat(chat.id)}
-              onSendMessage={async (content, files, replyToId) => {
+              onPointerDownCapture={() => {
                 if (selectedConversationId !== chat.id) {
                   setSelectedConversationId(chat.id);
                 }
-                await sendMessage(content, files, replyToId);
               }}
-              onTyping={(isTyping) => setTyping(chat.id, isTyping)}
-              toggleReaction={toggleReaction}
-              formatTime={formatTime}
-              onMarkAsRead={() => markMessagesAsRead(chat.id)}
-            />
+              onFocusCapture={() => {
+                if (selectedConversationId !== chat.id) {
+                  setSelectedConversationId(chat.id);
+                }
+              }}
+            >
+              <ChatWindow
+                conversationId={chat.id}
+                conversationName={chat.name}
+                messages={chat.id === selectedConversationId ? messages : []}
+                typingUsers={getTypingUsersForConversation(chat.id)}
+                isOnline={isUserOnline(chat.name)}
+                onClose={() => handleCloseChat(chat.id)}
+                onMinimize={() => handleMinimizeChat(chat.id)}
+                onSendMessage={async (content, files, replyToId) => {
+                  if (selectedConversationId !== chat.id) {
+                    setSelectedConversationId(chat.id);
+                  }
+                  await sendMessage(content, files, replyToId);
+                }}
+                onTyping={(isTyping) => setTyping(chat.id, isTyping)}
+                toggleReaction={toggleReaction}
+                formatTime={formatTime}
+                onMarkAsRead={() => markMessagesAsRead(chat.id)}
+              />
+            </div>
           ))}
       </div>
     </>
