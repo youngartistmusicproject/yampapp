@@ -132,7 +132,11 @@ export default function Knowledge() {
       {/* Editor */}
       <Card className="flex-1 shadow-card overflow-hidden">
         <CardContent className="p-0 h-full">
-          <KnowledgeEditor docId={selectedDoc} />
+          <KnowledgeEditor 
+            docId={selectedDoc} 
+            docs={sampleDocs}
+            onDocSelect={(docId) => setSelectedDoc(docId)}
+          />
         </CardContent>
       </Card>
     </div>
