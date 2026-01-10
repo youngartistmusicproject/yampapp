@@ -78,6 +78,9 @@ export function ChatWindow({
       )
     : [];
 
+  // Debug: log search state
+  console.log("Search debug:", { searchQuery, messagesCount: messages.length, searchResultsCount: searchResults.length });
+
   // Navigate to a search result
   const navigateToSearchResult = (index: number) => {
     if (searchResults.length === 0) return;
