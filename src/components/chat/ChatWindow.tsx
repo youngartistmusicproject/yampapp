@@ -166,17 +166,15 @@ export function ChatWindow({
               >
                 <div className={`relative flex items-end gap-2 ${msg.is_own ? "flex-row-reverse" : ""} max-w-[85%]`}>
                   {/* Avatar */}
-                  {!msg.is_own && (
-                    <Avatar className="w-6 h-6 flex-shrink-0 mb-4">
-                      <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
-                        {msg.sender_name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+                  <Avatar className="w-6 h-6 flex-shrink-0 mb-4">
+                    <AvatarFallback className={`text-[10px] ${msg.is_own ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
+                      {msg.sender_name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
 
                   {/* Message content */}
                   <div className="flex flex-col">
