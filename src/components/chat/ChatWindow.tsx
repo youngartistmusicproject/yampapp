@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Paperclip, Minus, SmilePlus, Reply, FileIcon, Loader2, Plus } from "lucide-react";
+import { X, Send, Paperclip, Minus, SmilePlus, Reply, FileIcon, Loader2, Plus, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -34,6 +34,7 @@ interface ChatWindowProps {
   onTyping: (isTyping: boolean) => void;
   toggleReaction: (messageId: string, emoji: string) => void;
   formatTime: (date: string) => string;
+  onMarkAsRead: () => void;
 }
 
 export function ChatWindow({
@@ -48,6 +49,7 @@ export function ChatWindow({
   onTyping,
   toggleReaction,
   formatTime,
+  onMarkAsRead,
 }: ChatWindowProps) {
   const [messageInput, setMessageInput] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -80,6 +82,11 @@ export function ChatWindow({
     }, 0);
 
     return () => window.clearTimeout(t);
+  }, [messages.length, conversationId]);
+
+  // Mark messages as read when window is visible
+  useEffect(() => {
+    onMarkAsRead();
   }, [messages.length, conversationId]);
 
   // Handle typing indicator with debounce
@@ -399,14 +406,25 @@ export function ChatWindow({
                       </div>
                     )}
 
-                    {/* Timestamp */}
-                    <p
-                      className={`text-[10px] text-muted-foreground mt-0.5 ${
-                        msg.is_own ? "text-right" : "text-left"
+                    {/* Timestamp and read receipt */}
+                    <div
+                      className={`flex items-center gap-1 mt-0.5 ${
+                        msg.is_own ? "justify-end" : "justify-start"
                       }`}
                     >
-                      {format(new Date(msg.created_at), "MMM d, h:mm a")}
-                    </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {format(new Date(msg.created_at), "MMM d, h:mm a")}
+                      </p>
+                      {msg.is_own && (
+                        <span title={msg.readBy && msg.readBy.length > 0 ? `Seen by ${msg.readBy.map(r => r.user_name).join(", ")}` : "Sent"}>
+                          {msg.readBy && msg.readBy.length > 0 ? (
+                            <CheckCheck className="w-3 h-3 text-primary" />
+                          ) : (
+                            <Check className="w-3 h-3 text-muted-foreground" />
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
