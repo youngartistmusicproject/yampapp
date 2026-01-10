@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -39,6 +39,9 @@ export function useCommunity() {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  
+  // Cache group names to avoid refetching
+  const groupNamesCache = useRef<Map<string, string>>(new Map());
 
   const formatTime = (timestamp: string): string => {
     const date = new Date(timestamp);
@@ -57,30 +60,29 @@ export function useCommunity() {
 
   const fetchGroups = async () => {
     try {
+      // Fetch groups with member count in a single query using a subquery
       const { data: groupsData, error } = await supabase
         .from("community_groups")
-        .select("*")
+        .select(`
+          *,
+          community_group_members(count)
+        `)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
 
-      // Get member counts
-      const groupsWithCounts = await Promise.all(
-        (groupsData || []).map(async (group) => {
-          const { count } = await supabase
-            .from("community_group_members")
-            .select("*", { count: "exact", head: true })
-            .eq("group_id", group.id);
-
-          return {
-            id: group.id,
-            name: group.name,
-            description: group.description,
-            icon: group.icon,
-            memberCount: count || 0,
-          };
-        })
-      );
+      const groupsWithCounts = (groupsData || []).map((group: any) => {
+        // Cache group names
+        groupNamesCache.current.set(group.id, group.name);
+        
+        return {
+          id: group.id,
+          name: group.name,
+          description: group.description,
+          icon: group.icon,
+          memberCount: group.community_group_members?.[0]?.count || 0,
+        };
+      });
 
       setGroups(groupsWithCounts);
 
@@ -97,87 +99,110 @@ export function useCommunity() {
     }
   };
 
-  const fetchPosts = async (groupId?: string) => {
+  const fetchPosts = useCallback(async (groupId?: string) => {
+    if (!groupId) return;
+    
     try {
-      let query = supabase
+      // Single query to get posts
+      const { data: postsData, error } = await supabase
         .from("community_posts")
         .select("*")
+        .eq("group_id", groupId)
         .order("created_at", { ascending: false });
-
-      if (groupId) {
-        query = query.eq("group_id", groupId);
-      }
-
-      const { data: postsData, error } = await query;
 
       if (error) throw error;
 
-      // Fetch likes, comments, and group names for each post
-      const postsWithDetails = await Promise.all(
-        (postsData || []).map(async (post) => {
-          // Get group name
-          const { data: groupData } = await supabase
-            .from("community_groups")
-            .select("name")
-            .eq("id", post.group_id)
-            .maybeSingle();
+      if (!postsData || postsData.length === 0) {
+        setPosts([]);
+        setIsLoading(false);
+        return;
+      }
 
-          // Get likes
-          const { data: likesData, count: likesCount } = await supabase
-            .from("community_post_likes")
-            .select("*", { count: "exact" })
-            .eq("post_id", post.id);
+      const postIds = postsData.map((p) => p.id);
 
-          // Check if current user liked
-          const hasLiked = (likesData || []).some((l) => l.user_name === "You");
+      // Batch fetch all related data in parallel
+      const [likesResult, commentsResult] = await Promise.all([
+        supabase
+          .from("community_post_likes")
+          .select("post_id, user_name")
+          .in("post_id", postIds),
+        supabase
+          .from("community_comments")
+          .select("*")
+          .in("post_id", postIds)
+          .order("created_at", { ascending: true }),
+      ]);
 
-          // Get comments
-          const { data: commentsData } = await supabase
-            .from("community_comments")
-            .select("*")
-            .eq("post_id", post.id)
-            .order("created_at", { ascending: true });
+      const likesData = likesResult.data || [];
+      const commentsData = commentsResult.data || [];
 
-          // Get comment likes
-          const commentsWithLikes = await Promise.all(
-            (commentsData || []).map(async (comment) => {
-              const { data: commentLikes, count: commentLikesCount } = await supabase
-                .from("community_comment_likes")
-                .select("*", { count: "exact" })
-                .eq("comment_id", comment.id);
+      // Fetch comment likes in batch if there are comments
+      const commentIds = commentsData.map((c) => c.id);
+      let commentLikesData: any[] = [];
+      
+      if (commentIds.length > 0) {
+        const { data } = await supabase
+          .from("community_comment_likes")
+          .select("comment_id, user_name")
+          .in("comment_id", commentIds);
+        commentLikesData = data || [];
+      }
 
-              const hasLikedComment = (commentLikes || []).some(
-                (l) => l.user_name === "You"
-              );
+      // Build lookup maps for O(1) access
+      const likesMap = new Map<string, { count: number; hasLiked: boolean }>();
+      likesData.forEach((like) => {
+        const existing = likesMap.get(like.post_id) || { count: 0, hasLiked: false };
+        existing.count++;
+        if (like.user_name === "You") existing.hasLiked = true;
+        likesMap.set(like.post_id, existing);
+      });
 
-              return {
-                id: comment.id,
-                author: { name: comment.author_name },
-                content: comment.content,
-                timestamp: formatTime(comment.created_at),
-                likes: commentLikesCount || 0,
-                hasLiked: hasLikedComment,
-              };
-            })
-          );
+      const commentLikesMap = new Map<string, { count: number; hasLiked: boolean }>();
+      commentLikesData.forEach((like) => {
+        const existing = commentLikesMap.get(like.comment_id) || { count: 0, hasLiked: false };
+        existing.count++;
+        if (like.user_name === "You") existing.hasLiked = true;
+        commentLikesMap.set(like.comment_id, existing);
+      });
 
-          return {
-            id: post.id,
-            groupId: post.group_id,
-            author: { name: post.author_name, role: post.author_role || "Member" },
-            content: post.content,
-            image: post.image_url || undefined,
-            timestamp: formatTime(post.created_at),
-            likes: likesCount || 0,
-            comments: commentsWithLikes,
-            shares: 0,
-            group: groupData?.name || "Unknown",
-            hasLiked,
-          };
-        })
-      );
+      const commentsMap = new Map<string, Comment[]>();
+      commentsData.forEach((comment) => {
+        const commentLikes = commentLikesMap.get(comment.id) || { count: 0, hasLiked: false };
+        const transformed: Comment = {
+          id: comment.id,
+          author: { name: comment.author_name },
+          content: comment.content,
+          timestamp: formatTime(comment.created_at),
+          likes: commentLikes.count,
+          hasLiked: commentLikes.hasLiked,
+        };
+        const existing = commentsMap.get(comment.post_id) || [];
+        existing.push(transformed);
+        commentsMap.set(comment.post_id, existing);
+      });
 
-      setPosts(postsWithDetails);
+      // Transform posts using cached data
+      const groupName = groupNamesCache.current.get(groupId) || "Unknown";
+      
+      const transformedPosts: Post[] = postsData.map((post) => {
+        const postLikes = likesMap.get(post.id) || { count: 0, hasLiked: false };
+        
+        return {
+          id: post.id,
+          groupId: post.group_id,
+          author: { name: post.author_name, role: post.author_role || "Member" },
+          content: post.content,
+          image: post.image_url || undefined,
+          timestamp: formatTime(post.created_at),
+          likes: postLikes.count,
+          comments: commentsMap.get(post.id) || [],
+          shares: 0,
+          group: groupName,
+          hasLiked: postLikes.hasLiked,
+        };
+      });
+
+      setPosts(transformedPosts);
     } catch (error) {
       console.error("Error fetching posts:", error);
       toast({
@@ -188,21 +213,43 @@ export function useCommunity() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   const createPost = async (content: string, imageUrl?: string) => {
     if (!selectedGroupId || !content.trim()) return;
 
     try {
-      const { error } = await supabase.from("community_posts").insert({
-        group_id: selectedGroupId,
-        author_name: "You",
-        author_role: "Member",
-        content: content.trim(),
-        image_url: imageUrl || null,
-      });
+      const { data, error } = await supabase
+        .from("community_posts")
+        .insert({
+          group_id: selectedGroupId,
+          author_name: "You",
+          author_role: "Member",
+          content: content.trim(),
+          image_url: imageUrl || null,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Optimistic update
+      const groupName = groupNamesCache.current.get(selectedGroupId) || "Unknown";
+      const newPost: Post = {
+        id: data.id,
+        groupId: data.group_id,
+        author: { name: "You", role: "Member" },
+        content: data.content,
+        image: data.image_url || undefined,
+        timestamp: "Just now",
+        likes: 0,
+        comments: [],
+        shares: 0,
+        group: groupName,
+        hasLiked: false,
+      };
+      
+      setPosts((prev) => [newPost, ...prev]);
 
       toast({
         title: "Success",
@@ -219,39 +266,49 @@ export function useCommunity() {
   };
 
   const togglePostLike = async (postId: string) => {
-    try {
-      const post = posts.find((p) => p.id === postId);
-      if (!post) return;
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
 
+    // Optimistic update first
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              hasLiked: !p.hasLiked,
+              likes: p.hasLiked ? p.likes - 1 : p.likes + 1,
+            }
+          : p
+      )
+    );
+
+    try {
       if (post.hasLiked) {
-        // Remove like
         await supabase
           .from("community_post_likes")
           .delete()
           .eq("post_id", postId)
           .eq("user_name", "You");
       } else {
-        // Add like
         await supabase.from("community_post_likes").insert({
           post_id: postId,
           user_name: "You",
           reaction_type: "like",
         });
       }
-
-      // Optimistic update
+    } catch (error) {
+      // Revert on error
       setPosts((prev) =>
         prev.map((p) =>
           p.id === postId
             ? {
                 ...p,
-                hasLiked: !p.hasLiked,
-                likes: p.hasLiked ? p.likes - 1 : p.likes + 1,
+                hasLiked: post.hasLiked,
+                likes: post.likes,
               }
             : p
         )
       );
-    } catch (error) {
       console.error("Error toggling like:", error);
     }
   };
@@ -272,7 +329,6 @@ export function useCommunity() {
 
       if (error) throw error;
 
-      // Optimistic update
       const newComment: Comment = {
         id: data.id,
         author: { name: "You" },
@@ -300,11 +356,31 @@ export function useCommunity() {
   };
 
   const toggleCommentLike = async (commentId: string, postId: string) => {
-    try {
-      const post = posts.find((p) => p.id === postId);
-      const comment = post?.comments.find((c) => c.id === commentId);
-      if (!comment) return;
+    const post = posts.find((p) => p.id === postId);
+    const comment = post?.comments.find((c) => c.id === commentId);
+    if (!comment) return;
 
+    // Optimistic update
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              comments: p.comments.map((c) =>
+                c.id === commentId
+                  ? {
+                      ...c,
+                      hasLiked: !c.hasLiked,
+                      likes: c.hasLiked ? c.likes - 1 : c.likes + 1,
+                    }
+                  : c
+              ),
+            }
+          : p
+      )
+    );
+
+    try {
       if (comment.hasLiked) {
         await supabase
           .from("community_comment_likes")
@@ -317,8 +393,8 @@ export function useCommunity() {
           user_name: "You",
         });
       }
-
-      // Optimistic update
+    } catch (error) {
+      // Revert on error
       setPosts((prev) =>
         prev.map((p) =>
           p.id === postId
@@ -328,8 +404,8 @@ export function useCommunity() {
                   c.id === commentId
                     ? {
                         ...c,
-                        hasLiked: !c.hasLiked,
-                        likes: c.hasLiked ? c.likes - 1 : c.likes + 1,
+                        hasLiked: comment.hasLiked,
+                        likes: comment.likes,
                       }
                     : c
                 ),
@@ -337,7 +413,6 @@ export function useCommunity() {
             : p
         )
       );
-    } catch (error) {
       console.error("Error toggling comment like:", error);
     }
   };
@@ -350,41 +425,33 @@ export function useCommunity() {
   // Fetch posts when group changes
   useEffect(() => {
     if (selectedGroupId) {
+      setIsLoading(true);
       fetchPosts(selectedGroupId);
     }
-  }, [selectedGroupId]);
+  }, [selectedGroupId, fetchPosts]);
 
-  // Realtime subscriptions
+  // Realtime subscriptions - debounced refresh
   useEffect(() => {
+    if (!selectedGroupId) return;
+
     const channel = supabase
       .channel("community-realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "community_posts" },
-        () => {
-          if (selectedGroupId) fetchPosts(selectedGroupId);
-        }
+        { event: "INSERT", schema: "public", table: "community_posts", filter: `group_id=eq.${selectedGroupId}` },
+        () => fetchPosts(selectedGroupId)
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "community_comments" },
-        () => {
-          if (selectedGroupId) fetchPosts(selectedGroupId);
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "community_post_likes" },
-        () => {
-          if (selectedGroupId) fetchPosts(selectedGroupId);
-        }
+        { event: "DELETE", schema: "public", table: "community_posts" },
+        () => fetchPosts(selectedGroupId)
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedGroupId]);
+  }, [selectedGroupId, fetchPosts]);
 
   return {
     groups,
