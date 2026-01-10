@@ -69,11 +69,11 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 overflow-x-auto">
         {statuses.map((column) => (
           <div
             key={column.id}
-            className="bg-secondary/30 rounded-lg p-3"
+            className="bg-secondary/30 rounded-lg p-3 min-w-[280px] sm:min-w-0"
             onDrop={(e) => handleDrop(e, column.id as Task["status"])}
             onDragOver={handleDragOver}
           >
@@ -99,15 +99,15 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                 >
                   <CardContent className="p-3">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-medium leading-snug">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <p className="text-sm font-medium leading-snug truncate">
                           {task.title}
                         </p>
                         {task.isRecurring && (
                           <Repeat className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                         )}
                       </div>
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                         <Button 
                           variant="ghost" 
                           size="icon" 

@@ -596,9 +596,9 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[1000px] h-[90vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[1000px] h-[95vh] sm:h-[90vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden">
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b">
+        <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b">
           <EditableText
             value={task.title}
             onSave={(value) => onTaskUpdate(task.id, { title: value })}
@@ -673,10 +673,10 @@ export function TaskDetailDialog({
         </div>
 
         {/* Main content - two column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] min-h-0">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] min-h-0 overflow-hidden">
           {/* Left side - Task details */}
-          <div className="overflow-y-auto border-r bg-background">
-            <div className="p-6 space-y-5">
+          <div className="overflow-y-auto md:border-r bg-background">
+            <div className="p-4 sm:p-6 space-y-5">
               {/* Properties as clean rows */}
               <div className="space-y-0">
                 {/* Status */}

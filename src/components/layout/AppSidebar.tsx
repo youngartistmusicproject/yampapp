@@ -14,10 +14,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Music,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -31,14 +38,14 @@ const navigation = [
   { name: "CRM", href: "/crm", icon: UserCircle },
 ];
 
-export function AppSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+// Desktop Sidebar
+function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
   const location = useLocation();
 
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
+        "hidden md:flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >
@@ -109,3 +116,99 @@ export function AppSidebar() {
     </aside>
   );
 }
+
+// Mobile Sheet Navigation
+function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const location = useLocation();
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="w-72 p-0 bg-sidebar">
+        {/* Logo */}
+        <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
+              <Music className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-foreground">WorkOS</span>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                onClick={() => onOpenChange(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+              >
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <span>{item.name}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        <Separator />
+
+        {/* Bottom section */}
+        <div className="p-3 space-y-1">
+          <NavLink
+            to="/settings"
+            onClick={() => onOpenChange(false)}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+              location.pathname === "/settings"
+                ? "bg-primary text-primary-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent"
+            )}
+          >
+            <Settings className="w-5 h-5 flex-shrink-0" />
+            <span>Settings</span>
+          </NavLink>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// Mobile trigger button
+export function MobileMenuTrigger({ onClick }: { onClick: () => void }) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="md:hidden"
+      onClick={onClick}
+    >
+      <Menu className="w-5 h-5" />
+    </Button>
+  );
+}
+
+export function AppSidebar() {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <>
+      <DesktopSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+      <MobileSidebar open={mobileOpen} onOpenChange={setMobileOpen} />
+    </>
+  );
+}
+
+// Export for header to use
+export { MobileSidebar };
+export const useMobileSidebar = () => {
+  const [open, setOpen] = useState(false);
+  return { open, setOpen };
+};

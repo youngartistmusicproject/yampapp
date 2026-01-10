@@ -545,16 +545,16 @@ export default function Projects() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 md:space-y-6 animate-fade-in">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Work Management</h1>
-          <p className="text-muted-foreground mt-1">Manage all your projects and tasks in one place</p>
+      <div className="flex items-start sm:items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Work Management</h1>
+          <p className="text-sm text-muted-foreground mt-1 hidden sm:block">Manage all your projects and tasks in one place</p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="icon" className="rounded-full h-10 w-10">
+            <Button size="icon" className="rounded-full h-10 w-10 flex-shrink-0">
               <Plus className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>
@@ -572,70 +572,74 @@ export default function Projects() {
       </div>
 
       {/* Teams Bar */}
-      <div className="flex gap-2 flex-wrap items-center">
-        <span className="text-sm font-medium text-muted-foreground mr-2">Teams:</span>
-        <Badge
-          variant={selectedTeam === "all" ? "default" : "outline"}
-          className="cursor-pointer"
-          onClick={() => {
-            setSelectedTeam("all");
-            setSelectedProject("all");
-          }}
-        >
-          All Teams
-        </Badge>
-        {teamsLibrary.map((team) => (
+      <ScrollArea className="w-full whitespace-nowrap">
+        <div className="flex gap-2 items-center pb-2">
+          <span className="text-sm font-medium text-muted-foreground mr-1 flex-shrink-0">Teams:</span>
           <Badge
-            key={team.id}
-            variant={selectedTeam === team.id ? "default" : "outline"}
-            className="cursor-pointer gap-1.5"
+            variant={selectedTeam === "all" ? "default" : "outline"}
+            className="cursor-pointer flex-shrink-0"
             onClick={() => {
-              setSelectedTeam(team.id);
+              setSelectedTeam("all");
               setSelectedProject("all");
             }}
-            style={selectedTeam === team.id ? { backgroundColor: team.color } : {}}
           >
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: selectedTeam === team.id ? "white" : team.color }}
-            />
-            {team.name}
+            All Teams
           </Badge>
-        ))}
-      </div>
-
-      {/* Projects Bar */}
-      <div className="flex gap-2 flex-wrap items-center">
-        <span className="text-sm font-medium text-muted-foreground mr-2">Projects:</span>
-        <Badge
-          variant={selectedProject === "all" ? "default" : "outline"}
-          className="cursor-pointer"
-          onClick={() => setSelectedProject("all")}
-        >
-          All Projects
-        </Badge>
-        {projects
-          .filter(p => selectedTeam === "all" || p.teamId === selectedTeam)
-          .map((project) => (
+          {teamsLibrary.map((team) => (
             <Badge
-              key={project.id}
-              variant={selectedProject === project.id ? "default" : "outline"}
-              className="cursor-pointer gap-1.5"
-              onClick={() => setSelectedProject(project.id)}
-              style={selectedProject === project.id ? { backgroundColor: project.color } : {}}
+              key={team.id}
+              variant={selectedTeam === team.id ? "default" : "outline"}
+              className="cursor-pointer gap-1.5 flex-shrink-0"
+              onClick={() => {
+                setSelectedTeam(team.id);
+                setSelectedProject("all");
+              }}
+              style={selectedTeam === team.id ? { backgroundColor: team.color } : {}}
             >
               <span
                 className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: selectedProject === project.id ? "white" : project.color }}
+                style={{ backgroundColor: selectedTeam === team.id ? "white" : team.color }}
               />
-              {project.name}
+              {team.name}
             </Badge>
           ))}
-      </div>
+        </div>
+      </ScrollArea>
+
+      {/* Projects Bar */}
+      <ScrollArea className="w-full whitespace-nowrap">
+        <div className="flex gap-2 items-center pb-2">
+          <span className="text-sm font-medium text-muted-foreground mr-1 flex-shrink-0">Projects:</span>
+          <Badge
+            variant={selectedProject === "all" ? "default" : "outline"}
+            className="cursor-pointer flex-shrink-0"
+            onClick={() => setSelectedProject("all")}
+          >
+            All Projects
+          </Badge>
+          {projects
+            .filter(p => selectedTeam === "all" || p.teamId === selectedTeam)
+            .map((project) => (
+              <Badge
+                key={project.id}
+                variant={selectedProject === project.id ? "default" : "outline"}
+                className="cursor-pointer gap-1.5 flex-shrink-0"
+                onClick={() => setSelectedProject(project.id)}
+                style={selectedProject === project.id ? { backgroundColor: project.color } : {}}
+              >
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: selectedProject === project.id ? "white" : project.color }}
+                />
+                {project.name}
+              </Badge>
+            ))}
+        </div>
+      </ScrollArea>
 
       {/* Filters */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search tasks..."
@@ -644,77 +648,79 @@ export default function Projects() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <TaskFilterPanel
-          filters={filters}
-          onFiltersChange={setFilters}
-          statuses={statuses}
-          availableMembers={teamMembers}
-          availableTags={availableTags}
-        />
-        
-        <Button variant="outline" size="sm" className="gap-2" onClick={() => setStatusManagerOpen(true)}>
-          <Settings2 className="w-4 h-4" />
-          Statuses
-        </Button>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              Completed
-              {completedTasks.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                  {completedTasks.length}
-                </Badge>
-              )}
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="w-[400px] sm:w-[540px]">
-            <SheetHeader>
-              <SheetTitle>Completed Tasks</SheetTitle>
-              <SheetDescription>
-                View and restore recently completed tasks
-              </SheetDescription>
-            </SheetHeader>
-            <ScrollArea className="h-[calc(100vh-120px)] mt-4 pr-4">
-              {completedTasks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-                  <CheckCircle2 className="w-8 h-8 mb-2 opacity-50" />
-                  <p>No completed tasks yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {completedTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                    >
-                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm line-through text-muted-foreground">
-                          {task.title}
-                        </p>
-                        {task.completedAt && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Completed {format(task.completedAt, "MMM d, yyyy 'at' h:mm a")}
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1.5 h-8"
-                        onClick={() => handleRestoreTask(task.id)}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+          <TaskFilterPanel
+            filters={filters}
+            onFiltersChange={setFilters}
+            statuses={statuses}
+            availableMembers={teamMembers}
+            availableTags={availableTags}
+          />
+          
+          <Button variant="outline" size="sm" className="gap-2 flex-shrink-0" onClick={() => setStatusManagerOpen(true)}>
+            <Settings2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Statuses</span>
+          </Button>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 flex-shrink-0">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Completed</span>
+                {completedTasks.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                    {completedTasks.length}
+                  </Badge>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-full sm:w-[400px] md:w-[540px]">
+              <SheetHeader>
+                <SheetTitle>Completed Tasks</SheetTitle>
+                <SheetDescription>
+                  View and restore recently completed tasks
+                </SheetDescription>
+              </SheetHeader>
+              <ScrollArea className="h-[calc(100vh-120px)] mt-4 pr-4">
+                {completedTasks.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                    <CheckCircle2 className="w-8 h-8 mb-2 opacity-50" />
+                    <p>No completed tasks yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {completedTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                       >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        Restore
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </SheetContent>
-        </Sheet>
+                        <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm line-through text-muted-foreground">
+                            {task.title}
+                          </p>
+                          {task.completedAt && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Completed {format(task.completedAt, "MMM d, yyyy 'at' h:mm a")}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5 h-8 flex-shrink-0"
+                          onClick={() => handleRestoreTask(task.id)}
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Restore</span>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       {/* Views */}
