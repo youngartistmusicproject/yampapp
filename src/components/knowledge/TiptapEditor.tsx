@@ -33,11 +33,17 @@ import {
   Undo,
   Redo,
   ImageIcon,
+  Info,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Megaphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { forwardRef, useEffect, useImperativeHandle, useState, useRef, useCallback } from "react";
+import { Callout, CalloutType } from "./extensions/CalloutExtension";
 
 interface DocItem {
   id: string;
@@ -153,6 +159,46 @@ const getCommands = (docs: DocItem[]): CommandItem[] => {
         // Trigger file input click
         const event = new CustomEvent('tiptap-image-upload');
         document.dispatchEvent(event);
+      },
+    },
+    {
+      title: "Info Callout",
+      description: "Highlight information",
+      icon: <Info className="w-4 h-4 text-blue-500" />,
+      command: ({ editor, range }) => {
+        editor.chain().focus().deleteRange(range).setCallout({ type: "info" }).run();
+      },
+    },
+    {
+      title: "Warning Callout",
+      description: "Warn about something",
+      icon: <AlertTriangle className="w-4 h-4 text-amber-500" />,
+      command: ({ editor, range }) => {
+        editor.chain().focus().deleteRange(range).setCallout({ type: "warning" }).run();
+      },
+    },
+    {
+      title: "Success Callout",
+      description: "Highlight success or tips",
+      icon: <CheckCircle className="w-4 h-4 text-green-500" />,
+      command: ({ editor, range }) => {
+        editor.chain().focus().deleteRange(range).setCallout({ type: "success" }).run();
+      },
+    },
+    {
+      title: "Error Callout",
+      description: "Highlight errors or issues",
+      icon: <XCircle className="w-4 h-4 text-red-500" />,
+      command: ({ editor, range }) => {
+        editor.chain().focus().deleteRange(range).setCallout({ type: "error" }).run();
+      },
+    },
+    {
+      title: "Announcement",
+      description: "Important announcement block",
+      icon: <Megaphone className="w-4 h-4 text-primary" />,
+      command: ({ editor, range }) => {
+        editor.chain().focus().deleteRange(range).setCallout({ type: "announcement" }).run();
       },
     },
   ];
@@ -384,9 +430,10 @@ export function TiptapEditor({ content, docs = [], onDocSelect, onUpdate }: Tipt
           class: "tiptap-image",
         },
       }),
+      Callout,
       createSlashCommands(docs),
     ],
-    content: content || "<p></p>",
+    content: content || "",
     editorProps: {
       attributes: {
         class: "prose prose-sm max-w-none focus:outline-none min-h-[500px] dark:prose-invert",

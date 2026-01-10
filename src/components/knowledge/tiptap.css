@@ -232,3 +232,51 @@
   outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
 }
+
+/* Callout and Announcement Blocks */
+.tiptap .callout {
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-left: 4px solid;
+}
+
+.tiptap .callout p {
+  margin: 0;
+}
+
+.tiptap .callout p + p {
+  margin-top: 0.5rem;
+}
+
+/* Info Callout - Blue */
+.tiptap .callout-info {
+  background-color: hsl(210 100% 50% / 0.1);
+  border-left-color: hsl(210 100% 50%);
+}
+
+/* Warning Callout - Amber */
+.tiptap .callout-warning {
+  background-color: hsl(38 92% 50% / 0.1);
+  border-left-color: hsl(38 92% 50%);
+}
+
+/* Success Callout - Green */
+.tiptap .callout-success {
+  background-color: hsl(142 71% 45% / 0.1);
+  border-left-color: hsl(142 71% 45%);
+}
+
+/* Error Callout - Red */
+.tiptap .callout-error {
+  background-color: hsl(0 84% 60% / 0.1);
+  border-left-color: hsl(0 84% 60%);
+}
+
+/* Announcement Block - Primary themed */
+.tiptap .callout-announcement {
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--primary) / 0.05));
+  border-left-color: hsl(var(--primary));
+  border: 2px solid hsl(var(--primary) / 0.3);
+  border-left-width: 4px;
+}
