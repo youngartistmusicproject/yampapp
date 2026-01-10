@@ -38,6 +38,7 @@ interface TaskTableProps {
   onEditTask: (task: Task) => void;
   onViewTask: (task: Task) => void;
   onDeleteTask?: (taskId: string) => void;
+  onDuplicateTask?: (taskId: string) => void;
   statuses: StatusItem[];
 }
 
@@ -48,7 +49,7 @@ const priorityColors: Record<string, string> = {
   urgent: "bg-destructive text-destructive-foreground",
 };
 
-export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, statuses }: TaskTableProps) {
+export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, statuses }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
   const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
@@ -170,7 +171,7 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                       variant="ghost" 
                       size="icon"
                       className="h-8 w-8"
-                      onClick={(e) => { e.stopPropagation(); /* duplicate logic */ }}
+                      onClick={(e) => { e.stopPropagation(); onDuplicateTask?.(task.id); }}
                     >
                       <Copy className="w-4 h-4" />
                     </Button>
