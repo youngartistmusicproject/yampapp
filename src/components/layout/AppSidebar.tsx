@@ -13,17 +13,13 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Music,
   Menu,
-  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 
 const navigation = [
@@ -38,31 +34,31 @@ const navigation = [
   { name: "CRM", href: "/crm", icon: UserCircle },
 ];
 
-// Desktop Sidebar
+// Desktop Sidebar - Bold Monochrome Style
 function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
   const location = useLocation();
 
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        "hidden md:flex flex-col h-screen bg-background border-r border-border transition-all duration-300",
+        collapsed ? "w-16" : "w-56"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
-            <Music className="w-5 h-5" />
+      <div className="flex items-center h-14 px-4 border-b border-border">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center w-7 h-7 rounded bg-foreground text-background font-bold text-sm">
+            W
           </div>
           {!collapsed && (
-            <span className="font-semibold text-foreground">WorkOS</span>
+            <span className="font-bold text-foreground tracking-tight">WorkOS</span>
           )}
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
         {navigation.map((item) => {
           const isActive = location.pathname === item.href;
           return (
@@ -70,33 +66,31 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
               key={item.name}
               to={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                "flex items-center gap-2.5 px-2.5 py-2 rounded text-sm transition-colors",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  ? "bg-foreground text-background font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               )}
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <item.icon className="w-4 h-4 flex-shrink-0" />
               {!collapsed && <span>{item.name}</span>}
             </NavLink>
           );
         })}
       </nav>
 
-      <Separator />
-
       {/* Bottom section */}
-      <div className="p-3 space-y-1">
+      <div className="px-2 py-3 border-t border-border space-y-0.5">
         <NavLink
           to="/settings"
           className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+            "flex items-center gap-2.5 px-2.5 py-2 rounded text-sm transition-colors",
             location.pathname === "/settings"
-              ? "bg-primary text-primary-foreground"
-              : "text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-foreground text-background font-medium"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           )}
         >
-          <Settings className="w-5 h-5 flex-shrink-0" />
+          <Settings className="w-4 h-4 flex-shrink-0" />
           {!collapsed && <span>Settings</span>}
         </NavLink>
 
@@ -104,7 +98,7 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full justify-center text-muted-foreground hover:text-foreground"
+          className="w-full justify-center text-muted-foreground hover:text-foreground h-8"
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />
@@ -123,19 +117,19 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-72 p-0 bg-sidebar">
+      <SheetContent side="left" className="w-64 p-0 bg-background border-r border-border">
         {/* Logo */}
-        <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
-              <Music className="w-5 h-5" />
+        <div className="flex items-center h-14 px-4 border-b border-border">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-7 h-7 rounded bg-foreground text-background font-bold text-sm">
+              W
             </div>
-            <span className="font-semibold text-foreground">WorkOS</span>
+            <span className="font-bold text-foreground tracking-tight">WorkOS</span>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
           {navigation.map((item) => {
             const isActive = location.pathname === item.href;
             return (
@@ -144,34 +138,32 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
                 to={item.href}
                 onClick={() => onOpenChange(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-2.5 px-2.5 py-2 rounded text-sm transition-colors",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    ? "bg-foreground text-background font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 )}
               >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <item.icon className="w-4 h-4 flex-shrink-0" />
                 <span>{item.name}</span>
               </NavLink>
             );
           })}
         </nav>
 
-        <Separator />
-
         {/* Bottom section */}
-        <div className="p-3 space-y-1">
+        <div className="px-2 py-3 border-t border-border space-y-0.5">
           <NavLink
             to="/settings"
             onClick={() => onOpenChange(false)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+              "flex items-center gap-2.5 px-2.5 py-2 rounded text-sm transition-colors",
               location.pathname === "/settings"
-                ? "bg-primary text-primary-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar-accent"
+                ? "bg-foreground text-background font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
             )}
           >
-            <Settings className="w-5 h-5 flex-shrink-0" />
+            <Settings className="w-4 h-4 flex-shrink-0" />
             <span>Settings</span>
           </NavLink>
         </div>
