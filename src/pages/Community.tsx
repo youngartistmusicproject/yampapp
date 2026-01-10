@@ -6,11 +6,8 @@ import {
   Share2,
   MoreHorizontal,
   Users,
-  Image as ImageIcon,
-  Smile,
   ThumbsUp,
   Send,
-  AtSign,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { useCommunity } from "@/hooks/useCommunity";
+import { CreatePostBox } from "@/components/community/CreatePostBox";
 
 export default function Community() {
   const {
@@ -34,10 +32,8 @@ export default function Community() {
     toggleCommentLike,
   } = useCommunity();
 
-  const [newPost, setNewPost] = useState("");
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
-  const [isPosting, setIsPosting] = useState(false);
 
   const toggleComments = (postId: string) => {
     setExpandedComments((prev) => {
@@ -57,14 +53,6 @@ export default function Community() {
 
     await addComment(postId, content);
     setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
-  };
-
-  const handleCreatePost = async () => {
-    if (!newPost.trim()) return;
-    setIsPosting(true);
-    await createPost(newPost);
-    setNewPost("");
-    setIsPosting(false);
   };
 
   if (isLoading) {
@@ -148,69 +136,8 @@ export default function Community() {
 
       {/* Feed */}
       <div className="flex-1 max-w-2xl space-y-4">
-        {/* Create Post Box - Facebook style */}
-        <Card className="shadow-card">
-          <CardContent className="pt-4 pb-3">
-            <div className="flex gap-3 items-center">
-              <Avatar className="w-10 h-10">
-                <AvatarFallback className="bg-primary text-primary-foreground font-medium">
-                  JD
-                </AvatarFallback>
-              </Avatar>
-              <textarea
-                id="post-textarea"
-                placeholder="What's on your mind, John?"
-                className="flex-1 bg-secondary hover:bg-secondary/80 transition-colors rounded-2xl px-4 py-2.5 text-sm placeholder:text-muted-foreground resize-none border-0 focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[42px] max-h-[200px]"
-                rows={1}
-                value={newPost}
-                onChange={(e) => {
-                  setNewPost(e.target.value);
-                  e.target.style.height = "auto";
-                  e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
-                }}
-              />
-            </div>
-
-            <Separator className="my-3" />
-
-            {/* Media buttons row */}
-            <div className="flex items-center justify-between">
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2 text-muted-foreground hover:text-green-600 hover:bg-green-50"
-                >
-                  <ImageIcon className="w-5 h-5 text-green-600" />
-                  <span className="hidden sm:inline">Photo/Video</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2 text-muted-foreground hover:text-yellow-600 hover:bg-yellow-50"
-                >
-                  <Smile className="w-5 h-5 text-yellow-500" />
-                  <span className="hidden sm:inline">Feeling</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
-                >
-                  <AtSign className="w-5 h-5 text-blue-500" />
-                  <span className="hidden sm:inline">Tag</span>
-                </Button>
-              </div>
-              <Button
-                size="sm"
-                disabled={!newPost.trim() || isPosting}
-                onClick={handleCreatePost}
-              >
-                {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Create Post Box */}
+        <CreatePostBox onCreatePost={createPost} />
 
         {/* Empty State */}
         {posts.length === 0 && (
