@@ -19,6 +19,8 @@ export interface Comment {
   hasLiked: boolean;
 }
 
+export type ReactionType = "like" | "love" | "care" | "congrats" | "celebrate" | "insightful";
+
 export interface Post {
   id: string;
   groupId: string;
@@ -26,11 +28,12 @@ export interface Post {
   content: string;
   image?: string;
   timestamp: string;
-  likes: number;
+  reactions: Record<string, number>;
+  reactionCount: number;
   comments: Comment[];
   shares: number;
   group: string;
-  hasLiked: boolean;
+  userReaction?: ReactionType;
 }
 
 export function useCommunity() {
@@ -124,7 +127,7 @@ export function useCommunity() {
       const [likesResult, commentsResult] = await Promise.all([
         supabase
           .from("community_post_likes")
-          .select("post_id, user_name")
+          .select("post_id, user_name, reaction_type")
           .in("post_id", postIds),
         supabase
           .from("community_comments")
@@ -148,13 +151,14 @@ export function useCommunity() {
         commentLikesData = data || [];
       }
 
-      // Build lookup maps for O(1) access
-      const likesMap = new Map<string, { count: number; hasLiked: boolean }>();
+      // Build lookup maps for O(1) access - now with reaction types
+      const reactionsMap = new Map<string, { reactions: Record<string, number>; userReaction?: ReactionType }>();
       likesData.forEach((like) => {
-        const existing = likesMap.get(like.post_id) || { count: 0, hasLiked: false };
-        existing.count++;
-        if (like.user_name === "You") existing.hasLiked = true;
-        likesMap.set(like.post_id, existing);
+        const existing = reactionsMap.get(like.post_id) || { reactions: {} };
+        const reactionType = like.reaction_type || "like";
+        existing.reactions[reactionType] = (existing.reactions[reactionType] || 0) + 1;
+        if (like.user_name === "You") existing.userReaction = reactionType as ReactionType;
+        reactionsMap.set(like.post_id, existing);
       });
 
       const commentLikesMap = new Map<string, { count: number; hasLiked: boolean }>();
@@ -185,7 +189,8 @@ export function useCommunity() {
       const groupName = groupNamesCache.current.get(groupId) || "Unknown";
       
       const transformedPosts: Post[] = postsData.map((post) => {
-        const postLikes = likesMap.get(post.id) || { count: 0, hasLiked: false };
+        const postReactions = reactionsMap.get(post.id) || { reactions: {} };
+        const reactionCount = Object.values(postReactions.reactions).reduce((sum, count) => sum + count, 0);
         
         return {
           id: post.id,
@@ -194,11 +199,12 @@ export function useCommunity() {
           content: post.content,
           image: post.image_url || undefined,
           timestamp: formatTime(post.created_at),
-          likes: postLikes.count,
+          reactions: postReactions.reactions,
+          reactionCount,
           comments: commentsMap.get(post.id) || [],
           shares: 0,
           group: groupName,
-          hasLiked: postLikes.hasLiked,
+          userReaction: postReactions.userReaction,
         };
       });
 
@@ -242,11 +248,12 @@ export function useCommunity() {
         content: data.content,
         image: data.image_url || undefined,
         timestamp: "Just now",
-        likes: 0,
+        reactions: {},
+        reactionCount: 0,
         comments: [],
         shares: 0,
         group: groupName,
-        hasLiked: false,
+        userReaction: undefined,
       };
       
       setPosts((prev) => [newPost, ...prev]);
@@ -265,37 +272,53 @@ export function useCommunity() {
     }
   };
 
-  const togglePostLike = async (postId: string) => {
+  const reactToPost = async (postId: string, reactionType: ReactionType) => {
     const post = posts.find((p) => p.id === postId);
     if (!post) return;
 
-    // Optimistic update first
+    const previousReaction = post.userReaction;
+
+    // Optimistic update
     setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? {
-              ...p,
-              hasLiked: !p.hasLiked,
-              likes: p.hasLiked ? p.likes - 1 : p.likes + 1,
-            }
-          : p
-      )
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        
+        const newReactions = { ...p.reactions };
+        
+        // Remove old reaction if exists
+        if (previousReaction && newReactions[previousReaction]) {
+          newReactions[previousReaction]--;
+          if (newReactions[previousReaction] === 0) delete newReactions[previousReaction];
+        }
+        
+        // Add new reaction
+        newReactions[reactionType] = (newReactions[reactionType] || 0) + 1;
+        
+        return {
+          ...p,
+          reactions: newReactions,
+          reactionCount: Object.values(newReactions).reduce((sum, count) => sum + count, 0),
+          userReaction: reactionType,
+        };
+      })
     );
 
     try {
-      if (post.hasLiked) {
+      // Delete old reaction if exists
+      if (previousReaction) {
         await supabase
           .from("community_post_likes")
           .delete()
           .eq("post_id", postId)
           .eq("user_name", "You");
-      } else {
-        await supabase.from("community_post_likes").insert({
-          post_id: postId,
-          user_name: "You",
-          reaction_type: "like",
-        });
       }
+      
+      // Insert new reaction
+      await supabase.from("community_post_likes").insert({
+        post_id: postId,
+        user_name: "You",
+        reaction_type: reactionType,
+      });
     } catch (error) {
       // Revert on error
       setPosts((prev) =>
@@ -303,13 +326,64 @@ export function useCommunity() {
           p.id === postId
             ? {
                 ...p,
-                hasLiked: post.hasLiked,
-                likes: post.likes,
+                reactions: post.reactions,
+                reactionCount: post.reactionCount,
+                userReaction: post.userReaction,
               }
             : p
         )
       );
-      console.error("Error toggling like:", error);
+      console.error("Error reacting to post:", error);
+    }
+  };
+
+  const removePostReaction = async (postId: string) => {
+    const post = posts.find((p) => p.id === postId);
+    if (!post || !post.userReaction) return;
+
+    const previousReaction = post.userReaction;
+
+    // Optimistic update
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        
+        const newReactions = { ...p.reactions };
+        if (newReactions[previousReaction]) {
+          newReactions[previousReaction]--;
+          if (newReactions[previousReaction] === 0) delete newReactions[previousReaction];
+        }
+        
+        return {
+          ...p,
+          reactions: newReactions,
+          reactionCount: Object.values(newReactions).reduce((sum, count) => sum + count, 0),
+          userReaction: undefined,
+        };
+      })
+    );
+
+    try {
+      await supabase
+        .from("community_post_likes")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_name", "You");
+    } catch (error) {
+      // Revert on error
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                reactions: post.reactions,
+                reactionCount: post.reactionCount,
+                userReaction: post.userReaction,
+              }
+            : p
+        )
+      );
+      console.error("Error removing reaction:", error);
     }
   };
 
@@ -460,7 +534,8 @@ export function useCommunity() {
     setSelectedGroupId,
     isLoading,
     createPost,
-    togglePostLike,
+    reactToPost,
+    removePostReaction,
     addComment,
     toggleCommentLike,
     fetchPosts,

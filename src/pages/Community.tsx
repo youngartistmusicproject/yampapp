@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import {
   Plus,
-  Heart,
   MessageCircle,
   Share2,
   MoreHorizontal,
   Users,
-  ThumbsUp,
   Send,
   Loader2,
+  ThumbsUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { useCommunity } from "@/hooks/useCommunity";
 import { CreatePostBox } from "@/components/community/CreatePostBox";
+import { ReactionPicker, ReactionSummary, ReactionType } from "@/components/community/ReactionPicker";
 
 export default function Community() {
   const {
@@ -27,7 +27,8 @@ export default function Community() {
     setSelectedGroupId,
     isLoading,
     createPost,
-    togglePostLike,
+    reactToPost,
+    removePostReaction,
     addComment,
     toggleCommentLike,
   } = useCommunity();
@@ -207,21 +208,10 @@ export default function Community() {
 
               {/* Reactions & Comments Count */}
               <div className="px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  {post.likes > 0 && (
-                    <>
-                      <div className="flex -space-x-1">
-                        <span className="w-[18px] h-[18px] rounded-full bg-primary flex items-center justify-center">
-                          <ThumbsUp className="w-2.5 h-2.5 text-primary-foreground" />
-                        </span>
-                        <span className="w-[18px] h-[18px] rounded-full bg-red-500 flex items-center justify-center">
-                          <Heart className="w-2.5 h-2.5 text-white fill-white" />
-                        </span>
-                      </div>
-                      <span className="ml-1">{post.likes}</span>
-                    </>
-                  )}
-                </div>
+                <ReactionSummary 
+                  reactions={post.reactions} 
+                  totalCount={post.reactionCount} 
+                />
                 <div className="flex items-center gap-3">
                   {post.comments.length > 0 && (
                     <button
@@ -244,21 +234,12 @@ export default function Community() {
 
               {/* Action Buttons */}
               <div className="px-2 py-1 flex items-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`flex-1 gap-2 ${
-                    post.hasLiked
-                      ? "text-primary hover:text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                  onClick={() => togglePostLike(post.id)}
-                >
-                  <ThumbsUp
-                    className={`w-5 h-5 ${post.hasLiked ? "fill-primary" : ""}`}
-                  />
-                  Like
-                </Button>
+                <ReactionPicker
+                  hasReacted={!!post.userReaction}
+                  userReaction={post.userReaction}
+                  onReact={(reactionType) => reactToPost(post.id, reactionType)}
+                  onRemoveReaction={() => removePostReaction(post.id)}
+                />
                 <Button
                   variant="ghost"
                   size="sm"
