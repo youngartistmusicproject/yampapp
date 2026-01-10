@@ -113,7 +113,7 @@ export function useKnowledgeDocs() {
             title,
             type,
             parent_id: parentId,
-            content: type === "doc" ? `<h1>${title}</h1><p>Start writing...</p>` : "",
+            content: "",
           })
           .select()
           .single();
