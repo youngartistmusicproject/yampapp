@@ -54,7 +54,8 @@ import {
   Clock,
   Repeat,
   Flag,
-  Circle
+  Circle,
+  BookOpen
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
@@ -181,6 +182,96 @@ function EditableText({
       className={`cursor-pointer hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors ${className}`}
     >
       {value || <span className="text-muted-foreground italic">{placeholder}</span>}
+    </div>
+  );
+}
+
+// Editable subtask component
+function EditableSubtask({
+  subtask,
+  onToggle,
+  onUpdate,
+  onDelete,
+}: {
+  subtask: Subtask;
+  onToggle: () => void;
+  onUpdate: (title: string) => void;
+  onDelete: () => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(subtask.title);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setEditValue(subtask.title);
+  }, [subtask.title]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleSave = () => {
+    if (editValue.trim() && editValue.trim() !== subtask.title) {
+      onUpdate(editValue.trim());
+    } else {
+      setEditValue(subtask.title);
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    }
+    if (e.key === 'Escape') {
+      setEditValue(subtask.title);
+      setIsEditing(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3 px-3 py-2.5 group hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0">
+      <Checkbox
+        checked={subtask.completed}
+        onCheckedChange={onToggle}
+        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+      />
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleSave}
+          className={`flex-1 text-sm bg-transparent border-none outline-none focus:outline-none ${
+            subtask.completed ? 'line-through text-muted-foreground' : ''
+          }`}
+        />
+      ) : (
+        <span
+          onClick={() => setIsEditing(true)}
+          className={`flex-1 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 ${
+            subtask.completed ? 'line-through text-muted-foreground' : ''
+          }`}
+        >
+          {subtask.title}
+        </span>
+      )}
+      {subtask.assignee && (
+        <UserAvatar user={subtask.assignee} className="w-5 h-5 text-[10px]" />
+      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+        onClick={onDelete}
+      >
+        <Trash2 className="w-3 h-3" />
+      </Button>
     </div>
   );
 }
@@ -514,6 +605,14 @@ export function TaskDetailDialog({
             placeholder="Task title"
             className="text-xl font-semibold"
           />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 mt-2 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            How To
+          </Button>
         </div>
 
         {/* Main content - two column layout */}
@@ -584,20 +683,112 @@ export function TaskDetailDialog({
                   </Select>
                 </div>
 
-                {/* Due Date */}
+                {/* Due Date with Recurring */}
                 <div className="flex items-center justify-between py-2.5 border-b border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="w-4 h-4" />
                     <span className="text-sm">Due date</span>
                   </div>
-                  <Input
-                    type="date"
-                    value={task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : ""}
-                    onChange={(e) => onTaskUpdate(task.id, { 
-                      dueDate: e.target.value ? new Date(e.target.value) : undefined 
-                    })}
-                    className="h-8 text-sm w-auto border-none shadow-none bg-transparent text-right cursor-pointer hover:bg-muted/50 rounded px-2"
-                  />
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="date"
+                      value={task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : ""}
+                      onChange={(e) => onTaskUpdate(task.id, { 
+                        dueDate: e.target.value ? new Date(e.target.value) : undefined 
+                      })}
+                      className="h-8 text-sm w-auto border-none shadow-none bg-transparent text-right cursor-pointer hover:bg-muted/50 rounded px-2"
+                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className={`h-8 w-8 p-0 ${task.isRecurring ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground`}
+                          title={task.isRecurring && task.recurrence 
+                            ? `Repeats every ${task.recurrence.interval > 1 ? `${task.recurrence.interval} ` : ''}${task.recurrence.frequency.replace('ly', task.recurrence.interval > 1 ? 's' : '')}`
+                            : 'Set recurring'
+                          }
+                        >
+                          <Repeat className="w-4 h-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="end">
+                        <div className="p-4 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Repeating task</span>
+                            <Button
+                              variant={task.isRecurring ? "secondary" : "outline"}
+                              size="sm"
+                              className="h-7"
+                              onClick={() => {
+                                if (task.isRecurring) {
+                                  onTaskUpdate(task.id, { isRecurring: false, recurrence: undefined });
+                                } else {
+                                  onTaskUpdate(task.id, { 
+                                    isRecurring: true, 
+                                    recurrence: { frequency: 'weekly', interval: 1 } 
+                                  });
+                                }
+                              }}
+                            >
+                              {task.isRecurring ? 'On' : 'Off'}
+                            </Button>
+                          </div>
+                          
+                          {task.isRecurring && task.recurrence && (
+                            <div className="space-y-3 pt-2 border-t">
+                              <div className="space-y-2">
+                                <span className="text-xs text-muted-foreground">Repeat every</span>
+                                <div className="flex gap-2">
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    max={99}
+                                    value={task.recurrence.interval}
+                                    onChange={(e) => onTaskUpdate(task.id, {
+                                      recurrence: { ...task.recurrence!, interval: parseInt(e.target.value) || 1 }
+                                    })}
+                                    className="w-16 h-8"
+                                  />
+                                  <Select
+                                    value={task.recurrence.frequency}
+                                    onValueChange={(v) => onTaskUpdate(task.id, {
+                                      recurrence: { ...task.recurrence!, frequency: v as any }
+                                    })}
+                                  >
+                                    <SelectTrigger className="flex-1 h-8">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="daily">Day(s)</SelectItem>
+                                      <SelectItem value="weekly">Week(s)</SelectItem>
+                                      <SelectItem value="monthly">Month(s)</SelectItem>
+                                      <SelectItem value="yearly">Year(s)</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <span className="text-xs text-muted-foreground">End date (optional)</span>
+                                <Input
+                                  type="date"
+                                  value={task.recurrence.endDate ? format(new Date(task.recurrence.endDate), "yyyy-MM-dd") : ""}
+                                  onChange={(e) => onTaskUpdate(task.id, {
+                                    recurrence: { 
+                                      ...task.recurrence!, 
+                                      endDate: e.target.value ? new Date(e.target.value) : undefined 
+                                    }
+                                  })}
+                                  className="h-8"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
 
                 {/* Estimated Time */}
@@ -695,107 +886,6 @@ export function TaskDetailDialog({
                     placeholder="Add..."
                   />
                 </div>
-
-
-                {/* Recurrence */}
-                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Repeat className="w-4 h-4" />
-                    <span className="text-sm">Recurring</span>
-                  </div>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        className="h-8 px-2 text-sm font-normal hover:bg-muted/50"
-                      >
-                        {task.isRecurring && task.recurrence ? (
-                          <span className="text-foreground">
-                            Every {task.recurrence.interval > 1 ? `${task.recurrence.interval} ` : ''}
-                            {task.recurrence.frequency.replace('ly', task.recurrence.interval > 1 ? 's' : '')}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">Not set</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="end">
-                      <div className="p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Repeating task</span>
-                          <Button
-                            variant={task.isRecurring ? "secondary" : "outline"}
-                            size="sm"
-                            className="h-7"
-                            onClick={() => {
-                              if (task.isRecurring) {
-                                onTaskUpdate(task.id, { isRecurring: false, recurrence: undefined });
-                              } else {
-                                onTaskUpdate(task.id, { 
-                                  isRecurring: true, 
-                                  recurrence: { frequency: 'weekly', interval: 1 } 
-                                });
-                              }
-                            }}
-                          >
-                            {task.isRecurring ? 'On' : 'Off'}
-                          </Button>
-                        </div>
-                        
-                        {task.isRecurring && task.recurrence && (
-                          <div className="space-y-3 pt-2 border-t">
-                            <div className="space-y-2">
-                              <span className="text-xs text-muted-foreground">Repeat every</span>
-                              <div className="flex gap-2">
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  max={99}
-                                  value={task.recurrence.interval}
-                                  onChange={(e) => onTaskUpdate(task.id, {
-                                    recurrence: { ...task.recurrence!, interval: parseInt(e.target.value) || 1 }
-                                  })}
-                                  className="w-16 h-8"
-                                />
-                                <Select
-                                  value={task.recurrence.frequency}
-                                  onValueChange={(v) => onTaskUpdate(task.id, {
-                                    recurrence: { ...task.recurrence!, frequency: v as any }
-                                  })}
-                                >
-                                  <SelectTrigger className="flex-1 h-8">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="daily">Day(s)</SelectItem>
-                                    <SelectItem value="weekly">Week(s)</SelectItem>
-                                    <SelectItem value="monthly">Month(s)</SelectItem>
-                                    <SelectItem value="yearly">Year(s)</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <span className="text-xs text-muted-foreground">End date (optional)</span>
-                              <Input
-                                type="date"
-                                value={task.recurrence.endDate ? format(new Date(task.recurrence.endDate), "yyyy-MM-dd") : ""}
-                                onChange={(e) => onTaskUpdate(task.id, {
-                                  recurrence: { 
-                                    ...task.recurrence!, 
-                                    endDate: e.target.value ? new Date(e.target.value) : undefined 
-                                  }
-                                })}
-                                className="h-8"
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
               </div>
 
               {/* Description */}
@@ -853,71 +943,41 @@ export function TaskDetailDialog({
                     {/* Subtask list */}
                     <div className="space-y-1 bg-muted/30 rounded-lg overflow-hidden">
                       {subtasks.map((subtask) => (
-                        <div
+                        <EditableSubtask
                           key={subtask.id}
-                          className="flex items-center gap-3 px-3 py-2.5 group hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0"
-                        >
-                          <Checkbox
-                            checked={subtask.completed}
-                            onCheckedChange={() => handleToggleSubtask(subtask.id)}
-                            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                          />
-                          <span className={`flex-1 text-sm ${subtask.completed ? 'line-through text-muted-foreground' : ''}`}>
-                            {subtask.title}
-                          </span>
-                          {subtask.assignee && (
-                            <UserAvatar user={subtask.assignee} className="w-5 h-5 text-[10px]" />
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-                            onClick={() => handleDeleteSubtask(subtask.id)}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
+                          subtask={subtask}
+                          onToggle={() => handleToggleSubtask(subtask.id)}
+                          onUpdate={(title) => {
+                            const updatedSubtasks = subtasks.map(s =>
+                              s.id === subtask.id ? { ...s, title } : s
+                            );
+                            onTaskUpdate(task.id, { subtasks: updatedSubtasks });
+                          }}
+                          onDelete={() => handleDeleteSubtask(subtask.id)}
+                        />
                       ))}
 
-                      {/* Add subtask input */}
-                      {isAddingSubtask ? (
-                        <div className="flex items-center gap-3 px-3 py-2">
-                          <Checkbox disabled className="opacity-30" />
-                          <Input
-                            ref={subtaskInputRef}
-                            value={newSubtaskTitle}
-                            onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                            onKeyDown={handleSubtaskKeyDown}
-                            onBlur={() => {
-                              if (!newSubtaskTitle.trim()) {
-                                setIsAddingSubtask(false);
-                              }
-                            }}
-                            placeholder="What needs to be done?"
-                            className="h-7 text-sm flex-1 border-none shadow-none bg-transparent focus-visible:ring-0 px-0"
-                            autoFocus
-                          />
+                      {/* Always visible add subtask input */}
+                      <div className="flex items-center gap-3 px-3 py-2 border-t border-border/30">
+                        <Plus className="w-4 h-4 text-muted-foreground" />
+                        <Input
+                          ref={subtaskInputRef}
+                          value={newSubtaskTitle}
+                          onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                          onKeyDown={handleSubtaskKeyDown}
+                          placeholder="Add subtask..."
+                          className="h-7 text-sm flex-1 border-none shadow-none bg-transparent focus-visible:ring-0 px-0"
+                        />
+                        {newSubtaskTitle.trim() && (
                           <Button
                             size="sm"
                             className="h-6 px-2 text-xs"
                             onClick={handleAddSubtask}
-                            disabled={!newSubtaskTitle.trim()}
                           >
                             Add
                           </Button>
-                        </div>
-                      ) : (
-                        <button
-                          className="flex items-center gap-3 px-3 py-2.5 w-full text-left text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                          onClick={() => {
-                            setIsAddingSubtask(true);
-                            setTimeout(() => subtaskInputRef.current?.focus(), 0);
-                          }}
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add subtask
-                        </button>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
