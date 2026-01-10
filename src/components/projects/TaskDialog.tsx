@@ -247,6 +247,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                       onIsRecurringChange={handleToggleRecurring}
                       recurrence={recurrence}
                       onRecurrenceChange={setRecurrence}
+                      compact
                     />
                   </PopoverContent>
                 </Popover>
