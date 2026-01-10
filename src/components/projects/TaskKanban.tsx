@@ -110,8 +110,11 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, status
                     </DropdownMenu>
                   </div>
 
-                  {task.description && (
+                  {(task.progress > 0 || task.description) && (
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {task.progress > 0 && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground mr-1.5">{task.progress}%</span>
+                      )}
                       {task.description}
                     </p>
                   )}
