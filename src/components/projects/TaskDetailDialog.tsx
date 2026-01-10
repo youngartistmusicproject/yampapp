@@ -402,7 +402,7 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] h-[90vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[1000px] h-[90vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b space-y-3">
           <EditableText
@@ -461,116 +461,119 @@ export function TaskDetailDialog({
           </div>
         </div>
 
-        {/* Main content - single scrollable area */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-6">
-            {/* Properties grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-start gap-3">
-                <Calendar className="w-4 h-4 text-muted-foreground mt-2" />
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Due Date</p>
-                  <Input
-                    type="date"
-                    value={task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : ""}
-                    onChange={(e) => onTaskUpdate(task.id, { 
-                      dueDate: e.target.value ? new Date(e.target.value) : undefined 
-                    })}
-                    className="h-8 text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Users className="w-4 h-4 text-muted-foreground mt-2" />
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Assignees</p>
-                  <SearchableAssigneeSelect
-                    members={availableMembers}
-                    selectedAssignees={task.assignees || []}
-                    onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })}
-                    placeholder="Add assignees..."
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 sm:col-span-2">
-                <Tag className="w-4 h-4 text-muted-foreground mt-2" />
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Tags</p>
-                  <SearchableTagSelect
-                    tags={tagLibrary}
-                    selectedTags={task.tags || []}
-                    onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
-                    placeholder="Add tags..."
-                  />
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Description */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <AlignLeft className="w-4 h-4 text-muted-foreground" />
-                <h3 className="text-sm font-medium">Description</h3>
-              </div>
-              <EditableText
-                value={task.description || ""}
-                onSave={(value) => onTaskUpdate(task.id, { description: value })}
-                placeholder="Add a description..."
-                multiline
-                className="text-sm whitespace-pre-wrap min-h-[60px]"
-              />
-            </div>
-
-            {/* Legacy Attachments (if any exist from before) */}
-            {legacyAttachments.length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Paperclip className="w-4 h-4 text-muted-foreground" />
-                    <h3 className="text-sm font-medium">Files</h3>
-                    <Badge variant="secondary" className="text-xs h-5">
-                      {legacyAttachments.length}
-                    </Badge>
+        {/* Main content - two column layout */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_350px] min-h-0">
+          {/* Left side - Task details */}
+          <div className="overflow-y-auto border-r">
+            <div className="p-6 space-y-6">
+              {/* Properties grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-4 h-4 text-muted-foreground mt-2" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Due Date</p>
+                    <Input
+                      type="date"
+                      value={task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : ""}
+                      onChange={(e) => onTaskUpdate(task.id, { 
+                        dueDate: e.target.value ? new Date(e.target.value) : undefined 
+                      })}
+                      className="h-8 text-sm"
+                    />
                   </div>
-                  <div className="grid gap-2">
-                    {legacyAttachments.map((attachment) => (
-                      <div
-                        key={attachment.id}
-                        className="flex items-center gap-3 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
-                      >
-                        <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center flex-shrink-0">
-                          {getFileIcon(attachment.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{attachment.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatFileSize(attachment.size)}
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleDownload(attachment)}
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Users className="w-4 h-4 text-muted-foreground mt-2" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Assignees</p>
+                    <SearchableAssigneeSelect
+                      members={availableMembers}
+                      selectedAssignees={task.assignees || []}
+                      onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })}
+                      placeholder="Add assignees..."
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 sm:col-span-2">
+                  <Tag className="w-4 h-4 text-muted-foreground mt-2" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Tags</p>
+                    <SearchableTagSelect
+                      tags={tagLibrary}
+                      selectedTags={task.tags || []}
+                      onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
+                      placeholder="Add tags..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Description */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <AlignLeft className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="text-sm font-medium">Description</h3>
+                </div>
+                <EditableText
+                  value={task.description || ""}
+                  onSave={(value) => onTaskUpdate(task.id, { description: value })}
+                  placeholder="Add a description..."
+                  multiline
+                  className="text-sm whitespace-pre-wrap min-h-[100px]"
+                />
+              </div>
+
+              {/* Legacy Attachments (if any exist from before) */}
+              {legacyAttachments.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Paperclip className="w-4 h-4 text-muted-foreground" />
+                      <h3 className="text-sm font-medium">Files</h3>
+                      <Badge variant="secondary" className="text-xs h-5">
+                        {legacyAttachments.length}
+                      </Badge>
+                    </div>
+                    <div className="grid gap-2">
+                      {legacyAttachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="flex items-center gap-3 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
                         >
-                          <Download className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    ))}
+                          <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center flex-shrink-0">
+                            {getFileIcon(attachment.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{attachment.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatFileSize(attachment.size)}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleDownload(attachment)}
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
+          </div>
 
-            <Separator />
-
-            {/* Comments Section */}
-            <div className="space-y-4">
+          {/* Right side - Activity */}
+          <div className="flex flex-col min-h-0 bg-muted/30">
+            <div className="px-4 py-3 border-b bg-background">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-muted-foreground" />
                 <h3 className="text-sm font-medium">Activity</h3>
@@ -580,15 +583,87 @@ export function TaskDetailDialog({
                   </Badge>
                 )}
               </div>
+            </div>
 
-              {/* Comment input with attachment support */}
+            {/* Comments list - scrollable */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {comments.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No activity yet. Be the first to comment!
+                </p>
+              )}
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex gap-3 group">
+                  <UserAvatar user={comment.author} className="w-8 h-8 text-xs flex-shrink-0" />
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{comment.author.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(comment.createdAt), "MMM d 'at' h:mm a")}
+                      </span>
+                      {comment.author.id === currentUser.id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive ml-auto"
+                          onClick={() => onDeleteComment(task.id, comment.id)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                    {comment.content && (
+                      <p className="text-sm whitespace-pre-wrap">{renderCommentContent(comment.content)}</p>
+                    )}
+                    
+                    {/* Comment attachments */}
+                    {comment.attachments && comment.attachments.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {comment.attachments.map((attachment) => (
+                          <div
+                            key={attachment.id}
+                            className="flex items-center gap-2 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                            onClick={() => handleDownload(attachment)}
+                          >
+                            {attachment.type.startsWith('image/') ? (
+                              <img 
+                                src={attachment.url} 
+                                alt={attachment.name}
+                                className="w-16 h-16 object-cover rounded"
+                              />
+                            ) : (
+                              <>
+                                <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center flex-shrink-0">
+                                  {getFileIcon(attachment.type)}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium truncate max-w-[100px]">
+                                    {attachment.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatFileSize(attachment.size)}
+                                  </p>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Comment input - fixed at bottom */}
+            <div className="p-4 border-t bg-background">
               <div className="flex gap-3">
                 <UserAvatar user={currentUser} className="w-8 h-8 text-xs flex-shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="relative">
                     <Textarea
                       ref={textareaRef}
-                      placeholder="Write a comment or drop files... Use @ to mention"
+                      placeholder="Write a comment... Use @ to mention"
                       value={newComment}
                       onChange={handleCommentChange}
                       onKeyDown={handleKeyDown}
@@ -624,7 +699,7 @@ export function TaskDetailDialog({
                     
                     {/* Mention autocomplete dropdown */}
                     {showMentions && filteredMembers.length > 0 && (
-                      <div className="absolute left-0 bottom-full mb-1 w-64 bg-popover border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                      <div className="absolute left-0 bottom-full mb-1 w-full bg-popover border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
                         {filteredMembers.map((member, index) => (
                           <button
                             key={member.id}
@@ -665,7 +740,7 @@ export function TaskDetailDialog({
                           ) : (
                             getFileIcon(pending.file.type)
                           )}
-                          <span className="max-w-[120px] truncate text-xs">
+                          <span className="max-w-[100px] truncate text-xs">
                             {pending.file.name}
                           </span>
                           <Button
@@ -682,73 +757,6 @@ export function TaskDetailDialog({
                   )}
                 </div>
               </div>
-
-              {/* Comments list */}
-              {comments.length > 0 && (
-                <div className="space-y-4 pt-2">
-                  {comments.map((comment) => (
-                    <div key={comment.id} className="flex gap-3 group">
-                      <UserAvatar user={comment.author} className="w-8 h-8 text-xs flex-shrink-0" />
-                      <div className="flex-1 min-w-0 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{comment.author.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(comment.createdAt), "MMM d 'at' h:mm a")}
-                          </span>
-                          {comment.author.id === currentUser.id && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive ml-auto"
-                              onClick={() => onDeleteComment(task.id, comment.id)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          )}
-                        </div>
-                        {comment.content && (
-                          <p className="text-sm whitespace-pre-wrap">{renderCommentContent(comment.content)}</p>
-                        )}
-                        
-                        {/* Comment attachments */}
-                        {comment.attachments && comment.attachments.length > 0 && (
-                          <div className="flex flex-wrap gap-2 pt-1">
-                            {comment.attachments.map((attachment) => (
-                              <div
-                                key={attachment.id}
-                                className="flex items-center gap-2 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
-                                onClick={() => handleDownload(attachment)}
-                              >
-                                {attachment.type.startsWith('image/') ? (
-                                  <img 
-                                    src={attachment.url} 
-                                    alt={attachment.name}
-                                    className="w-16 h-16 object-cover rounded"
-                                  />
-                                ) : (
-                                  <>
-                                    <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center flex-shrink-0">
-                                      {getFileIcon(attachment.type)}
-                                    </div>
-                                    <div className="min-w-0">
-                                      <p className="text-xs font-medium truncate max-w-[120px]">
-                                        {attachment.name}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {formatFileSize(attachment.size)}
-                                      </p>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>
