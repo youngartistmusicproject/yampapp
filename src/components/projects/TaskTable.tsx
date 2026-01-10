@@ -89,9 +89,9 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, statuse
                       <Repeat className="w-3.5 h-3.5 text-muted-foreground" />
                     )}
                   </div>
-                  {(task.progress !== undefined || task.description) && (
+                  {(task.progress > 0 || task.description) && (
                     <p className="text-xs text-muted-foreground line-clamp-1">
-                      {task.progress !== undefined && (
+                      {task.progress > 0 && (
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground mr-1.5">{task.progress}%</span>
                       )}
                       {task.description}
