@@ -344,9 +344,29 @@ export function useChat() {
     }
   };
 
-  // Create a new conversation
+  // Find existing direct conversation with a specific user
+  const findExistingDirectConversation = (participantName: string): Conversation | undefined => {
+    return conversations.find((conv) => {
+      // For direct conversations, check if the participant is in the conversation
+      if (conv.type === "direct") {
+        return conv.participants.includes(participantName) && conv.participants.includes("You");
+      }
+      return false;
+    });
+  };
+
+  // Create a new conversation (or return existing one for direct chats)
   const createConversation = async (name: string, type: "direct" | "group" = "direct") => {
     try {
+      // For direct conversations, check if one already exists with this person
+      if (type === "direct") {
+        const existingConv = findExistingDirectConversation(name);
+        if (existingConv) {
+          setSelectedConversationId(existingConv.id);
+          return { id: existingConv.id, name: existingConv.name, type: existingConv.type };
+        }
+      }
+
       const { data, error } = await supabase
         .from("conversations")
         .insert({ name, type })
