@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Project, User } from "@/types";
+import { Project, User, Team } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 
@@ -20,6 +27,8 @@ interface ProjectDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (project: Omit<Project, 'id' | 'createdAt' | 'tasks'>) => void;
   availableMembers: User[];
+  teams: Team[];
+  selectedTeamId?: string;
 }
 
 const projectColors = [
@@ -33,11 +42,12 @@ const projectColors = [
   "#84cc16", // lime
 ];
 
-export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers }: ProjectDialogProps) {
+export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, teams, selectedTeamId }: ProjectDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(projectColors[0]);
   const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
+  const [teamId, setTeamId] = useState(selectedTeamId || teams[0]?.id || "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,12 +56,14 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers }
       description,
       color,
       members: selectedMembers,
+      teamId,
     });
     // Reset form
     setName("");
     setDescription("");
     setColor(projectColors[0]);
     setSelectedMembers([]);
+    setTeamId(selectedTeamId || teams[0]?.id || "");
   };
 
   const toggleMember = (member: User) => {
@@ -77,6 +89,28 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers }
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="team">Team</Label>
+              <Select value={teamId} onValueChange={setTeamId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a team" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teams.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: team.color }}
+                        />
+                        {team.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="name">Project Name</Label>
               <Input

@@ -29,7 +29,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 
-import { teamMembers, statusLibrary as defaultStatuses, tagLibrary } from "@/data/workManagementConfig";
+import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, teamsLibrary } from "@/data/workManagementConfig";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
@@ -42,6 +42,7 @@ const initialProjects: Project[] = [
     color: "#eb5c5c",
     tasks: [],
     members: [teamMembers[0], teamMembers[2], teamMembers[4]],
+    teamId: "teachers",
     createdAt: new Date(),
   },
   {
@@ -51,6 +52,27 @@ const initialProjects: Project[] = [
     color: "#3b82f6",
     tasks: [],
     members: [teamMembers[1], teamMembers[2]],
+    teamId: "teachers",
+    createdAt: new Date(),
+  },
+  {
+    id: "p3",
+    name: "Q1 Budget Review",
+    description: "Review and finalize Q1 financial reports",
+    color: "#8b5cf6",
+    tasks: [],
+    members: [teamMembers[0], teamMembers[3]],
+    teamId: "finance-accounting",
+    createdAt: new Date(),
+  },
+  {
+    id: "p4",
+    name: "Lead Nurturing Campaign",
+    description: "Develop and execute marketing campaigns for prospective students",
+    color: "#f59e0b",
+    tasks: [],
+    members: [teamMembers[1], teamMembers[4]],
+    teamId: "sales-marketing",
     createdAt: new Date(),
   },
 ];
@@ -132,6 +154,7 @@ export default function Projects() {
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [filters, setFilters] = useState<TaskFilters>({
     statuses: [],
@@ -160,6 +183,10 @@ export default function Projects() {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
     
+    // Team filter - check if task's project belongs to selected team
+    const taskProject = projects.find(p => p.id === task.projectId);
+    const matchesTeam = selectedTeam === "all" || taskProject?.teamId === selectedTeam || !task.projectId;
+    
     // Status filter
     const matchesStatus = filters.statuses.length === 0 || filters.statuses.includes(task.status);
     
@@ -185,7 +212,7 @@ export default function Projects() {
     const matchesDueDateTo = !filters.dueDateTo || 
       (task.dueDate && new Date(task.dueDate) <= filters.dueDateTo);
     
-    return matchesSearch && matchesProject && matchesStatus && matchesPriority && 
+    return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesPriority && 
            matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo;
   });
 
@@ -544,6 +571,39 @@ export default function Projects() {
         </DropdownMenu>
       </div>
 
+      {/* Teams Bar */}
+      <div className="flex gap-2 flex-wrap items-center">
+        <span className="text-sm font-medium text-muted-foreground mr-2">Teams:</span>
+        <Badge
+          variant={selectedTeam === "all" ? "default" : "outline"}
+          className="cursor-pointer"
+          onClick={() => {
+            setSelectedTeam("all");
+            setSelectedProject("all");
+          }}
+        >
+          All Teams
+        </Badge>
+        {teamsLibrary.map((team) => (
+          <Badge
+            key={team.id}
+            variant={selectedTeam === team.id ? "default" : "outline"}
+            className="cursor-pointer gap-1.5"
+            onClick={() => {
+              setSelectedTeam(team.id);
+              setSelectedProject("all");
+            }}
+            style={selectedTeam === team.id ? { backgroundColor: team.color } : {}}
+          >
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: selectedTeam === team.id ? "white" : team.color }}
+            />
+            {team.name}
+          </Badge>
+        ))}
+      </div>
+
       {/* Projects Bar */}
       <div className="flex gap-2 flex-wrap items-center">
         <span className="text-sm font-medium text-muted-foreground mr-2">Projects:</span>
@@ -552,23 +612,25 @@ export default function Projects() {
           className="cursor-pointer"
           onClick={() => setSelectedProject("all")}
         >
-          All Tasks
+          All Projects
         </Badge>
-        {projects.map((project) => (
-          <Badge
-            key={project.id}
-            variant={selectedProject === project.id ? "default" : "outline"}
-            className="cursor-pointer gap-1.5"
-            onClick={() => setSelectedProject(project.id)}
-            style={selectedProject === project.id ? { backgroundColor: project.color } : {}}
-          >
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: selectedProject === project.id ? "white" : project.color }}
-            />
-            {project.name}
-          </Badge>
-        ))}
+        {projects
+          .filter(p => selectedTeam === "all" || p.teamId === selectedTeam)
+          .map((project) => (
+            <Badge
+              key={project.id}
+              variant={selectedProject === project.id ? "default" : "outline"}
+              className="cursor-pointer gap-1.5"
+              onClick={() => setSelectedProject(project.id)}
+              style={selectedProject === project.id ? { backgroundColor: project.color } : {}}
+            >
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: selectedProject === project.id ? "white" : project.color }}
+              />
+              {project.name}
+            </Badge>
+          ))}
       </div>
 
       {/* Filters */}
@@ -731,6 +793,8 @@ export default function Projects() {
         onOpenChange={setProjectDialogOpen}
         onSubmit={handleAddProject}
         availableMembers={teamMembers}
+        teams={teamsLibrary}
+        selectedTeamId={selectedTeam !== "all" ? selectedTeam : undefined}
       />
 
       <StatusManager
