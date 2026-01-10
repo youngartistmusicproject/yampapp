@@ -227,35 +227,37 @@ export function ChatWindow({
                         >
                           <Reply className="w-3 h-3 text-muted-foreground" />
                         </button>
-                        <Popover
-                          open={emojiPickerMessageId === msg.id}
-                          onOpenChange={(open) => setEmojiPickerMessageId(open ? msg.id : null)}
-                        >
-                          <PopoverTrigger asChild>
-                            <button
-                              className="p-1 rounded-full hover:bg-muted transition-colors"
-                              title="Add reaction"
-                            >
-                              <SmilePlus className="w-3 h-3 text-muted-foreground" />
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0 border-0" side="top" align={msg.is_own ? "end" : "start"}>
-                            <div className="flex gap-1 p-2 bg-background border rounded-lg shadow-lg">
-                              {REACTION_EMOJIS.map((emoji) => (
-                                <button
-                                  key={emoji}
-                                  onClick={() => {
-                                    toggleReaction(msg.id, emoji);
-                                    setEmojiPickerMessageId(null);
-                                  }}
-                                  className="p-1 hover:bg-muted rounded transition-colors text-sm"
-                                >
-                                  {emoji}
-                                </button>
-                              ))}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
+                        <div>
+                          <Popover
+                            open={emojiPickerMessageId === msg.id}
+                            onOpenChange={(open) => setEmojiPickerMessageId(open ? msg.id : null)}
+                          >
+                            <PopoverTrigger asChild>
+                              <button
+                                className="p-1 rounded-full hover:bg-muted transition-colors"
+                                title="Add reaction"
+                              >
+                                <SmilePlus className="w-3 h-3 text-muted-foreground" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 border-0" side="top" align={msg.is_own ? "end" : "start"}>
+                              <div className="flex gap-1 p-2 bg-background border rounded-lg shadow-lg">
+                                {REACTION_EMOJIS.map((emoji) => (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => {
+                                      toggleReaction(msg.id, emoji);
+                                      setEmojiPickerMessageId(null);
+                                    }}
+                                    className="p-1 hover:bg-muted rounded transition-colors text-sm"
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
                       </div>
                     </div>
 
