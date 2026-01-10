@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Task, User, TaskComment, TaskAttachment, CommentReaction } from "@/types";
+import { Task, User, TaskComment, TaskAttachment, CommentReaction, Subtask } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +23,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   MessageSquare, 
   Paperclip, 
@@ -40,7 +46,11 @@ import {
   ThumbsUp,
   Smile,
   Reply,
-  CornerDownRight
+  CornerDownRight,
+  ChevronDown,
+  ChevronRight,
+  Plus,
+  ListTodo
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
@@ -194,9 +204,13 @@ export function TaskDetailDialog({
   const [mentionIndex, setMentionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [replyingTo, setReplyingTo] = useState<TaskComment | null>(null);
+  const [subtasksOpen, setSubtasksOpen] = useState(true);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+  const subtaskInputRef = useRef<HTMLInputElement>(null);
 
   // Filter members based on mention search
   const filteredMembers = availableMembers.filter(member =>
@@ -228,10 +242,53 @@ export function TaskDetailDialog({
   );
   // Legacy attachments (attached directly to task, not through comments)
   const legacyAttachments = task.attachments || [];
+  const subtasks = task.subtasks || [];
+  const completedSubtasks = subtasks.filter(s => s.completed).length;
 
   // Scroll to bottom of comments
   const scrollToBottom = () => {
     commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Subtask handlers
+  const handleAddSubtask = () => {
+    if (!newSubtaskTitle.trim()) return;
+    
+    const newSubtask: Subtask = {
+      id: Date.now().toString(),
+      title: newSubtaskTitle.trim(),
+      completed: false,
+      createdAt: new Date(),
+    };
+    
+    onTaskUpdate(task.id, {
+      subtasks: [...subtasks, newSubtask],
+    });
+    
+    setNewSubtaskTitle("");
+    setIsAddingSubtask(false);
+  };
+
+  const handleToggleSubtask = (subtaskId: string) => {
+    const updatedSubtasks = subtasks.map(s =>
+      s.id === subtaskId ? { ...s, completed: !s.completed } : s
+    );
+    onTaskUpdate(task.id, { subtasks: updatedSubtasks });
+  };
+
+  const handleDeleteSubtask = (subtaskId: string) => {
+    const updatedSubtasks = subtasks.filter(s => s.id !== subtaskId);
+    onTaskUpdate(task.id, { subtasks: updatedSubtasks });
+  };
+
+  const handleSubtaskKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddSubtask();
+    } else if (e.key === 'Escape') {
+      setNewSubtaskTitle("");
+      setIsAddingSubtask(false);
+    }
   };
 
   const handleSubmitComment = () => {
@@ -555,6 +612,131 @@ export function TaskDetailDialog({
                   className="text-sm whitespace-pre-wrap min-h-[100px]"
                 />
               </div>
+
+              <Separator />
+
+              {/* Subtasks Section - Collapsible */}
+              <Collapsible open={subtasksOpen} onOpenChange={setSubtasksOpen}>
+                <CollapsibleTrigger asChild>
+                  <button className="flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded -mx-2 px-2 py-1 transition-colors">
+                    {subtasksOpen ? (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    )}
+                    <ListTodo className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="text-sm font-medium">Subtasks</h3>
+                    {subtasks.length > 0 && (
+                      <Badge variant="secondary" className="text-xs h-5 ml-1">
+                        {completedSubtasks}/{subtasks.length}
+                      </Badge>
+                    )}
+                  </button>
+                </CollapsibleTrigger>
+                
+                <CollapsibleContent className="mt-2 space-y-2">
+                  {/* Subtask list */}
+                  {subtasks.length > 0 && (
+                    <div className="space-y-1">
+                      {subtasks.map((subtask) => (
+                        <div
+                          key={subtask.id}
+                          className="flex items-center gap-2 group p-2 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <Checkbox
+                            checked={subtask.completed}
+                            onCheckedChange={() => handleToggleSubtask(subtask.id)}
+                            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          />
+                          <span className={`flex-1 text-sm ${subtask.completed ? 'line-through text-muted-foreground' : ''}`}>
+                            {subtask.title}
+                          </span>
+                          {subtask.assignee && (
+                            <UserAvatar user={subtask.assignee} className="w-5 h-5 text-[10px]" />
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                            onClick={() => handleDeleteSubtask(subtask.id)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add subtask input */}
+                  {isAddingSubtask ? (
+                    <div className="flex items-center gap-2 p-2">
+                      <Checkbox disabled className="opacity-50" />
+                      <Input
+                        ref={subtaskInputRef}
+                        value={newSubtaskTitle}
+                        onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                        onKeyDown={handleSubtaskKeyDown}
+                        onBlur={() => {
+                          if (!newSubtaskTitle.trim()) {
+                            setIsAddingSubtask(false);
+                          }
+                        }}
+                        placeholder="Enter subtask title..."
+                        className="h-7 text-sm flex-1"
+                        autoFocus
+                      />
+                      <Button
+                        size="sm"
+                        className="h-7 px-2"
+                        onClick={handleAddSubtask}
+                        disabled={!newSubtaskTitle.trim()}
+                      >
+                        Add
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => {
+                          setNewSubtaskTitle("");
+                          setIsAddingSubtask(false);
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-sm text-muted-foreground hover:text-foreground w-full justify-start gap-2"
+                      onClick={() => {
+                        setIsAddingSubtask(true);
+                        setTimeout(() => subtaskInputRef.current?.focus(), 0);
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add subtask
+                    </Button>
+                  )}
+
+                  {/* Progress bar */}
+                  {subtasks.length > 0 && (
+                    <div className="pt-2">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                        <span>Progress</span>
+                        <span>{Math.round((completedSubtasks / subtasks.length) * 100)}%</span>
+                      </div>
+                      <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary transition-all duration-300"
+                          style={{ width: `${(completedSubtasks / subtasks.length) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Legacy Attachments (if any exist from before) */}
               {legacyAttachments.length > 0 && (

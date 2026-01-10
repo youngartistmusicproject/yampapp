@@ -40,6 +40,15 @@ export interface TaskAttachment {
   uploadedAt: Date;
 }
 
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+  assignee?: User;
+  dueDate?: Date;
+  createdAt: Date;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -56,6 +65,7 @@ export interface Task {
   completedAt?: Date; // timestamp when task was marked complete
   comments?: TaskComment[];
   attachments?: TaskAttachment[];
+  subtasks?: Subtask[];
   createdAt: Date;
   updatedAt: Date;
 }
