@@ -233,7 +233,7 @@ export default function Projects() {
     setViewingTask(latestTask);
   };
 
-  const handleAddComment = (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>) => {
+  const handleAddComment = (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>, parentCommentId?: string) => {
     const commentId = Date.now().toString();
     // Process attachments to give them proper IDs
     const processedAttachments = comment.attachments?.map((a, i) => ({
@@ -247,22 +247,132 @@ export default function Projects() {
       id: commentId,
       createdAt: new Date(),
       attachments: processedAttachments,
+      parentCommentId,
     };
     
     setTasks(tasks.map(task => {
       if (task.id !== taskId) return task;
+      
+      // If this is a reply, add it to the parent comment's replies
+      if (parentCommentId) {
+        const updatedComments = (task.comments || []).map(c => {
+          if (c.id === parentCommentId) {
+            return {
+              ...c,
+              replies: [...(c.replies || []), newComment],
+            };
+          }
+          return c;
+        });
+        return {
+          ...task,
+          comments: updatedComments,
+          updatedAt: new Date(),
+        };
+      }
+      
       return {
         ...task,
         comments: [...(task.comments || []), newComment],
         updatedAt: new Date(),
       };
     }));
+    
     // Update viewing task to reflect changes
+    setViewingTask(prev => {
+      if (!prev || prev.id !== taskId) return prev;
+      
+      if (parentCommentId) {
+        const updatedComments = (prev.comments || []).map(c => {
+          if (c.id === parentCommentId) {
+            return {
+              ...c,
+              replies: [...(c.replies || []), newComment],
+            };
+          }
+          return c;
+        });
+        return {
+          ...prev,
+          comments: updatedComments,
+        };
+      }
+      
+      return {
+        ...prev,
+        comments: [...(prev.comments || []), newComment],
+      };
+    });
+  };
+
+  const handleToggleReaction = (taskId: string, commentId: string, emoji: string) => {
+    const updateReactions = (comments: TaskComment[]): TaskComment[] => {
+      return comments.map(comment => {
+        // Check replies first
+        if (comment.replies && comment.replies.length > 0) {
+          comment = {
+            ...comment,
+            replies: updateReactions(comment.replies),
+          };
+        }
+        
+        if (comment.id !== commentId) return comment;
+        
+        const reactions = comment.reactions || [];
+        const existingReaction = reactions.find(r => r.emoji === emoji);
+        
+        if (existingReaction) {
+          const userHasReacted = existingReaction.users.some(u => u.id === currentUser.id);
+          
+          if (userHasReacted) {
+            // Remove user from reaction
+            const updatedUsers = existingReaction.users.filter(u => u.id !== currentUser.id);
+            if (updatedUsers.length === 0) {
+              // Remove the reaction entirely
+              return {
+                ...comment,
+                reactions: reactions.filter(r => r.emoji !== emoji),
+              };
+            }
+            return {
+              ...comment,
+              reactions: reactions.map(r => 
+                r.emoji === emoji ? { ...r, users: updatedUsers } : r
+              ),
+            };
+          } else {
+            // Add user to existing reaction
+            return {
+              ...comment,
+              reactions: reactions.map(r =>
+                r.emoji === emoji ? { ...r, users: [...r.users, currentUser] } : r
+              ),
+            };
+          }
+        } else {
+          // Create new reaction
+          return {
+            ...comment,
+            reactions: [...reactions, { emoji, users: [currentUser] }],
+          };
+        }
+      });
+    };
+    
+    setTasks(tasks.map(task => {
+      if (task.id !== taskId) return task;
+      return {
+        ...task,
+        comments: updateReactions(task.comments || []),
+        updatedAt: new Date(),
+      };
+    }));
+    
     setViewingTask(prev => {
       if (!prev || prev.id !== taskId) return prev;
       return {
         ...prev,
-        comments: [...(prev.comments || []), newComment],
+        comments: updateReactions(prev.comments || []),
       };
     });
   };
@@ -563,6 +673,7 @@ export default function Projects() {
         onTaskUpdate={handleTaskUpdate}
         onAddComment={handleAddComment}
         onDeleteComment={handleDeleteComment}
+        onToggleReaction={handleToggleReaction}
       />
 
       <ProjectDialog

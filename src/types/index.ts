@@ -14,12 +14,20 @@ export interface RecurrenceSettings {
   dayOfMonth?: number; // for monthly recurrence
 }
 
+export interface CommentReaction {
+  emoji: string;
+  users: User[];
+}
+
 export interface TaskComment {
   id: string;
   content: string;
   author: User;
   createdAt: Date;
   attachments?: TaskAttachment[];
+  reactions?: CommentReaction[];
+  parentCommentId?: string; // For replies
+  replies?: TaskComment[];
 }
 
 export interface TaskAttachment {

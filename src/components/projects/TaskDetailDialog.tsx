@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Task, User, TaskComment, TaskAttachment } from "@/types";
+import { Task, User, TaskComment, TaskAttachment, CommentReaction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { 
   MessageSquare, 
   Paperclip, 
@@ -31,7 +36,11 @@ import {
   Users,
   Tag,
   AlignLeft,
-  X
+  X,
+  ThumbsUp,
+  Smile,
+  Reply,
+  CornerDownRight
 } from "lucide-react";
 import { format } from "date-fns";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
@@ -44,6 +53,9 @@ interface StatusItem {
   color: string;
 }
 
+// Quick reaction emojis
+const QUICK_REACTIONS = ['👍', '❤️', '😄', '🎉', '🚀', '👀', '💯', '🔥'];
+
 interface TaskDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -52,8 +64,9 @@ interface TaskDetailDialogProps {
   availableMembers: User[];
   statuses: StatusItem[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
-  onAddComment: (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>) => void;
+  onAddComment: (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>, parentCommentId?: string) => void;
   onDeleteComment: (taskId: string, commentId: string) => void;
+  onToggleReaction: (taskId: string, commentId: string, emoji: string) => void;
 }
 
 const getFileIcon = (type: string) => {
@@ -172,6 +185,7 @@ export function TaskDetailDialog({
   onTaskUpdate,
   onAddComment,
   onDeleteComment,
+  onToggleReaction,
 }: TaskDetailDialogProps) {
   const [newComment, setNewComment] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
@@ -179,6 +193,7 @@ export function TaskDetailDialog({
   const [mentionSearch, setMentionSearch] = useState("");
   const [mentionIndex, setMentionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [replyingTo, setReplyingTo] = useState<TaskComment | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
@@ -195,6 +210,7 @@ export function TaskDetailDialog({
       setNewComment("");
       setShowMentions(false);
       setMentionSearch("");
+      setReplyingTo(null);
     }
   }, [open]);
 
@@ -244,10 +260,11 @@ export function TaskDetailDialog({
           id: `pending-${i}`,
           uploadedAt: new Date(),
         })) : undefined,
-      });
+      }, replyingTo?.id);
       
       setNewComment("");
       setPendingAttachments([]);
+      setReplyingTo(null);
       
       // Scroll to bottom after adding comment
       setTimeout(scrollToBottom, 100);
@@ -604,65 +621,237 @@ export function TaskDetailDialog({
                   No activity yet. Be the first to comment!
                 </p>
               )}
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3 group">
-                  <UserAvatar user={comment.author} className="w-8 h-8 text-xs flex-shrink-0" />
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{comment.author.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(comment.createdAt), "MMM d 'at' h:mm a")}
-                      </span>
-                      {comment.author.id === currentUser.id && (
+              {comments.filter(c => !c.parentCommentId).map((comment) => (
+                <div key={comment.id} className="space-y-3">
+                  {/* Main comment */}
+                  <div className="flex gap-3 group">
+                    <UserAvatar user={comment.author} className="w-8 h-8 text-xs flex-shrink-0" />
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{comment.author.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(comment.createdAt), "MMM d 'at' h:mm a")}
+                        </span>
+                        {comment.author.id === currentUser.id && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive ml-auto"
+                            onClick={() => onDeleteComment(task.id, comment.id)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                      {comment.content && (
+                        <p className="text-sm whitespace-pre-wrap">{renderCommentContent(comment.content)}</p>
+                      )}
+                      
+                      {/* Comment attachments */}
+                      {comment.attachments && comment.attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {comment.attachments.map((attachment) => (
+                            <div
+                              key={attachment.id}
+                              className="flex items-center gap-2 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                              onClick={() => handleDownload(attachment)}
+                            >
+                              {attachment.type.startsWith('image/') ? (
+                                <img 
+                                  src={attachment.url} 
+                                  alt={attachment.name}
+                                  className="w-16 h-16 object-cover rounded"
+                                />
+                              ) : (
+                                <>
+                                  <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center flex-shrink-0">
+                                    {getFileIcon(attachment.type)}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-medium truncate max-w-[100px]">
+                                      {attachment.name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {formatFileSize(attachment.size)}
+                                    </p>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Reactions display */}
+                      {comment.reactions && comment.reactions.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {comment.reactions.map((reaction) => {
+                            const hasReacted = reaction.users.some(u => u.id === currentUser.id);
+                            return (
+                              <button
+                                key={reaction.emoji}
+                                onClick={() => onToggleReaction(task.id, comment.id, reaction.emoji)}
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                                  hasReacted 
+                                    ? 'bg-primary/10 border-primary/30 text-primary' 
+                                    : 'bg-muted hover:bg-muted/80 border-transparent'
+                                }`}
+                                title={reaction.users.map(u => u.name).join(', ')}
+                              >
+                                <span>{reaction.emoji}</span>
+                                <span>{reaction.users.length}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-1 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive ml-auto"
-                          onClick={() => onDeleteComment(task.id, comment.id)}
+                          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => onToggleReaction(task.id, comment.id, '👍')}
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <ThumbsUp className="w-3 h-3 mr-1" />
+                          Like
                         </Button>
-                      )}
-                    </div>
-                    {comment.content && (
-                      <p className="text-sm whitespace-pre-wrap">{renderCommentContent(comment.content)}</p>
-                    )}
-                    
-                    {/* Comment attachments */}
-                    {comment.attachments && comment.attachments.length > 0 && (
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {comment.attachments.map((attachment) => (
-                          <div
-                            key={attachment.id}
-                            className="flex items-center gap-2 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
-                            onClick={() => handleDownload(attachment)}
-                          >
-                            {attachment.type.startsWith('image/') ? (
-                              <img 
-                                src={attachment.url} 
-                                alt={attachment.name}
-                                className="w-16 h-16 object-cover rounded"
-                              />
-                            ) : (
-                              <>
-                                <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center flex-shrink-0">
-                                  {getFileIcon(attachment.type)}
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-xs font-medium truncate max-w-[100px]">
-                                    {attachment.name}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {formatFileSize(attachment.size)}
-                                  </p>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        ))}
+                        
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                            >
+                              <Smile className="w-3 h-3 mr-1" />
+                              React
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-2" align="start">
+                            <div className="flex gap-1">
+                              {QUICK_REACTIONS.map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => onToggleReaction(task.id, comment.id, emoji)}
+                                  className="w-8 h-8 flex items-center justify-center rounded hover:bg-muted transition-colors text-lg"
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => {
+                            setReplyingTo(comment);
+                            textareaRef.current?.focus();
+                          }}
+                        >
+                          <Reply className="w-3 h-3 mr-1" />
+                          Reply
+                        </Button>
                       </div>
-                    )}
+                    </div>
                   </div>
+
+                  {/* Replies */}
+                  {comment.replies && comment.replies.length > 0 && (
+                    <div className="ml-10 space-y-3 border-l-2 border-muted pl-4">
+                      {comment.replies.map((reply) => (
+                        <div key={reply.id} className="flex gap-3 group">
+                          <UserAvatar user={reply.author} className="w-6 h-6 text-xs flex-shrink-0" />
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">{reply.author.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(reply.createdAt), "MMM d 'at' h:mm a")}
+                              </span>
+                              {reply.author.id === currentUser.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive ml-auto"
+                                  onClick={() => onDeleteComment(task.id, reply.id)}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                            {reply.content && (
+                              <p className="text-sm whitespace-pre-wrap">{renderCommentContent(reply.content)}</p>
+                            )}
+
+                            {/* Reply reactions */}
+                            {reply.reactions && reply.reactions.length > 0 && (
+                              <div className="flex flex-wrap gap-1 pt-1">
+                                {reply.reactions.map((reaction) => {
+                                  const hasReacted = reaction.users.some(u => u.id === currentUser.id);
+                                  return (
+                                    <button
+                                      key={reaction.emoji}
+                                      onClick={() => onToggleReaction(task.id, reply.id, reaction.emoji)}
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                                        hasReacted 
+                                          ? 'bg-primary/10 border-primary/30 text-primary' 
+                                          : 'bg-muted hover:bg-muted/80 border-transparent'
+                                      }`}
+                                      title={reaction.users.map(u => u.name).join(', ')}
+                                    >
+                                      <span>{reaction.emoji}</span>
+                                      <span>{reaction.users.length}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Reply action buttons */}
+                            <div className="flex items-center gap-1 pt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => onToggleReaction(task.id, reply.id, '👍')}
+                              >
+                                <ThumbsUp className="w-3 h-3" />
+                              </Button>
+                              
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+                                  >
+                                    <Smile className="w-3 h-3" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-2" align="start">
+                                  <div className="flex gap-1">
+                                    {QUICK_REACTIONS.map((emoji) => (
+                                      <button
+                                        key={emoji}
+                                        onClick={() => onToggleReaction(task.id, reply.id, emoji)}
+                                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-muted transition-colors text-lg"
+                                      >
+                                        {emoji}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               {/* Scroll anchor */}
@@ -670,14 +859,30 @@ export function TaskDetailDialog({
             </div>
 
             {/* Comment input - fixed at bottom */}
-            <div className="p-4 border-t bg-background">
+            <div className="p-4 border-t bg-background space-y-2">
+              {/* Reply indicator */}
+              {replyingTo && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded">
+                  <CornerDownRight className="w-3 h-3" />
+                  <span>Replying to <span className="font-medium text-foreground">{replyingTo.author.name}</span></span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 w-5 p-0 ml-auto"
+                    onClick={() => setReplyingTo(null)}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+              
               <div className="flex gap-3">
                 <UserAvatar user={currentUser} className="w-8 h-8 text-xs flex-shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="relative">
                     <Textarea
                       ref={textareaRef}
-                      placeholder="Write a comment... Use @ to mention"
+                      placeholder={replyingTo ? `Reply to ${replyingTo.author.name}...` : "Write a comment... Use @ to mention"}
                       value={newComment}
                       onChange={handleCommentChange}
                       onKeyDown={handleKeyDown}
