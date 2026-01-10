@@ -14,6 +14,13 @@ export interface Conversation {
   updated_at: string;
 }
 
+export interface Attachment {
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+}
+
 export interface Message {
   id: string;
   conversation_id: string;
@@ -21,6 +28,7 @@ export interface Message {
   content: string;
   is_own: boolean;
   created_at: string;
+  attachments: Attachment[];
 }
 
 export function useChat() {
@@ -101,7 +109,13 @@ export function useChat() {
 
       if (error) throw error;
 
-      setMessages(data || []);
+      // Transform data to ensure attachments is always an array
+      const transformedMessages: Message[] = (data || []).map((msg) => ({
+        ...msg,
+        attachments: Array.isArray(msg.attachments) ? (msg.attachments as unknown as Attachment[]) : [],
+      }));
+
+      setMessages(transformedMessages);
     } catch (error) {
       console.error("Error fetching messages:", error);
       toast({
@@ -112,16 +126,61 @@ export function useChat() {
     }
   };
 
-  // Send a new message
-  const sendMessage = async (content: string) => {
-    if (!selectedConversationId || !content.trim()) return;
+  // Upload files to storage
+  const uploadFiles = async (files: File[]): Promise<Attachment[]> => {
+    const uploadedAttachments: Attachment[] = [];
+
+    for (const file of files) {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${selectedConversationId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("chat-attachments")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        toast({
+          title: "Upload Error",
+          description: `Failed to upload ${file.name}`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("chat-attachments")
+        .getPublicUrl(filePath);
+
+      uploadedAttachments.push({
+        name: file.name,
+        url: publicUrlData.publicUrl,
+        type: file.type,
+        size: file.size,
+      });
+    }
+
+    return uploadedAttachments;
+  };
+
+  // Send a new message with optional attachments
+  const sendMessage = async (content: string, files?: File[]) => {
+    if (!selectedConversationId || (!content.trim() && (!files || files.length === 0))) return;
 
     try {
+      let attachments: Attachment[] = [];
+
+      if (files && files.length > 0) {
+        attachments = await uploadFiles(files);
+      }
+
       const { error } = await supabase.from("messages").insert({
         conversation_id: selectedConversationId,
         sender_name: "You",
         content: content.trim(),
         is_own: true,
+        attachments: JSON.parse(JSON.stringify(attachments)),
       });
 
       if (error) throw error;
