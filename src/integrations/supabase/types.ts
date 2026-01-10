@@ -191,6 +191,35 @@ export type Database = {
           },
         ]
       }
+      typing_indicators: {
+        Row: {
+          conversation_id: string
+          id: string
+          updated_at: string
+          user_name: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          updated_at?: string
+          user_name: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          updated_at?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "typing_indicators_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
