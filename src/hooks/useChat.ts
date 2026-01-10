@@ -21,6 +21,20 @@ export interface Attachment {
   size: number;
 }
 
+export interface Reaction {
+  id: string;
+  message_id: string;
+  user_name: string;
+  emoji: string;
+}
+
+export interface ReactionGroup {
+  emoji: string;
+  count: number;
+  users: string[];
+  hasReacted: boolean;
+}
+
 export interface Message {
   id: string;
   conversation_id: string;
@@ -29,11 +43,15 @@ export interface Message {
   is_own: boolean;
   created_at: string;
   attachments: Attachment[];
+  reactions: ReactionGroup[];
 }
+
+export const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🎉"];
 
 export function useChat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [reactions, setReactions] = useState<Map<string, Reaction[]>>(new Map());
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -109,10 +127,27 @@ export function useChat() {
 
       if (error) throw error;
 
-      // Transform data to ensure attachments is always an array
+      // Fetch reactions for all messages
+      const messageIds = (data || []).map((m) => m.id);
+      const { data: reactionsData } = await supabase
+        .from("message_reactions")
+        .select("*")
+        .in("message_id", messageIds);
+
+      // Group reactions by message
+      const reactionsMap = new Map<string, Reaction[]>();
+      (reactionsData || []).forEach((r) => {
+        const existing = reactionsMap.get(r.message_id) || [];
+        existing.push(r as Reaction);
+        reactionsMap.set(r.message_id, existing);
+      });
+      setReactions(reactionsMap);
+
+      // Transform data to ensure attachments is always an array and add reactions
       const transformedMessages: Message[] = (data || []).map((msg) => ({
         ...msg,
         attachments: Array.isArray(msg.attachments) ? (msg.attachments as unknown as Attachment[]) : [],
+        reactions: groupReactions(reactionsMap.get(msg.id) || []),
       }));
 
       setMessages(transformedMessages);
@@ -121,6 +156,63 @@ export function useChat() {
       toast({
         title: "Error",
         description: "Failed to load messages",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Group reactions by emoji
+  const groupReactions = (messageReactions: Reaction[]): ReactionGroup[] => {
+    const groups = new Map<string, { count: number; users: string[] }>();
+    
+    messageReactions.forEach((r) => {
+      const existing = groups.get(r.emoji) || { count: 0, users: [] };
+      existing.count++;
+      existing.users.push(r.user_name);
+      groups.set(r.emoji, existing);
+    });
+
+    return Array.from(groups.entries()).map(([emoji, data]) => ({
+      emoji,
+      count: data.count,
+      users: data.users,
+      hasReacted: data.users.includes("You"),
+    }));
+  };
+
+  // Toggle reaction on a message
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    try {
+      // Check if user already reacted with this emoji
+      const existingReactions = reactions.get(messageId) || [];
+      const existingReaction = existingReactions.find(
+        (r) => r.emoji === emoji && r.user_name === "You"
+      );
+
+      if (existingReaction) {
+        // Remove reaction
+        await supabase
+          .from("message_reactions")
+          .delete()
+          .eq("id", existingReaction.id);
+      } else {
+        // Add reaction
+        await supabase.from("message_reactions").insert({
+          message_id: messageId,
+          user_name: "You",
+          emoji,
+        });
+      }
+
+      // Refresh messages to get updated reactions
+      if (selectedConversationId) {
+        await fetchMessages(selectedConversationId);
+      }
+    } catch (error) {
+      console.error("Error toggling reaction:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update reaction",
         variant: "destructive",
       });
     }
@@ -261,10 +353,10 @@ export function useChat() {
     }
   }, [selectedConversationId]);
 
-  // Set up realtime subscription for messages
+  // Set up realtime subscription for messages and reactions
   useEffect(() => {
     const channel = supabase
-      .channel("messages-realtime")
+      .channel("chat-realtime")
       .on(
         "postgres_changes",
         {
@@ -273,12 +365,33 @@ export function useChat() {
           table: "messages",
         },
         (payload) => {
-          const newMessage = payload.new as Message;
+          const newMessage = payload.new as any;
           if (newMessage.conversation_id === selectedConversationId) {
-            setMessages((prev) => [...prev, newMessage]);
+            const transformedMessage: Message = {
+              ...newMessage,
+              attachments: Array.isArray(newMessage.attachments) 
+                ? (newMessage.attachments as unknown as Attachment[]) 
+                : [],
+              reactions: [],
+            };
+            setMessages((prev) => [...prev, transformedMessage]);
           }
           // Refresh conversations to update last message
           fetchConversations();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "message_reactions",
+        },
+        () => {
+          // Refresh messages when reactions change
+          if (selectedConversationId) {
+            fetchMessages(selectedConversationId);
+          }
         }
       )
       .subscribe();
@@ -298,6 +411,7 @@ export function useChat() {
     setSelectedConversationId,
     sendMessage,
     createConversation,
+    toggleReaction,
     isLoading,
     formatTime,
   };

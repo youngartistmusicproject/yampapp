@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Search, Plus, Send, Paperclip, MoreHorizontal, Loader2, X, FileIcon, Image as ImageIcon } from "lucide-react";
+import { Search, Plus, Send, Paperclip, MoreHorizontal, Loader2, X, FileIcon, Image as ImageIcon, SmilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -14,7 +14,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useChat, Attachment } from "@/hooks/useChat";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useChat, Attachment, ReactionGroup, REACTION_EMOJIS } from "@/hooks/useChat";
 
 export default function Chat() {
   const {
@@ -25,6 +30,7 @@ export default function Chat() {
     setSelectedConversationId,
     sendMessage,
     createConversation,
+    toggleReaction,
     isLoading,
     formatTime,
   } = useChat();
@@ -262,31 +268,78 @@ export default function Chat() {
                   messages.map((msg) => (
                     <div
                       key={msg.id}
-                      className={`flex ${msg.is_own ? "justify-end" : "justify-start"}`}
+                      className={`flex ${msg.is_own ? "justify-end" : "justify-start"} group`}
                     >
-                      <div
-                        className={`max-w-[70%] ${
-                          msg.is_own
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary"
-                        } rounded-2xl px-4 py-2`}
-                      >
-                        {!msg.is_own && (
-                          <p className="text-xs font-medium mb-1 text-primary">
-                            {msg.sender_name}
-                          </p>
-                        )}
-                        {msg.content && <p className="text-sm">{msg.content}</p>}
-                        {renderAttachments(msg.attachments, msg.is_own)}
-                        <p
-                          className={`text-xs mt-1 ${
+                      <div className="relative">
+                        <div
+                          className={`max-w-[70%] ${
                             msg.is_own
-                              ? "text-primary-foreground/70"
-                              : "text-muted-foreground"
-                          }`}
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-secondary"
+                          } rounded-2xl px-4 py-2`}
                         >
-                          {formatTime(msg.created_at)}
-                        </p>
+                          {!msg.is_own && (
+                            <p className="text-xs font-medium mb-1 text-primary">
+                              {msg.sender_name}
+                            </p>
+                          )}
+                          {msg.content && <p className="text-sm">{msg.content}</p>}
+                          {renderAttachments(msg.attachments, msg.is_own)}
+                          <p
+                            className={`text-xs mt-1 ${
+                              msg.is_own
+                                ? "text-primary-foreground/70"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            {formatTime(msg.created_at)}
+                          </p>
+                        </div>
+                        
+                        {/* Reactions display */}
+                        {msg.reactions && msg.reactions.length > 0 && (
+                          <div className={`flex flex-wrap gap-1 mt-1 ${msg.is_own ? "justify-end" : "justify-start"}`}>
+                            {msg.reactions.map((reaction) => (
+                              <button
+                                key={reaction.emoji}
+                                onClick={() => toggleReaction(msg.id, reaction.emoji)}
+                                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                                  reaction.hasReacted
+                                    ? "bg-primary/10 border-primary/30"
+                                    : "bg-muted/50 border-border hover:bg-muted"
+                                }`}
+                                title={reaction.users.join(", ")}
+                              >
+                                <span>{reaction.emoji}</span>
+                                <span className="text-muted-foreground">{reaction.count}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Add reaction button */}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              className={`absolute ${msg.is_own ? "-left-8" : "-right-8"} top-1/2 -translate-y-1/2 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-muted transition-all`}
+                            >
+                              <SmilePlus className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-2" side={msg.is_own ? "left" : "right"}>
+                            <div className="flex gap-1">
+                              {REACTION_EMOJIS.map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => toggleReaction(msg.id, emoji)}
+                                  className="p-1.5 hover:bg-muted rounded transition-colors text-lg"
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
                   ))
