@@ -48,6 +48,7 @@ export function ChatPopover() {
     setTyping,
     getTypingUsersForConversation,
     isUserOnline,
+    markMessagesAsRead,
   } = useChat();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -387,6 +388,7 @@ export function ChatPopover() {
               onTyping={(isTyping) => setTyping(chat.id, isTyping)}
               toggleReaction={toggleReaction}
               formatTime={formatTime}
+              onMarkAsRead={() => markMessagesAsRead(chat.id)}
             />
           ))}
       </div>

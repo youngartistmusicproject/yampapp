@@ -41,6 +41,12 @@ export interface ReplyTo {
   content: string;
 }
 
+export interface MessageRead {
+  message_id: string;
+  user_name: string;
+  read_at: string;
+}
+
 export interface Message {
   id: string;
   conversation_id: string;
@@ -52,6 +58,7 @@ export interface Message {
   reactions: ReactionGroup[];
   reply_to_id: string | null;
   replyTo?: ReplyTo;
+  readBy?: MessageRead[];
 }
 
 export const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🎉"];
@@ -65,6 +72,7 @@ export function useChat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [reactions, setReactions] = useState<Map<string, Reaction[]>>(new Map());
+  const [messageReads, setMessageReads] = useState<Map<string, MessageRead[]>>(new Map());
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
@@ -158,6 +166,21 @@ export function useChat() {
       });
       setReactions(reactionsMap);
 
+      // Fetch read receipts for all messages
+      const { data: readsData } = await supabase
+        .from("message_reads")
+        .select("*")
+        .in("message_id", messageIds);
+
+      // Group reads by message
+      const readsMap = new Map<string, MessageRead[]>();
+      (readsData || []).forEach((r) => {
+        const existing = readsMap.get(r.message_id) || [];
+        existing.push(r as MessageRead);
+        readsMap.set(r.message_id, existing);
+      });
+      setMessageReads(readsMap);
+
       // Create a map of messages for reply lookups
       const messagesById = new Map<string, any>();
       (data || []).forEach((msg) => messagesById.set(msg.id, msg));
@@ -174,6 +197,7 @@ export function useChat() {
             sender_name: replyToMsg.sender_name,
             content: replyToMsg.content,
           } : undefined,
+          readBy: readsMap.get(msg.id) || [],
         };
       });
 
@@ -444,6 +468,38 @@ export function useChat() {
       .on(
         "postgres_changes",
         {
+          event: "INSERT",
+          schema: "public",
+          table: "message_reads",
+        },
+        (payload) => {
+          const newRead = payload.new as MessageRead;
+          // Update the reads map in realtime
+          setMessageReads((prev) => {
+            const newMap = new Map(prev);
+            const existing = newMap.get(newRead.message_id) || [];
+            if (!existing.some((r) => r.user_name === newRead.user_name)) {
+              newMap.set(newRead.message_id, [...existing, newRead]);
+            }
+            return newMap;
+          });
+          // Update messages to include new read receipt
+          setMessages((prev) =>
+            prev.map((msg) => {
+              if (msg.id === newRead.message_id) {
+                const existingReads = msg.readBy || [];
+                if (!existingReads.some((r) => r.user_name === newRead.user_name)) {
+                  return { ...msg, readBy: [...existingReads, newRead] };
+                }
+              }
+              return msg;
+            })
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
           event: "*",
           schema: "public",
           table: "typing_indicators",
@@ -580,6 +636,29 @@ export function useChat() {
     return onlineUsers.has(userName);
   };
 
+  // Mark messages as read
+  const markMessagesAsRead = async (conversationId: string) => {
+    // Get all unread messages from others in this conversation
+    const unreadMessages = messages.filter(
+      (msg) =>
+        msg.conversation_id === conversationId &&
+        !msg.is_own &&
+        !(msg.readBy || []).some((r) => r.user_name === "You")
+    );
+
+    if (unreadMessages.length === 0) return;
+
+    // Insert read receipts for unread messages
+    const readsToInsert = unreadMessages.map((msg) => ({
+      message_id: msg.id,
+      user_name: "You",
+    }));
+
+    await supabase.from("message_reads").upsert(readsToInsert, {
+      onConflict: "message_id,user_name",
+    });
+  };
+
   const selectedConversation = conversations.find((c) => c.id === selectedConversationId);
 
   return {
@@ -596,5 +675,6 @@ export function useChat() {
     setTyping,
     getTypingUsersForConversation,
     isUserOnline,
+    markMessagesAsRead,
   };
 }
