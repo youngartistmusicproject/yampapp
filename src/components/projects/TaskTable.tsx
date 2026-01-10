@@ -53,7 +53,7 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, statuse
             <TableHead className="w-12"></TableHead>
             <TableHead>
               <Button variant="ghost" size="sm" className="gap-1 -ml-3">
-                Title <ArrowUpDown className="w-3 h-3" />
+                Task <ArrowUpDown className="w-3 h-3" />
               </Button>
             </TableHead>
             <TableHead>Status</TableHead>
@@ -89,8 +89,12 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, statuse
                       <Repeat className="w-3.5 h-3.5 text-muted-foreground" />
                     )}
                   </div>
-                  {task.description && (
+                  {(task.progress !== undefined || task.description) && (
                     <p className="text-xs text-muted-foreground line-clamp-1">
+                      {task.progress !== undefined && (
+                        <span className="font-medium text-primary">{task.progress}%</span>
+                      )}
+                      {task.progress !== undefined && task.description && " · "}
                       {task.description}
                     </p>
                   )}
