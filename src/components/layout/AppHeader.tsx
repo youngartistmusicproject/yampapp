@@ -1,4 +1,4 @@
-import { Bell, Search, Plus } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,12 +23,7 @@ export function AppHeader() {
         />
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-3">
-        <Button size="sm" className="gap-2">
-          <Plus className="w-4 h-4" />
-          <span>New</span>
-        </Button>
 
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />

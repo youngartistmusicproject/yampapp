@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2 } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,12 +13,11 @@ import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPa
 import { Task, Project, User, TaskComment, TaskAttachment } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
@@ -526,16 +525,23 @@ export default function Projects() {
           <h1 className="text-2xl font-semibold text-foreground">Work Management</h1>
           <p className="text-muted-foreground mt-1">Manage all your projects and tasks in one place</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setProjectDialogOpen(true)} className="gap-2">
-            <FolderPlus className="w-4 h-4" />
-            New Project
-          </Button>
-          <Button onClick={() => setTaskDialogOpen(true)} className="gap-2">
-            <Plus className="w-4 h-4" />
-            New Task
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" className="rounded-full h-10 w-10">
+              <Plus className="w-5 h-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setTaskDialogOpen(true)} className="gap-2">
+              <ListTodo className="w-4 h-4" />
+              New Task
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setProjectDialogOpen(true)} className="gap-2">
+              <FolderPlus className="w-4 h-4" />
+              New Project
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Projects Bar */}
