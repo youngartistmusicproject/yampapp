@@ -49,11 +49,11 @@ export function ChatWindow({
       "[data-radix-scroll-area-viewport]"
     ) as HTMLDivElement | null;
 
+    // With flex-col-reverse, scrollTop=0 corresponds to the "bottom".
     if (viewport) {
-      viewport.scrollTop = viewport.scrollHeight;
+      viewport.scrollTop = 0;
     }
 
-    // Fallback (works even if selector fails)
     messagesEndRef.current?.scrollIntoView({ block: "end" });
   };
 
@@ -172,149 +172,181 @@ export function ChatWindow({
 
       {/* Messages */}
       <ScrollArea className="flex-1 px-3 py-2" ref={scrollAreaRef}>
-        <div className="min-h-full space-y-2 flex flex-col justify-end">
-          {messages.length === 0 ? (
+        {messages.length === 0 ? (
+          <div className="h-full flex items-center justify-center">
             <p className="text-center text-xs text-muted-foreground py-4">
               No messages yet. Start the conversation!
             </p>
-          ) : (
-            messages.map((msg) => (
-              <div
-                key={msg.id}
-                id={`chat-window-message-${conversationId}-${msg.id}`}
-                className={`flex ${msg.is_own ? "justify-end" : "justify-start"} group`}
-              >
-                <div className={`relative flex items-end gap-2 ${msg.is_own ? "flex-row-reverse" : ""} max-w-[85%]`}>
-                  {/* Avatar - only for other people */}
-                  {!msg.is_own && (
-                    <Avatar className="w-6 h-6 flex-shrink-0 mb-4">
-                      <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
-                        {msg.sender_name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-
-                  {/* Message content */}
-                  <div className="flex flex-col">
-                    {/* Reply preview */}
-                    {msg.replyTo && (
-                      <div
-                        className={`flex items-start gap-1.5 text-[10px] px-2 py-1 rounded-lg mb-0.5 cursor-pointer hover:opacity-80 transition-opacity ${
-                          msg.is_own ? "bg-primary/30" : "bg-muted/80"
-                        }`}
-                        onClick={() => {
-                          const element = document.getElementById(`chat-window-message-${conversationId}-${msg.replyTo?.id}`);
-                          element?.scrollIntoView({ behavior: "smooth", block: "center" });
-                          element?.classList.add("ring-2", "ring-primary", "ring-offset-1");
-                          setTimeout(() => element?.classList.remove("ring-2", "ring-primary", "ring-offset-1"), 2000);
-                        }}
-                      >
-                        <div className={`w-0.5 self-stretch rounded-full flex-shrink-0 ${msg.is_own ? "bg-primary-foreground/50" : "bg-primary"}`} />
-                        <div className="min-w-0 flex-1">
-                          <span className={`font-semibold ${msg.is_own ? "text-primary-foreground/80" : "text-primary"}`}>
-                            {msg.replyTo.sender_name}
-                          </span>
-                          <p className={`truncate ${msg.is_own ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                            {msg.replyTo.content || "📎 Attachment"}
-                          </p>
-                        </div>
-                      </div>
+          </div>
+        ) : (
+          <div className="min-h-full flex flex-col-reverse gap-2">
+            <div ref={messagesEndRef} />
+            {messages
+              .slice()
+              .reverse()
+              .map((msg) => (
+                <div
+                  key={msg.id}
+                  id={`chat-window-message-${conversationId}-${msg.id}`}
+                  className={`flex ${msg.is_own ? "justify-end" : "justify-start"} group`}
+                >
+                  <div className={`relative flex items-end gap-2 ${msg.is_own ? "flex-row-reverse" : ""} max-w-[85%]`}>
+                    {/* Avatar - only for other people */}
+                    {!msg.is_own && (
+                      <Avatar className="w-6 h-6 flex-shrink-0 mb-4">
+                        <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                          {msg.sender_name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
                     )}
 
-                    <div className={`flex items-center gap-1 ${msg.is_own ? "flex-row-reverse" : ""}`}>
-                      {/* Message bubble */}
-                      <div
-                        className={`${
-                          msg.is_own
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary"
-                        } rounded-2xl px-3 py-1.5`}
-                      >
-                        {msg.content && <p className="text-sm">{msg.content}</p>}
-                        {renderAttachments(msg.attachments, msg.is_own)}
-                      </div>
-
-                      {/* Action buttons - on opposite side */}
-                      <div className={`flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity`}>
-                        <button
-                          onClick={() => handleReply(msg)}
-                          className="p-1 rounded-full hover:bg-muted transition-colors"
-                          title="Reply"
+                    {/* Message content */}
+                    <div className="flex flex-col">
+                      {/* Reply preview */}
+                      {msg.replyTo && (
+                        <div
+                          className={`flex items-start gap-1.5 text-[10px] px-2 py-1 rounded-lg mb-0.5 cursor-pointer hover:opacity-80 transition-opacity ${
+                            msg.is_own ? "bg-primary/30" : "bg-muted/80"
+                          }`}
+                          onClick={() => {
+                            const element = document.getElementById(
+                              `chat-window-message-${conversationId}-${msg.replyTo?.id}`
+                            );
+                            element?.scrollIntoView({ behavior: "smooth", block: "center" });
+                            element?.classList.add("ring-2", "ring-primary", "ring-offset-1");
+                            setTimeout(
+                              () => element?.classList.remove("ring-2", "ring-primary", "ring-offset-1"),
+                              2000
+                            );
+                          }}
                         >
-                          <Reply className="w-3 h-3 text-muted-foreground" />
-                        </button>
-                        <div>
-                          <Popover
-                            open={emojiPickerMessageId === msg.id}
-                            onOpenChange={(open) => setEmojiPickerMessageId(open ? msg.id : null)}
+                          <div
+                            className={`w-0.5 self-stretch rounded-full flex-shrink-0 ${
+                              msg.is_own ? "bg-primary-foreground/50" : "bg-primary"
+                            }`}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <span
+                              className={`font-semibold ${
+                                msg.is_own ? "text-primary-foreground/80" : "text-primary"
+                              }`}
+                            >
+                              {msg.replyTo.sender_name}
+                            </span>
+                            <p
+                              className={`truncate ${
+                                msg.is_own ? "text-primary-foreground/60" : "text-muted-foreground"
+                              }`}
+                            >
+                              {msg.replyTo.content || "📎 Attachment"}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className={`flex items-center gap-1 ${msg.is_own ? "flex-row-reverse" : ""}`}>
+                        {/* Message bubble */}
+                        <div
+                          className={`${
+                            msg.is_own
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-secondary"
+                          } rounded-2xl px-3 py-1.5`}
+                        >
+                          {msg.content && <p className="text-sm">{msg.content}</p>}
+                          {renderAttachments(msg.attachments, msg.is_own)}
+                        </div>
+
+                        {/* Action buttons - on opposite side */}
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleReply(msg)}
+                            className="p-1 rounded-full hover:bg-muted transition-colors"
+                            title="Reply"
                           >
-                            <PopoverTrigger asChild>
-                              <button
-                                className="p-1 rounded-full hover:bg-muted transition-colors"
-                                title="Add reaction"
+                            <Reply className="w-3 h-3 text-muted-foreground" />
+                          </button>
+                          <div>
+                            <Popover
+                              open={emojiPickerMessageId === msg.id}
+                              onOpenChange={(open) =>
+                                setEmojiPickerMessageId(open ? msg.id : null)
+                              }
+                            >
+                              <PopoverTrigger asChild>
+                                <button
+                                  className="p-1 rounded-full hover:bg-muted transition-colors"
+                                  title="Add reaction"
+                                >
+                                  <SmilePlus className="w-3 h-3 text-muted-foreground" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-auto p-0 border-0"
+                                side="top"
+                                align={msg.is_own ? "end" : "start"}
                               >
-                                <SmilePlus className="w-3 h-3 text-muted-foreground" />
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0 border-0" side="top" align={msg.is_own ? "end" : "start"}>
-                              <div className="flex gap-1 p-2 bg-background border rounded-lg shadow-lg">
-                                {REACTION_EMOJIS.map((emoji) => (
-                                  <button
-                                    key={emoji}
-                                    onClick={() => {
-                                      toggleReaction(msg.id, emoji);
-                                      setEmojiPickerMessageId(null);
-                                    }}
-                                    className="p-1 hover:bg-muted rounded transition-colors text-sm"
-                                  >
-                                    {emoji}
-                                  </button>
-                                ))}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                                <div className="flex gap-1 p-2 bg-background border rounded-lg shadow-lg">
+                                  {REACTION_EMOJIS.map((emoji) => (
+                                    <button
+                                      key={emoji}
+                                      onClick={() => {
+                                        toggleReaction(msg.id, emoji);
+                                        setEmojiPickerMessageId(null);
+                                      }}
+                                      className="p-1 hover:bg-muted rounded transition-colors text-sm"
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
                         </div>
                       </div>
+
+                      {/* Reactions */}
+                      {msg.reactions && msg.reactions.length > 0 && (
+                        <div className={`flex gap-0.5 mt-0.5 ${msg.is_own ? "justify-end" : "justify-start"}`}>
+                          {msg.reactions.map((reaction) => (
+                            <button
+                              key={reaction.emoji}
+                              onClick={() => toggleReaction(msg.id, reaction.emoji)}
+                              className={`flex items-center gap-0.5 px-1 py-0.5 rounded-full text-xs ${
+                                reaction.hasReacted
+                                  ? "bg-primary/20 border border-primary/30"
+                                  : "bg-muted hover:bg-muted/80"
+                              } transition-colors`}
+                              title={reaction.users.join(", ")}
+                            >
+                              <span>{reaction.emoji}</span>
+                              {reaction.count > 1 && (
+                                <span className="text-[10px]">{reaction.count}</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Timestamp */}
+                      <p
+                        className={`text-[10px] text-muted-foreground mt-0.5 ${
+                          msg.is_own ? "text-right" : "text-left"
+                        }`}
+                      >
+                        {format(new Date(msg.created_at), "MMM d, h:mm a")}
+                      </p>
                     </div>
-
-                    {/* Reactions */}
-                    {msg.reactions && msg.reactions.length > 0 && (
-                      <div className={`flex gap-0.5 mt-0.5 ${msg.is_own ? "justify-end" : "justify-start"}`}>
-                        {msg.reactions.map((reaction) => (
-                          <button
-                            key={reaction.emoji}
-                            onClick={() => toggleReaction(msg.id, reaction.emoji)}
-                            className={`flex items-center gap-0.5 px-1 py-0.5 rounded-full text-xs ${
-                              reaction.hasReacted
-                                ? "bg-primary/20 border border-primary/30"
-                                : "bg-muted hover:bg-muted/80"
-                            } transition-colors`}
-                            title={reaction.users.join(", ")}
-                          >
-                            <span>{reaction.emoji}</span>
-                            {reaction.count > 1 && (
-                              <span className="text-[10px]">{reaction.count}</span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Timestamp */}
-                    <p className={`text-[10px] text-muted-foreground mt-0.5 ${msg.is_own ? "text-right" : "text-left"}`}>
-                      {format(new Date(msg.created_at), "MMM d, h:mm a")}
-                    </p>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+              ))}
+          </div>
+        )}
       </ScrollArea>
 
       {/* Reply preview */}
