@@ -35,6 +35,12 @@ export interface ReactionGroup {
   hasReacted: boolean;
 }
 
+export interface ReplyTo {
+  id: string;
+  sender_name: string;
+  content: string;
+}
+
 export interface Message {
   id: string;
   conversation_id: string;
@@ -44,6 +50,8 @@ export interface Message {
   created_at: string;
   attachments: Attachment[];
   reactions: ReactionGroup[];
+  reply_to_id: string | null;
+  replyTo?: ReplyTo;
 }
 
 export const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🎉"];
@@ -143,12 +151,24 @@ export function useChat() {
       });
       setReactions(reactionsMap);
 
+      // Create a map of messages for reply lookups
+      const messagesById = new Map<string, any>();
+      (data || []).forEach((msg) => messagesById.set(msg.id, msg));
+
       // Transform data to ensure attachments is always an array and add reactions
-      const transformedMessages: Message[] = (data || []).map((msg) => ({
-        ...msg,
-        attachments: Array.isArray(msg.attachments) ? (msg.attachments as unknown as Attachment[]) : [],
-        reactions: groupReactions(reactionsMap.get(msg.id) || []),
-      }));
+      const transformedMessages: Message[] = (data || []).map((msg) => {
+        const replyToMsg = msg.reply_to_id ? messagesById.get(msg.reply_to_id) : null;
+        return {
+          ...msg,
+          attachments: Array.isArray(msg.attachments) ? (msg.attachments as unknown as Attachment[]) : [],
+          reactions: groupReactions(reactionsMap.get(msg.id) || []),
+          replyTo: replyToMsg ? {
+            id: replyToMsg.id,
+            sender_name: replyToMsg.sender_name,
+            content: replyToMsg.content,
+          } : undefined,
+        };
+      });
 
       setMessages(transformedMessages);
     } catch (error) {
@@ -256,8 +276,8 @@ export function useChat() {
     return uploadedAttachments;
   };
 
-  // Send a new message with optional attachments
-  const sendMessage = async (content: string, files?: File[]) => {
+  // Send a new message with optional attachments and reply
+  const sendMessage = async (content: string, files?: File[], replyToId?: string) => {
     if (!selectedConversationId || (!content.trim() && (!files || files.length === 0))) return;
 
     try {
@@ -273,6 +293,7 @@ export function useChat() {
         content: content.trim(),
         is_own: true,
         attachments: JSON.parse(JSON.stringify(attachments)),
+        reply_to_id: replyToId || null,
       });
 
       if (error) throw error;
