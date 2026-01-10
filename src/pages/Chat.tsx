@@ -287,7 +287,8 @@ export default function Chat() {
                   messages.map((msg) => (
                     <div
                       key={msg.id}
-                      className={`flex ${msg.is_own ? "justify-end" : "justify-start"} group`}
+                      id={`message-${msg.id}`}
+                      className={`flex ${msg.is_own ? "justify-end" : "justify-start"} group transition-all duration-300 rounded-lg`}
                     >
                       <div className={`relative flex items-start gap-2 ${msg.is_own ? "flex-row-reverse" : ""}`}>
                         {/* Action buttons - positioned inline */}
@@ -348,17 +349,33 @@ export default function Chat() {
 
                         {/* Message bubble */}
                         <div className="max-w-[65%]">
-                          {/* Reply preview */}
+                          {/* Reply preview - clickable to scroll to original */}
                           {msg.replyTo && (
                             <div 
-                              className={`text-xs px-3 py-1.5 mb-1 rounded-t-lg border-l-2 ${
+                              className={`flex items-start gap-2 text-xs px-3 py-2 rounded-lg mb-1 cursor-pointer hover:opacity-80 transition-opacity ${
                                 msg.is_own 
-                                  ? "bg-primary/20 border-primary-foreground/50" 
-                                  : "bg-muted border-primary"
+                                  ? "bg-primary/30" 
+                                  : "bg-muted/80"
                               }`}
+                              onClick={() => {
+                                const element = document.getElementById(`message-${msg.replyTo?.id}`);
+                                element?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                element?.classList.add("ring-2", "ring-primary", "ring-offset-2");
+                                setTimeout(() => element?.classList.remove("ring-2", "ring-primary", "ring-offset-2"), 2000);
+                              }}
                             >
-                              <p className="font-medium text-muted-foreground">{msg.replyTo.sender_name}</p>
-                              <p className="truncate opacity-70">{msg.replyTo.content}</p>
+                              <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${msg.is_own ? "bg-primary-foreground/50" : "bg-primary"}`} />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <Reply className={`w-3 h-3 ${msg.is_own ? "text-primary-foreground/70" : "text-primary"}`} />
+                                  <span className={`font-semibold ${msg.is_own ? "text-primary-foreground/80" : "text-primary"}`}>
+                                    {msg.replyTo.sender_name}
+                                  </span>
+                                </div>
+                                <p className={`truncate mt-0.5 ${msg.is_own ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                                  {msg.replyTo.content || "📎 Attachment"}
+                                </p>
+                              </div>
                             </div>
                           )}
                           
