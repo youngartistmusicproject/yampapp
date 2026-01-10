@@ -632,14 +632,12 @@ export function TaskDetailDialog({
                     <Users className="w-4 h-4" />
                     <span className="text-sm">Assignees</span>
                   </div>
-                  <div className="flex-shrink-0 max-w-[200px]">
-                    <SearchableAssigneeSelect
-                      members={availableMembers}
-                      selectedAssignees={task.assignees || []}
-                      onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })}
-                      placeholder="Add..."
-                    />
-                  </div>
+                  <SearchableAssigneeSelect
+                    members={availableMembers}
+                    selectedAssignees={task.assignees || []}
+                    onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })}
+                    placeholder="Add..."
+                  />
                 </div>
 
                 {/* Tags */}
@@ -648,15 +646,14 @@ export function TaskDetailDialog({
                     <Tag className="w-4 h-4" />
                     <span className="text-sm">Tags</span>
                   </div>
-                  <div className="flex-shrink-0 max-w-[200px]">
-                    <SearchableTagSelect
-                      tags={tagLibrary}
-                      selectedTags={task.tags || []}
-                      onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
-                      placeholder="Add..."
-                    />
-                  </div>
+                  <SearchableTagSelect
+                    tags={tagLibrary}
+                    selectedTags={task.tags || []}
+                    onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
+                    placeholder="Add..."
+                  />
                 </div>
+
 
                 {/* Recurrence */}
                 <div className="flex items-center justify-between py-2.5 border-b border-border/50">
