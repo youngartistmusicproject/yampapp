@@ -449,6 +449,34 @@ export default function Projects() {
     ));
   };
 
+  const handleDeleteTask = (taskId: string) => {
+    setTasks(tasks.filter(task => task.id !== taskId));
+    // Close detail dialog if viewing the deleted task
+    if (viewingTask?.id === taskId) {
+      setViewingTask(null);
+    }
+  };
+
+  const handleDuplicateTask = (taskId: string) => {
+    const taskToDuplicate = tasks.find(t => t.id === taskId);
+    if (!taskToDuplicate) return;
+    
+    const duplicatedTask: Task = {
+      ...taskToDuplicate,
+      id: Date.now().toString(),
+      title: `${taskToDuplicate.title} (Copy)`,
+      status: 'todo',
+      completedAt: undefined,
+      comments: [],
+      attachments: [],
+      subtasks: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    setTasks([...tasks, duplicatedTask]);
+  };
+
   const handleTaskSubmit = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingTask) {
       // Update existing task
@@ -639,11 +667,27 @@ export default function Projects() {
         </TabsList>
 
         <TabsContent value="table" className="mt-4">
-          <TaskTable tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} onEditTask={handleEditTask} onViewTask={handleViewTask} statuses={statuses} />
+          <TaskTable 
+            tasks={filteredTasks} 
+            onTaskUpdate={handleTaskUpdate} 
+            onEditTask={handleEditTask} 
+            onViewTask={handleViewTask} 
+            onDeleteTask={handleDeleteTask}
+            onDuplicateTask={handleDuplicateTask}
+            statuses={statuses} 
+          />
         </TabsContent>
 
         <TabsContent value="kanban" className="mt-4">
-          <TaskKanban tasks={filteredTasks} onTaskUpdate={handleTaskUpdate} onEditTask={handleEditTask} onViewTask={handleViewTask} statuses={statuses} />
+          <TaskKanban 
+            tasks={filteredTasks} 
+            onTaskUpdate={handleTaskUpdate} 
+            onEditTask={handleEditTask} 
+            onViewTask={handleViewTask} 
+            onDeleteTask={handleDeleteTask}
+            onDuplicateTask={handleDuplicateTask}
+            statuses={statuses} 
+          />
         </TabsContent>
 
 
