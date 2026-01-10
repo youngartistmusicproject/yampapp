@@ -385,15 +385,34 @@ export function useChat() {
           schema: "public",
           table: "messages",
         },
-        (payload) => {
+        async (payload) => {
           const newMessage = payload.new as any;
           if (newMessage.conversation_id === selectedConversationId) {
+            // Fetch the reply-to message if exists
+            let replyToData: ReplyTo | undefined;
+            if (newMessage.reply_to_id) {
+              const { data: replyMsg } = await supabase
+                .from("messages")
+                .select("id, sender_name, content")
+                .eq("id", newMessage.reply_to_id)
+                .maybeSingle();
+              
+              if (replyMsg) {
+                replyToData = {
+                  id: replyMsg.id,
+                  sender_name: replyMsg.sender_name,
+                  content: replyMsg.content,
+                };
+              }
+            }
+
             const transformedMessage: Message = {
               ...newMessage,
               attachments: Array.isArray(newMessage.attachments) 
                 ? (newMessage.attachments as unknown as Attachment[]) 
                 : [],
               reactions: [],
+              replyTo: replyToData,
             };
             setMessages((prev) => [...prev, transformedMessage]);
           }
