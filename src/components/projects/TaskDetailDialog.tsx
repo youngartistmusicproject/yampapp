@@ -97,13 +97,15 @@ function EditableText({
   onSave, 
   className = "",
   placeholder = "Click to add...",
-  multiline = false
+  multiline = false,
+  inputClassName = ""
 }: { 
   value: string; 
   onSave: (value: string) => void; 
   className?: string;
   placeholder?: string;
   multiline?: boolean;
+  inputClassName?: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -151,19 +153,19 @@ function EditableText({
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleSave}
-          className="min-h-[80px] resize-none"
+          className={`min-h-[80px] resize-none text-sm ${inputClassName}`}
           placeholder={placeholder}
         />
       );
     }
     return (
-      <Input
+      <input
         ref={inputRef as React.RefObject<HTMLInputElement>}
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleSave}
-        className={className}
+        className={`w-full bg-transparent border-none outline-none focus:outline-none ${className} ${inputClassName}`}
         placeholder={placeholder}
       />
     );
@@ -548,100 +550,119 @@ export function TaskDetailDialog({
         </div>
 
         {/* Main content - two column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_350px] min-h-0">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] min-h-0">
           {/* Left side - Task details */}
-          <div className="overflow-y-auto border-r">
-            <div className="p-6 space-y-6">
-              {/* Properties grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-4 h-4 text-muted-foreground mt-2" />
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Due Date</p>
-                    <Input
-                      type="date"
-                      value={task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : ""}
-                      onChange={(e) => onTaskUpdate(task.id, { 
-                        dueDate: e.target.value ? new Date(e.target.value) : undefined 
-                      })}
-                      className="h-8 text-sm"
-                    />
+          <div className="overflow-y-auto border-r bg-background">
+            <div className="p-6 space-y-5">
+              {/* Properties as clean rows */}
+              <div className="space-y-3">
+                {/* Due Date */}
+                <div className="flex items-center justify-between py-2 border-b border-border/50">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-sm">Due date</span>
                   </div>
+                  <Input
+                    type="date"
+                    value={task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : ""}
+                    onChange={(e) => onTaskUpdate(task.id, { 
+                      dueDate: e.target.value ? new Date(e.target.value) : undefined 
+                    })}
+                    className="h-8 text-sm w-auto border-none shadow-none bg-transparent text-right cursor-pointer hover:bg-muted/50 rounded px-2"
+                  />
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <Users className="w-4 h-4 text-muted-foreground mt-2" />
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Assignees</p>
+                {/* Assignees */}
+                <div className="flex items-center justify-between py-2 border-b border-border/50">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Users className="w-4 h-4" />
+                    <span className="text-sm">Assignees</span>
+                  </div>
+                  <div className="flex-shrink-0 max-w-[200px]">
                     <SearchableAssigneeSelect
                       members={availableMembers}
                       selectedAssignees={task.assignees || []}
                       onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })}
-                      placeholder="Add assignees..."
+                      placeholder="Add..."
                     />
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 sm:col-span-2">
-                  <Tag className="w-4 h-4 text-muted-foreground mt-2" />
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Tags</p>
+                {/* Tags */}
+                <div className="flex items-center justify-between py-2 border-b border-border/50">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Tag className="w-4 h-4" />
+                    <span className="text-sm">Tags</span>
+                  </div>
+                  <div className="flex-shrink-0 max-w-[200px]">
                     <SearchableTagSelect
                       tags={tagLibrary}
                       selectedTags={task.tags || []}
                       onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
-                      placeholder="Add tags..."
+                      placeholder="Add..."
                     />
                   </div>
                 </div>
               </div>
 
-              <Separator />
-
               {/* Description */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <AlignLeft className="w-4 h-4 text-muted-foreground" />
-                  <h3 className="text-sm font-medium">Description</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <AlignLeft className="w-4 h-4" />
+                  <span className="text-sm font-medium text-foreground">Description</span>
                 </div>
-                <EditableText
-                  value={task.description || ""}
-                  onSave={(value) => onTaskUpdate(task.id, { description: value })}
-                  placeholder="Add a description..."
-                  multiline
-                  className="text-sm whitespace-pre-wrap min-h-[100px]"
-                />
+                <div className="bg-muted/30 rounded-lg p-3 min-h-[80px]">
+                  <EditableText
+                    value={task.description || ""}
+                    onSave={(value) => onTaskUpdate(task.id, { description: value })}
+                    placeholder="Add a description..."
+                    multiline
+                    className="text-sm whitespace-pre-wrap"
+                  />
+                </div>
               </div>
 
-              <Separator />
-
               {/* Subtasks Section - Collapsible */}
-              <Collapsible open={subtasksOpen} onOpenChange={setSubtasksOpen}>
-                <CollapsibleTrigger asChild>
-                  <button className="flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded -mx-2 px-2 py-1 transition-colors">
-                    {subtasksOpen ? (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    )}
-                    <ListTodo className="w-4 h-4 text-muted-foreground" />
-                    <h3 className="text-sm font-medium">Subtasks</h3>
+              <div className="space-y-3">
+                <Collapsible open={subtasksOpen} onOpenChange={setSubtasksOpen}>
+                  <CollapsibleTrigger asChild>
+                    <button className="flex items-center gap-2 w-full text-left group">
+                      <div className="flex items-center gap-2 text-muted-foreground group-hover:text-foreground transition-colors">
+                        {subtasksOpen ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        )}
+                        <ListTodo className="w-4 h-4" />
+                        <span className="text-sm font-medium text-foreground">Subtasks</span>
+                      </div>
+                      {subtasks.length > 0 && (
+                        <span className="text-xs text-muted-foreground ml-1">
+                          {completedSubtasks} of {subtasks.length}
+                        </span>
+                      )}
+                    </button>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent className="mt-3">
+                    {/* Progress bar at top */}
                     {subtasks.length > 0 && (
-                      <Badge variant="secondary" className="text-xs h-5 ml-1">
-                        {completedSubtasks}/{subtasks.length}
-                      </Badge>
+                      <div className="mb-3">
+                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary transition-all duration-300"
+                            style={{ width: `${(completedSubtasks / subtasks.length) * 100}%` }}
+                          />
+                        </div>
+                      </div>
                     )}
-                  </button>
-                </CollapsibleTrigger>
-                
-                <CollapsibleContent className="mt-2 space-y-2">
-                  {/* Subtask list */}
-                  {subtasks.length > 0 && (
-                    <div className="space-y-1">
+
+                    {/* Subtask list */}
+                    <div className="space-y-1 bg-muted/30 rounded-lg overflow-hidden">
                       {subtasks.map((subtask) => (
                         <div
                           key={subtask.id}
-                          className="flex items-center gap-2 group p-2 rounded-md hover:bg-muted/50 transition-colors"
+                          className="flex items-center gap-3 px-3 py-2.5 group hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0"
                         >
                           <Checkbox
                             checked={subtask.completed}
@@ -664,121 +685,50 @@ export function TaskDetailDialog({
                           </Button>
                         </div>
                       ))}
-                    </div>
-                  )}
 
-                  {/* Add subtask input */}
-                  {isAddingSubtask ? (
-                    <div className="flex items-center gap-2 p-2">
-                      <Checkbox disabled className="opacity-50" />
-                      <Input
-                        ref={subtaskInputRef}
-                        value={newSubtaskTitle}
-                        onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                        onKeyDown={handleSubtaskKeyDown}
-                        onBlur={() => {
-                          if (!newSubtaskTitle.trim()) {
-                            setIsAddingSubtask(false);
-                          }
-                        }}
-                        placeholder="Enter subtask title..."
-                        className="h-7 text-sm flex-1"
-                        autoFocus
-                      />
-                      <Button
-                        size="sm"
-                        className="h-7 px-2"
-                        onClick={handleAddSubtask}
-                        disabled={!newSubtaskTitle.trim()}
-                      >
-                        Add
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        onClick={() => {
-                          setNewSubtaskTitle("");
-                          setIsAddingSubtask(false);
-                        }}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-sm text-muted-foreground hover:text-foreground w-full justify-start gap-2"
-                      onClick={() => {
-                        setIsAddingSubtask(true);
-                        setTimeout(() => subtaskInputRef.current?.focus(), 0);
-                      }}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add subtask
-                    </Button>
-                  )}
-
-                  {/* Progress bar */}
-                  {subtasks.length > 0 && (
-                    <div className="pt-2">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                        <span>Progress</span>
-                        <span>{Math.round((completedSubtasks / subtasks.length) * 100)}%</span>
-                      </div>
-                      <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary transition-all duration-300"
-                          style={{ width: `${(completedSubtasks / subtasks.length) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </CollapsibleContent>
-              </Collapsible>
-
-              {/* Legacy Attachments (if any exist from before) */}
-              {legacyAttachments.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Paperclip className="w-4 h-4 text-muted-foreground" />
-                      <h3 className="text-sm font-medium">Files</h3>
-                      <Badge variant="secondary" className="text-xs h-5">
-                        {legacyAttachments.length}
-                      </Badge>
-                    </div>
-                    <div className="grid gap-2">
-                      {legacyAttachments.map((attachment) => (
-                        <div
-                          key={attachment.id}
-                          className="flex items-center gap-3 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
-                        >
-                          <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center flex-shrink-0">
-                            {getFileIcon(attachment.type)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{attachment.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatFileSize(attachment.size)}
-                            </p>
-                          </div>
+                      {/* Add subtask input */}
+                      {isAddingSubtask ? (
+                        <div className="flex items-center gap-3 px-3 py-2">
+                          <Checkbox disabled className="opacity-30" />
+                          <Input
+                            ref={subtaskInputRef}
+                            value={newSubtaskTitle}
+                            onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                            onKeyDown={handleSubtaskKeyDown}
+                            onBlur={() => {
+                              if (!newSubtaskTitle.trim()) {
+                                setIsAddingSubtask(false);
+                              }
+                            }}
+                            placeholder="What needs to be done?"
+                            className="h-7 text-sm flex-1 border-none shadow-none bg-transparent focus-visible:ring-0 px-0"
+                            autoFocus
+                          />
                           <Button
-                            variant="ghost"
                             size="sm"
-                            className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleDownload(attachment)}
+                            className="h-6 px-2 text-xs"
+                            onClick={handleAddSubtask}
+                            disabled={!newSubtaskTitle.trim()}
                           >
-                            <Download className="w-3.5 h-3.5" />
+                            Add
                           </Button>
                         </div>
-                      ))}
+                      ) : (
+                        <button
+                          className="flex items-center gap-3 px-3 py-2.5 w-full text-left text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                          onClick={() => {
+                            setIsAddingSubtask(true);
+                            setTimeout(() => subtaskInputRef.current?.focus(), 0);
+                          }}
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add subtask
+                        </button>
+                      )}
                     </div>
-                  </div>
-                </>
-              )}
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
             </div>
           </div>
 
