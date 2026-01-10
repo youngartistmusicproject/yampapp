@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ChatPopover } from "@/components/chat/ChatPopover";
 
 interface AppHeaderProps {
   onMobileMenuToggle?: () => void;
@@ -38,6 +39,8 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
+        <ChatPopover />
+        
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
