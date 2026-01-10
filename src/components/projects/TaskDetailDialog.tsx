@@ -42,7 +42,7 @@ import {
   Reply,
   CornerDownRight
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { tagLibrary } from "@/data/workManagementConfig";
@@ -631,7 +631,7 @@ export function TaskDetailDialog({
                       <div className="flex-1 min-w-0 flex items-center gap-2">
                         <span className="text-sm font-semibold">{comment.author.name}</span>
                         <span className="text-xs text-muted-foreground">
-                          {format(new Date(comment.createdAt), "mm 'mins'")}
+                          {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                         </span>
                       </div>
                       {comment.author.id === currentUser.id && (
@@ -792,7 +792,7 @@ export function TaskDetailDialog({
                             <div className="flex-1 min-w-0 flex items-center gap-2">
                               <span className="text-sm font-semibold">{reply.author.name}</span>
                               <span className="text-xs text-muted-foreground">
-                                {format(new Date(reply.createdAt), "mm 'mins'")}
+                                {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
                               </span>
                             </div>
                             {reply.author.id === currentUser.id && (
