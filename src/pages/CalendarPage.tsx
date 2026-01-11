@@ -32,31 +32,34 @@ function formatEventTime(event: GoogleCalendarEvent): string {
   return format(event.start, "h:mm a");
 }
 
-function isMultiDayEvent(event: GoogleCalendarEvent): boolean {
-  const startDay = startOfDay(event.start);
-  // For all-day events, end is exclusive, so subtract 1 day to get actual last day
-  const endDay = event.isAllDay 
+
+function getEventEndDay(event: GoogleCalendarEvent): Date {
+  return event.isAllDay 
     ? startOfDay(new Date(event.end.getTime() - 86400000)) 
     : startOfDay(event.end);
-  return endDay > startDay;
 }
 
-function formatEventDateRange(event: GoogleCalendarEvent): string {
+function formatDateDisplay(event: GoogleCalendarEvent): { weekday: string; date: string } {
   const startDay = startOfDay(event.start);
-  const endDay = event.isAllDay 
-    ? startOfDay(new Date(event.end.getTime() - 86400000)) 
-    : startOfDay(event.end);
+  const endDay = getEventEndDay(event);
+  const isMultiDay = endDay > startDay;
   
-  if (startDay.getTime() === endDay.getTime()) {
-    return format(event.start, "MMM d");
+  if (isMultiDay) {
+    // Multi-day: show weekday range and date range
+    const sameMonth = startDay.getMonth() === endDay.getMonth();
+    return {
+      weekday: `${format(startDay, "EEE")} – ${format(endDay, "EEE")}`,
+      date: sameMonth 
+        ? `${format(startDay, "MMM d")} – ${format(endDay, "d")}`
+        : `${format(startDay, "MMM d")} – ${format(endDay, "MMM d")}`
+    };
   }
   
-  // Same month
-  if (startDay.getMonth() === endDay.getMonth()) {
-    return `${format(startDay, "MMM d")} – ${format(endDay, "d")}`;
-  }
-  
-  return `${format(startDay, "MMM d")} – ${format(endDay, "MMM d")}`;
+  // Single day
+  return {
+    weekday: format(event.start, "EEE"),
+    date: format(event.start, "MMM d")
+  };
 }
 
 export default function CalendarPage() {
@@ -262,24 +265,19 @@ export default function CalendarPage() {
                     <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${getEventColor(event.id)}`} />
                     
                     {/* Date column - show when viewing all events */}
-                    {!selectedDate && (
-                      <div className="flex-shrink-0 min-w-[3.5rem] text-center">
-                        {isMultiDayEvent(event) ? (
-                          <div className="text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">
-                            {formatEventDateRange(event)}
+                    {!selectedDate && (() => {
+                      const { weekday, date } = formatDateDisplay(event);
+                      return (
+                        <div className="flex-shrink-0 min-w-[5rem] text-left border-r border-border pr-3 mr-1">
+                          <div className="text-sm font-semibold text-foreground">
+                            {weekday}
                           </div>
-                        ) : (
-                          <>
-                            <div className="text-lg sm:text-xl font-semibold text-foreground">
-                              {format(event.start, "d")}
-                            </div>
-                            <div className="text-[10px] sm:text-xs text-muted-foreground uppercase">
-                              {format(event.start, "MMM")}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )}
+                          <div className="text-sm text-muted-foreground">
+                            {date}
+                          </div>
+                        </div>
+                      );
+                    })()}
                     
                     {/* Event details */}
                     <div className="flex-1 min-w-0">
