@@ -215,6 +215,12 @@ export default function Projects() {
     
     return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesPriority && 
            matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo;
+  }).sort((a, b) => {
+    // Sort by due date chronologically (earliest first), tasks without due date go last
+    if (!a.dueDate && !b.dueDate) return 0;
+    if (!a.dueDate) return 1;
+    if (!b.dueDate) return -1;
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
   });
 
   // Find the "done" status ID dynamically

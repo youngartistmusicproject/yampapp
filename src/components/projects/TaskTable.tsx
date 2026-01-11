@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { ArrowUpDown, Repeat, Copy, Trash2 } from "lucide-react";
+import { Repeat, Copy, Trash2 } from "lucide-react";
 import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -155,19 +155,11 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-12"></TableHead>
-              <TableHead>
-                <Button variant="ghost" size="sm" className="gap-1 -ml-3">
-                  Task <ArrowUpDown className="w-3 h-3" />
-                </Button>
-              </TableHead>
+              <TableHead>Task</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Assignees</TableHead>
-              <TableHead>
-                <Button variant="ghost" size="sm" className="gap-1 -ml-3">
-                  Due Date <ArrowUpDown className="w-3 h-3" />
-                </Button>
-              </TableHead>
+              <TableHead>Due Date</TableHead>
               <TableHead>Tags</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
