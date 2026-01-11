@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,9 @@ import { ProjectDialog } from "@/components/projects/ProjectDialog";
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
 import { TeamsProjectsHeader } from "@/components/projects/TeamsProjectsHeader";
-import { Task, Project, User, TaskComment, TaskAttachment } from "@/types";
+import { Task, Project, User, TaskComment } from "@/types";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,125 +30,24 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, teamsLibrary } from "@/data/workManagementConfig";
+import { useTasks, useProjects, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
 
-const initialProjects: Project[] = [
-  {
-    id: "p1",
-    name: "Spring Recital 2024",
-    description: "Annual spring music recital planning and execution",
-    color: "#eb5c5c",
-    tasks: [],
-    members: [teamMembers[0], teamMembers[2], teamMembers[4]],
-    teamId: "teachers",
-    createdAt: new Date(),
-  },
-  {
-    id: "p2",
-    name: "Curriculum Update",
-    description: "Update music curriculum for the new semester",
-    color: "#3b82f6",
-    tasks: [],
-    members: [teamMembers[1], teamMembers[2]],
-    teamId: "teachers",
-    createdAt: new Date(),
-  },
-  {
-    id: "p3",
-    name: "Q1 Budget Review",
-    description: "Review and finalize Q1 financial reports",
-    color: "#8b5cf6",
-    tasks: [],
-    members: [teamMembers[0], teamMembers[3]],
-    teamId: "finance-accounting",
-    createdAt: new Date(),
-  },
-  {
-    id: "p4",
-    name: "Lead Nurturing Campaign",
-    description: "Develop and execute marketing campaigns for prospective students",
-    color: "#f59e0b",
-    tasks: [],
-    members: [teamMembers[1], teamMembers[4]],
-    teamId: "sales-marketing",
-    createdAt: new Date(),
-  },
-];
-
-const initialTasks: Task[] = [
-  {
-    id: "1",
-    title: "Review lesson plans for next week",
-    description: "Go through all lesson plans and update as needed",
-    status: "in-progress",
-    priority: "high",
-    dueDate: new Date("2024-01-20"),
-    tags: ["teaching", "planning"],
-    assignees: [teamMembers[2]],
-    projectId: "p1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    title: "Update student progress reports",
-    description: "Complete quarterly progress reports for all students",
-    status: "todo",
-    priority: "medium",
-    dueDate: new Date("2024-01-25"),
-    tags: ["admin", "reports"],
-    assignees: [teamMembers[0], teamMembers[1]],
-    projectId: "p1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "3",
-    title: "Schedule parent-teacher meetings",
-    description: "Coordinate schedules and send invitations",
-    status: "todo",
-    priority: "high",
-    dueDate: new Date("2024-01-22"),
-    tags: ["communication", "parents"],
-    assignees: [teamMembers[3]],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "4",
-    title: "Order new music books",
-    description: "Place order for spring semester materials",
-    status: "done",
-    priority: "low",
-    dueDate: new Date("2024-01-15"),
-    tags: ["supplies"],
-    assignees: [teamMembers[1]],
-    projectId: "p2",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "5",
-    title: "Prepare recital program",
-    description: "Design and print program for spring recital",
-    status: "review",
-    priority: "medium",
-    dueDate: new Date("2024-02-01"),
-    tags: ["recital", "design"],
-    assignees: [teamMembers[2], teamMembers[4]],
-    projectId: "p1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
-
 export default function Projects() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const { data: dbTasks = [], isLoading: tasksLoading } = useTasks();
+  const { data: dbProjects = [], isLoading: projectsLoading } = useProjects();
+  
+  const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
+  const duplicateTask = useDuplicateTask();
+  const createProject = useCreateProject();
+  
   const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
@@ -157,6 +57,7 @@ export default function Projects() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedProject, setSelectedProject] = useState<string>("all");
+  const [sortAscending, setSortAscending] = useState(true);
   const [filters, setFilters] = useState<TaskFilters>({
     statuses: [],
     priorities: [],
@@ -166,373 +67,184 @@ export default function Projects() {
     dueDateFrom: undefined,
     dueDateTo: undefined,
   });
-  const [sortAscending, setSortAscending] = useState(true);
+
+  // Convert DB projects to the format expected by components
+  const projects: Project[] = useMemo(() => {
+    return dbProjects.map(p => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      color: p.color || '#3b82f6',
+      tasks: [],
+      members: [] as User[],
+      teamId: p.teamId || '',
+      createdAt: p.createdAt,
+    }));
+  }, [dbProjects]);
 
   // Get all available tags from tasks and tag library
-  const availableTags = Array.from(new Set([
-    ...tagLibrary.map(t => t.name.toLowerCase()),
-    ...tasks.flatMap(t => t.tags || [])
-  ]));
+  const availableTags = useMemo(() => {
+    return Array.from(new Set([
+      ...tagLibrary.map(t => t.name.toLowerCase()),
+      ...dbTasks.flatMap(t => t.tags || [])
+    ]));
+  }, [dbTasks]);
 
   // Active tasks (not completed)
-  const activeTasks = tasks.filter(task => !task.completedAt);
+  const activeTasks = useMemo(() => dbTasks.filter(task => !task.completedAt), [dbTasks]);
   
   // Completed tasks
-  const completedTasks = tasks.filter(task => task.completedAt)
-    .sort((a, b) => (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0));
-
-  const filteredTasks = activeTasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
-    
-    // Team filter - check if task's project belongs to selected team
-    const taskProject = projects.find(p => p.id === task.projectId);
-    const matchesTeam = selectedTeam === "all" || taskProject?.teamId === selectedTeam || !task.projectId;
-    
-    // Status filter
-    const matchesStatus = filters.statuses.length === 0 || filters.statuses.includes(task.status);
-    
-    // Priority filter
-    const matchesPriority = filters.priorities.length === 0 || filters.priorities.includes(task.priority);
-    
-    // Assignee filter
-    const matchesAssignee = filters.assignees.length === 0 || 
-      task.assignees?.some(a => filters.assignees.includes(a.id));
-    
-    // Tags filter
-    const matchesTags = filters.tags.length === 0 || 
-      task.tags?.some(t => filters.tags.includes(t));
-    
-    // Recurring filter
-    const matchesRecurring = filters.showRecurring === null || 
-      (filters.showRecurring === true && task.recurrence) ||
-      (filters.showRecurring === false && !task.recurrence);
-    
-    // Due date range filter
-    const matchesDueDateFrom = !filters.dueDateFrom || 
-      (task.dueDate && new Date(task.dueDate) >= filters.dueDateFrom);
-    const matchesDueDateTo = !filters.dueDateTo || 
-      (task.dueDate && new Date(task.dueDate) <= filters.dueDateTo);
-    
-    return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesPriority && 
-           matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo;
-  }).sort((a, b) => {
-    // Sort by due date chronologically, tasks without due date go last
-    if (!a.dueDate && !b.dueDate) return 0;
-    if (!a.dueDate) return 1;
-    if (!b.dueDate) return -1;
-    const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-    return sortAscending ? comparison : -comparison;
-  });
+  const completedTasks = useMemo(() => 
+    dbTasks.filter(task => task.completedAt)
+      .sort((a, b) => (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0)),
+    [dbTasks]
+  );
 
   // Find the "done" status ID dynamically
   const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
 
-  const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
-    setTasks(tasks.map(task => {
-      if (task.id !== taskId) return task;
+  const filteredTasks = useMemo(() => {
+    return activeTasks.filter(task => {
+      const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
       
-      let updatedTask: Task;
+      // Team filter - check if task's project belongs to selected team
+      const taskProject = projects.find(p => p.id === task.projectId);
+      const matchesTeam = selectedTeam === "all" || taskProject?.teamId === selectedTeam || !task.projectId;
       
-      // If marking as done, add completedAt timestamp
-      if (updates.status === doneStatusId && task.status !== doneStatusId) {
-        updatedTask = { ...task, ...updates, completedAt: new Date(), updatedAt: new Date() };
-      }
-      // If unmarking as done, remove completedAt
-      else if (updates.status && updates.status !== doneStatusId && task.status === doneStatusId) {
-        updatedTask = { ...task, ...updates, completedAt: undefined, updatedAt: new Date() };
-      }
-      else {
-        updatedTask = { ...task, ...updates, updatedAt: new Date() };
-      }
+      // Status filter
+      const matchesStatus = filters.statuses.length === 0 || filters.statuses.includes(task.status);
       
-      return updatedTask;
-    }));
-    
-    // Also update viewingTask if it's the same task
-    setViewingTask(prev => {
-      if (!prev || prev.id !== taskId) return prev;
-      return { ...prev, ...updates, updatedAt: new Date() };
+      // Priority filter
+      const matchesPriority = filters.priorities.length === 0 || filters.priorities.includes(task.priority);
+      
+      // Assignee filter
+      const matchesAssignee = filters.assignees.length === 0 || 
+        task.assignees?.some(a => filters.assignees.includes(a.id));
+      
+      // Tags filter
+      const matchesTags = filters.tags.length === 0 || 
+        task.tags?.some(t => filters.tags.includes(t));
+      
+      // Recurring filter
+      const matchesRecurring = filters.showRecurring === null || 
+        (filters.showRecurring === true && task.recurrence) ||
+        (filters.showRecurring === false && !task.recurrence);
+      
+      // Due date range filter
+      const matchesDueDateFrom = !filters.dueDateFrom || 
+        (task.dueDate && new Date(task.dueDate) >= filters.dueDateFrom);
+      const matchesDueDateTo = !filters.dueDateTo || 
+        (task.dueDate && new Date(task.dueDate) <= filters.dueDateTo);
+      
+      return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesPriority && 
+             matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo;
+    }).sort((a, b) => {
+      // Sort by due date chronologically, tasks without due date go last
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      return sortAscending ? comparison : -comparison;
     });
+  }, [activeTasks, searchQuery, selectedProject, selectedTeam, projects, filters, sortAscending]);
+
+  const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
+    updateTask.mutate({ taskId, updates }, {
+      onError: (error) => {
+        toast.error('Failed to update task');
+        console.error(error);
+      },
+    });
+    
+    // Update viewing task optimistically
+    if (viewingTask?.id === taskId) {
+      setViewingTask(prev => prev ? { ...prev, ...updates } : null);
+    }
   };
 
   const handleEditTask = (task: Task) => {
-    setViewingTask(null); // Close detail dialog if open
+    setViewingTask(null);
     setEditingTask(task);
     setTaskDialogOpen(true);
   };
 
   const handleViewTask = (task: Task) => {
     // Get latest task data
-    const latestTask = tasks.find(t => t.id === task.id) || task;
+    const latestTask = dbTasks.find(t => t.id === task.id) || task;
     setViewingTask(latestTask);
   };
 
   const handleAddComment = (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>, parentCommentId?: string) => {
-    const commentId = Date.now().toString();
-    // Process attachments to give them proper IDs
-    const processedAttachments = comment.attachments?.map((a, i) => ({
-      ...a,
-      id: `${commentId}-att-${i}`,
-      uploadedAt: new Date(),
-    }));
-    
-    const newComment: TaskComment = {
-      ...comment,
-      id: commentId,
-      createdAt: new Date(),
-      attachments: processedAttachments,
-      parentCommentId,
-    };
-    
-    setTasks(tasks.map(task => {
-      if (task.id !== taskId) return task;
-      
-      // If this is a reply, add it to the parent comment's replies
-      if (parentCommentId) {
-        const updatedComments = (task.comments || []).map(c => {
-          if (c.id === parentCommentId) {
-            return {
-              ...c,
-              replies: [...(c.replies || []), newComment],
-            };
-          }
-          return c;
-        });
-        return {
-          ...task,
-          comments: updatedComments,
-          updatedAt: new Date(),
-        };
-      }
-      
-      return {
-        ...task,
-        comments: [...(task.comments || []), newComment],
-        updatedAt: new Date(),
-      };
-    }));
-    
-    // Update viewing task to reflect changes
-    setViewingTask(prev => {
-      if (!prev || prev.id !== taskId) return prev;
-      
-      if (parentCommentId) {
-        const updatedComments = (prev.comments || []).map(c => {
-          if (c.id === parentCommentId) {
-            return {
-              ...c,
-              replies: [...(c.replies || []), newComment],
-            };
-          }
-          return c;
-        });
-        return {
-          ...prev,
-          comments: updatedComments,
-        };
-      }
-      
-      return {
-        ...prev,
-        comments: [...(prev.comments || []), newComment],
-      };
-    });
+    // Comments are stored locally for now - would need a comments table for persistence
+    toast.info('Comments are not yet persisted to the database');
   };
 
   const handleToggleReaction = (taskId: string, commentId: string, emoji: string) => {
-    const updateReactions = (comments: TaskComment[]): TaskComment[] => {
-      return comments.map(comment => {
-        // Check replies first
-        if (comment.replies && comment.replies.length > 0) {
-          comment = {
-            ...comment,
-            replies: updateReactions(comment.replies),
-          };
-        }
-        
-        if (comment.id !== commentId) return comment;
-        
-        const reactions = comment.reactions || [];
-        const existingReaction = reactions.find(r => r.emoji === emoji);
-        
-        if (existingReaction) {
-          const userHasReacted = existingReaction.users.some(u => u.id === currentUser.id);
-          
-          if (userHasReacted) {
-            // Remove user from reaction
-            const updatedUsers = existingReaction.users.filter(u => u.id !== currentUser.id);
-            if (updatedUsers.length === 0) {
-              // Remove the reaction entirely
-              return {
-                ...comment,
-                reactions: reactions.filter(r => r.emoji !== emoji),
-              };
-            }
-            return {
-              ...comment,
-              reactions: reactions.map(r => 
-                r.emoji === emoji ? { ...r, users: updatedUsers } : r
-              ),
-            };
-          } else {
-            // Add user to existing reaction
-            return {
-              ...comment,
-              reactions: reactions.map(r =>
-                r.emoji === emoji ? { ...r, users: [...r.users, currentUser] } : r
-              ),
-            };
-          }
-        } else {
-          // Create new reaction
-          return {
-            ...comment,
-            reactions: [...reactions, { emoji, users: [currentUser] }],
-          };
-        }
-      });
-    };
-    
-    setTasks(tasks.map(task => {
-      if (task.id !== taskId) return task;
-      return {
-        ...task,
-        comments: updateReactions(task.comments || []),
-        updatedAt: new Date(),
-      };
-    }));
-    
-    setViewingTask(prev => {
-      if (!prev || prev.id !== taskId) return prev;
-      return {
-        ...prev,
-        comments: updateReactions(prev.comments || []),
-      };
-    });
+    // Reactions are stored locally for now
   };
 
   const handleDeleteComment = (taskId: string, commentId: string) => {
-    setTasks(tasks.map(task => {
-      if (task.id !== taskId) return task;
-      return {
-        ...task,
-        comments: (task.comments || []).filter(c => c.id !== commentId),
-        updatedAt: new Date(),
-      };
-    }));
-    setViewingTask(prev => {
-      if (!prev || prev.id !== taskId) return prev;
-      return {
-        ...prev,
-        comments: (prev.comments || []).filter(c => c.id !== commentId),
-      };
-    });
-  };
-
-  const handleAddAttachment = (taskId: string, attachment: Omit<TaskAttachment, 'id' | 'uploadedAt'>) => {
-    setTasks(tasks.map(task => {
-      if (task.id !== taskId) return task;
-      const newAttachment: TaskAttachment = {
-        ...attachment,
-        id: Date.now().toString(),
-        uploadedAt: new Date(),
-      };
-      return {
-        ...task,
-        attachments: [...(task.attachments || []), newAttachment],
-        updatedAt: new Date(),
-      };
-    }));
-    setViewingTask(prev => {
-      if (!prev || prev.id !== taskId) return prev;
-      const newAttachment: TaskAttachment = {
-        ...attachment,
-        id: Date.now().toString(),
-        uploadedAt: new Date(),
-      };
-      return {
-        ...prev,
-        attachments: [...(prev.attachments || []), newAttachment],
-      };
-    });
-  };
-
-  const handleDeleteAttachment = (taskId: string, attachmentId: string) => {
-    setTasks(tasks.map(task => {
-      if (task.id !== taskId) return task;
-      return {
-        ...task,
-        attachments: (task.attachments || []).filter(a => a.id !== attachmentId),
-        updatedAt: new Date(),
-      };
-    }));
-    setViewingTask(prev => {
-      if (!prev || prev.id !== taskId) return prev;
-      return {
-        ...prev,
-        attachments: (prev.attachments || []).filter(a => a.id !== attachmentId),
-      };
-    });
+    // Comments are stored locally for now
   };
 
   const handleRestoreTask = (taskId: string) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId 
-        ? { ...task, status: 'todo' as const, completedAt: undefined, updatedAt: new Date() }
-        : task
-    ));
+    updateTask.mutate({ 
+      taskId, 
+      updates: { status: 'todo', completedAt: undefined } 
+    }, {
+      onSuccess: () => toast.success('Task restored'),
+      onError: () => toast.error('Failed to restore task'),
+    });
   };
 
   const handleDeleteTask = (taskId: string) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
-    // Close detail dialog if viewing the deleted task
-    if (viewingTask?.id === taskId) {
-      setViewingTask(null);
-    }
+    deleteTask.mutate(taskId, {
+      onSuccess: () => {
+        toast.success('Task deleted');
+        if (viewingTask?.id === taskId) {
+          setViewingTask(null);
+        }
+      },
+      onError: () => toast.error('Failed to delete task'),
+    });
   };
 
   const handleDuplicateTask = (taskId: string) => {
-    const taskToDuplicate = tasks.find(t => t.id === taskId);
-    if (!taskToDuplicate) return;
-    
-    const duplicatedTask: Task = {
-      ...taskToDuplicate,
-      id: Date.now().toString(),
-      title: `${taskToDuplicate.title} (Copy)`,
-      status: 'todo',
-      completedAt: undefined,
-      comments: [],
-      attachments: [],
-      subtasks: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    
-    setTasks([...tasks, duplicatedTask]);
+    duplicateTask.mutate(taskId, {
+      onSuccess: () => toast.success('Task duplicated'),
+      onError: () => toast.error('Failed to duplicate task'),
+    });
   };
 
   const handleTaskSubmit = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingTask) {
       // Update existing task
-      setTasks(tasks.map(t => 
-        t.id === editingTask.id 
-          ? { ...t, ...taskData, updatedAt: new Date() }
-          : t
-      ));
+      updateTask.mutate({ 
+        taskId: editingTask.id, 
+        updates: taskData 
+      }, {
+        onSuccess: () => {
+          toast.success('Task updated');
+          setTaskDialogOpen(false);
+          setEditingTask(undefined);
+        },
+        onError: () => toast.error('Failed to update task'),
+      });
     } else {
       // Create new task
-      const task: Task = {
+      createTask.mutate({
         ...taskData,
-        id: Date.now().toString(),
-        projectId: selectedProject !== "all" ? selectedProject : undefined,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      setTasks([...tasks, task]);
+        projectId: selectedProject !== "all" ? selectedProject : taskData.projectId,
+      }, {
+        onSuccess: () => {
+          toast.success('Task created');
+          setTaskDialogOpen(false);
+          setEditingTask(undefined);
+        },
+        onError: () => toast.error('Failed to create task'),
+      });
     }
-    setTaskDialogOpen(false);
-    setEditingTask(undefined);
   };
 
   const handleDialogClose = (open: boolean) => {
@@ -543,15 +255,21 @@ export default function Projects() {
   };
 
   const handleAddProject = (newProject: Omit<Project, 'id' | 'createdAt' | 'tasks'>) => {
-    const project: Project = {
-      ...newProject,
-      id: Date.now().toString(),
-      tasks: [],
-      createdAt: new Date(),
-    };
-    setProjects([...projects, project]);
-    setProjectDialogOpen(false);
+    createProject.mutate({
+      name: newProject.name,
+      description: newProject.description,
+      teamId: newProject.teamId,
+      color: newProject.color,
+    }, {
+      onSuccess: () => {
+        toast.success('Project created');
+        setProjectDialogOpen(false);
+      },
+      onError: () => toast.error('Failed to create project'),
+    });
   };
+
+  const isLoading = tasksLoading || projectsLoading;
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
@@ -584,7 +302,7 @@ export default function Projects() {
       <TeamsProjectsHeader
         teams={teamsLibrary}
         projects={projects}
-        tasks={tasks}
+        tasks={dbTasks}
         selectedTeam={selectedTeam}
         selectedProject={selectedProject}
         onTeamSelect={setSelectedTeam}
@@ -598,7 +316,7 @@ export default function Projects() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search tasks..."
-            className="pl-10"
+            className="pl-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -696,70 +414,88 @@ export default function Projects() {
         </TabsList>
 
         <TabsContent value="table" className="mt-4">
-          <TaskTable 
-            tasks={filteredTasks} 
-            onTaskUpdate={handleTaskUpdate} 
-            onEditTask={handleEditTask} 
-            onViewTask={handleViewTask} 
-            onDeleteTask={handleDeleteTask}
-            onDuplicateTask={handleDuplicateTask}
-            onToggleSortOrder={() => setSortAscending(!sortAscending)}
-            sortAscending={sortAscending}
-            statuses={statuses} 
-          />
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map(i => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : (
+            <TaskTable 
+              tasks={filteredTasks} 
+              onTaskUpdate={handleTaskUpdate} 
+              onEditTask={handleEditTask} 
+              onViewTask={handleViewTask} 
+              onDeleteTask={handleDeleteTask}
+              onDuplicateTask={handleDuplicateTask}
+              onToggleSortOrder={() => setSortAscending(!sortAscending)}
+              sortAscending={sortAscending}
+              statuses={statuses} 
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="kanban" className="mt-4">
-          <TaskKanban 
-            tasks={filteredTasks} 
-            onTaskUpdate={handleTaskUpdate} 
-            onEditTask={handleEditTask} 
-            onViewTask={handleViewTask} 
-            onDeleteTask={handleDeleteTask}
-            onDuplicateTask={handleDuplicateTask}
-            statuses={statuses} 
-          />
+          {isLoading ? (
+            <div className="flex gap-4">
+              {[1, 2, 3, 4].map(i => (
+                <Skeleton key={i} className="h-96 w-80 flex-shrink-0" />
+              ))}
+            </div>
+          ) : (
+            <TaskKanban 
+              tasks={filteredTasks} 
+              onTaskUpdate={handleTaskUpdate} 
+              onEditTask={handleEditTask} 
+              onViewTask={handleViewTask} 
+              onDeleteTask={handleDeleteTask}
+              onDuplicateTask={handleDuplicateTask}
+              statuses={statuses} 
+            />
+          )}
         </TabsContent>
 
-
         <TabsContent value="timeline" className="mt-4">
-          <div className="flex items-center justify-center h-64 bg-secondary/30 rounded-lg border-2 border-dashed border-border">
-            <p className="text-muted-foreground">Gantt chart view coming soon</p>
+          <div className="flex items-center justify-center h-64 text-muted-foreground">
+            <p>Timeline view coming soon</p>
           </div>
         </TabsContent>
       </Tabs>
 
+      {/* Task Dialog */}
       <TaskDialog
         open={taskDialogOpen}
         onOpenChange={handleDialogClose}
         onSubmit={handleTaskSubmit}
+        task={editingTask}
         availableMembers={teamMembers}
         statuses={statuses}
-        task={editingTask}
       />
 
+      {/* Task Detail Dialog */}
       <TaskDetailDialog
         open={!!viewingTask}
         onOpenChange={(open) => !open && setViewingTask(null)}
         task={viewingTask}
+        onTaskUpdate={handleTaskUpdate}
+        onAddComment={handleAddComment}
+        onToggleReaction={handleToggleReaction}
+        onDeleteComment={handleDeleteComment}
         currentUser={currentUser}
         availableMembers={teamMembers}
         statuses={statuses}
-        onTaskUpdate={handleTaskUpdate}
-        onAddComment={handleAddComment}
-        onDeleteComment={handleDeleteComment}
-        onToggleReaction={handleToggleReaction}
       />
 
+      {/* Project Dialog */}
       <ProjectDialog
         open={projectDialogOpen}
         onOpenChange={setProjectDialogOpen}
         onSubmit={handleAddProject}
         availableMembers={teamMembers}
         teams={teamsLibrary}
-        selectedTeamId={selectedTeam !== "all" ? selectedTeam : undefined}
       />
 
+      {/* Status Manager */}
       <StatusManager
         open={statusManagerOpen}
         onOpenChange={setStatusManagerOpen}

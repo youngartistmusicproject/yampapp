@@ -452,6 +452,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          color: string | null
           created_at: string
           description: string | null
           due_date: string | null
@@ -462,6 +463,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
@@ -472,6 +474,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
@@ -491,6 +494,35 @@ export type Database = {
           },
         ]
       }
+      task_assignees: {
+        Row: {
+          created_at: string
+          id: string
+          task_id: string
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          task_id: string
+          user_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          task_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_assignees_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee: string | null
@@ -505,6 +537,7 @@ export type Database = {
           progress: number
           project_id: string | null
           status: string
+          tags: string[] | null
           title: string
           updated_at: string
         }
@@ -521,6 +554,7 @@ export type Database = {
           progress?: number
           project_id?: string | null
           status?: string
+          tags?: string[] | null
           title: string
           updated_at?: string
         }
@@ -537,6 +571,7 @@ export type Database = {
           progress?: number
           project_id?: string | null
           status?: string
+          tags?: string[] | null
           title?: string
           updated_at?: string
         }
