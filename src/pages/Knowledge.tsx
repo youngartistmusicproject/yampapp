@@ -132,15 +132,15 @@ export default function Knowledge() {
 
   if (loading) {
     return (
-      <div className="flex h-[calc(100vh-7rem)] gap-6 animate-fade-in">
-        <div className="w-72 flex-shrink-0 flex flex-col bg-card rounded-lg border shadow-card p-4 space-y-3">
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-8rem)] lg:h-[calc(100vh-7rem)] gap-4 lg:gap-6 animate-fade-in">
+        <div className="w-full lg:w-72 flex-shrink-0 flex flex-col bg-card rounded-lg border shadow-card p-4 space-y-3">
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-3/4" />
         </div>
-        <Card className="flex-1 shadow-card">
+        <Card className="flex-1 shadow-card hidden lg:block">
           <CardContent className="p-6 space-y-4">
             <Skeleton className="h-8 w-1/3" />
             <Skeleton className="h-4 w-2/3" />
@@ -152,12 +152,12 @@ export default function Knowledge() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] gap-6 animate-fade-in">
-      {/* Sidebar */}
-      <div className="w-72 flex-shrink-0 flex flex-col bg-card rounded-lg border shadow-card">
-        <div className="p-4 border-b">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-8rem)] lg:h-[calc(100vh-7rem)] gap-4 lg:gap-6 animate-fade-in">
+      {/* Sidebar - full width on mobile when no doc selected, hidden when doc selected on mobile */}
+      <div className={`w-full lg:w-72 flex-shrink-0 flex flex-col bg-card rounded-lg border shadow-card ${selectedDoc ? 'hidden lg:flex' : 'flex'}`}>
+        <div className="p-3 lg:p-4 border-b">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Knowledge Base</h2>
+            <h2 className="font-semibold text-sm lg:text-base">Knowledge Base</h2>
             <Button
               size="icon"
               variant="ghost"
@@ -171,7 +171,7 @@ export default function Knowledge() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search docs..."
-              className="pl-9 h-9"
+              className="pl-9 h-9 text-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -189,9 +189,23 @@ export default function Knowledge() {
         </div>
       </div>
 
-      {/* Editor */}
-      <Card className="flex-1 shadow-card overflow-hidden">
-        <CardContent className="p-0 h-full">
+      {/* Editor - full screen on mobile when doc selected */}
+      <Card className={`flex-1 shadow-card overflow-hidden ${selectedDoc ? 'flex' : 'hidden lg:flex'}`}>
+        <CardContent className="p-0 h-full w-full">
+          {/* Mobile back button */}
+          {selectedDoc && (
+            <div className="lg:hidden p-2 border-b">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedDocId(null)}
+                className="gap-2"
+              >
+                <ChevronRight className="w-4 h-4 rotate-180" />
+                Back to docs
+              </Button>
+            </div>
+          )}
           <KnowledgeEditor
             doc={selectedDoc || null}
             docs={docs}

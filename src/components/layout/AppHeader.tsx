@@ -18,8 +18,8 @@ interface AppHeaderProps {
 
 export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
   return (
-    <header className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-6 border-b border-border bg-card gap-3">
-      {/* Mobile menu trigger */}
+    <header className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-6 border-b border-border bg-card gap-2 sm:gap-3">
+      {/* Mobile menu trigger - for secondary navigation */}
       <Button
         variant="ghost"
         size="icon"
@@ -29,12 +29,12 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
         <Menu className="w-5 h-5" />
       </Button>
 
-      {/* Search */}
+      {/* Search - smaller on mobile */}
       <div className="relative flex-1 max-w-md">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Search..."
-          className="pl-10 bg-secondary border-0 focus-visible:ring-1 focus-visible:ring-primary"
+          className="pl-10 bg-secondary border-0 focus-visible:ring-1 focus-visible:ring-primary h-9 sm:h-10 text-sm"
         />
       </div>
 

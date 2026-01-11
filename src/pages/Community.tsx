@@ -65,8 +65,23 @@ export default function Community() {
   }
 
   return (
-    <div className="flex gap-4 animate-fade-in">
-      {/* Groups Sidebar */}
+    <div className="flex flex-col lg:flex-row gap-4 animate-fade-in">
+      {/* Mobile Group Selector */}
+      <div className="lg:hidden">
+        <select
+          className="w-full p-3 rounded-lg border bg-card text-sm font-medium"
+          value={selectedGroupId || ""}
+          onChange={(e) => setSelectedGroupId(e.target.value)}
+        >
+          {groups.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name} ({group.memberCount} members)
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Groups Sidebar - Desktop only */}
       <div className="w-72 flex-shrink-0 space-y-4 hidden lg:block">
         <Card className="shadow-card">
           <CardHeader className="pb-3">
