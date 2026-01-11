@@ -11,6 +11,14 @@ export interface GoogleCalendarEvent {
   isAllDay: boolean;
 }
 
+function parseCalendarDate(value: string, isAllDay: boolean): Date {
+  if (isAllDay && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+  return new Date(value);
+}
+
 export function useGoogleCalendar() {
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,8 +49,8 @@ export function useGoogleCalendar() {
         isAllDay: boolean;
       }) => ({
         ...event,
-        start: new Date(event.start),
-        end: new Date(event.end),
+        start: parseCalendarDate(event.start, event.isAllDay),
+        end: parseCalendarDate(event.end, event.isAllDay),
       }));
 
       setEvents(parsedEvents);

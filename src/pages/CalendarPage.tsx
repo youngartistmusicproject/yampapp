@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Plus, Filter, RefreshCw, Loader2, MapPin, Al
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfWeek, endOfWeek } from "date-fns";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfWeek, endOfWeek, startOfDay } from "date-fns";
 import { useGoogleCalendar, GoogleCalendarEvent } from "@/hooks/useGoogleCalendar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -45,18 +45,16 @@ export default function CalendarPage() {
 
   const getEventsForDate = (date: Date): GoogleCalendarEvent[] =>
     events.filter((event) => {
-      const eventStart = new Date(event.start);
-      
-      // Compare using local date parts only (ignoring time/timezone)
-      const eventYear = eventStart.getFullYear();
-      const eventMonth = eventStart.getMonth();
-      const eventDay = eventStart.getDate();
-      
-      const dateYear = date.getFullYear();
-      const dateMonth = date.getMonth();
-      const dateDay = date.getDate();
-      
-      return eventYear === dateYear && eventMonth === dateMonth && eventDay === dateDay;
+      const dayStart = startOfDay(date);
+
+      // All-day events from iCal have an exclusive end date (DTEND is the next day)
+      if (event.isAllDay) {
+        const start = startOfDay(event.start);
+        const endExclusive = startOfDay(event.end);
+        return dayStart >= start && dayStart < endExclusive;
+      }
+
+      return isSameDay(event.start, dayStart);
     });
 
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
