@@ -7,7 +7,8 @@ import {
   MessageSquare,
   FileText,
   ArrowRight,
-  Loader2
+  Loader2,
+  CalendarClock
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,14 +45,6 @@ export default function Dashboard() {
 
   const statCards = [
     { 
-      label: "Tasks Due Today", 
-      value: stats?.tasksDueToday ?? 0, 
-      icon: Clock, 
-      trend: "Due today",
-      highlight: false,
-      link: undefined as string | undefined
-    },
-    { 
       label: "Overdue Tasks", 
       value: overdueCount, 
       icon: AlertCircle, 
@@ -60,10 +53,18 @@ export default function Dashboard() {
       link: "/projects?filter=overdue"
     },
     { 
-      label: "High Priority", 
-      value: stats?.pendingRequests ?? 0, 
-      icon: TrendingUp, 
-      trend: "Needs attention",
+      label: "Due Today", 
+      value: stats?.tasksDueToday ?? 0, 
+      icon: Clock, 
+      trend: "Tasks due today",
+      highlight: false,
+      link: undefined as string | undefined
+    },
+    { 
+      label: "Due Tomorrow", 
+      value: stats?.tasksDueTomorrow ?? 0, 
+      icon: CalendarClock, 
+      trend: "Plan ahead",
       highlight: false,
       link: undefined as string | undefined
     },
