@@ -4,7 +4,13 @@ import { Task, Project, User } from '@/types';
 import { teamMembers } from '@/data/workManagementConfig';
 import { format } from 'date-fns';
 
-// Helper to format date to YYYY-MM-DD in local timezone
+// Parse a DATE column (YYYY-MM-DD) into a local Date (avoids timezone day-shift)
+function parseDateOnly(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
+// Format Date -> YYYY-MM-DD in local timezone
 function formatDateForDB(date: Date): string {
   return format(date, 'yyyy-MM-dd');
 }
@@ -62,7 +68,7 @@ export function useProjects() {
         description: p.description,
         color: p.color || '#3b82f6',
         status: p.status,
-        dueDate: p.due_date ? new Date(p.due_date) : undefined,
+        dueDate: p.due_date ? parseDateOnly(p.due_date) : undefined,
         teamId: p.team_id,
         tasks: [] as Task[],
         members: [] as User[],
@@ -106,7 +112,7 @@ export function useTasks() {
         description: t.description || undefined,
         status: t.status.replace('_', '-'), // Convert in_progress to in-progress for UI
         priority: t.priority as 'low' | 'medium' | 'high' | 'urgent',
-        dueDate: t.due_date ? new Date(t.due_date) : undefined,
+        dueDate: t.due_date ? parseDateOnly(t.due_date) : undefined,
         assignees: (assigneesByTask.get(t.id) || []).map(getUserByName),
         projectId: t.project_id || undefined,
         tags: t.tags || [],
