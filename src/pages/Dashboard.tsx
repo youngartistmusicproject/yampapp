@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   CheckCircle2, 
   Clock, 
@@ -20,9 +21,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { useDashboard, formatRelativeTime, formatEventDate } from "@/hooks/useDashboard";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
+import { useTasks, useUpdateTask } from "@/hooks/useWorkManagement";
 import { format } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
+import { Task, TaskComment } from "@/types";
+import { teamMembers, statusLibrary } from "@/data/workManagementConfig";
+import { toast } from "sonner";
+
+const currentUser = teamMembers[0];
 
 export default function Dashboard() {
   const { 
@@ -35,10 +43,15 @@ export default function Dashboard() {
     projects, 
     projectsLoading,
     weeklyCompletion,
-    weeklyCompletionLoading
+    weeklyCompletionLoading,
+    refetch
   } = useDashboard();
   
+  const { data: fullTasks = [] } = useTasks();
+  const updateTask = useUpdateTask();
   const { events, isLoading: eventsLoading } = useGoogleCalendar();
+  
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
 
   // Get upcoming events (next 3)
   const upcomingEvents = events
@@ -47,6 +60,35 @@ export default function Dashboard() {
     .slice(0, 3);
 
   const overdueCount = stats?.overdueTasks ?? 0;
+
+  const handleTaskClick = (taskId: string) => {
+    const fullTask = fullTasks.find(t => t.id === taskId);
+    if (fullTask) {
+      setViewingTask(fullTask);
+    }
+  };
+
+  const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
+    updateTask.mutate({ taskId, updates }, {
+      onSuccess: () => {
+        refetch();
+      },
+      onError: () => {
+        toast.error('Failed to update task');
+      },
+    });
+    
+    if (viewingTask?.id === taskId) {
+      setViewingTask(prev => prev ? { ...prev, ...updates } : null);
+    }
+  };
+
+  const handleAddComment = (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>, parentCommentId?: string) => {
+    toast.info('Comments are not yet persisted to the database');
+  };
+
+  const handleDeleteComment = (taskId: string, commentId: string) => {};
+  const handleToggleReaction = (taskId: string, commentId: string, emoji: string) => {};
 
   const statCards = [
     { 
@@ -164,7 +206,8 @@ export default function Dashboard() {
                 {tasks.map((task) => (
                   <div
                     key={task.id}
-                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                    onClick={() => handleTaskClick(task.id)}
+                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
@@ -377,6 +420,20 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Task Detail Dialog */}
+      <TaskDetailDialog
+        open={!!viewingTask}
+        onOpenChange={(open) => !open && setViewingTask(null)}
+        task={viewingTask}
+        currentUser={currentUser}
+        availableMembers={teamMembers}
+        statuses={statusLibrary}
+        onTaskUpdate={handleTaskUpdate}
+        onAddComment={handleAddComment}
+        onDeleteComment={handleDeleteComment}
+        onToggleReaction={handleToggleReaction}
+      />
     </div>
   );
 }
