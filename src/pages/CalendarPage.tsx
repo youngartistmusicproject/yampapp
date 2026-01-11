@@ -335,7 +335,7 @@ export default function CalendarPage() {
         </CardContent>
       </Card>
 
-      {/* Floating "Back to today" / "Scroll to top" button */}
+      {/* Floating "Back to Today" button */}
       {(!isViewingFromToday || hasScrolled) && (
         <Button
           onClick={() => {
@@ -351,7 +351,7 @@ export default function CalendarPage() {
           size="sm"
         >
           <ArrowUp className="w-4 h-4" />
-          {isViewingFromToday ? "Scroll to top" : "Back to today"}
+          Back to Today
         </Button>
       )}
     </div>
