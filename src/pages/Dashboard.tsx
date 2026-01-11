@@ -180,7 +180,7 @@ export default function Dashboard() {
               ) : (
                 upcomingEvents.map((event) => (
                   <div key={event.id} className="flex items-center gap-2 sm:gap-3">
-                    <div className="w-10 sm:w-12 text-center flex-shrink-0">
+                    <div className="min-w-[3.5rem] sm:min-w-[4rem] text-center flex-shrink-0 pr-2">
                       <p className="text-[10px] sm:text-xs font-semibold">{formatEventDate(event.start)}</p>
                       <p className="text-[10px] sm:text-xs text-muted-foreground">
                         {event.isAllDay ? 'All day' : format(event.start, 'h:mm a')}
