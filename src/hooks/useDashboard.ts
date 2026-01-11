@@ -4,6 +4,7 @@ import { startOfDay, endOfDay, startOfWeek, endOfWeek, format, isToday, isTomorr
 
 export interface DashboardStats {
   tasksDueToday: number;
+  tasksDueTomorrow: number;
   overdueTasks: number;
   pendingRequests: number;
   activeProjects: number;
@@ -65,6 +66,23 @@ export function useDashboard() {
         .gte('due_date', format(startOfDay(today), 'yyyy-MM-dd'))
         .lte('due_date', format(endOfDay(today), 'yyyy-MM-dd'));
 
+      // Tasks due tomorrow
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
+      
+      const { count: tasksDueTomorrowTodo } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'todo')
+        .eq('due_date', tomorrowStr);
+
+      const { count: tasksDueTomorrowInProgress } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'in_progress')
+        .eq('due_date', tomorrowStr);
+
       // Overdue tasks (due date before today and not completed)
       const todayStr = format(today, 'yyyy-MM-dd');
       const { count: overdueTodo } = await supabase
@@ -95,6 +113,7 @@ export function useDashboard() {
 
       return {
         tasksDueToday: (tasksDueToday || 0) + (inProgressDueToday || 0),
+        tasksDueTomorrow: (tasksDueTomorrowTodo || 0) + (tasksDueTomorrowInProgress || 0),
         overdueTasks: (overdueTodo || 0) + (overdueInProgress || 0),
         pendingRequests: pendingRequests || 0,
         activeProjects: activeProjects || 0,
