@@ -24,8 +24,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
-import { getTagById } from "@/data/workManagementConfig";
-
+import { getTagById, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 export interface StatusItem {
   id: string;
   name: string;
@@ -44,11 +50,18 @@ interface TaskTableProps {
   statuses: StatusItem[];
 }
 
-const priorityColors: Record<string, string> = {
-  low: "bg-secondary text-secondary-foreground",
-  medium: "bg-blue-100 text-blue-700",
-  high: "bg-orange-100 text-orange-700",
-  urgent: "bg-destructive text-destructive-foreground",
+const effortColors: Record<string, string> = {
+  easy: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+  light: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+  focused: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
+  deep: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+};
+
+const importanceColors: Record<string, string> = {
+  low: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  routine: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+  important: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
+  critical: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
 };
 
 export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onToggleSortOrder, sortAscending = true, statuses }: TaskTableProps) {
@@ -115,8 +128,11 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                       </Badge>
                     );
                   })()}
-                  <Badge className={`${priorityColors[task.priority]} text-xs`} variant="secondary">
-                    {task.priority}
+                  <Badge className={`${effortColors[task.effort]} text-xs`} variant="secondary">
+                    {task.effort}
+                  </Badge>
+                  <Badge className={`${importanceColors[task.importance]} text-xs`} variant="secondary">
+                    {task.importance}
                   </Badge>
                   {task.dueDate && (
                     <span className="text-xs text-muted-foreground">
@@ -159,7 +175,8 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
               <TableHead className="w-12"></TableHead>
               <TableHead>Task</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Priority</TableHead>
+              <TableHead>Effort</TableHead>
+              <TableHead>Importance</TableHead>
               <TableHead>Assignees</TableHead>
               <TableHead>
                 <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={onToggleSortOrder}>
@@ -218,8 +235,13 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                   })()}
                 </TableCell>
                 <TableCell>
-                  <Badge className={priorityColors[task.priority]} variant="secondary">
-                    {task.priority}
+                  <Badge className={effortColors[task.effort]} variant="secondary">
+                    {task.effort}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge className={importanceColors[task.importance]} variant="secondary">
+                    {task.importance}
                   </Badge>
                 </TableCell>
                 <TableCell>

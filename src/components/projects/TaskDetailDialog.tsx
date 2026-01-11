@@ -60,7 +60,14 @@ import {
 import { format, formatDistanceToNow } from "date-fns";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { SearchableTagSelect } from "./SearchableTagSelect";
-import { tagLibrary } from "@/data/workManagementConfig";
+import { tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 interface StatusItem {
   id: string;
@@ -593,11 +600,18 @@ export function TaskDetailDialog({
     document.body.removeChild(link);
   };
 
-  const priorityColors = {
+  const effortColors: Record<string, string> = {
+    easy: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+    light: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+    focused: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+    deep: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+  };
+
+  const importanceColors: Record<string, string> = {
     low: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-    medium: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-    high: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
-    urgent: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+    routine: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+    important: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+    critical: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
   };
 
   return (
@@ -722,26 +736,76 @@ export function TaskDetailDialog({
                   </Select>
                 </div>
 
-                {/* Priority */}
+                {/* Effort */}
                 <div className="flex items-center justify-between py-2.5 border-b border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Flag className="w-4 h-4" />
-                    <span className="text-sm">Priority</span>
+                    <span className="text-sm">Effort</span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-3.5 h-3.5 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <ul className="text-xs space-y-1">
+                            {effortLibrary.map(e => (
+                              <li key={e.id}><strong>{e.name}</strong> – {e.description}</li>
+                            ))}
+                          </ul>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <Select 
-                    value={task.priority} 
-                    onValueChange={(value: Task['priority']) => onTaskUpdate(task.id, { priority: value })}
+                    value={task.effort} 
+                    onValueChange={(value: Task['effort']) => onTaskUpdate(task.id, { effort: value })}
                   >
                     <SelectTrigger className="w-auto h-8 text-sm gap-1 border-none shadow-none bg-transparent hover:bg-muted/50">
-                      <Badge className={`${priorityColors[task.priority]} text-xs capitalize`}>
-                        {task.priority}
+                      <Badge className={`${effortColors[task.effort]} text-xs capitalize`}>
+                        {task.effort}
                       </Badge>
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-50">
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
+                      {effortLibrary.map(e => (
+                        <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Importance */}
+                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Circle className="w-4 h-4" />
+                    <span className="text-sm">Importance</span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-3.5 h-3.5 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <ul className="text-xs space-y-1">
+                            {importanceLibrary.map(i => (
+                              <li key={i.id}><strong>{i.name}</strong> – {i.description}</li>
+                            ))}
+                          </ul>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Select 
+                    value={task.importance} 
+                    onValueChange={(value: Task['importance']) => onTaskUpdate(task.id, { importance: value })}
+                  >
+                    <SelectTrigger className="w-auto h-8 text-sm gap-1 border-none shadow-none bg-transparent hover:bg-muted/50">
+                      <Badge className={`${importanceColors[task.importance]} text-xs capitalize`}>
+                        {task.importance}
+                      </Badge>
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      {importanceLibrary.map(i => (
+                        <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

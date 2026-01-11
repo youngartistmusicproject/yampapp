@@ -530,8 +530,10 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          effort: string | null
           estimated_time: string | null
           id: string
+          importance: string | null
           is_recurring: boolean
           priority: string
           progress: number
@@ -547,8 +549,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          effort?: string | null
           estimated_time?: string | null
           id?: string
+          importance?: string | null
           is_recurring?: boolean
           priority?: string
           progress?: number
@@ -564,8 +568,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          effort?: string | null
           estimated_time?: string | null
           id?: string
+          importance?: string | null
           is_recurring?: boolean
           priority?: string
           progress?: number

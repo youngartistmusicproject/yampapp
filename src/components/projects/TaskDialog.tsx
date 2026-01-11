@@ -25,11 +25,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { tagLibrary } from "@/data/workManagementConfig";
+import { tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { RecurrenceSettings } from "./RecurrenceSettings";
-import { Repeat, BookOpen, Plus } from "lucide-react";
+import { Repeat, BookOpen, Plus, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface StatusItem {
   id: string;
@@ -51,7 +57,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<string>("todo");
-  const [priority, setPriority] = useState<Task["priority"]>("medium");
+  const [effort, setEffort] = useState<Task["effort"]>("easy");
+  const [importance, setImportance] = useState<Task["importance"]>("routine");
   const [dueDate, setDueDate] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
@@ -75,7 +82,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       setTitle(task.title);
       setDescription(task.description || "");
       setStatus(task.status);
-      setPriority(task.priority);
+      setEffort(task.effort);
+      setImportance(task.importance);
       setDueDate(task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : "");
       setSelectedTags(task.tags);
       setSelectedAssignees(task.assignees);
@@ -92,7 +100,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     setTitle("");
     setDescription("");
     setStatus("todo");
-    setPriority("medium");
+    setEffort("easy");
+    setImportance("routine");
     setDueDate("");
     setSelectedTags([]);
     setSelectedAssignees([]);
@@ -135,7 +144,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       title,
       description,
       status,
-      priority,
+      effort,
+      importance,
       dueDate: dueDate ? parseInputDate(dueDate) : undefined,
       tags: selectedTags,
       assignees: selectedAssignees,
@@ -216,19 +226,64 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Select value={priority} onValueChange={(v) => setPriority(v as Task["priority"])}>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="effort">Effort</Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <ul className="text-xs space-y-1">
+                          {effortLibrary.map(e => (
+                            <li key={e.id}><strong>{e.name}</strong> – {e.description}</li>
+                          ))}
+                        </ul>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Select value={effort} onValueChange={(v) => setEffort(v as Task["effort"])}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
+                    <SelectValue placeholder="Select effort" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
+                    {effortLibrary.map(e => (
+                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                    ))}
                   </SelectContent>
-              </Select>
-            </div>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="importance">Importance</Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <ul className="text-xs space-y-1">
+                          {importanceLibrary.map(i => (
+                            <li key={i.id}><strong>{i.name}</strong> – {i.description}</li>
+                          ))}
+                        </ul>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Select value={importance} onValueChange={(v) => setImportance(v as Task["importance"])}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select importance" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {importanceLibrary.map(i => (
+                      <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
             <div className="col-span-2 space-y-2">
               <Label htmlFor="project">Project</Label>

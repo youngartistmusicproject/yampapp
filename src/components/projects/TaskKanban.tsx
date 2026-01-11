@@ -38,11 +38,11 @@ interface TaskKanbanProps {
   statuses: StatusItem[];
 }
 
-const priorityColors: Record<string, string> = {
-  low: "border-l-secondary",
-  medium: "border-l-blue-400",
-  high: "border-l-orange-400",
-  urgent: "border-l-destructive",
+const importanceColors: Record<string, string> = {
+  low: "border-l-gray-400",
+  routine: "border-l-blue-400",
+  important: "border-l-amber-400",
+  critical: "border-l-red-500",
 };
 
 export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, statuses }: TaskKanbanProps) {
@@ -146,7 +146,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                     {columnTasks.map((task) => (
                       <Card
                         key={task.id}
-                        className={`group cursor-grab active:cursor-grabbing border-l-4 ${priorityColors[task.priority]} shadow-card hover:shadow-elevated transition-all`}
+                        className={`group cursor-grab active:cursor-grabbing border-l-4 ${importanceColors[task.importance]} shadow-card hover:shadow-elevated transition-all`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, task.id)}
                         onClick={() => onViewTask(task)}

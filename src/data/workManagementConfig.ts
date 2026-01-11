@@ -38,6 +38,26 @@ export const statusLibrary = [
 
 export type StatusItem = (typeof statusLibrary)[number];
 
+// Effort options - describes the level of work required
+export const effortLibrary = [
+  { id: "easy", name: "Easy", color: "#10b981", description: "Minimal effort, can be done quickly" },
+  { id: "light", name: "Light", color: "#3b82f6", description: "Small but noticeable effort" },
+  { id: "focused", name: "Focused", color: "#f59e0b", description: "Requires concentration or planning" },
+  { id: "deep", name: "Deep", color: "#ef4444", description: "Significant focus and sustained attention" },
+];
+
+export type EffortItem = (typeof effortLibrary)[number];
+
+// Importance options - describes the impact of the task
+export const importanceLibrary = [
+  { id: "low", name: "Low", color: "#6b7280", description: "Low impact if delayed or done imperfectly" },
+  { id: "routine", name: "Routine", color: "#3b82f6", description: "Baseline work; expected but not urgent" },
+  { id: "important", name: "Important", color: "#f59e0b", description: "Meaningful consequences if not done well" },
+  { id: "critical", name: "Critical", color: "#ef4444", description: "High impact; must be done correctly and on time" },
+];
+
+export type ImportanceItem = (typeof importanceLibrary)[number];
+
 // Mock team members with avatars
 export const teamMembers: User[] = [
   { 
@@ -83,4 +103,12 @@ export function getTagById(id: string): TagItem | undefined {
 
 export function getStatusById(id: string): StatusItem | undefined {
   return statusLibrary.find(status => status.id === id);
+}
+
+export function getEffortById(id: string): EffortItem | undefined {
+  return effortLibrary.find(effort => effort.id === id);
+}
+
+export function getImportanceById(id: string): ImportanceItem | undefined {
+  return importanceLibrary.find(importance => importance.id === id);
 }

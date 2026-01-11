@@ -149,8 +149,8 @@ export default function Projects() {
       // Status filter
       const matchesStatus = filters.statuses.length === 0 || filters.statuses.includes(task.status);
       
-      // Priority filter
-      const matchesPriority = filters.priorities.length === 0 || filters.priorities.includes(task.priority);
+      // Effort filter (was priority)
+      const matchesEffort = filters.priorities.length === 0 || filters.priorities.includes(task.effort);
       
       // Assignee filter
       const matchesAssignee = filters.assignees.length === 0 || 
@@ -175,7 +175,7 @@ export default function Projects() {
       const matchesOverdue = !filters.showOverdueOnly || 
         (task.dueDate && new Date(task.dueDate) < today && task.status !== 'done');
       
-      return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesPriority && 
+      return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesEffort && 
              matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
       // Sort by due date chronologically, tasks without due date go last
