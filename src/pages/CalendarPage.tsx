@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { ChevronDown, RefreshCw, Loader2, MapPin, AlertCircle, CalendarDays } from "lucide-react";
+import { ChevronDown, RefreshCw, Loader2, MapPin, AlertCircle, CalendarDays, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -92,6 +92,17 @@ export default function CalendarPage() {
   const monthOptions = useMemo(() => generateMonthOptions(), []);
   const today = startOfDay(new Date());
   const isViewingFromToday = isSameDay(startOfDay(startFrom), today);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  // Track scroll position for floating button
+  useEffect(() => {
+    const handleScroll = () => {
+      setHasScrolled(window.scrollY > 200);
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Filter events from the selected start date onwards
   const upcomingEvents = useMemo(() => {
@@ -212,17 +223,6 @@ export default function CalendarPage() {
           </SelectContent>
         </Select>
 
-        {!isViewingFromToday && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBackToToday}
-            className="gap-2"
-          >
-            Back to today
-          </Button>
-        )}
-        
         <span className="text-sm text-muted-foreground ml-auto">
           {upcomingEvents.length} event{upcomingEvents.length !== 1 ? 's' : ''}
         </span>
@@ -318,6 +318,18 @@ export default function CalendarPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Floating "Back to today" button */}
+      {!isViewingFromToday && hasScrolled && (
+        <Button
+          onClick={handleBackToToday}
+          className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg gap-2 px-4"
+          size="sm"
+        >
+          <ArrowUp className="w-4 h-4" />
+          Back to today
+        </Button>
+      )}
     </div>
   );
 }
