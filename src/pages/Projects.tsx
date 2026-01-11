@@ -72,10 +72,27 @@ export default function Projects() {
     showOverdueOnly: false,
   });
 
-  // Apply overdue filter from URL params
+  // Apply filters from URL params
   useEffect(() => {
-    if (searchParams.get('filter') === 'overdue') {
-      setFilters(prev => ({ ...prev, showOverdueOnly: true }));
+    const filterParam = searchParams.get('filter');
+    if (filterParam) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (filterParam === 'overdue') {
+        setFilters(prev => ({ ...prev, showOverdueOnly: true }));
+      } else if (filterParam === 'today') {
+        const endOfToday = new Date(today);
+        endOfToday.setHours(23, 59, 59, 999);
+        setFilters(prev => ({ ...prev, dueDateFrom: today, dueDateTo: endOfToday }));
+      } else if (filterParam === 'tomorrow') {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const endOfTomorrow = new Date(tomorrow);
+        endOfTomorrow.setHours(23, 59, 59, 999);
+        setFilters(prev => ({ ...prev, dueDateFrom: tomorrow, dueDateTo: endOfTomorrow }));
+      }
+      
       // Clear the param so it doesn't persist on refresh
       searchParams.delete('filter');
       setSearchParams(searchParams, { replace: true });
