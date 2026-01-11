@@ -220,17 +220,14 @@ export default function CalendarPage() {
       )}
 
       {/* Navigation bar */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Select
-          value={format(startFrom, "yyyy-MM")}
-          onValueChange={handleMonthChange}
-        >
-          <SelectTrigger className="w-[180px]">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Select value={format(startFrom, "yyyy-MM")} onValueChange={handleMonthChange}>
+          <SelectTrigger className="w-full sm:w-[220px]">
             <CalendarDays className="w-4 h-4 mr-2 text-muted-foreground" />
             <SelectValue />
             <ChevronDown className="w-4 h-4 ml-auto opacity-50" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-[60vh]">
             {monthOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
@@ -239,8 +236,8 @@ export default function CalendarPage() {
           </SelectContent>
         </Select>
 
-        <span className="text-sm text-muted-foreground ml-auto">
-          {upcomingEvents.length} event{upcomingEvents.length !== 1 ? 's' : ''}
+        <span className="text-xs sm:text-sm text-muted-foreground sm:ml-auto">
+          {upcomingEvents.length} event{upcomingEvents.length !== 1 ? "s" : ""}
         </span>
       </div>
 
@@ -257,26 +254,23 @@ export default function CalendarPage() {
               {groupedEvents.map((group, groupIndex) => (
                 <div key={group.date.toISOString()}>
                   {/* Date header */}
-                  <div className={`bg-muted/60 px-4 py-2 border-b ${groupIndex > 0 ? 'border-t' : ''}`}>
+                  <div className={`bg-muted/60 px-3 sm:px-4 py-2 border-b ${groupIndex > 0 ? "border-t" : ""}`}>
                     <span className="text-sm font-semibold text-foreground">
-                      {isSameDay(group.date, today) 
-                        ? "Today" 
-                        : format(group.date, "EEEE, MMMM d")
-                      }
+                      {isSameDay(group.date, today) ? "Today" : format(group.date, "EEEE, MMMM d")}
                     </span>
                   </div>
-                  
+
                   {/* Events for this date */}
                   <div className="divide-y">
                     {group.events.map((event) => (
                       <div
                         key={event.id}
-                        className="flex items-start gap-3 p-4 hover:bg-secondary/30 active:bg-secondary/40 transition-colors"
+                        className="flex items-start gap-3 p-3 sm:p-4 hover:bg-secondary/30 active:bg-secondary/40 transition-colors touch-manipulation"
                       >
                         <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${getEventColor(event.id)}`} />
                         
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-sm lg:text-base text-foreground">
+                          <h3 className="font-medium text-sm lg:text-base text-foreground leading-snug line-clamp-2">
                             {event.title}
                           </h3>
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
@@ -338,6 +332,7 @@ export default function CalendarPage() {
       {/* Floating "Back to Today" button */}
       {(!isViewingFromToday || hasScrolled) && (
         <Button
+          aria-label="Back to Today"
           onClick={() => {
             handleBackToToday();
             const scrollEl = document.querySelector("main");
@@ -351,7 +346,8 @@ export default function CalendarPage() {
           size="sm"
         >
           <ArrowUp className="w-4 h-4" />
-          Back to Today
+          <span className="hidden sm:inline">Back to Today</span>
+          <span className="sm:hidden">Today</span>
         </Button>
       )}
     </div>
