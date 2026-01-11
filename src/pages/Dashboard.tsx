@@ -175,7 +175,17 @@ export default function Dashboard() {
                         <p className={`text-xs sm:text-sm font-medium truncate ${task.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>
                           {task.title}
                         </p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">{task.assignee || 'Unassigned'}</p>
+                        <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
+                          <span>{task.assignee || 'Unassigned'}</span>
+                          {task.dueDate && (
+                            <>
+                              <span>•</span>
+                              <span className={task.dueDate < new Date(new Date().setHours(0,0,0,0)) ? 'text-destructive font-medium' : ''}>
+                                {formatEventDate(task.dueDate)}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <Badge 
