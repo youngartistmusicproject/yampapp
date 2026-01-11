@@ -54,7 +54,8 @@ export interface Task {
   title: string;
   description?: string;
   status: string; // Now dynamic based on custom statuses
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  effort: 'easy' | 'light' | 'focused' | 'deep';
+  importance: 'low' | 'routine' | 'important' | 'critical';
   dueDate?: Date;
   assignees: User[];
   projectId?: string;

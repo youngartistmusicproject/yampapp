@@ -111,7 +111,8 @@ export function useTasks() {
         title: t.title,
         description: t.description || undefined,
         status: t.status.replace('_', '-'), // Convert in_progress to in-progress for UI
-        priority: t.priority as 'low' | 'medium' | 'high' | 'urgent',
+        effort: (t.effort || 'easy') as 'easy' | 'light' | 'focused' | 'deep',
+        importance: (t.importance || 'routine') as 'low' | 'routine' | 'important' | 'critical',
         dueDate: t.due_date ? parseDateOnly(t.due_date) : undefined,
         assignees: (assigneesByTask.get(t.id) || []).map(getUserByName),
         projectId: t.project_id || undefined,
@@ -140,7 +141,8 @@ export function useCreateTask() {
           title: task.title,
           description: task.description || null,
           status: (task.status || 'todo').replace('-', '_'),
-          priority: task.priority || 'medium',
+          effort: task.effort || 'easy',
+          importance: task.importance || 'routine',
           due_date: task.dueDate ? formatDateForDB(task.dueDate) : null,
           project_id: task.projectId || null,
           tags: task.tags || [],
@@ -206,7 +208,8 @@ export function useUpdateTask() {
           updateData.completed_at = null;
         }
       }
-      if (updates.priority !== undefined) updateData.priority = updates.priority;
+      if (updates.effort !== undefined) updateData.effort = updates.effort;
+      if (updates.importance !== undefined) updateData.importance = updates.importance;
       if (updates.dueDate !== undefined) {
         updateData.due_date = updates.dueDate ? formatDateForDB(updates.dueDate) : null;
       }
@@ -311,7 +314,8 @@ export function useDuplicateTask() {
           title: `${original.title} (Copy)`,
           description: original.description,
           status: 'todo',
-          priority: original.priority,
+          effort: original.effort,
+          importance: original.importance,
           due_date: original.due_date,
           project_id: original.project_id,
           tags: original.tags,
