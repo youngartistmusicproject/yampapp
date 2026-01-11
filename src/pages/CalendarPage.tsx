@@ -32,6 +32,33 @@ function formatEventTime(event: GoogleCalendarEvent): string {
   return format(event.start, "h:mm a");
 }
 
+function isMultiDayEvent(event: GoogleCalendarEvent): boolean {
+  const startDay = startOfDay(event.start);
+  // For all-day events, end is exclusive, so subtract 1 day to get actual last day
+  const endDay = event.isAllDay 
+    ? startOfDay(new Date(event.end.getTime() - 86400000)) 
+    : startOfDay(event.end);
+  return endDay > startDay;
+}
+
+function formatEventDateRange(event: GoogleCalendarEvent): string {
+  const startDay = startOfDay(event.start);
+  const endDay = event.isAllDay 
+    ? startOfDay(new Date(event.end.getTime() - 86400000)) 
+    : startOfDay(event.end);
+  
+  if (startDay.getTime() === endDay.getTime()) {
+    return format(event.start, "MMM d");
+  }
+  
+  // Same month
+  if (startDay.getMonth() === endDay.getMonth()) {
+    return `${format(startDay, "MMM d")} – ${format(endDay, "d")}`;
+  }
+  
+  return `${format(startDay, "MMM d")} – ${format(endDay, "MMM d")}`;
+}
+
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -236,13 +263,21 @@ export default function CalendarPage() {
                     
                     {/* Date column - show when viewing all events */}
                     {!selectedDate && (
-                      <div className="flex-shrink-0 w-12 sm:w-14 text-center">
-                        <div className="text-lg sm:text-xl font-semibold text-foreground">
-                          {format(event.start, "d")}
-                        </div>
-                        <div className="text-[10px] sm:text-xs text-muted-foreground uppercase">
-                          {format(event.start, "MMM")}
-                        </div>
+                      <div className="flex-shrink-0 min-w-[3.5rem] text-center">
+                        {isMultiDayEvent(event) ? (
+                          <div className="text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">
+                            {formatEventDateRange(event)}
+                          </div>
+                        ) : (
+                          <>
+                            <div className="text-lg sm:text-xl font-semibold text-foreground">
+                              {format(event.start, "d")}
+                            </div>
+                            <div className="text-[10px] sm:text-xs text-muted-foreground uppercase">
+                              {format(event.start, "MMM")}
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                     
