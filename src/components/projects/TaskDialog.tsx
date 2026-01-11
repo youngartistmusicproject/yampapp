@@ -225,12 +225,15 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
             <div className="col-span-2 space-y-2">
               <Label htmlFor="project">Project</Label>
-              <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+              <Select 
+                value={selectedProjectId || "none"} 
+                onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="No project" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No project</SelectItem>
+                  <SelectItem value="none">No project</SelectItem>
                   {(projects || []).map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       <div className="flex items-center gap-2">
