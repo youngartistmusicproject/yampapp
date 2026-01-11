@@ -27,6 +27,7 @@ export interface TaskFilters {
   showRecurring: boolean | null; // null = show all, true = only recurring, false = only non-recurring
   dueDateFrom?: Date;
   dueDateTo?: Date;
+  showOverdueOnly?: boolean;
 }
 
 interface TaskFilterPanelProps {
@@ -59,7 +60,8 @@ export function TaskFilterPanel({
     filters.tags.length +
     (filters.showRecurring !== null ? 1 : 0) +
     (filters.dueDateFrom ? 1 : 0) +
-    (filters.dueDateTo ? 1 : 0);
+    (filters.dueDateTo ? 1 : 0) +
+    (filters.showOverdueOnly ? 1 : 0);
 
   const handleStatusToggle = (statusId: string) => {
     const newStatuses = filters.statuses.includes(statusId)
@@ -102,6 +104,7 @@ export function TaskFilterPanel({
       showRecurring: null,
       dueDateFrom: undefined,
       dueDateTo: undefined,
+      showOverdueOnly: false,
     });
   };
 

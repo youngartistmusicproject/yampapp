@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,7 @@ export default function Projects() {
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [sortAscending, setSortAscending] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<TaskFilters>({
     statuses: [],
     priorities: [],
@@ -67,7 +69,18 @@ export default function Projects() {
     showRecurring: null,
     dueDateFrom: undefined,
     dueDateTo: undefined,
+    showOverdueOnly: false,
   });
+
+  // Apply overdue filter from URL params
+  useEffect(() => {
+    if (searchParams.get('filter') === 'overdue') {
+      setFilters(prev => ({ ...prev, showOverdueOnly: true }));
+      // Clear the param so it doesn't persist on refresh
+      searchParams.delete('filter');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Convert DB projects to the format expected by components
   const projects: Project[] = useMemo(() => {
@@ -105,6 +118,9 @@ export default function Projects() {
   const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
 
   const filteredTasks = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     return activeTasks.filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
@@ -138,8 +154,12 @@ export default function Projects() {
       const matchesDueDateTo = !filters.dueDateTo || 
         (task.dueDate && new Date(task.dueDate) <= filters.dueDateTo);
       
+      // Overdue filter
+      const matchesOverdue = !filters.showOverdueOnly || 
+        (task.dueDate && new Date(task.dueDate) < today && task.status !== 'done');
+      
       return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesPriority && 
-             matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo;
+             matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
       // Sort by due date chronologically, tasks without due date go last
       if (!a.dueDate && !b.dueDate) return 0;
