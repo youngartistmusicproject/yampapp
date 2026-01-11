@@ -58,7 +58,13 @@ export default function CalendarPage() {
     });
 
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
-
+  
+  // For list view: show selected date events, or all upcoming events sorted by date
+  const displayEvents = selectedDate
+    ? selectedDateEvents
+    : events
+        .filter((e) => e.start >= startOfDay(new Date()))
+        .sort((a, b) => a.start.getTime() - b.start.getTime());
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Page Header */}
@@ -98,9 +104,9 @@ export default function CalendarPage() {
         </Alert>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-        {/* Calendar Grid */}
-        <Card className="flex-1 shadow-card">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        {/* Calendar Grid - Compact on larger screens */}
+        <Card className="lg:col-span-1 shadow-card">
           <CardHeader className="pb-3 sm:pb-4 p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base sm:text-lg">{format(currentDate, "MMMM yyyy")}</CardTitle>
@@ -133,28 +139,20 @@ export default function CalendarPage() {
             </div>
           </CardHeader>
           <CardContent className="p-2 sm:p-6 pt-0 sm:pt-0">
-            {/* Day headers - abbreviated on mobile */}
+            {/* Day headers */}
             <div className="grid grid-cols-7 mb-1 sm:mb-2">
               {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
                 <div
                   key={`${day}-${i}`}
-                  className="text-center text-xs sm:text-sm font-medium text-muted-foreground py-1 sm:py-2 sm:hidden"
-                >
-                  {day}
-                </div>
-              ))}
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div
-                  key={day}
-                  className="text-center text-sm font-medium text-muted-foreground py-2 hidden sm:block"
+                  className="text-center text-xs font-medium text-muted-foreground py-1"
                 >
                   {day}
                 </div>
               ))}
             </div>
 
-            {/* Calendar days - compact on mobile */}
-            <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+            {/* Calendar days - compact */}
+            <div className="grid grid-cols-7 gap-0.5">
               {days.map((day) => {
                 const dayEvents = getEventsForDate(day);
                 const isCurrentMonth = isSameMonth(day, currentDate);
@@ -165,110 +163,122 @@ export default function CalendarPage() {
                     key={day.toISOString()}
                     onClick={() => setSelectedDate(day)}
                     className={`
-                      relative min-h-[48px] sm:min-h-[80px] p-1 sm:p-2 rounded-md sm:rounded-lg text-left transition-colors
+                      relative min-h-[36px] sm:min-h-[40px] p-1 rounded-md text-center transition-colors
                       ${!isCurrentMonth ? "text-muted-foreground/50" : ""}
                       ${isToday(day) ? "bg-primary/10 ring-1 ring-primary" : ""}
-                      ${isSelected ? "bg-secondary ring-1 ring-primary" : "hover:bg-secondary/50"}
+                      ${isSelected ? "bg-primary text-primary-foreground" : "hover:bg-secondary/50"}
                     `}
                   >
-                    <span
-                      className={`text-xs sm:text-sm font-medium ${
-                        isToday(day) ? "text-primary" : ""
-                      }`}
-                    >
+                    <span className={`text-xs sm:text-sm font-medium ${isToday(day) && !isSelected ? "text-primary" : ""}`}>
                       {format(day, "d")}
                     </span>
-                    {/* Events - dots on mobile, pills on desktop */}
-                    <div className="mt-0.5 sm:mt-1 space-y-0.5">
-                      {/* Mobile: show dots for events */}
-                      <div className="flex gap-0.5 sm:hidden flex-wrap">
+                    {dayEvents.length > 0 && (
+                      <div className="flex justify-center gap-0.5 mt-0.5">
                         {dayEvents.slice(0, 3).map((event) => (
                           <div
                             key={event.id}
-                            className={`w-1.5 h-1.5 rounded-full ${getEventColor(event.id)}`}
+                            className={`w-1 h-1 rounded-full ${isSelected ? "bg-primary-foreground" : getEventColor(event.id)}`}
                           />
                         ))}
                       </div>
-                      {/* Desktop: show event titles */}
-                      <div className="hidden sm:block space-y-0.5">
-                        {dayEvents.slice(0, 2).map((event) => (
-                          <div
-                            key={event.id}
-                            className={`text-xs px-1.5 py-0.5 rounded truncate text-white ${getEventColor(event.id)}`}
-                          >
-                            {event.title}
-                          </div>
-                        ))}
-                        {dayEvents.length > 2 && (
-                          <div className="text-xs text-muted-foreground px-1">
-                            +{dayEvents.length - 2} more
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    )}
                   </button>
                 );
               })}
             </div>
 
             {isLoading && events.length === 0 && (
-              <div className="flex items-center justify-center py-8 text-muted-foreground">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                Loading events...
+              <div className="flex items-center justify-center py-4 text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                <span className="text-sm">Loading...</span>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Sidebar - Sheet on mobile, sidebar on desktop */}
-        <Card className="w-full lg:w-80 shadow-card">
-          <CardHeader className="p-4 lg:p-6">
-            <CardTitle className="text-sm lg:text-base">
-              {selectedDate
-                ? format(selectedDate, "EEEE, MMMM d")
-                : "Select a date"}
+        {/* Events List View */}
+        <Card className="lg:col-span-2 shadow-card">
+          <CardHeader className="p-4 lg:p-6 border-b">
+            <CardTitle className="text-base lg:text-lg flex items-center justify-between">
+              <span>
+                {selectedDate ? format(selectedDate, "EEEE, MMMM d, yyyy") : "Upcoming Events"}
+              </span>
+              {selectedDate && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-muted-foreground"
+                  onClick={() => setSelectedDate(null)}
+                >
+                  Show all
+                </Button>
+              )}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0 lg:p-6 lg:pt-0">
-            {selectedDate ? (
-              selectedDateEvents.length > 0 ? (
-                <div className="space-y-2 lg:space-y-3">
-                  {selectedDateEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className="flex items-start gap-2 lg:gap-3 p-2 lg:p-3 rounded-lg bg-secondary/50"
-                    >
-                      <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${getEventColor(event.id)}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-xs lg:text-sm">{event.title}</p>
-                        <p className="text-[10px] lg:text-xs text-muted-foreground">{formatEventTime(event)}</p>
-                        {event.location && (
-                          <p className="text-[10px] lg:text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                            <MapPin className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">{event.location}</span>
-                          </p>
-                        )}
-                        {event.description && (
-                          <p className="text-[10px] lg:text-xs text-muted-foreground mt-1 line-clamp-2">
-                            {event.description}
-                          </p>
-                        )}
-                        <Badge variant="outline" className="text-[10px] lg:text-xs mt-2">
-                          {event.isAllDay ? "All Day" : "Event"}
-                        </Badge>
+          <CardContent className="p-0">
+            {isLoading && events.length === 0 ? (
+              <div className="flex items-center justify-center py-12 text-muted-foreground">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                Loading events...
+              </div>
+            ) : displayEvents.length > 0 ? (
+              <div className="divide-y">
+                {displayEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex items-start gap-3 sm:gap-4 p-4 lg:p-5 hover:bg-secondary/30 transition-colors"
+                  >
+                    {/* Color indicator */}
+                    <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${getEventColor(event.id)}`} />
+                    
+                    {/* Date column - show when viewing all events */}
+                    {!selectedDate && (
+                      <div className="flex-shrink-0 w-12 sm:w-14 text-center">
+                        <div className="text-lg sm:text-xl font-semibold text-foreground">
+                          {format(event.start, "d")}
+                        </div>
+                        <div className="text-[10px] sm:text-xs text-muted-foreground uppercase">
+                          {format(event.start, "MMM")}
+                        </div>
                       </div>
+                    )}
+                    
+                    {/* Event details */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-sm sm:text-base text-foreground truncate">
+                        {event.title}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <span className="text-xs sm:text-sm text-muted-foreground">
+                          {formatEventTime(event)}
+                        </span>
+                        {event.location && (
+                          <span className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
+                            <MapPin className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate max-w-[150px] sm:max-w-[200px]">{event.location}</span>
+                          </span>
+                        )}
+                      </div>
+                      {event.description && (
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-2 line-clamp-2">
+                          {event.description}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs lg:text-sm text-muted-foreground text-center py-6 lg:py-8">
-                  No events scheduled
-                </p>
-              )
+                    
+                    {/* Badge */}
+                    <Badge variant="outline" className="text-[10px] sm:text-xs flex-shrink-0 hidden sm:inline-flex">
+                      {event.isAllDay ? "All Day" : "Event"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <p className="text-xs lg:text-sm text-muted-foreground text-center py-6 lg:py-8">
-                Click a date to view events
-              </p>
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <p className="text-sm">
+                  {selectedDate ? "No events scheduled for this date" : "No upcoming events"}
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>
