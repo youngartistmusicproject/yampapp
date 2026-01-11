@@ -97,30 +97,31 @@ export default function CRM() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">CRM</h1>
-          <p className="text-muted-foreground mt-1">Manage parents, guardians, and prospects</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">CRM</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 truncate">Manage parents, guardians, and prospects</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2 flex-shrink-0" size="sm">
           <Plus className="w-4 h-4" />
-          Add Contact
+          <span className="hidden sm:inline">Add Contact</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </div>
 
       <Tabs defaultValue="pipeline">
-        <TabsList>
-          <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-          <TabsTrigger value="contacts">All Contacts</TabsTrigger>
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="pipeline" className="flex-1 sm:flex-none">Pipeline</TabsTrigger>
+          <TabsTrigger value="contacts" className="flex-1 sm:flex-none">All Contacts</TabsTrigger>
         </TabsList>
 
-        {/* Pipeline View */}
+        {/* Pipeline View - horizontal scroll on mobile */}
         <TabsContent value="pipeline" className="mt-4">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="flex gap-4 overflow-x-auto pb-4 lg:grid lg:grid-cols-4 lg:overflow-visible">
             {(["lead", "contacted", "qualified", "enrolled"] as const).map((stage) => (
-              <div key={stage} className="bg-secondary/30 rounded-lg p-3">
+              <div key={stage} className="bg-secondary/30 rounded-lg p-3 min-w-[260px] lg:min-w-0 flex-shrink-0">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-medium text-sm">{stageConfig[stage].label}</h3>
                   <Badge variant="secondary" className="text-xs">
