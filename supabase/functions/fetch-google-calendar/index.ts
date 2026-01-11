@@ -15,15 +15,18 @@ interface CalendarEvent {
   isAllDay: boolean;
 }
 
-function parseICalDate(dateStr: string): { date: Date; isAllDay: boolean } {
-  // All-day events: YYYYMMDD
+function parseICalDate(dateStr: string): { value: string; isAllDay: boolean } {
+  const pad2 = (n: number) => String(n).padStart(2, "0");
+
+  // All-day events: YYYYMMDD (represent as date-only to avoid timezone shifts)
   if (dateStr.length === 8) {
     const year = parseInt(dateStr.slice(0, 4));
-    const month = parseInt(dateStr.slice(4, 6)) - 1;
+    const month = parseInt(dateStr.slice(4, 6));
     const day = parseInt(dateStr.slice(6, 8));
-    return { date: new Date(year, month, day), isAllDay: true };
+
+    return { value: `${year}-${pad2(month)}-${pad2(day)}`, isAllDay: true };
   }
-  
+
   // Date-time events: YYYYMMDDTHHMMSSZ or YYYYMMDDTHHMMSS
   const year = parseInt(dateStr.slice(0, 4));
   const month = parseInt(dateStr.slice(4, 6)) - 1;
@@ -31,11 +34,18 @@ function parseICalDate(dateStr: string): { date: Date; isAllDay: boolean } {
   const hour = parseInt(dateStr.slice(9, 11)) || 0;
   const minute = parseInt(dateStr.slice(11, 13)) || 0;
   const second = parseInt(dateStr.slice(13, 15)) || 0;
-  
-  if (dateStr.endsWith('Z')) {
-    return { date: new Date(Date.UTC(year, month, day, hour, minute, second)), isAllDay: false };
+
+  if (dateStr.endsWith("Z")) {
+    return {
+      value: new Date(Date.UTC(year, month, day, hour, minute, second)).toISOString(),
+      isAllDay: false,
+    };
   }
-  return { date: new Date(year, month, day, hour, minute, second), isAllDay: false };
+
+  return {
+    value: new Date(year, month, day, hour, minute, second).toISOString(),
+    isAllDay: false,
+  };
 }
 
 function parseICalendar(icalData: string): CalendarEvent[] {
@@ -76,15 +86,17 @@ function parseICalendar(icalData: string): CalendarEvent[] {
         case 'LOCATION':
           currentEvent.location = value.replace(/\\,/g, ',').replace(/\\;/g, ';');
           break;
-        case 'DTSTART':
+        case 'DTSTART': {
           const startResult = parseICalDate(value);
-          currentEvent.start = startResult.date.toISOString();
+          currentEvent.start = startResult.value;
           currentEvent.isAllDay = startResult.isAllDay;
           break;
-        case 'DTEND':
+        }
+        case 'DTEND': {
           const endResult = parseICalDate(value);
-          currentEvent.end = endResult.date.toISOString();
+          currentEvent.end = endResult.value;
           break;
+        }
       }
     }
   }
