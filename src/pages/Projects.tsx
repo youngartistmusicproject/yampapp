@@ -166,6 +166,7 @@ export default function Projects() {
     dueDateFrom: undefined,
     dueDateTo: undefined,
   });
+  const [sortAscending, setSortAscending] = useState(true);
 
   // Get all available tags from tasks and tag library
   const availableTags = Array.from(new Set([
@@ -216,11 +217,12 @@ export default function Projects() {
     return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesPriority && 
            matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo;
   }).sort((a, b) => {
-    // Sort by due date chronologically (earliest first), tasks without due date go last
+    // Sort by due date chronologically, tasks without due date go last
     if (!a.dueDate && !b.dueDate) return 0;
     if (!a.dueDate) return 1;
     if (!b.dueDate) return -1;
-    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    return sortAscending ? comparison : -comparison;
   });
 
   // Find the "done" status ID dynamically
@@ -701,6 +703,8 @@ export default function Projects() {
             onViewTask={handleViewTask} 
             onDeleteTask={handleDeleteTask}
             onDuplicateTask={handleDuplicateTask}
+            onToggleSortOrder={() => setSortAscending(!sortAscending)}
+            sortAscending={sortAscending}
             statuses={statuses} 
           />
         </TabsContent>
