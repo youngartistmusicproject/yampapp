@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight, ChevronUp, RefreshCw, Loader2, MapPin, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -116,9 +116,30 @@ export default function CalendarPage() {
     setVisibleCount(EVENTS_PER_PAGE);
   };
   
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
     setVisibleCount((prev) => prev + EVENTS_PER_PAGE);
-  };
+  }, []);
+  
+  // Infinite scroll with IntersectionObserver
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const element = loadMoreRef.current;
+    if (!element || !hasMoreEvents) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [hasMoreEvents, loadMore]);
+
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Page Header */}
@@ -380,17 +401,13 @@ export default function CalendarPage() {
                       </div>
                     ))}
                     
-                    {/* Load more button */}
+                    {/* Infinite scroll sentinel */}
                     {hasMoreEvents && (
-                      <div className="p-4 border-t">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={loadMore}
-                        >
-                          Load more ({allUpcomingEvents.length - visibleCount} remaining)
-                        </Button>
+                      <div 
+                        ref={loadMoreRef}
+                        className="flex items-center justify-center py-4"
+                      >
+                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                       </div>
                     )}
                   </>
