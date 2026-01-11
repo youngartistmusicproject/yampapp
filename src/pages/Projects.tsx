@@ -4,7 +4,7 @@ import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, C
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TaskTable } from "@/components/projects/TaskTable";
+import { TaskTable, SortField } from "@/components/projects/TaskTable";
 import { TaskKanban } from "@/components/projects/TaskKanban";
 import { TaskDialog } from "@/components/projects/TaskDialog";
 import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
@@ -33,7 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-import { teamMembers, statusLibrary as defaultStatuses, tagLibrary } from "@/data/workManagementConfig";
+import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
@@ -59,6 +59,7 @@ export default function Projects() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedProject, setSelectedProject] = useState<string>("all");
+  const [sortField, setSortField] = useState<SortField>('dueDate');
   const [sortAscending, setSortAscending] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<TaskFilters>({
@@ -182,14 +183,32 @@ export default function Projects() {
       return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesEffort && matchesImportance &&
              matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
-      // Sort by due date chronologically, tasks without due date go last
+      // Define sort order for effort and importance
+      const effortOrder = effortLibrary.map(e => e.id);
+      const importanceOrder = importanceLibrary.map(i => i.id);
+      
+      if (sortField === 'effort') {
+        const aIndex = effortOrder.indexOf(a.effort);
+        const bIndex = effortOrder.indexOf(b.effort);
+        const comparison = aIndex - bIndex;
+        return sortAscending ? comparison : -comparison;
+      }
+      
+      if (sortField === 'importance') {
+        const aIndex = importanceOrder.indexOf(a.importance);
+        const bIndex = importanceOrder.indexOf(b.importance);
+        const comparison = aIndex - bIndex;
+        return sortAscending ? comparison : -comparison;
+      }
+      
+      // Default: sort by due date chronologically, tasks without due date go last
       if (!a.dueDate && !b.dueDate) return 0;
       if (!a.dueDate) return 1;
       if (!b.dueDate) return -1;
       const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       return sortAscending ? comparison : -comparison;
     });
-  }, [activeTasks, searchQuery, selectedProject, selectedTeam, projects, filters, sortAscending]);
+  }, [activeTasks, searchQuery, selectedProject, selectedTeam, projects, filters, sortField, sortAscending]);
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
     updateTask.mutate({ taskId, updates }, {
@@ -470,7 +489,15 @@ export default function Projects() {
               onViewTask={handleViewTask} 
               onDeleteTask={handleDeleteTask}
               onDuplicateTask={handleDuplicateTask}
-              onToggleSortOrder={() => setSortAscending(!sortAscending)}
+              onToggleSort={(field) => {
+                if (sortField === field) {
+                  setSortAscending(!sortAscending);
+                } else {
+                  setSortField(field);
+                  setSortAscending(true);
+                }
+              }}
+              sortField={sortField}
               sortAscending={sortAscending}
               statuses={statuses} 
             />

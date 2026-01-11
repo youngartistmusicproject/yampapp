@@ -38,6 +38,8 @@ export interface StatusItem {
   color: string;
 }
 
+export type SortField = 'dueDate' | 'effort' | 'importance';
+
 interface TaskTableProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
@@ -45,7 +47,8 @@ interface TaskTableProps {
   onViewTask: (task: Task) => void;
   onDeleteTask?: (taskId: string) => void;
   onDuplicateTask?: (taskId: string) => void;
-  onToggleSortOrder?: () => void;
+  onToggleSort?: (field: SortField) => void;
+  sortField?: SortField;
   sortAscending?: boolean;
   statuses: StatusItem[];
 }
@@ -64,7 +67,7 @@ const importanceColors: Record<string, string> = {
   critical: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
 };
 
-export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onToggleSortOrder, sortAscending = true, statuses }: TaskTableProps) {
+export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onToggleSort, sortField = 'dueDate', sortAscending = true, statuses }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
   const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
@@ -175,12 +178,20 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
               <TableHead className="w-12"></TableHead>
               <TableHead>Task</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Effort</TableHead>
-              <TableHead>Importance</TableHead>
+              <TableHead>
+                <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('effort')}>
+                  Effort <ArrowUpDown className={`w-3 h-3 ${sortField === 'effort' ? 'text-primary' : ''}`} />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('importance')}>
+                  Importance <ArrowUpDown className={`w-3 h-3 ${sortField === 'importance' ? 'text-primary' : ''}`} />
+                </Button>
+              </TableHead>
               <TableHead>Assignees</TableHead>
               <TableHead>
-                <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={onToggleSortOrder}>
-                  Due Date <ArrowUpDown className="w-3 h-3" />
+                <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('dueDate')}>
+                  Due Date <ArrowUpDown className={`w-3 h-3 ${sortField === 'dueDate' ? 'text-primary' : ''}`} />
                 </Button>
               </TableHead>
               <TableHead>Tags</TableHead>
