@@ -14,7 +14,8 @@ export interface DashboardTask {
   id: string;
   title: string;
   status: string;
-  priority: string;
+  effort: string;
+  importance: string;
   assignee: string | null;
   dueDate: Date | null;
 }
@@ -137,10 +138,10 @@ export function useDashboard() {
       // First, get tasks due today (not completed)
       const { data: dueTodayData, error: dueTodayError } = await supabase
         .from('tasks')
-        .select('id, title, status, priority, assignee, due_date')
+        .select('id, title, status, effort, importance, assignee, due_date')
         .eq('due_date', todayStr)
         .neq('status', 'done')
-        .order('priority', { ascending: false });
+        .order('importance', { ascending: false });
 
       if (dueTodayError) throw dueTodayError;
 
@@ -149,7 +150,7 @@ export function useDashboard() {
       
       const { data: recentData, error: recentError } = await supabase
         .from('tasks')
-        .select('id, title, status, priority, assignee, due_date')
+        .select('id, title, status, effort, importance, assignee, due_date')
         .not('id', 'in', dueTodayIds.length > 0 ? `(${dueTodayIds.join(',')})` : '(00000000-0000-0000-0000-000000000000)')
         .neq('status', 'done')
         .order('due_date', { ascending: true, nullsFirst: false })
@@ -171,7 +172,8 @@ export function useDashboard() {
         id: t.id,
         title: t.title,
         status: t.status,
-        priority: t.priority,
+        effort: t.effort || 'easy',
+        importance: t.importance || 'routine',
         assignee: t.assignee,
         dueDate: parseDateOnly(t.due_date),
       }));
