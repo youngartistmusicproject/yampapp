@@ -69,19 +69,27 @@ function formatDateDisplay(event: GoogleCalendarEvent): { weekday: string; date:
 const EVENTS_PER_PAGE = 15;
 
 // Generate month options for the dropdown (current month + next 12 months)
+// Use a stable "yyyy-MM" value to avoid timezone issues from ISO strings.
 function generateMonthOptions(): { value: string; label: string }[] {
-  const options = [];
+  const options: { value: string; label: string }[] = [];
   const today = new Date();
-  
+
   for (let i = 0; i < 13; i++) {
     const monthDate = addMonths(startOfMonth(today), i);
     options.push({
-      value: monthDate.toISOString(),
-      label: format(monthDate, "MMMM yyyy")
+      value: format(monthDate, "yyyy-MM"),
+      label: format(monthDate, "MMMM yyyy"),
     });
   }
-  
+
   return options;
+}
+
+function parseMonthValue(value: string): Date {
+  const [yearStr, monthStr] = value.split("-");
+  const year = Number(yearStr);
+  const monthIndex = Number(monthStr) - 1;
+  return new Date(year, monthIndex, 1);
 }
 
 export default function CalendarPage() {
@@ -94,14 +102,21 @@ export default function CalendarPage() {
   const isViewingFromToday = isSameDay(startOfDay(startFrom), today);
   const [hasScrolled, setHasScrolled] = useState(false);
 
-  // Track scroll position for floating button
+  // Track scroll position for floating button.
+  // Note: the app layout scrolls inside the <main> element (not window).
   useEffect(() => {
+    const scrollEl = document.querySelector("main");
+
     const handleScroll = () => {
-      setHasScrolled(window.scrollY > 200);
+      const y = scrollEl instanceof HTMLElement ? scrollEl.scrollTop : window.scrollY;
+      setHasScrolled(y > 200);
     };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    handleScroll();
+
+    const target = scrollEl instanceof HTMLElement ? scrollEl : window;
+    target.addEventListener("scroll", handleScroll as EventListener, { passive: true } as AddEventListenerOptions);
+    return () => target.removeEventListener("scroll", handleScroll as EventListener);
   }, []);
 
   // Filter events from the selected start date onwards
@@ -158,10 +173,11 @@ export default function CalendarPage() {
   }, [hasMoreEvents, loadMore]);
 
   const handleMonthChange = (value: string) => {
-    const selectedDate = new Date(value);
+    const selectedMonthStart = parseMonthValue(value);
+
     // If selecting current month, start from today; otherwise start from 1st of month
-    const isCurrentMonth = isSameDay(startOfMonth(selectedDate), startOfMonth(today));
-    setStartFrom(isCurrentMonth ? today : selectedDate);
+    const isCurrentMonth = format(selectedMonthStart, "yyyy-MM") === format(today, "yyyy-MM");
+    setStartFrom(isCurrentMonth ? new Date() : selectedMonthStart);
     setVisibleCount(EVENTS_PER_PAGE);
   };
 
@@ -206,7 +222,7 @@ export default function CalendarPage() {
       {/* Navigation bar */}
       <div className="flex items-center gap-2 flex-wrap">
         <Select
-          value={startOfMonth(startFrom).toISOString()}
+          value={format(startFrom, "yyyy-MM")}
           onValueChange={handleMonthChange}
         >
           <SelectTrigger className="w-[180px]">
@@ -319,14 +335,19 @@ export default function CalendarPage() {
         </CardContent>
       </Card>
 
-      {/* Floating "Back to today" button */}
+      {/* Floating "Back to today" / "Scroll to top" button */}
       {(!isViewingFromToday || hasScrolled) && (
         <Button
           onClick={() => {
             handleBackToToday();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const scrollEl = document.querySelector("main");
+            if (scrollEl instanceof HTMLElement) {
+              scrollEl.scrollTo({ top: 0, behavior: "smooth" });
+              return;
+            }
+            window.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg gap-2 px-4"
+          className="fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[60] rounded-full shadow-lg gap-2 px-4"
           size="sm"
         >
           <ArrowUp className="w-4 h-4" />
