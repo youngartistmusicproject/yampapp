@@ -40,30 +40,36 @@ export default function Dashboard() {
     .sort((a, b) => a.start.getTime() - b.start.getTime())
     .slice(0, 3);
 
+  const overdueCount = stats?.overdueTasks ?? 0;
+
   const statCards = [
     { 
       label: "Tasks Due Today", 
       value: stats?.tasksDueToday ?? 0, 
       icon: Clock, 
-      trend: "Due today" 
+      trend: "Due today",
+      highlight: false
     },
     { 
       label: "Overdue Tasks", 
-      value: stats?.overdueTasks ?? 0, 
+      value: overdueCount, 
       icon: AlertCircle, 
-      trend: "Past due date" 
+      trend: "Past due date",
+      highlight: overdueCount > 0
     },
     { 
       label: "High Priority", 
       value: stats?.pendingRequests ?? 0, 
       icon: TrendingUp, 
-      trend: "Needs attention" 
+      trend: "Needs attention",
+      highlight: false
     },
     { 
       label: "Active Projects", 
       value: stats?.activeProjects ?? 0, 
       icon: CheckCircle2, 
-      trend: "In progress" 
+      trend: "In progress",
+      highlight: false
     },
   ];
 
@@ -78,20 +84,33 @@ export default function Dashboard() {
       {/* Stats Grid - 2 cols on mobile, 4 on desktop */}
       <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
-          <Card key={stat.label} className="shadow-card hover:shadow-elevated transition-shadow">
+          <Card 
+            key={stat.label} 
+            className={`shadow-card hover:shadow-elevated transition-shadow ${
+              stat.highlight ? 'border-destructive bg-destructive/5' : ''
+            }`}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground line-clamp-1">
+              <CardTitle className={`text-xs sm:text-sm font-medium line-clamp-1 ${
+                stat.highlight ? 'text-destructive' : 'text-muted-foreground'
+              }`}>
                 {stat.label}
               </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <stat.icon className={`h-4 w-4 flex-shrink-0 ${
+                stat.highlight ? 'text-destructive' : 'text-muted-foreground'
+              }`} />
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
               {statsLoading ? (
                 <Skeleton className="h-7 w-12" />
               ) : (
-                <div className="text-xl sm:text-2xl font-bold">{stat.value}</div>
+                <div className={`text-xl sm:text-2xl font-bold ${
+                  stat.highlight ? 'text-destructive' : ''
+                }`}>{stat.value}</div>
               )}
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 line-clamp-1">{stat.trend}</p>
+              <p className={`text-[10px] sm:text-xs mt-1 line-clamp-1 ${
+                stat.highlight ? 'text-destructive/80' : 'text-muted-foreground'
+              }`}>{stat.trend}</p>
             </CardContent>
           </Card>
         ))}
