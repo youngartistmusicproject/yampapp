@@ -58,7 +58,7 @@ export default function Dashboard() {
       icon: Clock, 
       trend: "Tasks due today",
       highlight: false,
-      link: undefined as string | undefined
+      link: "/projects?filter=today"
     },
     { 
       label: "Due Tomorrow", 
@@ -66,7 +66,7 @@ export default function Dashboard() {
       icon: CalendarClock, 
       trend: "Plan ahead",
       highlight: false,
-      link: undefined as string | undefined
+      link: "/projects?filter=tomorrow"
     },
     { 
       label: "Active Projects", 
