@@ -231,7 +231,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">No project</SelectItem>
-                  {projects.map((p) => (
+                  {(projects || []).map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       <div className="flex items-center gap-2">
                         <div 
