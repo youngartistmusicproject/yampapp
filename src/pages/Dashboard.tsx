@@ -8,7 +8,8 @@ import {
   FileText,
   ArrowRight,
   Loader2,
-  CalendarClock
+  CalendarClock,
+  BarChart3
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,8 @@ import { Link } from "react-router-dom";
 import { useDashboard, formatRelativeTime, formatEventDate } from "@/hooks/useDashboard";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { format } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 export default function Dashboard() {
   const { 
@@ -30,7 +33,9 @@ export default function Dashboard() {
     activity, 
     activityLoading, 
     projects, 
-    projectsLoading 
+    projectsLoading,
+    weeklyCompletion,
+    weeklyCompletionLoading
   } = useDashboard();
   
   const { events, isLoading: eventsLoading } = useGoogleCalendar();
@@ -270,46 +275,98 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Projects Progress */}
-      <Card className="shadow-card">
-        <CardHeader className="p-4 sm:p-6">
-          <div className="flex items-center justify-between">
+      {/* Weekly Completion & Projects Progress */}
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+        {/* Weekly Task Completion Chart */}
+        <Card className="shadow-card">
+          <CardHeader className="p-4 sm:p-6">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-primary" />
-              <CardTitle className="text-sm sm:text-base">Project Progress</CardTitle>
+              <BarChart3 className="w-4 h-4 text-primary" />
+              <CardTitle className="text-sm sm:text-base">Weekly Completion</CardTitle>
             </div>
-            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
-              <Link to="/projects">View All</Link>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-          {projectsLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-20 w-full" />
-              ))}
+            <CardDescription className="text-xs">Tasks completed in the last 7 days</CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            {weeklyCompletionLoading ? (
+              <Skeleton className="h-[180px] w-full" />
+            ) : (
+              <ChartContainer
+                config={{
+                  completed: {
+                    label: "Completed",
+                    color: "hsl(var(--primary))",
+                  },
+                }}
+                className="h-[180px] w-full"
+              >
+                <BarChart data={weeklyCompletion} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+                  <XAxis 
+                    dataKey="day" 
+                    tickLine={false} 
+                    axisLine={false}
+                    tick={{ fontSize: 11 }}
+                    className="fill-muted-foreground"
+                  />
+                  <YAxis 
+                    tickLine={false} 
+                    axisLine={false}
+                    tick={{ fontSize: 11 }}
+                    allowDecimals={false}
+                    className="fill-muted-foreground"
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar 
+                    dataKey="completed" 
+                    fill="hsl(var(--primary))" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Projects Progress */}
+        <Card className="shadow-card">
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" />
+                <CardTitle className="text-sm sm:text-base">Project Progress</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                <Link to="/projects">View All</Link>
+              </Button>
             </div>
-          ) : projects.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No active projects</p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-              {projects.map((project) => (
-                <div key={project.id} className="space-y-2">
-                  <div className="flex justify-between text-xs sm:text-sm">
-                    <span className="font-medium truncate">{project.name}</span>
-                    <span className="text-muted-foreground flex-shrink-0 ml-2">{project.progress}%</span>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            {projectsLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : projects.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No active projects</p>
+            ) : (
+              <div className="space-y-4">
+                {projects.map((project) => (
+                  <div key={project.id} className="space-y-2">
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className="font-medium truncate">{project.name}</span>
+                      <span className="text-muted-foreground flex-shrink-0 ml-2">{project.progress}%</span>
+                    </div>
+                    <Progress value={project.progress} className="h-2" />
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      {project.completedTasks}/{project.totalTasks} tasks
+                    </p>
                   </div>
-                  <Progress value={project.progress} className="h-2" />
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">
-                    {project.completedTasks}/{project.totalTasks} tasks
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
