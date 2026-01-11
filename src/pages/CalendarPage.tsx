@@ -241,7 +241,7 @@ export default function CalendarPage() {
               {groupedEvents.map((group, groupIndex) => (
                 <div key={group.date.toISOString()}>
                   {/* Date header */}
-                  <div className={`sticky top-0 z-10 bg-muted/80 backdrop-blur-sm px-4 py-2 border-b ${groupIndex > 0 ? 'border-t' : ''}`}>
+                  <div className={`bg-muted/60 px-4 py-2 border-b ${groupIndex > 0 ? 'border-t' : ''}`}>
                     <span className="text-sm font-semibold text-foreground">
                       {isSameDay(group.date, today) 
                         ? "Today" 
@@ -320,14 +320,17 @@ export default function CalendarPage() {
       </Card>
 
       {/* Floating "Back to today" button */}
-      {!isViewingFromToday && hasScrolled && (
+      {(!isViewingFromToday || hasScrolled) && (
         <Button
-          onClick={handleBackToToday}
+          onClick={() => {
+            handleBackToToday();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg gap-2 px-4"
           size="sm"
         >
           <ArrowUp className="w-4 h-4" />
-          Back to today
+          {isViewingFromToday ? "Scroll to top" : "Back to today"}
         </Button>
       )}
     </div>
