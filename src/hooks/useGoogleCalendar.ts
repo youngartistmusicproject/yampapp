@@ -12,10 +12,22 @@ export interface GoogleCalendarEvent {
 }
 
 function parseCalendarDate(value: string, isAllDay: boolean): Date {
-  if (isAllDay && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    const [y, m, d] = value.split("-").map(Number);
-    return new Date(y, m - 1, d);
+  // All-day events should be anchored to the *calendar day* regardless of timezone.
+  // We normalize them to a local-midnight Date derived from the UTC day.
+  if (isAllDay) {
+    // Preferred payload: date-only (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [y, m, d] = value.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    // Back-compat payload: ISO at midnight UTC (YYYY-MM-DDT00:00:00.000Z)
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) {
+      return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    }
   }
+
   return new Date(value);
 }
 
