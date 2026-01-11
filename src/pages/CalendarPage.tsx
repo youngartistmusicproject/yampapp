@@ -63,9 +63,12 @@ function formatDateDisplay(event: GoogleCalendarEvent): { weekday: string; date:
   };
 }
 
+const EVENTS_PER_PAGE = 10;
+
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [visibleCount, setVisibleCount] = useState(EVENTS_PER_PAGE);
   const { events, isLoading, error, refetch } = useGoogleCalendar();
 
   const monthStart = startOfMonth(currentDate);
@@ -88,29 +91,34 @@ export default function CalendarPage() {
       return isSameDay(event.start, dayStart);
     });
 
-  const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
-  
-  // Reference date for filtering: selected date or today
+  // Reference date: selected date or today
   const referenceDate = selectedDate || new Date();
   const referenceDayStart = startOfDay(referenceDate);
   
-  // Events on or after reference date within the month view
-  const upcomingEvents = events
-    .filter((e) => {
-      const eventStart = startOfDay(e.start);
-      return eventStart >= referenceDayStart && eventStart <= startOfDay(calendarEnd);
-    })
+  // All events from reference date onwards (no upper bound - show all future)
+  const allUpcomingEvents = events
+    .filter((e) => startOfDay(e.start) >= referenceDayStart)
     .sort((a, b) => a.start.getTime() - b.start.getTime());
   
-  // Events before reference date within the month view (for preview)
+  // Events before reference date (for preview)
   const previousEvents = events
-    .filter((e) => {
-      const eventStart = startOfDay(e.start);
-      return eventStart < referenceDayStart && eventStart >= startOfDay(calendarStart);
-    })
+    .filter((e) => startOfDay(e.start) < referenceDayStart)
     .sort((a, b) => b.start.getTime() - a.start.getTime()); // Most recent first
   
-  const displayEvents = selectedDate ? selectedDateEvents : upcomingEvents;
+  // Paginated display
+  const displayEvents = allUpcomingEvents.slice(0, visibleCount);
+  const hasMoreEvents = allUpcomingEvents.length > visibleCount;
+  
+  // Reset visible count when date changes
+  const handleDateSelect = (day: Date) => {
+    const isAlreadySelected = selectedDate && isSameDay(day, selectedDate);
+    setSelectedDate(isAlreadySelected ? null : day);
+    setVisibleCount(EVENTS_PER_PAGE);
+  };
+  
+  const loadMore = () => {
+    setVisibleCount((prev) => prev + EVENTS_PER_PAGE);
+  };
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Page Header */}
@@ -205,7 +213,7 @@ export default function CalendarPage() {
                 return (
                   <button
                     key={day.toISOString()}
-                    onClick={() => setSelectedDate(isSelected ? null : day)}
+                    onClick={() => handleDateSelect(day)}
                     className={`
                       relative min-h-[44px] p-1 rounded-lg text-center transition-colors touch-manipulation
                       ${!isCurrentMonth ? "text-muted-foreground/40" : ""}
@@ -246,8 +254,8 @@ export default function CalendarPage() {
             <CardTitle className="text-base lg:text-lg flex items-center justify-between gap-2">
               <span className="truncate">
                 {selectedDate 
-                  ? format(selectedDate, "EEE, MMM d, yyyy") 
-                  : `From ${format(referenceDate, "MMM d")} onwards`
+                  ? `From ${format(selectedDate, "EEE, MMM d")} onwards` 
+                  : "All upcoming events"
                 }
               </span>
               {selectedDate && (
@@ -255,9 +263,12 @@ export default function CalendarPage() {
                   variant="ghost"
                   size="sm"
                   className="text-xs text-muted-foreground flex-shrink-0"
-                  onClick={() => setSelectedDate(null)}
+                  onClick={() => {
+                    setSelectedDate(null);
+                    setVisibleCount(EVENTS_PER_PAGE);
+                  }}
                 >
-                  Show all
+                  Clear filter
                 </Button>
               )}
             </CardTitle>
@@ -271,22 +282,22 @@ export default function CalendarPage() {
             ) : (
               <div className="divide-y">
                 {/* Previous events collapsible section */}
-                {!selectedDate && previousEvents.length > 0 && (
+                {previousEvents.length > 0 && (
                   <Collapsible>
                     <CollapsibleTrigger asChild>
-                      <button className="w-full flex items-center justify-between gap-2 p-4 text-sm text-muted-foreground hover:bg-secondary/30 transition-colors group">
+                      <button className="w-full flex items-center justify-between gap-2 p-4 text-sm text-muted-foreground hover:bg-secondary/30 transition-colors group border-b">
                         <span className="flex items-center gap-2">
                           <ChevronUp className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
-                          {previousEvents.length} earlier event{previousEvents.length !== 1 ? 's' : ''} in {format(currentDate, "MMMM")}
+                          {previousEvents.length} earlier event{previousEvents.length !== 1 ? 's' : ''}
                         </span>
                       </button>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <div className="divide-y border-t bg-muted/30">
+                      <div className="divide-y bg-muted/30">
                         {previousEvents.slice().reverse().map((event) => (
                           <div
                             key={event.id}
-                            className="flex items-start gap-3 p-4 opacity-70"
+                            className="flex items-start gap-3 p-4 opacity-60"
                           >
                             <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${getEventColor(event.id)}`} />
                             {(() => {
@@ -319,60 +330,76 @@ export default function CalendarPage() {
 
                 {/* Main events list */}
                 {displayEvents.length > 0 ? (
-                  displayEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className="flex items-start gap-3 p-4 lg:p-5 hover:bg-secondary/30 active:bg-secondary/40 transition-colors"
-                    >
-                      <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${getEventColor(event.id)}`} />
-                      
-                      {!selectedDate && (() => {
-                        const { weekday, date } = formatDateDisplay(event);
-                        return (
-                          <div className="flex-shrink-0 min-w-[4.5rem] text-left border-r border-border pr-3 mr-1">
-                            <div className="text-sm font-semibold text-foreground">
-                              {weekday}
+                  <>
+                    {displayEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-start gap-3 p-4 lg:p-5 hover:bg-secondary/30 active:bg-secondary/40 transition-colors"
+                      >
+                        <div className={`w-1 self-stretch rounded-full flex-shrink-0 ${getEventColor(event.id)}`} />
+                        
+                        {(() => {
+                          const { weekday, date } = formatDateDisplay(event);
+                          return (
+                            <div className="flex-shrink-0 min-w-[4.5rem] text-left border-r border-border pr-3 mr-1">
+                              <div className="text-sm font-semibold text-foreground">
+                                {weekday}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {date}
+                              </div>
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              {date}
-                            </div>
-                          </div>
-                        );
-                      })()}
-                      
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm lg:text-base text-foreground truncate">
-                          {event.title}
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                          <span className="text-xs lg:text-sm text-muted-foreground">
-                            {formatEventTime(event)}
-                          </span>
-                          {event.location && (
-                            <span className="text-xs lg:text-sm text-muted-foreground flex items-center gap-1">
-                              <MapPin className="w-3 h-3 flex-shrink-0" />
-                              <span className="truncate max-w-[180px]">{event.location}</span>
+                          );
+                        })()}
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-sm lg:text-base text-foreground truncate">
+                            {event.title}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                            <span className="text-xs lg:text-sm text-muted-foreground">
+                              {formatEventTime(event)}
                             </span>
+                            {event.location && (
+                              <span className="text-xs lg:text-sm text-muted-foreground flex items-center gap-1">
+                                <MapPin className="w-3 h-3 flex-shrink-0" />
+                                <span className="truncate max-w-[180px]">{event.location}</span>
+                              </span>
+                            )}
+                          </div>
+                          {event.description && (
+                            <p className="text-xs lg:text-sm text-muted-foreground mt-2 line-clamp-2">
+                              {event.description}
+                            </p>
                           )}
                         </div>
-                        {event.description && (
-                          <p className="text-xs lg:text-sm text-muted-foreground mt-2 line-clamp-2">
-                            {event.description}
-                          </p>
-                        )}
+                        
+                        <Badge variant="outline" className="text-xs flex-shrink-0 hidden lg:inline-flex">
+                          {event.isAllDay ? "All Day" : "Event"}
+                        </Badge>
                       </div>
-                      
-                      <Badge variant="outline" className="text-xs flex-shrink-0 hidden lg:inline-flex">
-                        {event.isAllDay ? "All Day" : "Event"}
-                      </Badge>
-                    </div>
-                  ))
+                    ))}
+                    
+                    {/* Load more button */}
+                    {hasMoreEvents && (
+                      <div className="p-4 border-t">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={loadMore}
+                        >
+                          Load more ({allUpcomingEvents.length - visibleCount} remaining)
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                     <p className="text-sm">
                       {selectedDate 
-                        ? "No events scheduled for this date" 
-                        : `No upcoming events in ${format(currentDate, "MMMM yyyy")}`
+                        ? `No events from ${format(selectedDate, "MMM d")} onwards` 
+                        : "No upcoming events"
                       }
                     </p>
                   </div>
