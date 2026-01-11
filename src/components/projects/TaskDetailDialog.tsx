@@ -55,19 +55,13 @@ import {
   Repeat,
   Flag,
   Circle,
-  BookOpen
+  BookOpen,
+  Info,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
 
 interface StatusItem {
   id: string;
@@ -741,20 +735,27 @@ export function TaskDetailDialog({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Flag className="w-4 h-4" />
                     <span className="text-sm">Effort</span>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="w-3.5 h-3.5 cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <ul className="text-xs space-y-1">
-                            {effortLibrary.map(e => (
-                              <li key={e.id}><strong>{e.name}</strong> – {e.description}</li>
-                            ))}
-                          </ul>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                          aria-label="View effort definitions"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-3 z-[70]" align="start">
+                        <p className="text-sm font-medium">Effort</p>
+                        <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
+                          {effortLibrary.map((e) => (
+                            <li key={e.id}>
+                              <span className="font-medium text-foreground">{e.name}</span> — {e.description}
+                            </li>
+                          ))}
+                        </ul>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <Select 
                     value={task.effort} 
@@ -778,20 +779,27 @@ export function TaskDetailDialog({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Circle className="w-4 h-4" />
                     <span className="text-sm">Importance</span>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="w-3.5 h-3.5 cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <ul className="text-xs space-y-1">
-                            {importanceLibrary.map(i => (
-                              <li key={i.id}><strong>{i.name}</strong> – {i.description}</li>
-                            ))}
-                          </ul>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                          aria-label="View importance definitions"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-3 z-[70]" align="start">
+                        <p className="text-sm font-medium">Importance</p>
+                        <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
+                          {importanceLibrary.map((i) => (
+                            <li key={i.id}>
+                              <span className="font-medium text-foreground">{i.name}</span> — {i.description}
+                            </li>
+                          ))}
+                        </ul>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <Select 
                     value={task.importance} 
