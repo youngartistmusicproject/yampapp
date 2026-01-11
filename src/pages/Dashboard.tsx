@@ -27,7 +27,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recha
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { Task, TaskComment } from "@/types";
-import { teamMembers, statusLibrary } from "@/data/workManagementConfig";
+import { teamMembers, statusLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { toast } from "sonner";
 
 const currentUser = teamMembers[0];
@@ -231,12 +231,28 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
-                    <Badge 
-                      variant={task.priority === 'high' ? 'destructive' : task.priority === 'medium' ? 'default' : 'secondary'}
-                      className="text-[10px] sm:text-xs ml-2 flex-shrink-0"
-                    >
-                      {task.priority}
-                    </Badge>
+                    <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
+                      <Badge 
+                        variant="secondary"
+                        className="text-[10px] sm:text-xs"
+                        style={{ 
+                          backgroundColor: effortLibrary.find(e => e.id === task.effort)?.color + '20',
+                          color: effortLibrary.find(e => e.id === task.effort)?.color
+                        }}
+                      >
+                        {task.effort}
+                      </Badge>
+                      <Badge 
+                        variant="secondary"
+                        className="text-[10px] sm:text-xs"
+                        style={{ 
+                          backgroundColor: importanceLibrary.find(i => i.id === task.importance)?.color + '20',
+                          color: importanceLibrary.find(i => i.id === task.importance)?.color
+                        }}
+                      >
+                        {task.importance}
+                      </Badge>
+                    </div>
                   </div>
                 ))}
               </div>
