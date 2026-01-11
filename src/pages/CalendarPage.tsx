@@ -1,30 +1,41 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Filter } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Filter, RefreshCw, Loader2, MapPin, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfWeek, endOfWeek } from "date-fns";
+import { useGoogleCalendar, GoogleCalendarEvent } from "@/hooks/useGoogleCalendar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-interface CalendarEvent {
-  id: string;
-  title: string;
-  date: Date;
-  time: string;
-  color: string;
-  type: "lesson" | "meeting" | "event" | "deadline";
+const eventColors = [
+  "bg-primary",
+  "bg-purple-500",
+  "bg-green-500",
+  "bg-blue-500",
+  "bg-orange-500",
+  "bg-pink-500",
+  "bg-teal-500",
+];
+
+function getEventColor(eventId: string): string {
+  let hash = 0;
+  for (let i = 0; i < eventId.length; i++) {
+    hash = eventId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return eventColors[Math.abs(hash) % eventColors.length];
 }
 
-const sampleEvents: CalendarEvent[] = [
-  { id: "1", title: "Staff Meeting", date: new Date(2024, 0, 15, 10), time: "10:00 AM", color: "bg-primary", type: "meeting" },
-  { id: "2", title: "Piano Recital", date: new Date(2024, 0, 20, 14), time: "2:00 PM", color: "bg-purple-500", type: "event" },
-  { id: "3", title: "Parent Conferences", date: new Date(2024, 0, 18, 9), time: "9:00 AM", color: "bg-green-500", type: "meeting" },
-  { id: "4", title: "New Student Orientation", date: new Date(2024, 0, 22, 11), time: "11:00 AM", color: "bg-blue-500", type: "event" },
-  { id: "5", title: "Curriculum Review Deadline", date: new Date(2024, 0, 25), time: "EOD", color: "bg-orange-500", type: "deadline" },
-];
+function formatEventTime(event: GoogleCalendarEvent): string {
+  if (event.isAllDay) {
+    return "All day";
+  }
+  return format(event.start, "h:mm a");
+}
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const { events, isLoading, error, refetch } = useGoogleCalendar();
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -32,8 +43,22 @@ export default function CalendarPage() {
   const calendarEnd = endOfWeek(monthEnd);
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  const getEventsForDate = (date: Date) =>
-    sampleEvents.filter((event) => isSameDay(event.date, date));
+  const getEventsForDate = (date: Date): GoogleCalendarEvent[] =>
+    events.filter((event) => {
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
+      
+      // For all-day events, check if date falls within range
+      if (event.isAllDay) {
+        const dayStart = new Date(date);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(date);
+        dayEnd.setHours(23, 59, 59, 999);
+        return eventStart <= dayEnd && eventEnd > dayStart;
+      }
+      
+      return isSameDay(eventStart, date);
+    });
 
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
 
@@ -43,19 +68,38 @@ export default function CalendarPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Calendar</h1>
-          <p className="text-muted-foreground mt-1">Manage schedules and events</p>
+          <p className="text-muted-foreground mt-1">View scheduled events</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
+            Refresh
+          </Button>
           <Button variant="outline" size="sm" className="gap-2">
             <Filter className="w-4 h-4" />
             Filter
           </Button>
-          <Button className="gap-2">
-            <Plus className="w-4 h-4" />
-            Add Event
-          </Button>
         </div>
       </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}. Please check that the Google Calendar is set to public and the calendar ID is correct.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="flex gap-6">
         {/* Calendar Grid */}
@@ -132,7 +176,7 @@ export default function CalendarPage() {
                       {dayEvents.slice(0, 2).map((event) => (
                         <div
                           key={event.id}
-                          className={`text-xs px-1.5 py-0.5 rounded truncate text-white ${event.color}`}
+                          className={`text-xs px-1.5 py-0.5 rounded truncate text-white ${getEventColor(event.id)}`}
                         >
                           {event.title}
                         </div>
@@ -147,6 +191,13 @@ export default function CalendarPage() {
                 );
               })}
             </div>
+
+            {isLoading && events.length === 0 && (
+              <div className="flex items-center justify-center py-8 text-muted-foreground">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                Loading events...
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -168,12 +219,23 @@ export default function CalendarPage() {
                       key={event.id}
                       className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50"
                     >
-                      <div className={`w-2 h-2 mt-1.5 rounded-full ${event.color}`} />
+                      <div className={`w-2 h-2 mt-1.5 rounded-full ${getEventColor(event.id)}`} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm">{event.title}</p>
-                        <p className="text-xs text-muted-foreground">{event.time}</p>
-                        <Badge variant="outline" className="text-xs mt-1">
-                          {event.type}
+                        <p className="text-xs text-muted-foreground">{formatEventTime(event)}</p>
+                        {event.location && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                            <MapPin className="w-3 h-3" />
+                            {event.location}
+                          </p>
+                        )}
+                        {event.description && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {event.description}
+                          </p>
+                        )}
+                        <Badge variant="outline" className="text-xs mt-2">
+                          {event.isAllDay ? "All Day" : "Event"}
                         </Badge>
                       </div>
                     </div>
