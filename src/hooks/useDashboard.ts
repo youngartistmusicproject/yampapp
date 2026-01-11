@@ -16,6 +16,7 @@ export interface DashboardTask {
   status: string;
   priority: string;
   assignee: string | null;
+  dueDate: Date | null;
 }
 
 export interface DashboardEvent {
@@ -159,12 +160,20 @@ export function useDashboard() {
       // Combine: tasks due today first, then other recent tasks
       const combined = [...(dueTodayData || []), ...(recentData || [])].slice(0, 5);
       
+      // Parse date-only strings into local dates to avoid timezone shifts
+      const parseDateOnly = (dateStr: string | null): Date | null => {
+        if (!dateStr) return null;
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, (m || 1) - 1, d || 1);
+      };
+
       return combined.map(t => ({
         id: t.id,
         title: t.title,
         status: t.status,
         priority: t.priority,
         assignee: t.assignee,
+        dueDate: parseDateOnly(t.due_date),
       }));
     },
   });
