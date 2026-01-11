@@ -96,6 +96,12 @@ const formatFileSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+// Parse a date input (YYYY-MM-DD) into a local Date (avoids timezone day-shift)
+const parseInputDate = (value: string): Date => {
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+};
+
 // Inline editable text component
 function EditableText({ 
   value, 
@@ -749,10 +755,12 @@ export function TaskDetailDialog({
                   <div className="flex items-center gap-1">
                     <Input
                       type="date"
-                      value={task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : ""}
-                      onChange={(e) => onTaskUpdate(task.id, { 
-                        dueDate: e.target.value ? new Date(e.target.value) : undefined 
-                      })}
+                      value={task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : ""}
+                      onChange={(e) =>
+                        onTaskUpdate(task.id, {
+                          dueDate: e.target.value ? parseInputDate(e.target.value) : undefined,
+                        })
+                      }
                       className="h-8 text-sm w-auto border-none shadow-none bg-transparent text-right cursor-pointer hover:bg-muted/50 rounded px-2"
                     />
                     <Popover>
@@ -830,13 +838,17 @@ export function TaskDetailDialog({
                                 <span className="text-xs text-muted-foreground">End date (optional)</span>
                                 <Input
                                   type="date"
-                                  value={task.recurrence.endDate ? format(new Date(task.recurrence.endDate), "yyyy-MM-dd") : ""}
-                                  onChange={(e) => onTaskUpdate(task.id, {
-                                    recurrence: { 
-                                      ...task.recurrence!, 
-                                      endDate: e.target.value ? new Date(e.target.value) : undefined 
-                                    }
-                                  })}
+                                  value={task.recurrence.endDate ? format(task.recurrence.endDate, "yyyy-MM-dd") : ""}
+                                  onChange={(e) =>
+                                    onTaskUpdate(task.id, {
+                                      recurrence: {
+                                        ...task.recurrence!,
+                                        endDate: e.target.value
+                                          ? parseInputDate(e.target.value)
+                                          : undefined,
+                                      },
+                                    })
+                                  }
                                   className="h-8"
                                 />
                               </div>

@@ -1,4 +1,5 @@
 import { RecurrenceSettings as RecurrenceSettingsType } from "@/types";
+import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
+const parseInputDate = (value: string): Date => {
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+};
 
 interface RecurrenceSettingsProps {
   isRecurring: boolean;
@@ -120,16 +126,10 @@ export function RecurrenceSettings({
               <Label>End Date (Optional)</Label>
               <Input
                 type="date"
-                value={
-                  recurrence.endDate
-                    ? recurrence.endDate.toISOString().split("T")[0]
-                    : ""
-                }
+                value={recurrence.endDate ? format(recurrence.endDate, "yyyy-MM-dd") : ""}
                 onChange={(e) =>
                   updateRecurrence({
-                    endDate: e.target.value
-                      ? new Date(e.target.value)
-                      : undefined,
+                    endDate: e.target.value ? parseInputDate(e.target.value) : undefined,
                   })
                 }
               />
