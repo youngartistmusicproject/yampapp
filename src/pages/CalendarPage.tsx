@@ -196,8 +196,8 @@ export default function CalendarPage() {
         </div>
         <Button
           variant="outline"
-          size="icon"
-          className="h-9 w-9 sm:h-auto sm:w-auto sm:px-3 sm:gap-2"
+          size="sm"
+          className="flex-shrink-0"
           onClick={() => refetch()}
           disabled={isLoading}
         >
@@ -206,7 +206,6 @@ export default function CalendarPage() {
           ) : (
             <RefreshCw className="w-4 h-4" />
           )}
-          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 
