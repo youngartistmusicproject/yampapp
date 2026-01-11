@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import { Task, User, Project, RecurrenceSettings as RecurrenceSettingsType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,12 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
   const isEditing = !!task;
 
+  // Parse an <input type="date" /> value (YYYY-MM-DD) into a local Date
+  const parseInputDate = (value: string): Date => {
+    const [y, m, d] = value.split("-").map(Number);
+    return new Date(y, (m || 1) - 1, d || 1);
+  };
+
   // Populate form when editing
   useEffect(() => {
     if (task) {
@@ -69,7 +76,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       setDescription(task.description || "");
       setStatus(task.status);
       setPriority(task.priority);
-      setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : "");
+      setDueDate(task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : "");
       setSelectedTags(task.tags);
       setSelectedAssignees(task.assignees);
       setSelectedProjectId(task.projectId || "");
@@ -129,7 +136,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       description,
       status,
       priority,
-      dueDate: dueDate ? new Date(dueDate) : undefined,
+      dueDate: dueDate ? parseInputDate(dueDate) : undefined,
       tags: selectedTags,
       assignees: selectedAssignees,
       projectId: selectedProjectId || undefined,
