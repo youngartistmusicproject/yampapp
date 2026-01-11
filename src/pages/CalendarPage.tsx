@@ -59,11 +59,14 @@ export default function CalendarPage() {
 
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
   
-  // For list view: show selected date events, or all upcoming events sorted by date
+  // For list view: show events within the visible calendar range (calendarStart to calendarEnd)
   const displayEvents = selectedDate
     ? selectedDateEvents
     : events
-        .filter((e) => e.start >= startOfDay(new Date()))
+        .filter((e) => {
+          const eventStart = startOfDay(e.start);
+          return eventStart >= startOfDay(calendarStart) && eventStart <= startOfDay(calendarEnd);
+        })
         .sort((a, b) => a.start.getTime() - b.start.getTime());
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
@@ -201,7 +204,7 @@ export default function CalendarPage() {
           <CardHeader className="p-4 lg:p-6 border-b">
             <CardTitle className="text-base lg:text-lg flex items-center justify-between">
               <span>
-                {selectedDate ? format(selectedDate, "EEEE, MMMM d, yyyy") : "Upcoming Events"}
+                {selectedDate ? format(selectedDate, "EEEE, MMMM d, yyyy") : `Events in ${format(currentDate, "MMMM yyyy")}`}
               </span>
               {selectedDate && (
                 <Button
@@ -276,7 +279,7 @@ export default function CalendarPage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <p className="text-sm">
-                  {selectedDate ? "No events scheduled for this date" : "No upcoming events"}
+                  {selectedDate ? "No events scheduled for this date" : `No events in ${format(currentDate, "MMMM yyyy")}`}
                 </p>
               </div>
             )}
