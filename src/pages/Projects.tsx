@@ -32,8 +32,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, teamsLibrary } from "@/data/workManagementConfig";
-import { useTasks, useProjects, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject } from "@/hooks/useWorkManagement";
+import { teamMembers, statusLibrary as defaultStatuses, tagLibrary } from "@/data/workManagementConfig";
+import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
@@ -41,6 +41,7 @@ const currentUser = teamMembers[0];
 export default function Projects() {
   const { data: dbTasks = [], isLoading: tasksLoading } = useTasks();
   const { data: dbProjects = [], isLoading: projectsLoading } = useProjects();
+  const { data: dbTeams = [] } = useTeams();
   
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
@@ -300,7 +301,7 @@ export default function Projects() {
 
       {/* Teams & Projects Header */}
       <TeamsProjectsHeader
-        teams={teamsLibrary}
+        teams={dbTeams}
         projects={projects}
         tasks={dbTasks}
         selectedTeam={selectedTeam}
@@ -492,7 +493,7 @@ export default function Projects() {
         onOpenChange={setProjectDialogOpen}
         onSubmit={handleAddProject}
         availableMembers={teamMembers}
-        teams={teamsLibrary}
+        teams={dbTeams}
       />
 
       {/* Status Manager */}
