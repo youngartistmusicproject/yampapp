@@ -48,21 +48,21 @@ export default function Dashboard() {
       trend: "Due today" 
     },
     { 
-      label: "Completed This Week", 
-      value: stats?.completedThisWeek ?? 0, 
-      icon: CheckCircle2, 
-      trend: "This week" 
+      label: "Overdue Tasks", 
+      value: stats?.overdueTasks ?? 0, 
+      icon: AlertCircle, 
+      trend: "Past due date" 
     },
     { 
       label: "High Priority", 
       value: stats?.pendingRequests ?? 0, 
-      icon: AlertCircle, 
+      icon: TrendingUp, 
       trend: "Needs attention" 
     },
     { 
       label: "Active Projects", 
       value: stats?.activeProjects ?? 0, 
-      icon: TrendingUp, 
+      icon: CheckCircle2, 
       trend: "In progress" 
     },
   ];
