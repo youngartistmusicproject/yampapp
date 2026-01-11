@@ -2,6 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Task, Project, User } from '@/types';
 import { teamMembers } from '@/data/workManagementConfig';
+import { format } from 'date-fns';
+
+// Helper to format date to YYYY-MM-DD in local timezone
+function formatDateForDB(date: Date): string {
+  return format(date, 'yyyy-MM-dd');
+}
 
 // Helper to map user_name to User object
 function getUserByName(name: string): User {
@@ -129,7 +135,7 @@ export function useCreateTask() {
           description: task.description || null,
           status: (task.status || 'todo').replace('-', '_'),
           priority: task.priority || 'medium',
-          due_date: task.dueDate ? task.dueDate.toISOString().split('T')[0] : null,
+          due_date: task.dueDate ? formatDateForDB(task.dueDate) : null,
           project_id: task.projectId || null,
           tags: task.tags || [],
           is_recurring: task.isRecurring || false,
@@ -196,7 +202,7 @@ export function useUpdateTask() {
       }
       if (updates.priority !== undefined) updateData.priority = updates.priority;
       if (updates.dueDate !== undefined) {
-        updateData.due_date = updates.dueDate ? updates.dueDate.toISOString().split('T')[0] : null;
+        updateData.due_date = updates.dueDate ? formatDateForDB(updates.dueDate) : null;
       }
       if (updates.projectId !== undefined) updateData.project_id = updates.projectId || null;
       if (updates.tags !== undefined) updateData.tags = updates.tags;
