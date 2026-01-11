@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Repeat, Copy, Trash2 } from "lucide-react";
+import { Repeat, Copy, Trash2, ArrowUpDown } from "lucide-react";
 import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,8 @@ interface TaskTableProps {
   onViewTask: (task: Task) => void;
   onDeleteTask?: (taskId: string) => void;
   onDuplicateTask?: (taskId: string) => void;
+  onToggleSortOrder?: () => void;
+  sortAscending?: boolean;
   statuses: StatusItem[];
 }
 
@@ -49,7 +51,7 @@ const priorityColors: Record<string, string> = {
   urgent: "bg-destructive text-destructive-foreground",
 };
 
-export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, statuses }: TaskTableProps) {
+export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onToggleSortOrder, sortAscending = true, statuses }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
   const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
@@ -159,7 +161,11 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
               <TableHead>Status</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Assignees</TableHead>
-              <TableHead>Due Date</TableHead>
+              <TableHead>
+                <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={onToggleSortOrder}>
+                  Due Date <ArrowUpDown className="w-3 h-3" />
+                </Button>
+              </TableHead>
               <TableHead>Tags</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
