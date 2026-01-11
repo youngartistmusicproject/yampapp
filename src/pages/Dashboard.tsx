@@ -48,28 +48,32 @@ export default function Dashboard() {
       value: stats?.tasksDueToday ?? 0, 
       icon: Clock, 
       trend: "Due today",
-      highlight: false
+      highlight: false,
+      link: undefined as string | undefined
     },
     { 
       label: "Overdue Tasks", 
       value: overdueCount, 
       icon: AlertCircle, 
       trend: "Past due date",
-      highlight: overdueCount > 0
+      highlight: overdueCount > 0,
+      link: "/projects?filter=overdue"
     },
     { 
       label: "High Priority", 
       value: stats?.pendingRequests ?? 0, 
       icon: TrendingUp, 
       trend: "Needs attention",
-      highlight: false
+      highlight: false,
+      link: undefined as string | undefined
     },
     { 
       label: "Active Projects", 
       value: stats?.activeProjects ?? 0, 
       icon: CheckCircle2, 
       trend: "In progress",
-      highlight: false
+      highlight: false,
+      link: undefined as string | undefined
     },
   ];
 
@@ -83,37 +87,46 @@ export default function Dashboard() {
 
       {/* Stats Grid - 2 cols on mobile, 4 on desktop */}
       <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat) => (
-          <Card 
-            key={stat.label} 
-            className={`shadow-card hover:shadow-elevated transition-shadow ${
-              stat.highlight ? 'border-destructive bg-destructive/5' : ''
-            }`}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
-              <CardTitle className={`text-xs sm:text-sm font-medium line-clamp-1 ${
-                stat.highlight ? 'text-destructive' : 'text-muted-foreground'
-              }`}>
-                {stat.label}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 flex-shrink-0 ${
-                stat.highlight ? 'text-destructive' : 'text-muted-foreground'
-              }`} />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              {statsLoading ? (
-                <Skeleton className="h-7 w-12" />
-              ) : (
-                <div className={`text-xl sm:text-2xl font-bold ${
-                  stat.highlight ? 'text-destructive' : ''
-                }`}>{stat.value}</div>
-              )}
-              <p className={`text-[10px] sm:text-xs mt-1 line-clamp-1 ${
-                stat.highlight ? 'text-destructive/80' : 'text-muted-foreground'
-              }`}>{stat.trend}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {statCards.map((stat) => {
+          const cardContent = (
+            <Card
+              className={`shadow-card hover:shadow-elevated transition-shadow ${
+                stat.highlight ? 'border-destructive bg-destructive/5' : ''
+              } ${stat.link ? 'cursor-pointer' : ''}`}
+            >
+              <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+                <CardTitle className={`text-xs sm:text-sm font-medium line-clamp-1 ${
+                  stat.highlight ? 'text-destructive' : 'text-muted-foreground'
+                }`}>
+                  {stat.label}
+                </CardTitle>
+                <stat.icon className={`h-4 w-4 flex-shrink-0 ${
+                  stat.highlight ? 'text-destructive' : 'text-muted-foreground'
+                }`} />
+              </CardHeader>
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                {statsLoading ? (
+                  <Skeleton className="h-7 w-12" />
+                ) : (
+                  <div className={`text-xl sm:text-2xl font-bold ${
+                    stat.highlight ? 'text-destructive' : ''
+                  }`}>{stat.value}</div>
+                )}
+                <p className={`text-[10px] sm:text-xs mt-1 line-clamp-1 ${
+                  stat.highlight ? 'text-destructive/80' : 'text-muted-foreground'
+                }`}>{stat.trend}</p>
+              </CardContent>
+            </Card>
+          );
+
+          return stat.link ? (
+            <Link key={stat.label} to={stat.link} className="block">
+              {cardContent}
+            </Link>
+          ) : (
+            <div key={stat.label}>{cardContent}</div>
+          );
+        })}
       </div>
 
       {/* Main Content Grid - stack on mobile */}
