@@ -41,6 +41,12 @@ export interface ProjectProgress {
   totalTasks: number;
 }
 
+export interface WeeklyCompletionData {
+  day: string;
+  completed: number;
+  date: string;
+}
+
 export function useDashboard() {
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
@@ -223,6 +229,41 @@ export function useDashboard() {
     },
   });
 
+  // Fetch weekly completion data
+  const weeklyCompletionQuery = useQuery({
+    queryKey: ['dashboard-weekly-completion'],
+    queryFn: async (): Promise<WeeklyCompletionData[]> => {
+      const days: WeeklyCompletionData[] = [];
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      
+      // Get last 7 days including today
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        date.setHours(0, 0, 0, 0);
+        
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const dayName = dayNames[date.getDay()];
+        
+        // Count tasks completed on this day
+        const { count } = await supabase
+          .from('tasks')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'done')
+          .gte('completed_at', `${dateStr}T00:00:00`)
+          .lt('completed_at', `${dateStr}T23:59:59`);
+        
+        days.push({
+          day: dayName,
+          completed: count || 0,
+          date: dateStr,
+        });
+      }
+      
+      return days;
+    },
+  });
+
   return {
     stats: statsQuery.data,
     statsLoading: statsQuery.isLoading,
@@ -232,11 +273,14 @@ export function useDashboard() {
     activityLoading: activityQuery.isLoading,
     projects: projectsQuery.data || [],
     projectsLoading: projectsQuery.isLoading,
+    weeklyCompletion: weeklyCompletionQuery.data || [],
+    weeklyCompletionLoading: weeklyCompletionQuery.isLoading,
     refetch: () => {
       statsQuery.refetch();
       tasksQuery.refetch();
       activityQuery.refetch();
       projectsQuery.refetch();
+      weeklyCompletionQuery.refetch();
     },
   };
 }
