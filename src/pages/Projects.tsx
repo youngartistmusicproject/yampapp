@@ -471,6 +471,7 @@ export default function Projects() {
         task={editingTask}
         availableMembers={teamMembers}
         statuses={statuses}
+        projects={projects}
       />
 
       {/* Task Detail Dialog */}

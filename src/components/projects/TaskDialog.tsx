@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Task, User, RecurrenceSettings as RecurrenceSettingsType } from "@/types";
+import { Task, User, Project, RecurrenceSettings as RecurrenceSettingsType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,10 +42,11 @@ interface TaskDialogProps {
   onSubmit: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => void;
   availableMembers: User[];
   statuses: StatusItem[];
+  projects: Project[];
   task?: Task; // For editing
 }
 
-export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, statuses, task }: TaskDialogProps) {
+export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, statuses, projects, task }: TaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<string>("todo");
@@ -53,6 +54,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
   const [dueDate, setDueDate] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceSettingsType | undefined>();
   const [howToLink, setHowToLink] = useState("");
@@ -70,6 +72,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : "");
       setSelectedTags(task.tags);
       setSelectedAssignees(task.assignees);
+      setSelectedProjectId(task.projectId || "");
       setIsRecurring(task.isRecurring || false);
       setRecurrence(task.recurrence);
       setHowToLink(task.howToLink || "");
@@ -86,6 +89,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     setDueDate("");
     setSelectedTags([]);
     setSelectedAssignees([]);
+    setSelectedProjectId("");
     setIsRecurring(false);
     setRecurrence(undefined);
     setHowToLink("");
@@ -128,6 +132,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       dueDate: dueDate ? new Date(dueDate) : undefined,
       tags: selectedTags,
       assignees: selectedAssignees,
+      projectId: selectedProjectId || undefined,
       isRecurring,
       recurrence,
       howToLink: howToLink.trim() || undefined,
@@ -215,9 +220,32 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="urgent">Urgent</SelectItem>
                   </SelectContent>
-                </Select>
-              </div>
+              </Select>
             </div>
+
+            <div className="col-span-2 space-y-2">
+              <Label htmlFor="project">Project</Label>
+              <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="No project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No project</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-2 h-2 rounded-full" 
+                          style={{ backgroundColor: p.color }}
+                        />
+                        {p.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
             {/* Due Date with Recurrence */}
             <div className="space-y-2">
