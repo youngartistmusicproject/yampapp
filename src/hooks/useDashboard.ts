@@ -96,18 +96,45 @@ export function useDashboard() {
     },
   });
 
-  // Fetch recent tasks
+  // Fetch tasks due today first, then recent tasks
   const tasksQuery = useQuery({
     queryKey: ['dashboard-tasks'],
     queryFn: async (): Promise<DashboardTask[]> => {
-      const { data, error } = await supabase
+      const todayStr = format(today, 'yyyy-MM-dd');
+      
+      // First, get tasks due today (not completed)
+      const { data: dueTodayData, error: dueTodayError } = await supabase
         .from('tasks')
-        .select('id, title, status, priority, assignee')
-        .order('updated_at', { ascending: false })
-        .limit(5);
+        .select('id, title, status, priority, assignee, due_date')
+        .eq('due_date', todayStr)
+        .neq('status', 'done')
+        .order('priority', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+      if (dueTodayError) throw dueTodayError;
+
+      // Then get recent tasks (excluding ones already fetched)
+      const dueTodayIds = (dueTodayData || []).map(t => t.id);
+      
+      const { data: recentData, error: recentError } = await supabase
+        .from('tasks')
+        .select('id, title, status, priority, assignee, due_date')
+        .not('id', 'in', dueTodayIds.length > 0 ? `(${dueTodayIds.join(',')})` : '(00000000-0000-0000-0000-000000000000)')
+        .neq('status', 'done')
+        .order('due_date', { ascending: true, nullsFirst: false })
+        .limit(5 - dueTodayIds.length);
+
+      if (recentError) throw recentError;
+
+      // Combine: tasks due today first, then other recent tasks
+      const combined = [...(dueTodayData || []), ...(recentData || [])].slice(0, 5);
+      
+      return combined.map(t => ({
+        id: t.id,
+        title: t.title,
+        status: t.status,
+        priority: t.priority,
+        assignee: t.assignee,
+      }));
     },
   });
 
