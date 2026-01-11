@@ -195,13 +195,13 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   <SelectContent>
                     {statuses.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-2 h-2 rounded-full" 
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="h-2 w-2 rounded-full"
                             style={{ backgroundColor: s.color }}
                           />
-                          {s.name}
-                        </div>
+                          <span>{s.name}</span>
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -236,13 +236,13 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   <SelectItem value="none">No project</SelectItem>
                   {(projects || []).map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-2 h-2 rounded-full" 
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="h-2 w-2 rounded-full"
                           style={{ backgroundColor: p.color }}
                         />
-                        {p.name}
-                      </div>
+                        <span>{p.name}</span>
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
