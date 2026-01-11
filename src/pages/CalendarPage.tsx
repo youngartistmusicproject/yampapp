@@ -189,15 +189,15 @@ export default function CalendarPage() {
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Calendar</h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">Upcoming events</p>
         </div>
         <Button
           variant="outline"
-          size="sm"
-          className="gap-2 w-fit"
+          size="icon"
+          className="h-9 w-9 sm:h-auto sm:w-auto sm:px-3 sm:gap-2"
           onClick={() => refetch()}
           disabled={isLoading}
         >
@@ -219,27 +219,21 @@ export default function CalendarPage() {
         </Alert>
       )}
 
-      {/* Navigation bar */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Select value={format(startFrom, "yyyy-MM")} onValueChange={handleMonthChange}>
-          <SelectTrigger className="w-full sm:w-[220px]">
-            <CalendarDays className="w-4 h-4 mr-2 text-muted-foreground" />
-            <SelectValue />
-            <ChevronDown className="w-4 h-4 ml-auto opacity-50" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[60vh]">
-            {monthOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <span className="text-xs sm:text-sm text-muted-foreground sm:ml-auto">
-          {upcomingEvents.length} event{upcomingEvents.length !== 1 ? "s" : ""}
-        </span>
-      </div>
+      {/* Month selector */}
+      <Select value={format(startFrom, "yyyy-MM")} onValueChange={handleMonthChange}>
+        <SelectTrigger className="w-full sm:w-[220px]">
+          <CalendarDays className="w-4 h-4 mr-2 text-muted-foreground" />
+          <SelectValue />
+          <ChevronDown className="w-4 h-4 ml-auto opacity-50" />
+        </SelectTrigger>
+        <SelectContent className="max-h-[60vh]">
+          {monthOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {/* Events list */}
       <Card className="shadow-card">
