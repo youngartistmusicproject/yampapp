@@ -63,7 +63,8 @@ export default function Projects() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<TaskFilters>({
     statuses: [],
-    priorities: [],
+    efforts: [],
+    importances: [],
     assignees: [],
     tags: [],
     showRecurring: null,
@@ -149,8 +150,11 @@ export default function Projects() {
       // Status filter
       const matchesStatus = filters.statuses.length === 0 || filters.statuses.includes(task.status);
       
-      // Effort filter (was priority)
-      const matchesEffort = filters.priorities.length === 0 || filters.priorities.includes(task.effort);
+      // Effort filter
+      const matchesEffort = filters.efforts.length === 0 || filters.efforts.includes(task.effort);
+      
+      // Importance filter
+      const matchesImportance = filters.importances.length === 0 || filters.importances.includes(task.importance);
       
       // Assignee filter
       const matchesAssignee = filters.assignees.length === 0 || 
@@ -175,7 +179,7 @@ export default function Projects() {
       const matchesOverdue = !filters.showOverdueOnly || 
         (task.dueDate && new Date(task.dueDate) < today && task.status !== 'done');
       
-      return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesEffort && 
+      return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesEffort && matchesImportance &&
              matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
       // Sort by due date chronologically, tasks without due date go last

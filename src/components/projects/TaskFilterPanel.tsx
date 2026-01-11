@@ -18,16 +18,20 @@ import { format } from "date-fns";
 import { User } from "@/types";
 import { StatusItem } from "./StatusManager";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 
 export interface TaskFilters {
   statuses: string[];
-  priorities: string[];
+  efforts: string[];
+  importances: string[];
   assignees: string[];
   tags: string[];
   showRecurring: boolean | null; // null = show all, true = only recurring, false = only non-recurring
   dueDateFrom?: Date;
   dueDateTo?: Date;
   showOverdueOnly?: boolean;
+  /** @deprecated Use efforts instead */
+  priorities?: string[];
 }
 
 interface TaskFilterPanelProps {
@@ -37,12 +41,6 @@ interface TaskFilterPanelProps {
   availableMembers: User[];
   availableTags: string[];
 }
-
-const priorities = [
-  { id: "low", label: "Low", color: "bg-slate-500" },
-  { id: "medium", label: "Medium", color: "bg-yellow-500" },
-  { id: "high", label: "High", color: "bg-red-500" },
-];
 
 export function TaskFilterPanel({
   filters,
@@ -55,7 +53,8 @@ export function TaskFilterPanel({
 
   const activeFilterCount = 
     filters.statuses.length +
-    filters.priorities.length +
+    filters.efforts.length +
+    filters.importances.length +
     filters.assignees.length +
     filters.tags.length +
     (filters.showRecurring !== null ? 1 : 0) +
@@ -70,11 +69,18 @@ export function TaskFilterPanel({
     onFiltersChange({ ...filters, statuses: newStatuses });
   };
 
-  const handlePriorityToggle = (priorityId: string) => {
-    const newPriorities = filters.priorities.includes(priorityId)
-      ? filters.priorities.filter(p => p !== priorityId)
-      : [...filters.priorities, priorityId];
-    onFiltersChange({ ...filters, priorities: newPriorities });
+  const handleEffortToggle = (effortId: string) => {
+    const newEfforts = filters.efforts.includes(effortId)
+      ? filters.efforts.filter(e => e !== effortId)
+      : [...filters.efforts, effortId];
+    onFiltersChange({ ...filters, efforts: newEfforts });
+  };
+
+  const handleImportanceToggle = (importanceId: string) => {
+    const newImportances = filters.importances.includes(importanceId)
+      ? filters.importances.filter(i => i !== importanceId)
+      : [...filters.importances, importanceId];
+    onFiltersChange({ ...filters, importances: newImportances });
   };
 
   const handleAssigneeToggle = (assigneeId: string) => {
@@ -98,7 +104,8 @@ export function TaskFilterPanel({
   const handleClearFilters = () => {
     onFiltersChange({
       statuses: [],
-      priorities: [],
+      efforts: [],
+      importances: [],
       assignees: [],
       tags: [],
       showRecurring: null,
@@ -167,21 +174,55 @@ export function TaskFilterPanel({
 
             <Separator />
 
-            {/* Priority Filter */}
+            {/* Effort Filter */}
             <div className="space-y-2">
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Priority
+                Effort
               </Label>
               <div className="flex flex-wrap gap-1.5">
-                {priorities.map((priority) => (
+                {effortLibrary.map((effort) => (
                   <Badge
-                    key={priority.id}
-                    variant={filters.priorities.includes(priority.id) ? "default" : "outline"}
+                    key={effort.id}
+                    variant={filters.efforts.includes(effort.id) ? "default" : "outline"}
                     className="cursor-pointer gap-1.5"
-                    onClick={() => handlePriorityToggle(priority.id)}
+                    onClick={() => handleEffortToggle(effort.id)}
+                    style={filters.efforts.includes(effort.id) ? { backgroundColor: effort.color } : {}}
                   >
-                    <span className={cn("w-2 h-2 rounded-full", priority.color)} />
-                    {priority.label}
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ 
+                        backgroundColor: filters.efforts.includes(effort.id) ? "white" : effort.color 
+                      }}
+                    />
+                    {effort.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Importance Filter */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Importance
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                {importanceLibrary.map((importance) => (
+                  <Badge
+                    key={importance.id}
+                    variant={filters.importances.includes(importance.id) ? "default" : "outline"}
+                    className="cursor-pointer gap-1.5"
+                    onClick={() => handleImportanceToggle(importance.id)}
+                    style={filters.importances.includes(importance.id) ? { backgroundColor: importance.color } : {}}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ 
+                        backgroundColor: filters.importances.includes(importance.id) ? "white" : importance.color 
+                      }}
+                    />
+                    {importance.name}
                   </Badge>
                 ))}
               </div>
