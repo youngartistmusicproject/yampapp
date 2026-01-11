@@ -46,18 +46,17 @@ export default function CalendarPage() {
   const getEventsForDate = (date: Date): GoogleCalendarEvent[] =>
     events.filter((event) => {
       const eventStart = new Date(event.start);
-      const eventEnd = new Date(event.end);
       
-      // For all-day events, check if date falls within range
-      if (event.isAllDay) {
-        const dayStart = new Date(date);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(date);
-        dayEnd.setHours(23, 59, 59, 999);
-        return eventStart <= dayEnd && eventEnd > dayStart;
-      }
+      // Compare using local date parts only (ignoring time/timezone)
+      const eventYear = eventStart.getFullYear();
+      const eventMonth = eventStart.getMonth();
+      const eventDay = eventStart.getDate();
       
-      return isSameDay(eventStart, date);
+      const dateYear = date.getFullYear();
+      const dateMonth = date.getMonth();
+      const dateDay = date.getDate();
+      
+      return eventYear === dateYear && eventMonth === dateMonth && eventDay === dateDay;
     });
 
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
