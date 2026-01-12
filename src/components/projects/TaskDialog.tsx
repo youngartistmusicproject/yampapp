@@ -53,8 +53,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<string>("not-started");
-  const [effort, setEffort] = useState<Task["effort"]>("easy");
-  const [importance, setImportance] = useState<Task["importance"]>("routine");
+  const [effort, setEffort] = useState<Task["effort"] | undefined>(undefined);
+  const [importance, setImportance] = useState<Task["importance"] | undefined>(undefined);
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
@@ -101,8 +101,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     setTitle("");
     setDescription("");
     setStatus("not-started");
-    setEffort("easy");
-    setImportance("routine");
+    setEffort(undefined);
+    setImportance(undefined);
     setDueDate(undefined);
     setSelectedTags([]);
     setSelectedAssignees([]);
@@ -136,9 +136,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     e.preventDefault();
     
     // Validate required fields
-    if (!selectedProjectId) {
-      return;
-    }
     if (!dueDate) {
       return;
     }
@@ -194,16 +191,16 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
           <div className="space-y-4 py-4">
             {/* Project */}
             <div className="space-y-2">
-              <Label htmlFor="project">What project does this belong to? <span className="text-destructive">*</span></Label>
+              <Label htmlFor="project">What project does this belong to?</Label>
               <Select 
                 value={selectedProjectId || "none"} 
                 onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
-                required
               >
-                <SelectTrigger className={cn(!selectedProjectId && "border-muted-foreground/50")}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select a project" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">No Project</SelectItem>
                   {(projects || []).map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       <span className="flex items-center gap-2">
@@ -221,10 +218,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">What needs to get done? <span className="text-destructive">*</span></Label>
+              <Label htmlFor="title">What task needs to get done? <span className="text-destructive">*</span></Label>
               <Input
                 id="title"
-                placeholder="Enter task title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -233,10 +229,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">Any context or details for this task? <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Label htmlFor="description">Are there any details that might be helpful in completing this task?</Label>
               <Textarea
                 id="description"
-                placeholder="Add more details about this task..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
@@ -253,7 +248,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                       type="button"
                       variant="outline"
                       className={cn(
-                        "justify-start text-left font-normal",
+                        "w-[200px] justify-start text-left font-normal",
                         !dueDate && "text-muted-foreground"
                       )}
                     >
@@ -342,7 +337,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                     </PopoverContent>
                   </Popover>
                 </div>
-                <Select value={effort} onValueChange={(v) => setEffort(v as Task["effort"])}>
+                <Select value={effort || ""} onValueChange={(v) => setEffort(v as Task["effort"])}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select effort" />
                   </SelectTrigger>
@@ -380,7 +375,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                     </PopoverContent>
                   </Popover>
                 </div>
-                <Select value={importance} onValueChange={(v) => setImportance(v as Task["importance"])}>
+                <Select value={importance || ""} onValueChange={(v) => setImportance(v as Task["importance"])}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select importance" />
                   </SelectTrigger>
