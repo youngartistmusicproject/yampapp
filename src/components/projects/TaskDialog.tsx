@@ -135,6 +135,17 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate required fields
+    if (!selectedProjectId) {
+      return;
+    }
+    if (!dueDate) {
+      return;
+    }
+    if (selectedAssignees.length === 0) {
+      return;
+    }
+    
     // Validate URL before submitting
     if (howToLink.trim() && !isValidUrl(howToLink)) {
       setHowToLinkError("Please enter a valid URL (e.g., https://example.com)");
@@ -183,16 +194,16 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
           <div className="space-y-4 py-4">
             {/* Project */}
             <div className="space-y-2">
-              <Label htmlFor="project">What project does this belong to?</Label>
+              <Label htmlFor="project">What project does this belong to? <span className="text-destructive">*</span></Label>
               <Select 
                 value={selectedProjectId || "none"} 
                 onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
+                required
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="No project" />
+                <SelectTrigger className={cn(!selectedProjectId && "border-muted-foreground/50")}>
+                  <SelectValue placeholder="Select a project" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No project</SelectItem>
                   {(projects || []).map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       <span className="flex items-center gap-2">
@@ -234,7 +245,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
             {/* Due Date with Recurrence */}
             <div className="space-y-2">
-              <Label>When is the deadline for this task?</Label>
+              <Label>When is the deadline for this task? <span className="text-destructive">*</span></Label>
               <div className="flex items-center gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
@@ -291,7 +302,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
             {/* Assignees */}
             <div className="space-y-2">
-              <Label>Who is responsible for this task?</Label>
+              <Label>Who is responsible for this task? <span className="text-destructive">*</span></Label>
               <SearchableAssigneeSelect
                 members={availableMembers}
                 selectedAssignees={selectedAssignees}
@@ -302,29 +313,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
             {/* Separator */}
             <Separator className="my-4" />
-
-            {/* Stage (Status) */}
-            <div className="space-y-2">
-              <Label htmlFor="status">Stage <span className="text-destructive">*</span></Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select stage" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuses.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      <span className="flex items-center gap-2">
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: s.color }}
-                        />
-                        <span>{s.name}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
             {/* Effort & Importance - side by side */}
             <div className="grid grid-cols-2 gap-4">
