@@ -191,7 +191,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
           <div className="space-y-4 py-4">
             {/* Project */}
             <div className="space-y-2">
-              <Label htmlFor="project">What project does this belong to?</Label>
+              <Label htmlFor="project">What project does this belong to? <span className="text-destructive">*</span></Label>
               <Select 
                 value={selectedProjectId || "none"} 
                 onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
@@ -329,8 +329,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                       <p className="text-sm font-medium">Effort</p>
                       <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
                         {effortLibrary.map((e) => (
-                          <li key={e.id}>
-                            <span className="font-medium text-foreground">{e.name}</span> — {e.description}
+                          <li key={e.id} className="flex">
+                            <span className="font-medium text-foreground shrink-0">{e.name}</span>
+                            <span className="ml-1">— {e.description}</span>
                           </li>
                         ))}
                       </ul>
@@ -367,8 +368,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                       <p className="text-sm font-medium">Importance</p>
                       <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
                         {importanceLibrary.map((i) => (
-                          <li key={i.id}>
-                            <span className="font-medium text-foreground">{i.name}</span> — {i.description}
+                          <li key={i.id} className="flex">
+                            <span className="font-medium text-foreground shrink-0">{i.name}</span>
+                            <span className="ml-1">— {i.description}</span>
                           </li>
                         ))}
                       </ul>
