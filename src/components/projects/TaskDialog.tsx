@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +31,8 @@ import { tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagem
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { RecurrenceSettings } from "./RecurrenceSettings";
-import { Repeat, BookOpen, Plus, Info } from "lucide-react";
+import { Repeat, BookOpen, Plus, Info, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 export interface StatusItem {
   id: string;
   name: string;
@@ -53,7 +55,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
   const [status, setStatus] = useState<string>("not-started");
   const [effort, setEffort] = useState<Task["effort"]>("easy");
   const [importance, setImportance] = useState<Task["importance"]>("routine");
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
@@ -64,10 +66,15 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
   const isEditing = !!task;
 
-  // Parse an <input type="date" /> value (YYYY-MM-DD) into a local Date
+  // Parse a date string (YYYY-MM-DD) into a local Date
   const parseInputDate = (value: string): Date => {
     const [y, m, d] = value.split("-").map(Number);
     return new Date(y, (m || 1) - 1, d || 1);
+  };
+
+  // Convert Date to YYYY-MM-DD string for storage
+  const formatDateForStorage = (date: Date): string => {
+    return format(date, "yyyy-MM-dd");
   };
 
   // Populate form when editing
@@ -78,7 +85,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       setStatus(task.status);
       setEffort(task.effort);
       setImportance(task.importance);
-      setDueDate(task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : "");
+      setDueDate(task.dueDate ? (typeof task.dueDate === 'string' ? parseInputDate(task.dueDate as string) : task.dueDate) : undefined);
       setSelectedTags(task.tags);
       setSelectedAssignees(task.assignees);
       setSelectedProjectId(task.projectId || "");
@@ -96,7 +103,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     setStatus("not-started");
     setEffort("easy");
     setImportance("routine");
-    setDueDate("");
+    setDueDate(undefined);
     setSelectedTags([]);
     setSelectedAssignees([]);
     setSelectedProjectId("");
@@ -140,7 +147,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       status,
       effort,
       importance,
-      dueDate: dueDate ? parseInputDate(dueDate) : undefined,
+      dueDate: dueDate || undefined,
       tags: selectedTags,
       assignees: selectedAssignees,
       projectId: selectedProjectId || undefined,
@@ -227,15 +234,32 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
             {/* Due Date with Recurrence */}
             <div className="space-y-2">
-              <Label htmlFor="dueDate">When is the deadline for this task?</Label>
+              <Label>When is the deadline for this task?</Label>
               <div className="flex items-center gap-2">
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-auto"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        "justify-start text-left font-normal",
+                        !dueDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-[70]" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dueDate}
+                      onSelect={setDueDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -247,7 +271,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                       <Repeat className="w-4 h-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-80" align="end">
+                  <PopoverContent className="w-80 z-[70]" align="end">
                     <RecurrenceSettings
                       isRecurring={isRecurring}
                       onIsRecurringChange={handleToggleRecurring}
