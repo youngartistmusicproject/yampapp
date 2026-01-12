@@ -25,6 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import { tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
@@ -49,7 +50,7 @@ interface TaskDialogProps {
 export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, statuses, projects, task }: TaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<string>("todo");
+  const [status, setStatus] = useState<string>("not-started");
   const [effort, setEffort] = useState<Task["effort"]>("easy");
   const [importance, setImportance] = useState<Task["importance"]>("routine");
   const [dueDate, setDueDate] = useState("");
@@ -92,7 +93,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
   const resetForm = () => {
     setTitle("");
     setDescription("");
-    setStatus("todo");
+    setStatus("not-started");
     setEffort("easy");
     setImportance("routine");
     setDueDate("");
@@ -173,127 +174,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
+            {/* Project */}
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                placeholder="Enter task title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Add more details about this task..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statuses.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        <span className="flex items-center gap-2">
-                          <span
-                            className="h-2 w-2 rounded-full"
-                            style={{ backgroundColor: s.color }}
-                          />
-                          <span>{s.name}</span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-1">
-                  <Label htmlFor="effort">Effort</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        aria-label="View effort definitions"
-                      >
-                        <Info className="w-3.5 h-3.5" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-3 z-[70]" align="start">
-                      <p className="text-sm font-medium">Effort</p>
-                      <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
-                        {effortLibrary.map((e) => (
-                          <li key={e.id}>
-                            <span className="font-medium text-foreground">{e.name}</span> — {e.description}
-                          </li>
-                        ))}
-                      </ul>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <Select value={effort} onValueChange={(v) => setEffort(v as Task["effort"])}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select effort" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {effortLibrary.map(e => (
-                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-1">
-                  <Label htmlFor="importance">Importance</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        aria-label="View importance definitions"
-                      >
-                        <Info className="w-3.5 h-3.5" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-3 z-[70]" align="start">
-                      <p className="text-sm font-medium">Importance</p>
-                      <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
-                        {importanceLibrary.map((i) => (
-                          <li key={i.id}>
-                            <span className="font-medium text-foreground">{i.name}</span> — {i.description}
-                          </li>
-                        ))}
-                      </ul>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <Select value={importance} onValueChange={(v) => setImportance(v as Task["importance"])}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select importance" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {importanceLibrary.map(i => (
-                      <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-            <div className="col-span-2 space-y-2">
-              <Label htmlFor="project">Project</Label>
+              <Label htmlFor="project">What project does this belong to?</Label>
               <Select 
                 value={selectedProjectId || "none"} 
                 onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
@@ -317,11 +200,34 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 </SelectContent>
               </Select>
             </div>
-          </div>
+
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">What needs to get done? <span className="text-destructive">*</span></Label>
+              <Input
+                id="title"
+                placeholder="Enter task title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Any context or details for this task? <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Textarea
+                id="description"
+                placeholder="Add more details about this task..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
 
             {/* Due Date with Recurrence */}
             <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date</Label>
+              <Label htmlFor="dueDate">When is the deadline for this task?</Label>
               <div className="flex items-center gap-2">
                 <Input
                   id="dueDate"
@@ -359,8 +265,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
               )}
             </div>
 
+            {/* Assignees */}
             <div className="space-y-2">
-              <Label>Assign To</Label>
+              <Label>Who is responsible for this task?</Label>
               <SearchableAssigneeSelect
                 members={availableMembers}
                 selectedAssignees={selectedAssignees}
@@ -369,6 +276,109 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
               />
             </div>
 
+            {/* Separator */}
+            <Separator className="my-4" />
+
+            {/* Stage (Status) */}
+            <div className="space-y-2">
+              <Label htmlFor="status">Stage <span className="text-destructive">*</span></Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select stage" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statuses.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: s.color }}
+                        />
+                        <span>{s.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Effort */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1">
+                <Label htmlFor="effort">Effort <span className="text-destructive">*</span></Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      aria-label="View effort definitions"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-3 z-[70]" align="start">
+                    <p className="text-sm font-medium">Effort</p>
+                    <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
+                      {effortLibrary.map((e) => (
+                        <li key={e.id}>
+                          <span className="font-medium text-foreground">{e.name}</span> — {e.description}
+                        </li>
+                      ))}
+                    </ul>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <Select value={effort} onValueChange={(v) => setEffort(v as Task["effort"])}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select effort" />
+                </SelectTrigger>
+                <SelectContent>
+                  {effortLibrary.map(e => (
+                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Importance */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1">
+                <Label htmlFor="importance">Importance <span className="text-destructive">*</span></Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      aria-label="View importance definitions"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-3 z-[70]" align="start">
+                    <p className="text-sm font-medium">Importance</p>
+                    <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
+                      {importanceLibrary.map((i) => (
+                        <li key={i.id}>
+                          <span className="font-medium text-foreground">{i.name}</span> — {i.description}
+                        </li>
+                      ))}
+                    </ul>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <Select value={importance} onValueChange={(v) => setImportance(v as Task["importance"])}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select importance" />
+                </SelectTrigger>
+                <SelectContent>
+                  {importanceLibrary.map(i => (
+                    <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Tags */}
             <div className="space-y-2">
               <Label>Tags</Label>
               <SearchableTagSelect
@@ -377,14 +387,11 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 onTagsChange={setSelectedTags}
                 placeholder="Search and select tags..."
               />
-              <p className="text-xs text-muted-foreground">
-                Search or select from the tag library
-              </p>
             </div>
 
-            {/* How To Link */}
+            {/* Connect SOP */}
             <div className="space-y-2">
-              <Label htmlFor="howToLink">How To (SOP Link)</Label>
+              <Label htmlFor="howToLink">Connect SOP</Label>
               <div className="flex items-center gap-2">
                 {howToLink && !howToLinkError ? (
                   <BookOpen className="w-4 h-4 text-muted-foreground shrink-0" />

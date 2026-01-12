@@ -29,11 +29,10 @@ export type TagItem = (typeof tagLibrary)[number];
 
 // Custom statuses - configurable by admins
 export const statusLibrary = [
-  { id: "todo", name: "To Do", color: "#6b7280" },
+  { id: "not-started", name: "Not Started", color: "#6b7280" },
   { id: "in-progress", name: "In Progress", color: "#eb5c5c" },
-  { id: "review", name: "Review", color: "#8b5cf6" },
-  { id: "blocked", name: "Blocked", color: "#ef4444" },
-  { id: "done", name: "Done", color: "#10b981" },
+  { id: "waiting", name: "Waiting", color: "#f59e0b" },
+  { id: "needs-review", name: "Needs Review", color: "#8b5cf6" },
 ];
 
 export type StatusItem = (typeof statusLibrary)[number];
