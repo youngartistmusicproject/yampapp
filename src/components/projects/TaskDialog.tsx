@@ -234,7 +234,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="flex-1"
+                  className="w-auto"
                 />
                 <Popover>
                   <PopoverTrigger asChild>
