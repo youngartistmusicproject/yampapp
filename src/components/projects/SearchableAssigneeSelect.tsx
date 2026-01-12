@@ -70,7 +70,7 @@ export function SearchableAssigneeSelect({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-0 z-50 bg-popover" align="end">
+      <PopoverContent className="w-64 p-0 z-[60] bg-popover" align="start">
         <Command>
           <CommandInput placeholder="Search members..." />
           <CommandList>
