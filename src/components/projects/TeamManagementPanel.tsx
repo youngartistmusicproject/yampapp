@@ -139,7 +139,7 @@ export function TeamManagementPanel({
             <Users className="w-3.5 h-3.5" />
           </Button>
         </SheetTrigger>
-        <SheetContent className="w-[400px] sm:w-[540px]">
+        <SheetContent className="w-full sm:max-w-[480px]">
           <SheetHeader>
             <SheetTitle>
               {selectedTeamId ? (
