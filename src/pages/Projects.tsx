@@ -870,6 +870,8 @@ export default function Projects() {
               onReorderTasks={handleReorderTasks}
               statuses={statuses}
               showDetails={showTaskDetails}
+              sortField={sortField}
+              sortAscending={sortAscending}
             />
           )}
         </TabsContent>
