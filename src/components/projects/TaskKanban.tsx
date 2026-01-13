@@ -1,11 +1,11 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag } from "lucide-react";
-import { getTagById } from "@/data/workManagementConfig";
+import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, ArrowUpDown } from "lucide-react";
+import { getTagById, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
@@ -24,12 +24,20 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface StatusItem {
   id: string;
   name: string;
   color: string;
 }
+
+export type KanbanSortField = 'dueDate' | 'importance' | 'effort' | 'title';
 
 interface TaskKanbanProps {
   tasks: Task[];
@@ -85,13 +93,58 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<KanbanSortField>('dueDate');
+  const [sortAscending, setSortAscending] = useState(true);
   const isDragging = useRef(false);
 
-  // Use tasks directly, only track dragging state for visual feedback
-  const displayTasks = tasks;
+  // Sort tasks within columns
+  const sortedTasks = useMemo(() => {
+    const effortOrder = effortLibrary.map(e => e.id);
+    const importanceOrder = importanceLibrary.map(i => i.id);
+    
+    return [...tasks].sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortField === 'title') {
+        comparison = a.title.localeCompare(b.title);
+      } else if (sortField === 'importance') {
+        const aIndex = importanceOrder.indexOf(a.importance);
+        const bIndex = importanceOrder.indexOf(b.importance);
+        comparison = aIndex - bIndex;
+      } else if (sortField === 'effort') {
+        const aIndex = effortOrder.indexOf(a.effort);
+        const bIndex = effortOrder.indexOf(b.effort);
+        comparison = aIndex - bIndex;
+      } else {
+        // dueDate - tasks without due date go last
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }
+      
+      return sortAscending ? comparison : -comparison;
+    });
+  }, [tasks, sortField, sortAscending]);
 
   const getTasksByStatus = (status: string) =>
-    displayTasks.filter((task) => task.status === status);
+    sortedTasks.filter((task) => task.status === status);
+
+  const handleSortChange = (field: KanbanSortField) => {
+    if (sortField === field) {
+      setSortAscending(!sortAscending);
+    } else {
+      setSortField(field);
+      setSortAscending(true);
+    }
+  };
+
+  const sortLabels: Record<KanbanSortField, string> = {
+    dueDate: 'Due Date',
+    importance: 'Importance',
+    effort: 'Effort',
+    title: 'Title',
+  };
 
   const toggleColumnCollapse = (columnId: string) => {
     setCollapsedColumns(prev => {
@@ -155,6 +208,31 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
 
   return (
     <>
+      {/* Sort Controls */}
+      <div className="flex items-center justify-end mb-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <ArrowUpDown className="w-3.5 h-3.5" />
+              Sort: {sortLabels[sortField]}
+              {!sortAscending && ' (desc)'}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {(Object.keys(sortLabels) as KanbanSortField[]).map((field) => (
+              <DropdownMenuItem
+                key={field}
+                onClick={() => handleSortChange(field)}
+                className={sortField === field ? 'bg-accent' : ''}
+              >
+                {sortLabels[field]}
+                {sortField === field && (sortAscending ? ' ↑' : ' ↓')}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <div className="flex gap-4 overflow-x-auto pb-4">
         {statuses.map((column) => {
           const isCollapsed = collapsedColumns.has(column.id);
