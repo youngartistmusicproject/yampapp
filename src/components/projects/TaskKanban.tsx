@@ -3,7 +3,8 @@ import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
 import {
@@ -44,6 +45,14 @@ const importanceColors: Record<string, string> = {
   important: "border-l-amber-400",
   critical: "border-l-red-500",
 };
+
+// Helper to format estimated time
+function formatEstimatedTime(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
 
 export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, statuses }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
@@ -181,13 +190,28 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                             </div>
                           </div>
 
-                          {(task.progress > 0 || task.description) && (
+                          {task.description && (
                             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                              {task.progress > 0 && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground mr-1.5">{task.progress}%</span>
-                              )}
                               {task.description}
                             </p>
+                          )}
+                          
+                          {/* Est Time & Progress */}
+                          {(task.estimatedTime || (task.progress !== undefined && task.progress > 0)) && (
+                            <div className="flex items-center gap-3 mt-2">
+                              {task.estimatedTime && (
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Clock className="w-3 h-3" />
+                                  {formatEstimatedTime(task.estimatedTime)}
+                                </div>
+                              )}
+                              {task.progress !== undefined && task.progress > 0 && (
+                                <div className="flex items-center gap-1.5 flex-1">
+                                  <Progress value={task.progress} className="h-1.5" />
+                                  <span className="text-xs text-muted-foreground">{task.progress}%</span>
+                                </div>
+                              )}
+                            </div>
                           )}
 
                           <div className="flex items-center gap-2 mt-3">
