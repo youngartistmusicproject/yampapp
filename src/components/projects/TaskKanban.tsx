@@ -62,6 +62,7 @@ interface TaskKanbanProps {
   onDuplicateTask?: (taskId: string) => void;
   onReorderTasks?: (updates: { taskId: string; sortOrder: number }[]) => void;
   statuses: StatusItem[];
+  showDetails?: boolean;
 }
 
 const importanceColors: Record<string, string> = {
@@ -108,6 +109,7 @@ interface SortableTaskCardProps {
   onDeleteClick: (task: Task) => void;
   onCompleteTask?: (taskId: string) => void;
   dropIndicatorPosition?: "before" | "after";
+  showDetails?: boolean;
 }
 
 function SortableTaskCard({
@@ -117,6 +119,7 @@ function SortableTaskCard({
   onDeleteClick,
   onCompleteTask,
   dropIndicatorPosition,
+  showDetails = true,
 }: SortableTaskCardProps) {
   const {
     attributes,
@@ -183,32 +186,36 @@ function SortableTaskCard({
 
         {/* Meta info */}
         <div className="mt-2 pt-2 border-t border-border/50 flex flex-col gap-1.5">
-          {/* Effort & Importance */}
-          <div className="flex items-center gap-3 text-xs">
-            <span className="text-muted-foreground">
-              Effort: <span className="capitalize font-medium text-foreground">{task.effort || '—'}</span>
-            </span>
-            <span className="text-muted-foreground">
-              Importance: <span className="capitalize font-medium text-foreground">{task.importance || '—'}</span>
-            </span>
-          </div>
+          {showDetails && (
+            <>
+              {/* Effort & Importance */}
+              <div className="flex items-center gap-3 text-xs">
+                <span className="text-muted-foreground">
+                  Effort: <span className="capitalize font-medium text-foreground">{task.effort || '—'}</span>
+                </span>
+                <span className="text-muted-foreground">
+                  Importance: <span className="capitalize font-medium text-foreground">{task.importance || '—'}</span>
+                </span>
+              </div>
 
-          {/* Est. Time + Progress on same line */}
-          <div className="flex items-center gap-2 text-xs">
-            {task.estimatedTime && (
-              <span className="text-muted-foreground flex items-center gap-1 flex-shrink-0">
-                <Clock className="w-3 h-3" />
-                <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
-              </span>
-            )}
-            <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all ${getProgressColor(task.progress)}`}
-                style={{ width: `${task.progress}%` }}
-              />
-            </div>
-            <span className="text-muted-foreground text-[10px] font-medium w-6 text-right">{task.progress}%</span>
-          </div>
+              {/* Est. Time + Progress on same line */}
+              <div className="flex items-center gap-2 text-xs">
+                {task.estimatedTime && (
+                  <span className="text-muted-foreground flex items-center gap-1 flex-shrink-0">
+                    <Clock className="w-3 h-3" />
+                    <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
+                  </span>
+                )}
+                <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all ${getProgressColor(task.progress)}`}
+                    style={{ width: `${task.progress}%` }}
+                  />
+                </div>
+                <span className="text-muted-foreground text-[10px] font-medium w-6 text-right">{task.progress}%</span>
+              </div>
+            </>
+          )}
 
           {/* Footer: Assignees + Due Date */}
           <div className="flex items-center justify-between">
@@ -302,7 +309,7 @@ const TaskCardOverlay = React.forwardRef<HTMLDivElement, { task: Task }>(functio
   );
 });
 
-export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onReorderTasks, statuses }: TaskKanbanProps) {
+export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onReorderTasks, statuses, showDetails = true }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -637,6 +644,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                                 onDeleteClick={setTaskToDelete}
                                 onCompleteTask={(taskId) => onTaskUpdate(taskId, { status: 'done', progress: 100 })}
                                 dropIndicatorPosition={dropPos}
+                                showDetails={showDetails}
                               />
                             </div>
                           );

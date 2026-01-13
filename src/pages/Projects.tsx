@@ -743,30 +743,32 @@ export default function Projects() {
             <span className="text-[13px] text-muted-foreground tabular-nums ml-2">
               {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
             </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {sortField === 'manual' && (
+              <button 
+                className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => {
+                  setSortField('dueDate');
+                  setSortAscending(true);
+                }}
+              >
+                <GripVertical className="w-3 h-3" />
+                Manual
+                <X className="w-3 h-3 ml-0.5" />
+              </button>
+            )}
             
             <button
               onClick={() => setShowTaskDetails(!showTaskDetails)}
-              className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors ml-2"
+              className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
               title={showTaskDetails ? "Hide details" : "Show details"}
             >
               {showTaskDetails ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               <span className="hidden sm:inline">{showTaskDetails ? "Hide details" : "Show details"}</span>
             </button>
           </div>
-          
-          {sortField === 'manual' && (
-            <button 
-              className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => {
-                setSortField('dueDate');
-                setSortAscending(true);
-              }}
-            >
-              <GripVertical className="w-3 h-3" />
-              Manual
-              <X className="w-3 h-3 ml-0.5" />
-            </button>
-          )}
         </div>
 
         <TabsContent value="table" className="mt-0">
@@ -817,7 +819,8 @@ export default function Projects() {
               onDeleteTask={handleDeleteTask}
               onDuplicateTask={handleDuplicateTask}
               onReorderTasks={handleReorderTasks}
-              statuses={statuses} 
+              statuses={statuses}
+              showDetails={showTaskDetails}
             />
           )}
         </TabsContent>
