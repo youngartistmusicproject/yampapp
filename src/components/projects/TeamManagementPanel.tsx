@@ -140,7 +140,7 @@ export function TeamManagementPanel({
           </Button>
         </SheetTrigger>
         <SheetContent className="w-[400px] sm:w-[540px]">
-          <SheetHeader>
+          <SheetHeader className="pr-8">
             <SheetTitle className="flex items-center justify-between">
               {selectedTeamId ? (
                 <button 

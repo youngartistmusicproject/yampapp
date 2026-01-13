@@ -79,7 +79,7 @@ export function ProjectManagementPanel({
           </Button>
         </SheetTrigger>
         <SheetContent className="w-[400px] sm:w-[540px]">
-          <SheetHeader>
+          <SheetHeader className="pr-8">
             <SheetTitle className="flex items-center justify-between">
               <span>Manage Projects</span>
               <Button 
