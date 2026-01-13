@@ -208,10 +208,12 @@ function SortableTableRow({
         <span>
           Importance: <span className="font-medium text-foreground capitalize">{task.importance || '—'}</span>
         </span>
-        <span className="flex items-center gap-1">
-          <Clock className="w-3 h-3" />
-          <span className="font-medium text-foreground">{task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : '—'}</span>
-        </span>
+        {task.estimatedTime && (
+          <span className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
+          </span>
+        )}
         <div className="flex items-center gap-1.5 flex-1 max-w-[120px]">
           <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
             <div 
