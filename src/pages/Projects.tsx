@@ -94,6 +94,14 @@ export default function Projects() {
     localStorage.setItem('showTaskDetails', JSON.stringify(showTaskDetails));
   }, [showTaskDetails]);
 
+  // Reset to Due Date sort when switching to Kanban if Stage sort is selected
+  useEffect(() => {
+    if (activeView === 'kanban' && sortField === 'stage') {
+      setSortField('dueDate');
+      setSortAscending(true);
+    }
+  }, [activeView, sortField]);
+
   // Apply filters from URL params
   useEffect(() => {
     const filterParam = searchParams.get('filter');
