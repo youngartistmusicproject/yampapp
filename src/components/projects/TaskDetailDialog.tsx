@@ -73,6 +73,7 @@ interface TaskDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task | null;
+  projectName?: string;
   currentUser: User;
   availableMembers: User[];
   statuses: StatusItem[];
@@ -282,6 +283,7 @@ export function TaskDetailDialog({
   open,
   onOpenChange,
   task,
+  projectName,
   currentUser,
   availableMembers,
   statuses,
@@ -576,17 +578,21 @@ export function TaskDetailDialog({
       <DialogContent className="w-full max-w-[95vw] md:max-w-[1100px] h-[92vh] md:h-[85vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden rounded-xl">
         {/* Header - Clean and spacious */}
         <div className="px-6 pt-6 pb-5 border-b border-border/40">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-            <span>{task.projectId ? 'Project' : 'No Project'}</span>
-            <ChevronRight className="w-3 h-3" />
-            {taskStatus && (
-              <span className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: taskStatus.color }} />
+          {/* Status Badge - More prominent */}
+          {taskStatus && (
+            <div className="mb-3">
+              <span 
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full"
+                style={{ 
+                  backgroundColor: `${taskStatus.color}20`,
+                  color: taskStatus.color 
+                }}
+              >
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: taskStatus.color }} />
                 {taskStatus.name}
               </span>
-            )}
-          </div>
+            </div>
+          )}
           
           {/* Title */}
           <EditableText
@@ -626,17 +632,18 @@ export function TaskDetailDialog({
         <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] min-h-0 overflow-hidden">
           {/* Left side - Properties & Subtasks */}
           <div className="overflow-y-auto border-r border-border/40">
-            <div className="p-6 space-y-6">
-              {/* Properties Grid */}
-              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                {/* Status */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</label>
+            <div className="p-6 space-y-4">
+              {/* Properties - Single column layout for better alignment */}
+              <div className="space-y-3">
+                {/* Status Row */}
+                <div className="flex items-center gap-3 min-h-[36px]">
+                  <div className="w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0" />
+                  <span className="text-sm text-muted-foreground w-24 shrink-0">Status</span>
                   <Select value={task.status} onValueChange={(value) => onTaskUpdate(task.id, { status: value })}>
-                    <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent hover:bg-muted/30">
+                    <SelectTrigger className="h-8 text-sm border-0 bg-muted/30 hover:bg-muted/50 w-auto min-w-[120px]">
                       {taskStatus && (
                         <div className="flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: taskStatus.color }} />
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: taskStatus.color }} />
                           {taskStatus.name}
                         </div>
                       )}
@@ -645,7 +652,7 @@ export function TaskDetailDialog({
                       {statuses.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
                           <div className="flex items-center gap-2">
-                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
                             {s.name}
                           </div>
                         </SelectItem>
@@ -654,13 +661,11 @@ export function TaskDetailDialog({
                   </Select>
                 </div>
 
-                {/* Due Date */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5" />
-                    Due Date
-                  </label>
-                  <div className="flex items-center gap-2">
+                {/* Due Date Row */}
+                <div className="flex items-center gap-3 min-h-[36px]">
+                  <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground w-24 shrink-0">Due Date</span>
+                  <div className="flex items-center gap-2 flex-1">
                     <Input
                       type="date"
                       value={task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : ""}
@@ -669,19 +674,19 @@ export function TaskDetailDialog({
                           dueDate: e.target.value ? parseInputDate(e.target.value) : undefined,
                         })
                       }
-                      className="h-9 text-sm border-border/50 bg-transparent flex-1"
+                      className="h-8 text-sm border-0 bg-muted/30 hover:bg-muted/50 w-auto"
                     />
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          className={`h-9 w-9 p-0 ${task.isRecurring ? 'text-primary' : 'text-muted-foreground'}`}
+                          className={`h-8 w-8 p-0 ${task.isRecurring ? 'text-primary' : 'text-muted-foreground'}`}
                         >
                           <Repeat className="w-4 h-4" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-64 p-4" align="end">
+                      <PopoverContent className="w-64 p-4" align="start">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium">Repeat</span>
@@ -739,10 +744,10 @@ export function TaskDetailDialog({
                   </div>
                 </div>
 
-                {/* Effort */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                    <Zap className="w-3.5 h-3.5" />
+                {/* Effort Row */}
+                <div className="flex items-center gap-3 min-h-[36px]">
+                  <Zap className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground w-24 shrink-0 flex items-center gap-1.5">
                     Effort
                     <Popover>
                       <PopoverTrigger asChild>
@@ -761,10 +766,10 @@ export function TaskDetailDialog({
                         </ul>
                       </PopoverContent>
                     </Popover>
-                  </label>
+                  </span>
                   <Select value={task.effort} onValueChange={(value: Task['effort']) => onTaskUpdate(task.id, { effort: value })}>
-                    <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent hover:bg-muted/30">
-                      <span className={`px-2 py-0.5 rounded text-sm font-medium capitalize ${effortConfig[task.effort]?.bg} ${effortConfig[task.effort]?.text}`}>
+                    <SelectTrigger className="h-8 text-sm border-0 bg-transparent hover:bg-muted/30 w-auto p-0 gap-0">
+                      <span className={`px-2.5 py-1 rounded-md text-sm font-medium capitalize ${effortConfig[task.effort]?.bg} ${effortConfig[task.effort]?.text}`}>
                         {task.effort}
                       </span>
                     </SelectTrigger>
@@ -776,10 +781,10 @@ export function TaskDetailDialog({
                   </Select>
                 </div>
 
-                {/* Importance */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                    <Target className="w-3.5 h-3.5" />
+                {/* Importance Row */}
+                <div className="flex items-center gap-3 min-h-[36px]">
+                  <Target className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground w-24 shrink-0 flex items-center gap-1.5">
                     Importance
                     <Popover>
                       <PopoverTrigger asChild>
@@ -798,10 +803,10 @@ export function TaskDetailDialog({
                         </ul>
                       </PopoverContent>
                     </Popover>
-                  </label>
+                  </span>
                   <Select value={task.importance} onValueChange={(value: Task['importance']) => onTaskUpdate(task.id, { importance: value })}>
-                    <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent hover:bg-muted/30">
-                      <span className={`px-2 py-0.5 rounded text-sm font-medium capitalize ${importanceConfig[task.importance]?.bg} ${importanceConfig[task.importance]?.text}`}>
+                    <SelectTrigger className="h-8 text-sm border-0 bg-transparent hover:bg-muted/30 w-auto p-0 gap-0">
+                      <span className={`px-2.5 py-1 rounded-md text-sm font-medium capitalize ${importanceConfig[task.importance]?.bg} ${importanceConfig[task.importance]?.text}`}>
                         {task.importance}
                       </span>
                     </SelectTrigger>
@@ -813,17 +818,15 @@ export function TaskDetailDialog({
                   </Select>
                 </div>
 
-                {/* Est. Time */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5" />
-                    Est. Time
-                  </label>
+                {/* Est. Time Row */}
+                <div className="flex items-center gap-3 min-h-[36px]">
+                  <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground w-24 shrink-0">Est. Time</span>
                   <Select 
                     value={task.estimatedTime?.toString() || ""} 
                     onValueChange={(value) => onTaskUpdate(task.id, { estimatedTime: value ? parseInt(value) : undefined })}
                   >
-                    <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent hover:bg-muted/30">
+                    <SelectTrigger className="h-8 text-sm border-0 bg-muted/30 hover:bg-muted/50 w-auto min-w-[100px]">
                       <SelectValue placeholder="—" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-[60]">
@@ -838,27 +841,86 @@ export function TaskDetailDialog({
                   </Select>
                 </div>
 
-                {/* How To Link */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                    <BookOpen className="w-3.5 h-3.5" />
-                    How To
-                  </label>
+                {/* Progress Row */}
+                <div className="flex items-center gap-3 min-h-[36px]">
+                  <div className="w-4 h-4 flex items-center justify-center text-muted-foreground shrink-0">
+                    <span className="text-xs font-medium">{progressPercent}%</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground w-24 shrink-0">Progress</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="flex-1 max-w-[200px] h-2 bg-secondary rounded-full overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-300 ${getProgressColor(progressPercent)}`}
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-3" align="start">
+                      <div className="flex gap-1 flex-wrap max-w-[200px]">
+                        {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((value) => (
+                          <Button
+                            key={value}
+                            variant={progressPercent === value ? "secondary" : "ghost"}
+                            size="sm"
+                            className="h-7 w-10 text-xs"
+                            onClick={() => onTaskUpdate(task.id, { progress: value })}
+                          >
+                            {value}%
+                          </Button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Responsible Row */}
+                <div className="flex items-center gap-3 min-h-[36px]">
+                  <Users className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground w-24 shrink-0">Responsible</span>
+                  <div className="flex-1">
+                    <SearchableAssigneeSelect
+                      members={availableMembers}
+                      selectedAssignees={task.assignees || []}
+                      onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })}
+                      placeholder="Add..."
+                    />
+                  </div>
+                </div>
+
+                {/* Tags Row */}
+                <div className="flex items-center gap-3 min-h-[36px]">
+                  <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground w-24 shrink-0">Tags</span>
+                  <div className="flex-1">
+                    <SearchableTagSelect
+                      tags={tagLibrary}
+                      selectedTags={task.tags || []}
+                      onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
+                      placeholder="Add..."
+                    />
+                  </div>
+                </div>
+
+                {/* How To Row */}
+                <div className="flex items-center gap-3 min-h-[36px]">
+                  <BookOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground w-24 shrink-0">How To</span>
                   {task.howToLink ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="h-9 text-sm flex-1 justify-start text-left truncate"
+                        className="h-8 text-sm px-2 text-primary hover:text-primary justify-start truncate"
                         onClick={() => window.open(task.howToLink, '_blank')}
                       >
-                        <ExternalLink className="w-3.5 h-3.5 mr-2 shrink-0" />
+                        <ExternalLink className="w-3.5 h-3.5 mr-1.5 shrink-0" />
                         <span className="truncate">{task.howToLink}</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0"
                         onClick={() => onTaskUpdate(task.id, { howToLink: undefined })}
                       >
                         <X className="w-4 h-4" />
@@ -866,9 +928,9 @@ export function TaskDetailDialog({
                     </div>
                   ) : (
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="h-9 text-sm w-full justify-start text-muted-foreground hover:text-foreground"
+                      className="h-8 text-sm px-2 text-muted-foreground hover:text-foreground"
                       onClick={() => {
                         const link = prompt("Enter How To link (SOP URL):");
                         if (link?.trim()) {
@@ -876,72 +938,11 @@ export function TaskDetailDialog({
                         }
                       }}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus className="w-4 h-4 mr-1" />
                       Add link
                     </Button>
                   )}
                 </div>
-              </div>
-
-              {/* Progress - Full width */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Progress</label>
-                  <span className="text-sm font-medium">{progressPercent}%</span>
-                </div>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-full h-2.5 bg-secondary rounded-full overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-300 ${getProgressColor(progressPercent)}`}
-                        style={{ width: `${progressPercent}%` }}
-                      />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-3" align="start">
-                    <div className="flex gap-1 flex-wrap max-w-[200px]">
-                      {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((value) => (
-                        <Button
-                          key={value}
-                          variant={progressPercent === value ? "secondary" : "ghost"}
-                          size="sm"
-                          className="h-7 w-10 text-xs"
-                          onClick={() => onTaskUpdate(task.id, { progress: value })}
-                        >
-                          {value}%
-                        </Button>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Responsible */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5" />
-                  Responsible
-                </label>
-                <SearchableAssigneeSelect
-                  members={availableMembers}
-                  selectedAssignees={task.assignees || []}
-                  onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })}
-                  placeholder="Add assignee..."
-                />
-              </div>
-
-              {/* Tags */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                  <Tag className="w-3.5 h-3.5" />
-                  Tags
-                </label>
-                <SearchableTagSelect
-                  tags={tagLibrary}
-                  selectedTags={task.tags || []}
-                  onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
-                  placeholder="Add tag..."
-                />
               </div>
 
               {/* Subtasks */}
