@@ -49,10 +49,10 @@ export type EffortItem = (typeof effortLibrary)[number];
 
 // Importance options - describes the impact of the task
 export const importanceLibrary = [
-  { id: "low", name: "Low", color: "#6b7280", description: "Low impact if delayed or done imperfectly" },
-  { id: "routine", name: "Routine", color: "#3b82f6", description: "Baseline work; expected but not urgent" },
-  { id: "important", name: "Important", color: "#f59e0b", description: "Meaningful consequences if not done well" },
-  { id: "critical", name: "Critical", color: "#ef4444", description: "High impact; must be done correctly and on time" },
+  { id: "low", name: "Low", color: "#6b7280", description: "Could do, but nothing will break if not." },
+  { id: "routine", name: "Routine", color: "#3b82f6", description: "Baseline work. Should be done." },
+  { id: "important", name: "Important", color: "#f59e0b", description: "No excuses. This must get done." },
+  { id: "critical", name: "Critical", color: "#ef4444", description: "Pull an all-nighter if you have to." },
 ];
 
 export type ImportanceItem = (typeof importanceLibrary)[number];
