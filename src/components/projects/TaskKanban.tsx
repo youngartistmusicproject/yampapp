@@ -53,6 +53,8 @@ export interface StatusItem {
   color: string;
 }
 
+export type SortField = 'dueDate' | 'effort' | 'importance' | 'stage' | 'estimatedTime' | 'manual';
+
 interface TaskKanbanProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
@@ -63,6 +65,8 @@ interface TaskKanbanProps {
   onReorderTasks?: (updates: { taskId: string; sortOrder: number }[]) => void;
   statuses: StatusItem[];
   showDetails?: boolean;
+  sortField?: SortField;
+  sortAscending?: boolean;
 }
 
 const importanceColors: Record<string, string> = {
@@ -309,7 +313,7 @@ const TaskCardOverlay = React.forwardRef<HTMLDivElement, { task: Task }>(functio
   );
 });
 
-export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onReorderTasks, statuses, showDetails = true }: TaskKanbanProps) {
+export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onReorderTasks, statuses, showDetails = true, sortField = 'manual', sortAscending = true }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -323,6 +327,48 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     | { kind: "column"; overId: string; position: "end" }
     | null
   >(null);
+
+  // Sort order definitions for effort and importance
+  const effortOrder = ['easy', 'light', 'focused', 'deep'];
+  const importanceOrder = ['low', 'routine', 'important', 'critical'];
+
+  // Sort tasks within column based on sortField
+  const sortTasksInColumn = useCallback((columnTasks: Task[]): Task[] => {
+    if (sortField === 'manual') {
+      return [...columnTasks].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    }
+
+    return [...columnTasks].sort((a, b) => {
+      let comparison = 0;
+
+      if (sortField === 'dueDate') {
+        if (!a.dueDate && !b.dueDate) comparison = 0;
+        else if (!a.dueDate) comparison = 1;
+        else if (!b.dueDate) comparison = -1;
+        else comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      } else if (sortField === 'effort') {
+        const aIndex = effortOrder.indexOf(a.effort || '');
+        const bIndex = effortOrder.indexOf(b.effort || '');
+        comparison = (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+      } else if (sortField === 'importance') {
+        const aIndex = importanceOrder.indexOf(a.importance || '');
+        const bIndex = importanceOrder.indexOf(b.importance || '');
+        comparison = (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+      } else if (sortField === 'estimatedTime') {
+        const aTime = a.estimatedTime || 0;
+        const bTime = b.estimatedTime || 0;
+        if (aTime === 0 && bTime === 0) comparison = 0;
+        else if (aTime === 0) comparison = 1;
+        else if (bTime === 0) comparison = -1;
+        else comparison = aTime - bTime;
+      } else if (sortField === 'stage') {
+        // Stage sorting doesn't apply within columns (already grouped by stage)
+        comparison = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+      }
+
+      return sortAscending ? comparison : -comparison;
+    });
+  }, [sortField, sortAscending]);
 
   // Sync local tasks with props when not dragging (sorted by manual order)
   useEffect(() => {
@@ -364,8 +410,10 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     return rectIntersection(args);
   }, []);
 
-  const getTasksByStatus = useCallback((status: string) =>
-    localTasks.filter((task) => task.status === status), [localTasks]);
+  const getTasksByStatus = useCallback((status: string) => {
+    const columnTasks = localTasks.filter((task) => task.status === status);
+    return sortTasksInColumn(columnTasks);
+  }, [localTasks, sortTasksInColumn]);
 
   const toggleColumnCollapse = (columnId: string) => {
     setCollapsedColumns(prev => {
