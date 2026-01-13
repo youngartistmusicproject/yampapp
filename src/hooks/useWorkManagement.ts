@@ -102,6 +102,24 @@ export function useTeamMembers(teamId: string | null) {
   });
 }
 
+// Fetch all team leaders across all teams
+export function useAllTeamLeaders() {
+  return useQuery({
+    queryKey: ['all-team-leaders'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('*')
+        .in('role', ['leader', 'admin']);
+      
+      if (error) throw error;
+      
+      // Return a set of user names who are team leaders
+      return data.map(m => m.user_name);
+    },
+  });
+}
+
 // Add a member to a team
 export function useAddTeamMember() {
   const queryClient = useQueryClient();

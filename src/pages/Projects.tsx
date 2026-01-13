@@ -36,7 +36,7 @@ import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
-import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useCreateTeam, useUpdateTeam, useDeleteTeam, useReorderTasks, useCompleteRecurringTask, useReorderTeams, useReorderProjects } from "@/hooks/useWorkManagement";
+import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useCreateTeam, useUpdateTeam, useDeleteTeam, useReorderTasks, useCompleteRecurringTask, useReorderTeams, useReorderProjects, useAllTeamLeaders } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
@@ -45,6 +45,7 @@ export default function Projects() {
   const { data: dbTasks = [], isLoading: tasksLoading } = useTasks();
   const { data: dbProjects = [], isLoading: projectsLoading } = useProjects();
   const { data: dbTeams = [] } = useTeams();
+  const { data: teamLeaderNames = [] } = useAllTeamLeaders();
   
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
@@ -1033,6 +1034,7 @@ export default function Projects() {
               sortAscending={sortAscending}
               statuses={statuses}
               showDetails={showTaskDetails}
+              teamLeaderNames={teamLeaderNames}
             />
           )}
         </TabsContent>
@@ -1063,6 +1065,7 @@ export default function Projects() {
               showDetails={showTaskDetails}
               sortField={sortField}
               sortAscending={sortAscending}
+              teamLeaderNames={teamLeaderNames}
             />
           )}
         </TabsContent>
