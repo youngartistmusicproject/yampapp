@@ -70,7 +70,8 @@ const importanceColors: Record<string, string> = {
 export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onToggleSort, sortField = 'dueDate', sortAscending = true, statuses }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
-  const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
+  const completedStatusId = 'completed';
+  const defaultStatusId = 'not-started';
 
   const handleDeleteConfirm = () => {
     if (taskToDelete && onDeleteTask) {
@@ -92,17 +93,17 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
             <div className="flex items-start gap-3">
               <div onClick={(e) => e.stopPropagation()}>
                 <Checkbox
-                  checked={task.status === doneStatusId}
+                  checked={task.status === completedStatusId}
                   onCheckedChange={(checked) =>
-                    onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+                    onTaskUpdate(task.id, { status: checked ? completedStatusId : defaultStatusId })
                   }
                 />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
-                    {task.title}
-                  </p>
+                    <p className={`font-medium ${task.status === completedStatusId ? 'line-through text-muted-foreground' : ''}`}>
+                      {task.title}
+                    </p>
                   {task.isRecurring && (
                     <Repeat className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                   )}
@@ -203,16 +204,16 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
               <TableRow key={task.id} className="group cursor-pointer" onClick={() => onViewTask(task)}>
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={task.status === doneStatusId}
+                    checked={task.status === completedStatusId}
                     onCheckedChange={(checked) =>
-                      onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+                      onTaskUpdate(task.id, { status: checked ? completedStatusId : defaultStatusId })
                     }
                   />
                 </TableCell>
                 <TableCell>
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5">
-                      <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
+                      <p className={`font-medium ${task.status === completedStatusId ? 'line-through text-muted-foreground' : ''}`}>
                         {task.title}
                       </p>
                       {task.isRecurring && (

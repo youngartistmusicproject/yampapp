@@ -152,7 +152,7 @@ export function TaskFilterPanel({
                 Stage
               </Label>
               <div className="flex flex-wrap gap-1.5">
-                {statuses.map((status) => (
+                {statuses.filter(s => s.id !== 'completed').map((status) => (
                   <Badge
                     key={status.id}
                     variant={filters.statuses.includes(status.id) ? "default" : "outline"}

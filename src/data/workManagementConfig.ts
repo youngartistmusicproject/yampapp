@@ -28,11 +28,13 @@ export const tagLibrary = [
 export type TagItem = (typeof tagLibrary)[number];
 
 // Custom statuses - configurable by admins
+// "completed" is a system status, not user-selectable
 export const statusLibrary = [
-  { id: "not-started", name: "Not Started", color: "#6b7280" },
-  { id: "in-progress", name: "In Progress", color: "#eb5c5c" },
-  { id: "waiting", name: "Waiting", color: "#f59e0b" },
-  { id: "needs-review", name: "Needs Review", color: "#8b5cf6" },
+  { id: "not-started", name: "Not Started", color: "#6b7280", isSystem: false },
+  { id: "in-progress", name: "In Progress", color: "#eb5c5c", isSystem: false },
+  { id: "waiting", name: "Waiting", color: "#f59e0b", isSystem: false },
+  { id: "needs-review", name: "Needs Review", color: "#8b5cf6", isSystem: false },
+  { id: "completed", name: "Completed", color: "#10b981", isSystem: true },
 ];
 
 export type StatusItem = (typeof statusLibrary)[number];
