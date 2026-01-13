@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Task, User, TaskComment, TaskAttachment, CommentReaction, Subtask } from "@/types";
+import { getProgressColor } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -975,7 +976,7 @@ export function TaskDetailDialog({
                       >
                         <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-primary rounded-full transition-all duration-300"
+                            className={`h-full rounded-full transition-all duration-300 ${getProgressColor(task.progress || 0)}`}
                             style={{ width: `${task.progress || 0}%` }}
                           />
                         </div>

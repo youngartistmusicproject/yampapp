@@ -190,27 +190,24 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                             </div>
                           </div>
 
+                          {/* Progress bar under title */}
+                          {task.progress !== undefined && task.progress > 0 && (
+                            <div className="mt-1.5">
+                              <Progress value={task.progress} colorByValue className="h-1.5" />
+                            </div>
+                          )}
+
                           {task.description && (
                             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                               {task.description}
                             </p>
                           )}
                           
-                          {/* Est Time & Progress */}
-                          {(task.estimatedTime || (task.progress !== undefined && task.progress > 0)) && (
-                            <div className="flex items-center gap-3 mt-2">
-                              {task.estimatedTime && (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Clock className="w-3 h-3" />
-                                  {formatEstimatedTime(task.estimatedTime)}
-                                </div>
-                              )}
-                              {task.progress !== undefined && task.progress > 0 && (
-                                <div className="flex items-center gap-1.5 flex-1">
-                                  <Progress value={task.progress} className="h-1.5" />
-                                  <span className="text-xs text-muted-foreground">{task.progress}%</span>
-                                </div>
-                              )}
+                          {/* Est Time only */}
+                          {task.estimatedTime && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
+                              <Clock className="w-3 h-3" />
+                              {formatEstimatedTime(task.estimatedTime)}
                             </div>
                           )}
 
