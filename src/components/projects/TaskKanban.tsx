@@ -147,110 +147,56 @@ function SortableTaskCard({
         <div className="pointer-events-none absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-primary/70" />
       )}
 
-      <Card
-        className={`group border-l-4 ${importanceColors[task.importance]} ${
-          overdue ? "bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500" : ""
-        } hover:shadow-md hover:scale-[1.01] transition-all duration-150`}
+      <div
+        className={`group rounded-lg border bg-card p-3 transition-colors ${
+          overdue ? "bg-destructive/5 border-destructive/30" : "hover:bg-muted/30"
+        }`}
         onClick={() => onViewTask(task)}
       >
-        <CardContent className="p-3 space-y-2 h-[120px] flex flex-col">
-          {/* Task Title Row */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0 flex-1">
-              <p className="text-sm font-medium leading-snug line-clamp-2">
-                {task.title}
-              </p>
-              {task.isRecurring && (
-                <Repeat className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-              )}
-            </div>
-            <div 
-              className="flex items-center gap-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-              onClick={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
+        {/* Title */}
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-sm font-medium leading-snug line-clamp-2 flex-1">
+            {task.title}
+          </p>
+          <div 
+            className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              onClick={() => onDuplicateTask?.(task.id)}
             >
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6"
-                onClick={() => onDuplicateTask?.(task.id)}
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6 text-destructive hover:text-destructive"
-                onClick={() => onDeleteClick(task)}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
-            </div>
+              <Copy className="w-3 h-3" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+              onClick={() => onDeleteClick(task)}
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
           </div>
+        </div>
 
-          {/* Progress bar */}
-          {task.progress !== undefined && task.progress > 0 && (
-            <Progress value={task.progress} colorByValue className="h-1.5" />
+        {/* Footer: Assignees + Due Date */}
+        <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50">
+          {task.assignees && task.assignees.length > 0 ? (
+            <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+          ) : (
+            <span className="text-xs text-muted-foreground">Unassigned</span>
           )}
           
-          {/* Properties Row: Time | Importance | Effort */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40 mt-auto">
-            {task.estimatedTime && (
-              <div className="flex items-center gap-1 text-xs bg-muted/50 rounded px-1.5 py-0.5">
-                <Clock className="w-3 h-3 text-muted-foreground" />
-                <span>{formatEstimatedTime(task.estimatedTime)}</span>
-              </div>
-            )}
-            <Badge className={`${importanceBadgeColors[task.importance]} text-[10px] capitalize`} variant="secondary">
-              {task.importance}
-            </Badge>
-            <Badge className={`${effortColors[task.effort]} text-[10px] capitalize`} variant="secondary">
-              {task.effort}
-            </Badge>
-          </div>
-
-          {/* Footer Row: Responsible | Due Date | Tags */}
-          <div className="flex items-center gap-2 pt-1 border-t border-border/40">
-            {task.assignees && task.assignees.length > 0 ? (
-              <UserAvatarGroup users={task.assignees} max={2} size="sm" />
-            ) : (
-              <span className="text-[10px] text-muted-foreground italic">Unassigned</span>
-            )}
-            
-            {task.dueDate && (
-              <div className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}`}>
-                <Calendar className="w-3 h-3" />
-                <span>
-                  {overdue && '⚠ '}
-                  {format(task.dueDate, "MMM d")}
-                </span>
-              </div>
-            )}
-            
-            {task.tags && task.tags.length > 0 && (
-              <div className="flex items-center gap-1 ml-auto">
-                <Tag className="w-3 h-3 text-muted-foreground" />
-                {task.tags.slice(0, 1).map((tagId) => {
-                  const tag = getTagById(tagId);
-                  return (
-                    <Badge 
-                      key={tagId} 
-                      variant="outline" 
-                      className="text-[10px] px-1.5 py-0"
-                      style={{ borderColor: tag?.color, color: tag?.color }}
-                    >
-                      {tag?.name || tagId}
-                    </Badge>
-                  );
-                })}
-                {task.tags.length > 1 && (
-                  <span className="text-[10px] text-muted-foreground">+{task.tags.length - 1}</span>
-                )}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          {task.dueDate && (
+            <span className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+              {format(task.dueDate, "MMM d")}
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -276,20 +222,14 @@ const TaskCardOverlay = React.forwardRef<HTMLDivElement, { task: Task }>(functio
   { task },
   ref,
 ) {
-  const overdue = isTaskOverdue(task);
-
   return (
     <div ref={ref}>
-      <Card
-        className={`border-l-4 ${importanceColors[task.importance]} shadow-lg cursor-grabbing ${
-          overdue ? "bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500" : ""
-        }`}
-        style={{ width: "300px" }}
+      <div
+        className="rounded-lg border bg-card p-3 shadow-lg cursor-grabbing"
+        style={{ width: "280px" }}
       >
-        <CardContent className="p-3 space-y-2 h-[120px] flex flex-col">
-          <p className="text-sm font-medium leading-snug line-clamp-2">{task.title}</p>
-        </CardContent>
-      </Card>
+        <p className="text-sm font-medium leading-snug line-clamp-2">{task.title}</p>
+      </div>
     </div>
   );
 });
@@ -554,48 +494,47 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                 onOpenChange={() => toggleColumnCollapse(column.id)}
               >
                 <div
-                  className={`bg-secondary/30 rounded-lg p-3 flex-shrink-0 transition-all duration-200 h-full flex flex-col ${
-                    isCollapsed ? "w-12" : "w-[320px]"
+                  className={`bg-muted/30 rounded-lg p-3 flex-shrink-0 transition-all duration-200 h-full flex flex-col ${
+                    isCollapsed ? "w-10" : "w-[280px]"
                   } ${
                     activeTask && (
                       (dropIndicator?.kind === "column" && dropIndicator.overId === column.id) ||
                       (dropIndicator?.kind === "task" && localTasks.find(t => t.id === dropIndicator.overId)?.status === column.id)
                     )
-                      ? "bg-accent/40 ring-1 ring-accent-foreground/10"
+                      ? "bg-primary/5"
                       : ""
                   }`}
                 >
                   <CollapsibleTrigger asChild>
-                    <div className={`flex items-center gap-2 mb-3 cursor-pointer hover:bg-secondary/50 rounded-md p-1 -m-1 ${
+                    <div className={`flex items-center gap-2 mb-3 cursor-pointer rounded-md p-1 -m-1 ${
                       isCollapsed ? "flex-col" : ""
                     }`}>
                       {isCollapsed ? (
-                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      )}
-                      <div 
-                        className="w-2 h-2 rounded-full flex-shrink-0" 
-                        style={{ backgroundColor: column.color }}
-                      />
-                      {isCollapsed ? (
                         <div className="flex flex-col items-center gap-2">
+                          <div 
+                            className="w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: column.color }}
+                          />
                           <span 
-                            className="font-medium text-sm writing-mode-vertical whitespace-nowrap"
+                            className="text-xs font-medium text-muted-foreground writing-mode-vertical whitespace-nowrap"
                             style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
                           >
                             {column.name}
                           </span>
-                          <Badge variant="secondary" className="text-xs">
+                          <span className="text-xs text-muted-foreground">
                             {columnTasks.length}
-                          </Badge>
+                          </span>
                         </div>
                       ) : (
                         <>
-                          <h3 className="font-medium text-sm">{column.name}</h3>
-                          <Badge variant="secondary" className="ml-auto text-xs">
+                          <div 
+                            className="w-2 h-2 rounded-full flex-shrink-0" 
+                            style={{ backgroundColor: column.color }}
+                          />
+                          <span className="text-sm font-medium text-muted-foreground">{column.name}</span>
+                          <span className="ml-auto text-xs text-muted-foreground">
                             {columnTasks.length}
-                          </Badge>
+                          </span>
                         </>
                       )}
                     </div>

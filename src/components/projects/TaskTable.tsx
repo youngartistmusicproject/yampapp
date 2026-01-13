@@ -137,7 +137,7 @@ function SortableTableRow({
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={`group cursor-grab active:cursor-grabbing hover:bg-muted/50 ${overdue ? 'bg-red-50 dark:bg-red-950/30' : ''}`}
+      className={`group cursor-grab active:cursor-grabbing ${overdue ? 'bg-destructive/5' : 'hover:bg-muted/30'}`}
       onClick={() => onViewTask(task)}
       {...attributes}
       {...listeners}
@@ -151,94 +151,49 @@ function SortableTableRow({
         />
       </TableCell>
       <TableCell>
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-1.5">
-            <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
-              {task.title}
-            </p>
-            {task.isRecurring && (
-              <Repeat className="w-3.5 h-3.5 text-muted-foreground" />
-            )}
-          </div>
-          {task.progress > 0 && (
-            <Progress value={task.progress} colorByValue className="h-1.5 w-24" />
+        <div className="flex items-center gap-2">
+          <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
+            {task.title}
+          </p>
+          {task.isRecurring && (
+            <Repeat className="w-3 h-3 text-muted-foreground/60" />
           )}
         </div>
       </TableCell>
-      <TableCell className="text-muted-foreground text-sm">
-        {task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : "-"}
-      </TableCell>
       <TableCell>
-        <Badge className={importanceColors[task.importance]} variant="secondary">
-          {task.importance}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        <Badge
-          variant="secondary"
+        <span 
+          className="text-xs px-2 py-0.5 rounded-full"
           style={{
-            backgroundColor: status ? `${status.color}20` : undefined,
+            backgroundColor: status ? `${status.color}15` : undefined,
             color: status?.color,
           }}
         >
           {status?.name || task.status}
-        </Badge>
+        </span>
       </TableCell>
       <TableCell>
-        <Badge className={effortColors[task.effort]} variant="secondary">
-          {task.effort}
-        </Badge>
+        <UserAvatarGroup users={task.assignees} max={2} size="sm" />
       </TableCell>
-      <TableCell>
-        <UserAvatarGroup users={task.assignees} max={3} size="md" />
-      </TableCell>
-      <TableCell className={overdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}>
-        {task.dueDate ? (
-          <>
-            {overdue && '⚠ '}
-            {format(task.dueDate, "MMM d, yyyy")}
-          </>
-        ) : "-"}
-      </TableCell>
-      <TableCell>
-        <div className="flex gap-1 flex-wrap">
-          {task.tags.slice(0, 2).map((tagId) => {
-            const tag = getTagById(tagId);
-            return (
-              <Badge
-                key={tagId}
-                variant="outline"
-                className="text-xs"
-                style={{ borderColor: tag?.color, color: tag?.color }}
-              >
-                {tag?.name || tagId}
-              </Badge>
-            );
-          })}
-          {task.tags.length > 2 && (
-            <Badge variant="outline" className="text-xs">
-              +{task.tags.length - 2}
-            </Badge>
-          )}
-        </div>
+      <TableCell className={overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}>
+        {task.dueDate ? format(task.dueDate, "MMM d") : "—"}
       </TableCell>
       <TableCell onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
             onClick={() => onDuplicateTask?.(task.id)}
           >
-            <Copy className="w-4 h-4" />
+            <Copy className="w-3.5 h-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-destructive hover:text-destructive"
+            className="h-7 w-7 text-muted-foreground hover:text-destructive"
             onClick={() => onDeleteClick(task)}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
       </TableCell>
@@ -295,8 +250,8 @@ function SortableMobileCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-lg border p-4 shadow-card cursor-grab active:cursor-grabbing hover:bg-muted/50 hover:shadow-md transition-all ${
-        overdue ? 'bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800' : 'bg-card'
+      className={`rounded-lg border p-4 cursor-grab active:cursor-grabbing transition-colors ${
+        overdue ? 'bg-destructive/5 border-destructive/20' : 'bg-card hover:bg-muted/30'
       }`}
       onClick={() => onViewTask(task)}
       {...attributes}
@@ -312,51 +267,34 @@ function SortableMobileCard({
           />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
               {task.title}
             </p>
             {task.isRecurring && (
-              <Repeat className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+              <Repeat className="w-3 h-3 text-muted-foreground/60 flex-shrink-0" />
             )}
           </div>
-          {task.progress !== undefined && task.progress > 0 && (
-            <div className="mt-1.5">
-              <Progress value={task.progress} colorByValue className="h-1.5 w-full max-w-[120px]" />
-            </div>
-          )}
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            {task.estimatedTime && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="w-3 h-3" />
-                {formatEstimatedTime(task.estimatedTime)}
-              </div>
-            )}
-            <Badge
-              variant="secondary"
-              className="text-xs"
+          
+          <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
+            <span 
+              className="text-xs px-2 py-0.5 rounded-full"
               style={{
-                backgroundColor: status ? `${status.color}20` : undefined,
+                backgroundColor: status ? `${status.color}15` : undefined,
                 color: status?.color,
               }}
             >
               {status?.name || task.status}
-            </Badge>
-            <Badge className={`${effortColors[task.effort]} text-xs`} variant="secondary">
-              {task.effort}
-            </Badge>
-            <Badge className={`${importanceColors[task.importance]} text-xs`} variant="secondary">
-              {task.importance}
-            </Badge>
+            </span>
             {task.dueDate && (
-              <span className={`text-xs ${overdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}`}>
-                {overdue && '⚠ '}
+              <span className={overdue ? 'text-destructive font-medium' : ''}>
                 {format(task.dueDate, "MMM d")}
               </span>
             )}
           </div>
+          
           <div className="flex items-center justify-between mt-3">
-            <UserAvatarGroup users={task.assignees} max={3} size="sm" />
+            <UserAvatarGroup users={task.assignees} max={2} size="sm" />
             <div 
               className="flex items-center gap-1" 
               onClick={(e) => e.stopPropagation()}
@@ -365,18 +303,18 @@ function SortableMobileCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-7 w-7 text-muted-foreground"
                 onClick={() => onDuplicateTask?.(task.id)}
               >
-                <Copy className="w-4 h-4" />
+                <Copy className="w-3.5 h-3.5" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
                 onClick={() => onDeleteClick(task)}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
               </Button>
             </div>
           </div>
@@ -485,41 +423,32 @@ export function TaskTable({
         </div>
 
         {/* Desktop Table View */}
-        <div className="rounded-lg border bg-card shadow-card hidden md:block">
+        <div className="rounded-lg border bg-card hidden md:block overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
+              <TableRow className="hover:bg-transparent border-b">
                 <TableHead className="w-12"></TableHead>
-                <TableHead>Task</TableHead>
-                <TableHead className="w-14">
-                  <Button variant="ghost" size="sm" className="gap-1 -ml-3 p-1" onClick={() => onToggleSort?.('estimatedTime')}>
-                    <Clock className={`w-4 h-4 ${sortField === 'estimatedTime' ? 'text-primary' : 'text-muted-foreground'}`} />
-                    <ArrowUpDown className={`w-3 h-3 ${sortField === 'estimatedTime' ? 'text-primary' : ''}`} />
-                  </Button>
+                <TableHead className="font-medium">Task</TableHead>
+                <TableHead className="font-medium">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    onClick={() => onToggleSort?.('stage')}
+                  >
+                    Status
+                    {sortField === 'stage' && <ArrowUpDown className="w-3 h-3 text-primary" />}
+                  </button>
                 </TableHead>
-                <TableHead>
-                  <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('importance')}>
-                    Importance <ArrowUpDown className={`w-3 h-3 ${sortField === 'importance' ? 'text-primary' : ''}`} />
-                  </Button>
+                <TableHead className="font-medium">Responsible</TableHead>
+                <TableHead className="font-medium">
+                  <button 
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    onClick={() => onToggleSort?.('dueDate')}
+                  >
+                    Due
+                    {sortField === 'dueDate' && <ArrowUpDown className="w-3 h-3 text-primary" />}
+                  </button>
                 </TableHead>
-                <TableHead>
-                  <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('stage')}>
-                    Stage <ArrowUpDown className={`w-3 h-3 ${sortField === 'stage' ? 'text-primary' : ''}`} />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('effort')}>
-                    Effort <ArrowUpDown className={`w-3 h-3 ${sortField === 'effort' ? 'text-primary' : ''}`} />
-                  </Button>
-                </TableHead>
-                <TableHead>Responsible</TableHead>
-                <TableHead>
-                  <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('dueDate')}>
-                    Due Date <ArrowUpDown className={`w-3 h-3 ${sortField === 'dueDate' ? 'text-primary' : ''}`} />
-                  </Button>
-                </TableHead>
-                <TableHead>Tags</TableHead>
-                <TableHead className="w-12"></TableHead>
+                <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
