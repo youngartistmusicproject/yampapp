@@ -82,9 +82,17 @@ function isTaskOverdue(task: Task): boolean {
 export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, statuses }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
+  const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks);
+
+  // Sync optimistic tasks with props when tasks change externally
+  if (tasks !== optimisticTasks && !draggingTaskId) {
+    setOptimisticTasks(tasks);
+  }
 
   const getTasksByStatus = (status: string) =>
-    tasks.filter((task) => task.status === status);
+    optimisticTasks.filter((task) => task.status === status);
 
   const toggleColumnCollapse = (columnId: string) => {
     setCollapsedColumns(prev => {
@@ -101,20 +109,47 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
   const handleDragStart = useCallback((e: React.DragEvent, taskId: string) => {
     e.dataTransfer.setData("taskId", taskId);
     e.dataTransfer.effectAllowed = "move";
+    setDraggingTaskId(taskId);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggingTaskId(null);
+    setDragOverColumn(null);
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent, status: Task["status"]) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData("taskId");
     if (taskId) {
+      // Optimistic update: immediately move task in local state
+      setOptimisticTasks(prev => 
+        prev.map(task => task.id === taskId ? { ...task, status } : task)
+      );
+      // Then persist to database
       onTaskUpdate(taskId, { status });
     }
+    setDragOverColumn(null);
+    setDraggingTaskId(null);
   }, [onTaskUpdate]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   }, []);
+
+  const handleDragEnter = useCallback((columnId: string) => {
+    setDragOverColumn(columnId);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent, columnId: string) => {
+    // Only clear if we're actually leaving the column (not entering a child)
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      if (dragOverColumn === columnId) {
+        setDragOverColumn(null);
+      }
+    }
+  }, [dragOverColumn]);
 
   const handleDeleteConfirm = () => {
     if (taskToDelete && onDeleteTask) {
@@ -137,11 +172,17 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
               onOpenChange={() => toggleColumnCollapse(column.id)}
             >
               <div
-                className={`bg-secondary/30 rounded-lg p-3 flex-shrink-0 transition-all ${
+                className={`bg-secondary/30 rounded-lg p-3 flex-shrink-0 transition-all duration-200 ${
                   isCollapsed ? "w-12" : "w-[320px]"
+                } ${
+                  dragOverColumn === column.id && !isCollapsed
+                    ? "bg-primary/10 ring-2 ring-primary/50 ring-dashed"
+                    : ""
                 }`}
                 onDrop={(e) => handleDrop(e, column.id as Task["status"])}
                 onDragOver={handleDragOver}
+                onDragEnter={() => handleDragEnter(column.id)}
+                onDragLeave={(e) => handleDragLeave(e, column.id)}
               >
                 <CollapsibleTrigger asChild>
                   <div className={`flex items-center gap-2 mb-3 cursor-pointer hover:bg-secondary/50 rounded-md p-1 -m-1 ${
@@ -188,9 +229,10 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                         key={task.id}
                         className={`group cursor-grab active:cursor-grabbing border-l-4 ${importanceColors[task.importance]} shadow-card hover:shadow-elevated transition-all ${
                           overdue ? 'bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500' : ''
-                        }`}
+                        } ${draggingTaskId === task.id ? 'opacity-50 scale-95' : ''}`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, task.id)}
+                        onDragEnd={handleDragEnd}
                         onClick={() => onViewTask(task)}
                       >
                         <CardContent className="p-3 space-y-2.5">
