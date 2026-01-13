@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Repeat, Copy, Trash2, ArrowUpDown, Clock, GripVertical } from "lucide-react";
+import { Repeat, Copy, Trash2, ArrowUpDown, Clock } from "lucide-react";
 import {
   DndContext,
   DragEndEvent,
@@ -137,19 +137,12 @@ function SortableTableRow({
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={`group cursor-pointer ${overdue ? 'bg-red-50 dark:bg-red-950/30' : ''}`}
+      className={`group cursor-grab active:cursor-grabbing hover:bg-muted/50 ${overdue ? 'bg-red-50 dark:bg-red-950/30' : ''}`}
       onClick={() => onViewTask(task)}
+      {...attributes}
+      {...listeners}
     >
-      <TableCell onClick={(e) => e.stopPropagation()} className="w-8">
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
-        >
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
-        </div>
-      </TableCell>
-      <TableCell onClick={(e) => e.stopPropagation()}>
+      <TableCell onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
         <Checkbox
           checked={task.status === doneStatusId}
           onCheckedChange={(checked) =>
@@ -229,13 +222,13 @@ function SortableTableRow({
           )}
         </div>
       </TableCell>
-      <TableCell onClick={(e) => e.stopPropagation()}>
+      <TableCell onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={(e) => { e.stopPropagation(); onDuplicateTask?.(task.id); }}
+            onClick={() => onDuplicateTask?.(task.id)}
           >
             <Copy className="w-4 h-4" />
           </Button>
@@ -243,7 +236,7 @@ function SortableTableRow({
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-destructive hover:text-destructive"
-            onClick={(e) => { e.stopPropagation(); onDeleteClick(task); }}
+            onClick={() => onDeleteClick(task)}
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -255,8 +248,7 @@ function SortableTableRow({
 
 function DragOverlayRow({ task }: { task: Task }) {
   return (
-    <div className="bg-card border rounded-lg p-3 shadow-lg flex items-center gap-3">
-      <GripVertical className="w-4 h-4 text-muted-foreground" />
+    <div className="bg-card border rounded-lg p-3 shadow-lg flex items-center gap-3 cursor-grabbing">
       <span className="font-medium">{task.title}</span>
     </div>
   );
@@ -303,21 +295,15 @@ function SortableMobileCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-lg border p-4 shadow-card cursor-pointer hover:bg-muted/50 transition-colors ${
+      className={`rounded-lg border p-4 shadow-card cursor-grab active:cursor-grabbing hover:bg-muted/50 hover:shadow-md transition-all ${
         overdue ? 'bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800' : 'bg-card'
       }`}
       onClick={() => onViewTask(task)}
+      {...attributes}
+      {...listeners}
     >
       <div className="flex items-start gap-3">
-        <div
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-          className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded mt-0.5"
-        >
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
-        </div>
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
           <Checkbox
             checked={task.status === doneStatusId}
             onCheckedChange={(checked) =>
@@ -371,7 +357,11 @@ function SortableMobileCard({
           </div>
           <div className="flex items-center justify-between mt-3">
             <UserAvatarGroup users={task.assignees} max={3} size="sm" />
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <div 
+              className="flex items-center gap-1" 
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               <Button
                 variant="ghost"
                 size="icon"
@@ -499,7 +489,6 @@ export function TaskTable({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-8"></TableHead>
                 <TableHead className="w-12"></TableHead>
                 <TableHead>Task</TableHead>
                 <TableHead className="w-14">
