@@ -133,8 +133,8 @@ export default function Projects() {
     [dbTasks]
   );
 
-  // Find the "done" status ID dynamically
-  const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
+  // Completed status ID
+  const completedStatusId = 'completed';
 
   const filteredTasks = useMemo(() => {
     const today = new Date();
@@ -178,7 +178,7 @@ export default function Projects() {
       
       // Overdue filter
       const matchesOverdue = !filters.showOverdueOnly || 
-        (task.dueDate && new Date(task.dueDate) < today && task.status !== 'done');
+        (task.dueDate && new Date(task.dueDate) < today && task.status !== 'completed');
       
       return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesEffort && matchesImportance &&
              matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
@@ -252,7 +252,7 @@ export default function Projects() {
   const handleRestoreTask = (taskId: string) => {
     updateTask.mutate({ 
       taskId, 
-      updates: { status: 'todo', completedAt: undefined } 
+      updates: { status: 'not-started', completedAt: undefined } 
     }, {
       onSuccess: () => toast.success('Task restored'),
       onError: () => toast.error('Failed to restore task'),
@@ -368,7 +368,7 @@ export default function Projects() {
         selectedProject={selectedProject}
         onTeamSelect={setSelectedTeam}
         onProjectSelect={setSelectedProject}
-        doneStatusId={doneStatusId}
+        completedStatusId={completedStatusId}
       />
 
       {/* Filters */}
