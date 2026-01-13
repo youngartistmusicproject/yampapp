@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Team } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ interface TeamDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (team: Omit<Team, 'id'>) => void;
+  team?: Team; // If provided, we're editing
 }
 
 const teamColors = [
@@ -25,11 +26,27 @@ const teamColors = [
   "#06b6d4", // cyan
 ];
 
-export function TeamDialog({ open, onOpenChange, onSubmit }: TeamDialogProps) {
+export function TeamDialog({ open, onOpenChange, onSubmit, team }: TeamDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(teamColors[0]);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+
+  const isEditing = !!team;
+
+  // Populate form when editing
+  useEffect(() => {
+    if (team) {
+      setName(team.name);
+      setDescription(team.description || "");
+      setColor(team.color || teamColors[0]);
+    } else {
+      setName("");
+      setDescription("");
+      setColor(teamColors[0]);
+    }
+    setHasAttemptedSubmit(false);
+  }, [team, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +67,7 @@ export function TeamDialog({ open, onOpenChange, onSubmit }: TeamDialogProps) {
     setDescription("");
     setColor(teamColors[0]);
     setHasAttemptedSubmit(false);
+    onOpenChange(false);
   };
 
   return (
@@ -105,7 +123,7 @@ export function TeamDialog({ open, onOpenChange, onSubmit }: TeamDialogProps) {
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Team</Button>
+            <Button type="submit">{isEditing ? 'Save Changes' : 'Create Team'}</Button>
           </div>
         </form>
       </DialogContent>

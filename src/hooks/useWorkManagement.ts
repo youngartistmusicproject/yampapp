@@ -87,6 +87,84 @@ export function useCreateTeam() {
   });
 }
 
+// Update an existing team
+export function useUpdateTeam() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ teamId, updates }: { teamId: string; updates: { name?: string; description?: string; color?: string } }) => {
+      const { data, error } = await supabase
+        .from('teams')
+        .update({
+          name: updates.name,
+          description: updates.description,
+          color: updates.color,
+        })
+        .eq('id', teamId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Log activity
+      await supabase.from('activity_log').insert({
+        user_name: 'You',
+        action: 'updated team',
+        target_type: 'team',
+        target_title: data.name,
+        target_id: data.id,
+      });
+      
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
+    },
+  });
+}
+
+// Delete a team
+export function useDeleteTeam() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (teamId: string) => {
+      // First get the team name for activity log
+      const { data: team } = await supabase
+        .from('teams')
+        .select('name')
+        .eq('id', teamId)
+        .single();
+      
+      const { error } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', teamId);
+      
+      if (error) throw error;
+      
+      // Log activity
+      if (team) {
+        await supabase.from('activity_log').insert({
+          user_name: 'You',
+          action: 'deleted team',
+          target_type: 'team',
+          target_title: team.name,
+          target_id: teamId,
+        });
+      }
+      
+      return teamId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
+    },
+  });
+}
+
 // Fetch all projects with their team info
 export function useProjects() {
   return useQuery({
