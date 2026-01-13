@@ -248,9 +248,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 onChange={(e) => setTitle(e.target.value)}
                 className={hasAttemptedSubmit && validationErrors.title ? "border-destructive focus-visible:ring-destructive" : ""}
               />
-              {hasAttemptedSubmit && validationErrors.title && (
-                <p className="text-xs text-destructive">{validationErrors.title}</p>
-              )}
             </div>
 
             {/* Description */}
@@ -320,9 +317,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   {getRecurrenceDescription(recurrence)}
                 </p>
               )}
-              {hasAttemptedSubmit && validationErrors.dueDate && (
-                <p className="text-xs text-destructive">{validationErrors.dueDate}</p>
-              )}
             </div>
 
             {/* Assignees */}
@@ -336,9 +330,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   placeholder="Search and select assignees..."
                 />
               </div>
-              {hasAttemptedSubmit && validationErrors.assignees && (
-                <p className="text-xs text-destructive">{validationErrors.assignees}</p>
-              )}
             </div>
 
             {/* Separator */}
@@ -383,9 +374,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                     ))}
                   </SelectContent>
                 </Select>
-                {hasAttemptedSubmit && validationErrors.effort && (
-                  <p className="text-xs text-destructive">{validationErrors.effort}</p>
-                )}
               </div>
 
               {/* Importance */}
@@ -425,9 +413,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                     ))}
                   </SelectContent>
                 </Select>
-                {hasAttemptedSubmit && validationErrors.importance && (
-                  <p className="text-xs text-destructive">{validationErrors.importance}</p>
-                )}
               </div>
             </div>
 
