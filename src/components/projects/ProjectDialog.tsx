@@ -102,7 +102,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
     setHasAttemptedSubmit(true);
     
     // Validate required fields
-    if (!teamId) {
+    if (!teamId || selectedMembers.length === 0) {
       return;
     }
     
@@ -215,7 +215,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
 
               {/* Members */}
               <div className="flex items-start gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0 pt-2">Members</Label>
+                <Label className="text-sm text-muted-foreground w-28 shrink-0 pt-2">Members <span className="text-destructive">*</span></Label>
                 <div className="flex-1 space-y-2">
                   {selectedMembers.length > 0 && (
                     <div className="flex gap-2 flex-wrap">
@@ -234,15 +234,24 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                     </div>
                   )}
                   {!teamId ? (
-                    <div className="border border-border/50 rounded-lg p-4 text-center text-sm text-muted-foreground">
+                    <div className={cn(
+                      "border rounded-lg p-4 text-center text-sm text-muted-foreground",
+                      hasAttemptedSubmit && selectedMembers.length === 0 ? "border-destructive" : "border-border/50"
+                    )}>
                       Select a team first to see available members
                     </div>
                   ) : filteredMembers.length === 0 ? (
-                    <div className="border border-border/50 rounded-lg p-4 text-center text-sm text-muted-foreground">
+                    <div className={cn(
+                      "border rounded-lg p-4 text-center text-sm text-muted-foreground",
+                      hasAttemptedSubmit && selectedMembers.length === 0 ? "border-destructive" : "border-border/50"
+                    )}>
                       No members in this team yet
                     </div>
                   ) : (
-                    <div className="border border-border/50 rounded-lg p-2 max-h-32 overflow-y-auto space-y-1">
+                    <div className={cn(
+                      "border rounded-lg p-2 max-h-32 overflow-y-auto space-y-1",
+                      hasAttemptedSubmit && selectedMembers.length === 0 ? "border-destructive" : "border-border/50"
+                    )}>
                       {/* All Team Members option */}
                       <button
                         type="button"
