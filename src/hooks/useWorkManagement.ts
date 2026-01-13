@@ -30,287 +30,14 @@ function getUserByName(name: string): User {
   };
 }
 
-// Fetch all teams with member counts
-export function useTeams() {
-  return useQuery({
-    queryKey: ['teams'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('teams')
-        .select('*, team_members(count)')
-        .order('sort_order', { ascending: true });
-      
-      if (error) throw error;
-      return data.map(team => ({
-        id: team.id,
-        name: team.name,
-        color: team.color || '#6366f1',
-        description: team.description,
-        memberCount: (team.team_members as any)?.[0]?.count || 0,
-        sortOrder: (team as any).sort_order || 0,
-      }));
-    },
-  });
-}
-
-// Reorder teams
-export function useReorderTeams() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (teams: { id: string; sortOrder: number }[]) => {
-      // Update each team's sort_order
-      const updates = teams.map((team, index) => 
-        supabase
-          .from('teams')
-          .update({ sort_order: index })
-          .eq('id', team.id)
-      );
-      
-      await Promise.all(updates);
-      return teams;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-    },
-  });
-}
-
-// Fetch team members for a specific team
-export function useTeamMembers(teamId: string | null) {
-  return useQuery({
-    queryKey: ['team-members', teamId],
-    queryFn: async () => {
-      if (!teamId) return [];
-      
-      const { data, error } = await supabase
-        .from('team_members')
-        .select('*')
-        .eq('team_id', teamId)
-        .order('user_name');
-      
-      if (error) throw error;
-      return data.map(m => ({
-        id: m.id,
-        teamId: m.team_id,
-        userName: m.user_name,
-        role: m.role || 'member',
-        joinedAt: new Date(m.joined_at),
-      }));
-    },
-    enabled: !!teamId,
-  });
-}
-
-// Fetch all team leaders across all teams
-export function useAllTeamLeaders() {
-  return useQuery({
-    queryKey: ['all-team-leaders'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('team_members')
-        .select('*')
-        .in('role', ['leader', 'admin']);
-      
-      if (error) throw error;
-      
-      // Return a set of user names who are team leaders
-      return data.map(m => m.user_name);
-    },
-  });
-}
-
-// Add a member to a team
-export function useAddTeamMember() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ teamId, userName, role = 'member' }: { teamId: string; userName: string; role?: string }) => {
-      const { data, error } = await supabase
-        .from('team_members')
-        .insert({
-          team_id: teamId,
-          user_name: userName,
-          role,
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['team-members', variables.teamId] });
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-    },
-  });
-}
-
-// Remove a member from a team
-export function useRemoveTeamMember() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ memberId, teamId }: { memberId: string; teamId: string }) => {
-      const { error } = await supabase
-        .from('team_members')
-        .delete()
-        .eq('id', memberId);
-      
-      if (error) throw error;
-      return memberId;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['team-members', variables.teamId] });
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-    },
-  });
-}
-
-// Update a team member's role
-export function useUpdateTeamMemberRole() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ memberId, teamId, role }: { memberId: string; teamId: string; role: string }) => {
-      const { data, error } = await supabase
-        .from('team_members')
-        .update({ role })
-        .eq('id', memberId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['team-members', variables.teamId] });
-    },
-  });
-}
-
-// Create a new team
-export function useCreateTeam() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (team: { name: string; description?: string; color?: string }) => {
-      const { data, error } = await supabase
-        .from('teams')
-        .insert({
-          name: team.name,
-          description: team.description || null,
-          color: team.color || '#6366f1',
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      // Log activity
-      await supabase.from('activity_log').insert({
-        user_name: 'You',
-        action: 'created team',
-        target_type: 'team',
-        target_title: team.name,
-        target_id: data.id,
-      });
-      
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
-    },
-  });
-}
-
-// Update an existing team
-export function useUpdateTeam() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ teamId, updates }: { teamId: string; updates: { name?: string; description?: string; color?: string } }) => {
-      const { data, error } = await supabase
-        .from('teams')
-        .update({
-          name: updates.name,
-          description: updates.description,
-          color: updates.color,
-        })
-        .eq('id', teamId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      // Log activity
-      await supabase.from('activity_log').insert({
-        user_name: 'You',
-        action: 'updated team',
-        target_type: 'team',
-        target_title: data.name,
-        target_id: data.id,
-      });
-      
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
-    },
-  });
-}
-
-// Delete a team
-export function useDeleteTeam() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (teamId: string) => {
-      // First get the team name for activity log
-      const { data: team } = await supabase
-        .from('teams')
-        .select('name')
-        .eq('id', teamId)
-        .single();
-      
-      const { error } = await supabase
-        .from('teams')
-        .delete()
-        .eq('id', teamId);
-      
-      if (error) throw error;
-      
-      // Log activity
-      if (team) {
-        await supabase.from('activity_log').insert({
-          user_name: 'You',
-          action: 'deleted team',
-          target_type: 'team',
-          target_title: team.name,
-          target_id: teamId,
-        });
-      }
-      
-      return teamId;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
-    },
-  });
-}
-
-// Fetch all projects with their team info, owners, and members
+// Fetch all projects with owners and members
 export function useProjects() {
   return useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('projects')
-        .select('*, teams(id, name)')
+        .select('*')
         .order('sort_order', { ascending: true });
       
       if (error) throw error;
@@ -345,7 +72,6 @@ export function useProjects() {
         color: p.color || '#3b82f6',
         status: p.status,
         dueDate: p.due_date ? parseDateOnly(p.due_date) : undefined,
-        teamId: p.team_id,
         tasks: [] as Task[],
         owners: (ownersByProject.get(p.id) || []).map(getUserByName),
         members: (membersByProject.get(p.id) || []).map(getUserByName),
@@ -840,13 +566,12 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (project: { name: string; description?: string; teamId?: string; color?: string; owners?: User[]; members?: User[] }) => {
+    mutationFn: async (project: { name: string; description?: string; color?: string; owners?: User[]; members?: User[] }) => {
       const { data, error } = await supabase
         .from('projects')
         .insert({
           name: project.name,
           description: project.description || null,
-          team_id: project.teamId || null,
           color: project.color || '#3b82f6',
           status: 'active',
         })
@@ -901,13 +626,12 @@ export function useUpdateProject() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; teamId?: string; color?: string; owners?: User[]; members?: User[] } }) => {
+    mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; color?: string; owners?: User[]; members?: User[] } }) => {
       const { data, error } = await supabase
         .from('projects')
         .update({
           name: updates.name,
           description: updates.description,
-          team_id: updates.teamId,
           color: updates.color,
         })
         .eq('id', projectId)
@@ -999,6 +723,49 @@ export function useDeleteProject() {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
+    },
+  });
+}
+
+// Get project members for a specific project
+export function useProjectMembers(projectId: string | null) {
+  return useQuery({
+    queryKey: ['project-members', projectId],
+    queryFn: async () => {
+      if (!projectId) return [];
+      
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('user_name');
+      
+      if (error) throw error;
+      return data.map(m => ({
+        id: m.id,
+        projectId: m.project_id,
+        userName: m.user_name,
+        role: m.role || 'member',
+      }));
+    },
+    enabled: !!projectId,
+  });
+}
+
+// Get all project leads (owners) across all projects
+export function useAllProjectLeads() {
+  return useQuery({
+    queryKey: ['all-project-leads'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('*')
+        .eq('role', 'owner');
+      
+      if (error) throw error;
+      
+      // Return a set of user names who are project leads
+      return data.map(m => m.user_name);
     },
   });
 }

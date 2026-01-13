@@ -1,23 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { Project, User, Team } from "@/types";
+import { Project, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X, Users, Crown } from "lucide-react";
 import { SearchableUserMultiSelect } from "@/components/projects/SearchableUserMultiSelect";
-import { useTeamMembers } from "@/hooks/useWorkManagement";
 import { teamMembers as allTeamMembers } from "@/data/workManagementConfig";
 
 interface ProjectDialogProps {
@@ -25,8 +17,6 @@ interface ProjectDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (project: Omit<Project, 'id' | 'createdAt' | 'tasks'>) => void;
   availableMembers: User[];
-  teams: Team[];
-  selectedTeamId?: string;
   project?: Project; // If provided, we're editing
 }
 
@@ -41,38 +31,15 @@ const projectColors = [
   "#84cc16", // lime
 ];
 
-export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, teams, selectedTeamId, project }: ProjectDialogProps) {
+export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, project }: ProjectDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(projectColors[0]);
   const [selectedOwners, setSelectedOwners] = useState<User[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
-  const [teamId, setTeamId] = useState("");
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   const isEditing = !!project;
-
-  // Fetch team members for the selected team
-  const { data: teamMembersData } = useTeamMembers(teamId || null);
-
-  // Convert team members to User objects
-  const filteredMembers = useMemo(() => {
-    if (!teamMembersData || teamMembersData.length === 0) return [];
-    
-    return teamMembersData.map(tm => {
-      // Find matching user from allTeamMembers config
-      const found = allTeamMembers.find(m => m.name === tm.userName || m.name.startsWith(tm.userName.split(' ')[0]));
-      if (found) return found;
-      
-      // Create a basic user object for unknown names
-      return {
-        id: tm.userName.toLowerCase().replace(/\s+/g, '-'),
-        name: tm.userName,
-        email: `${tm.userName.toLowerCase().replace(/\s+/g, '.')}@company.com`,
-        role: (tm.role === 'super-admin' ? 'super-admin' : tm.role === 'admin' ? 'admin' : 'staff') as User['role'],
-      };
-    });
-  }, [teamMembersData]);
 
   // Populate form when editing or reset when creating
   useEffect(() => {
@@ -82,32 +49,22 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
       setColor(project.color || projectColors[0]);
       setSelectedOwners(project.owners || []);
       setSelectedMembers(project.members || []);
-      setTeamId(project.teamId || "");
     } else {
       setName("");
       setDescription("");
       setColor(projectColors[0]);
       setSelectedOwners([]);
       setSelectedMembers([]);
-      setTeamId(selectedTeamId || teams[0]?.id || "");
     }
     setHasAttemptedSubmit(false);
-  }, [project, open, selectedTeamId, teams]);
-
-  // Clear selected owners and members when team changes (unless editing)
-  useEffect(() => {
-    if (!isEditing && teamId) {
-      setSelectedOwners([]);
-      setSelectedMembers([]);
-    }
-  }, [teamId, isEditing]);
+  }, [project, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setHasAttemptedSubmit(true);
     
     // Validate required fields - at least one owner required
-    if (!teamId || selectedOwners.length === 0) {
+    if (selectedOwners.length === 0) {
       return;
     }
     
@@ -117,7 +74,6 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
       color,
       owners: selectedOwners,
       members: selectedMembers,
-      teamId,
     });
     
     // Reset form
@@ -126,7 +82,6 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
     setColor(projectColors[0]);
     setSelectedOwners([]);
     setSelectedMembers([]);
-    setTeamId(selectedTeamId || teams[0]?.id || "");
     setHasAttemptedSubmit(false);
     onOpenChange(false);
   };
@@ -161,28 +116,23 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
     setSelectedMembers(prev => prev.filter(m => m.id !== memberId));
   };
 
-  const selectAllAsOwners = () => {
-    setSelectedOwners(filteredMembers);
-    setSelectedMembers([]);
-  };
-
   const selectAllAsMembers = () => {
-    // Add all team members as members, EXCEPT those already assigned as leads
-    const nonLeadMembers = filteredMembers.filter(
+    // Add all available members as members, EXCEPT those already assigned as leads
+    const nonLeadMembers = availableMembers.filter(
       (m) => !selectedOwners.find((o) => o.id === m.id)
     );
     setSelectedMembers(nonLeadMembers);
   };
 
   // Get available members for each role (excluding those already selected in the other role)
-  const availableForOwner = filteredMembers.filter(m => !selectedMembers.find(sm => sm.id === m.id));
-  const availableForMember = filteredMembers.filter(m => !selectedOwners.find(so => so.id === m.id));
+  const availableForOwner = availableMembers.filter(m => !selectedMembers.find(sm => sm.id === m.id));
+  const availableForMember = availableMembers.filter(m => !selectedOwners.find(so => so.id === m.id));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-[95vw] sm:max-w-[640px] max-h-[90vh] overflow-y-auto p-0 top-[10%] translate-y-0 data-[state=open]:slide-in-from-top-[5%] data-[state=closed]:slide-out-to-top-[5%]">
         <form onSubmit={handleSubmit}>
-          {/* Header area - matches TaskDialog */}
+          {/* Header area */}
           <div className="px-6 pt-6 pb-4 border-b border-border/50">
             <input
               type="text"
@@ -204,32 +154,6 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
           {/* Form fields */}
           <div className="px-6 py-5 space-y-4">
             <div className="space-y-3">
-              {/* Team */}
-              <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0">Team <span className="text-destructive">*</span></Label>
-                <Select value={teamId} onValueChange={setTeamId}>
-                  <SelectTrigger className={cn(
-                    "h-9 text-sm border-border/50 bg-transparent flex-1",
-                    hasAttemptedSubmit && !teamId && "border-destructive"
-                  )}>
-                    <SelectValue placeholder="Select a team" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id}>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: team.color }}
-                          />
-                          {team.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Project Color */}
               <div className="flex items-center gap-3">
                 <Label className="text-sm text-muted-foreground w-28 shrink-0">Color</Label>
@@ -263,14 +187,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                     )}
                     selected={selectedOwners}
                     onToggle={toggleOwner}
-                    disabled={!teamId || filteredMembers.length === 0}
-                    placeholder={
-                      !teamId
-                        ? "Select a team first"
-                        : filteredMembers.length === 0
-                          ? "No members in team"
-                          : "Add lead..."
-                    }
+                    placeholder="Add lead..."
                     searchPlaceholder="Search leads..."
                   />
 
@@ -315,14 +232,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                     items={availableForMember}
                     selected={selectedMembers}
                     onToggle={toggleMember}
-                    disabled={!teamId || filteredMembers.length === 0}
-                    placeholder={
-                      !teamId
-                        ? "Select a team first"
-                        : filteredMembers.length === 0
-                          ? "No members in team"
-                          : "Add member..."
-                    }
+                    placeholder="Add member..."
                     searchPlaceholder="Search members..."
                     prependItem={{
                       value: "__all__",
@@ -330,7 +240,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                       label: (
                         <span className="flex items-center gap-2">
                           <Users className="w-3 h-3" />
-                          All Team Members
+                          All Available Members
                         </span>
                       ),
                     }}
