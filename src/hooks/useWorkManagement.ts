@@ -278,21 +278,40 @@ export function useReorderTasks() {
   
   return useMutation({
     mutationFn: async (updates: { taskId: string; sortOrder: number }[]) => {
-      // Update each task's sort_order
-      const promises = updates.map(({ taskId, sortOrder }) => 
+      const promises = updates.map(({ taskId, sortOrder }) =>
         supabase
           .from('tasks')
           .update({ sort_order: sortOrder })
           .eq('id', taskId)
       );
-      
+
       const results = await Promise.all(promises);
       const error = results.find(r => r.error)?.error;
       if (error) throw error;
-      
+
       return updates;
     },
-    onSuccess: () => {
+    onMutate: async (updates) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData<Task[]>(['tasks']);
+
+      queryClient.setQueryData<Task[]>(['tasks'], (old) => {
+        if (!old) return old;
+        const byId = new Map(updates.map(u => [u.taskId, u.sortOrder] as const));
+        return old.map(t => {
+          const nextOrder = byId.get(t.id);
+          return nextOrder === undefined ? t : { ...t, sortOrder: nextOrder };
+        });
+      });
+
+      return { previous };
+    },
+    onError: (_err, _updates, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(['tasks'], ctx.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
