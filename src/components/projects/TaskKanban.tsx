@@ -301,6 +301,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
   const skipNextSync = useRef(false);
+  const dragStartStatusRef = useRef<{ taskId: string; status: string } | null>(null);
   const [dropIndicator, setDropIndicator] = useState<
     | { kind: "task"; overId: string; position: "before" | "after" }
     | { kind: "column"; overId: string; position: "end" }
@@ -350,6 +351,9 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = localTasks.find(t => t.id === event.active.id);
+    if (task) {
+      dragStartStatusRef.current = { taskId: task.id, status: task.status };
+    }
     setDropIndicator(null);
     setActiveTask(task || null);
   };
@@ -413,8 +417,14 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
+    const startedInStatus =
+      dragStartStatusRef.current?.taskId === (active.id as string)
+        ? dragStartStatusRef.current.status
+        : null;
+
     // Prevent an immediate resync from props before the cache/backend updates
     skipNextSync.current = true;
+    dragStartStatusRef.current = null;
     setActiveTask(null);
     setDropIndicator(null);
 
@@ -481,8 +491,9 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
       sortOrder: index * 10,
     }));
 
-    // Update status if changed
-    if (activeTaskData.status !== targetStatus) {
+    // Update status if changed (compare to status at drag start, since we optimistically update during drag-over)
+    const shouldUpdateStatus = (startedInStatus ?? activeTaskData.status) !== targetStatus;
+    if (shouldUpdateStatus) {
       onTaskUpdate(active.id as string, { status: targetStatus });
     }
 
@@ -509,6 +520,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
         onDragEnd={handleDragEnd}
         onDragCancel={() => {
           skipNextSync.current = false;
+          dragStartStatusRef.current = null;
           setActiveTask(null);
           setDropIndicator(null);
         }}
@@ -527,6 +539,13 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                 <div
                   className={`bg-secondary/30 rounded-lg p-3 flex-shrink-0 transition-all duration-200 h-full flex flex-col ${
                     isCollapsed ? "w-12" : "w-[320px]"
+                  } ${
+                    activeTask && (
+                      (dropIndicator?.kind === "column" && dropIndicator.overId === column.id) ||
+                      (dropIndicator?.kind === "task" && localTasks.find(t => t.id === dropIndicator.overId)?.status === column.id)
+                    )
+                      ? "bg-primary/5 ring-1 ring-primary/20"
+                      : ""
                   }`}
                 >
                   <CollapsibleTrigger asChild>
