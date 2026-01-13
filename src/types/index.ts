@@ -70,6 +70,7 @@ export interface Task {
   attachments?: TaskAttachment[];
   subtasks?: Subtask[];
   howToLink?: string; // Link to SOP documentation
+  sortOrder?: number; // for manual drag-and-drop sorting
   createdAt: Date;
   updatedAt: Date;
 }

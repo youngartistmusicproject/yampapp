@@ -34,7 +34,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
-import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject } from "@/hooks/useWorkManagement";
+import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useReorderTasks } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
@@ -49,6 +49,7 @@ export default function Projects() {
   const deleteTask = useDeleteTask();
   const duplicateTask = useDuplicateTask();
   const createProject = useCreateProject();
+  const reorderTasks = useReorderTasks();
   
   const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -623,6 +624,7 @@ export default function Projects() {
               onViewTask={handleViewTask} 
               onDeleteTask={handleDeleteTask}
               onDuplicateTask={handleDuplicateTask}
+              onReorderTasks={(updates) => reorderTasks.mutate(updates)}
               onToggleSort={(field) => {
                 if (sortField === field) {
                   setSortAscending(!sortAscending);
@@ -653,6 +655,7 @@ export default function Projects() {
               onViewTask={handleViewTask} 
               onDeleteTask={handleDeleteTask}
               onDuplicateTask={handleDuplicateTask}
+              onReorderTasks={(updates) => reorderTasks.mutate(updates)}
               statuses={statuses} 
             />
           )}
