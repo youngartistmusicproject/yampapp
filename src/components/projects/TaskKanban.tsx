@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -98,19 +98,23 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     });
   };
 
-  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+  const handleDragStart = useCallback((e: React.DragEvent, taskId: string) => {
     e.dataTransfer.setData("taskId", taskId);
-  };
+    e.dataTransfer.effectAllowed = "move";
+  }, []);
 
-  const handleDrop = (e: React.DragEvent, status: Task["status"]) => {
+  const handleDrop = useCallback((e: React.DragEvent, status: Task["status"]) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData("taskId");
-    onTaskUpdate(taskId, { status });
-  };
+    if (taskId) {
+      onTaskUpdate(taskId, { status });
+    }
+  }, [onTaskUpdate]);
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-  };
+    e.dataTransfer.dropEffect = "move";
+  }, []);
 
   const handleDeleteConfirm = () => {
     if (taskToDelete && onDeleteTask) {
