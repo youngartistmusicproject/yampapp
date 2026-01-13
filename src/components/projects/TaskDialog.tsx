@@ -287,7 +287,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                         <Repeat className="w-4 h-4" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-72 z-[70]" align="end">
+                    <PopoverContent className="w-80 z-[70] max-h-[400px] overflow-y-auto" align="end">
                       <RecurrenceSettings
                         isRecurring={isRecurring}
                         onIsRecurringChange={handleToggleRecurring}
