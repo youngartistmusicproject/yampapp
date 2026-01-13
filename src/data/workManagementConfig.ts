@@ -1,6 +1,6 @@
 import { User } from "@/types";
 
-// Department tags - admin-configurable labels for categorizing work
+// Area tags - admin-configurable labels for categorizing work
 export const tagLibrary = [
   { id: "operations", name: "Operations", color: "#3b82f6" },
   { id: "finance", name: "Finance", color: "#10b981" },
