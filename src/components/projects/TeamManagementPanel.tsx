@@ -111,11 +111,11 @@ function SortableTeamItem({ team, onSelect, onEdit, onDelete }: SortableTeamItem
       >
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium truncate">{team.name}</p>
-          {team.memberCount && team.memberCount > 0 && (
-            <Badge variant="secondary" className="text-xs h-5">
-              {team.memberCount} {team.memberCount === 1 ? 'member' : 'members'}
-            </Badge>
-          )}
+          <Badge variant="secondary" className="text-xs h-5">
+            {team.memberCount && team.memberCount > 0 
+              ? `${team.memberCount} ${team.memberCount === 1 ? 'member' : 'members'}`
+              : 'No members'}
+          </Badge>
         </div>
         {team.description && (
           <p className="text-xs text-muted-foreground truncate mt-0.5">
