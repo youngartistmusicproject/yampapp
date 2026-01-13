@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -196,8 +196,8 @@ export function CompletedTasksPanel({
   }, [completedTasks]);
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
+    <Sheet>
+      <SheetTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
@@ -206,13 +206,15 @@ export function CompletedTasksPanel({
           <CheckCircle2 className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Completed</span>
         </Button>
-      </DialogTrigger>
+      </SheetTrigger>
 
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-[640px] max-h-[90vh] p-0 gap-0 flex flex-col overflow-hidden">
-        {/* Header area - matches TaskDialog */}
-        <div className="px-6 pt-6 pb-4 border-b border-border/50 shrink-0">
-          <h2 className="text-xl font-semibold">Completed Tasks</h2>
-        </div>
+      <SheetContent className="w-full sm:max-w-[480px] p-0 flex flex-col">
+        <SheetHeader className="px-6 py-5 border-b border-border/50 shrink-0">
+          <SheetTitle className="text-xl font-semibold">Completed Tasks</SheetTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            View and restore completed tasks
+          </p>
+        </SheetHeader>
 
         <div className="px-6 py-4 border-b border-border/50 space-y-3 shrink-0">
           {/* Search */}
@@ -303,30 +305,28 @@ export function CompletedTasksPanel({
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 h-full overflow-hidden">
-          <ScrollArea className="h-[50vh] sm:h-[55vh] w-full">
-            <div className="px-4 py-2 w-full min-w-0">
-              {filteredTasks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center min-h-[12rem] text-muted-foreground">
-                  <CheckCircle2 className="h-8 w-8 opacity-30 mb-2" />
-                  <p className="text-sm">{query ? "No tasks match your search" : "No completed tasks"}</p>
-                </div>
-              ) : (
-                <div className="space-y-0.5 w-full min-w-0">
-                  {filteredTasks.map((task) => (
-                    <TaskRow
-                      key={task.id}
-                      task={task}
-                      project={getProject(task.projectId)}
-                      onRestore={() => onRestoreTask(task.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-        </div>
-      </DialogContent>
-    </Dialog>
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="px-4 py-2 w-full min-w-0">
+            {filteredTasks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center min-h-[12rem] text-muted-foreground">
+                <CheckCircle2 className="h-8 w-8 opacity-30 mb-2" />
+                <p className="text-sm">{query ? "No tasks match your search" : "No completed tasks"}</p>
+              </div>
+            ) : (
+              <div className="space-y-0.5 w-full min-w-0">
+                {filteredTasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    project={getProject(task.projectId)}
+                    onRestore={() => onRestoreTask(task.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
   );
 }
