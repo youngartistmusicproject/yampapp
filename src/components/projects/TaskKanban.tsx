@@ -25,7 +25,8 @@ import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, MessageSquare, Paperclip } from "lucide-react";
+import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, MessageSquare, Paperclip, Check } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getTagById } from "@/data/workManagementConfig";
 import { Progress, getProgressColor } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -105,6 +106,7 @@ interface SortableTaskCardProps {
   onViewTask: (task: Task) => void;
   onDuplicateTask?: (taskId: string) => void;
   onDeleteClick: (task: Task) => void;
+  onCompleteTask?: (taskId: string) => void;
   dropIndicatorPosition?: "before" | "after";
 }
 
@@ -113,6 +115,7 @@ function SortableTaskCard({
   onViewTask,
   onDuplicateTask,
   onDeleteClick,
+  onCompleteTask,
   dropIndicatorPosition,
 }: SortableTaskCardProps) {
   const {
@@ -207,7 +210,7 @@ function SortableTaskCard({
             <span className="text-muted-foreground text-[10px] font-medium w-6 text-right">{task.progress}%</span>
           </div>
 
-          {/* Footer: Assignees + Due Date + Actions */}
+          {/* Footer: Assignees + Due Date */}
           <div className="flex items-center justify-between pt-1">
             {task.assignees && task.assignees.length > 0 ? (
               <UserAvatarGroup users={task.assignees} max={2} size="sm" />
@@ -215,36 +218,46 @@ function SortableTaskCard({
               <span className="text-xs text-muted-foreground">Unassigned</span>
             )}
             
-            <div className="flex items-center gap-1">
-              {task.dueDate && (
-                <span className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-                  {format(task.dueDate, "MMM d")}
-                </span>
-              )}
-              {/* Hover actions */}
-              <div 
-                className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-              >
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 text-muted-foreground hover:text-foreground"
-                  onClick={() => onDuplicateTask?.(task.id)}
-                >
-                  <Copy className="w-3 h-3" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 text-muted-foreground hover:text-destructive"
-                  onClick={() => onDeleteClick(task)}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
-              </div>
-            </div>
+            {task.dueDate && (
+              <span className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                {format(task.dueDate, "MMM d")}
+              </span>
+            )}
+          </div>
+
+          {/* Hover actions - bottom center */}
+          <div 
+            className="flex items-center justify-center gap-1 pt-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 text-muted-foreground hover:text-green-600"
+              onClick={() => onCompleteTask?.(task.id)}
+              title="Mark complete"
+            >
+              <Check className="w-3.5 h-3.5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              onClick={() => onDuplicateTask?.(task.id)}
+              title="Duplicate"
+            >
+              <Copy className="w-3 h-3" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+              onClick={() => onDeleteClick(task)}
+              title="Delete"
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
           </div>
         </div>
       </div>
@@ -618,6 +631,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                                 onViewTask={onViewTask}
                                 onDuplicateTask={onDuplicateTask}
                                 onDeleteClick={setTaskToDelete}
+                                onCompleteTask={(taskId) => onTaskUpdate(taskId, { status: 'done', progress: 100 })}
                                 dropIndicatorPosition={dropPos}
                               />
                             </div>
