@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X, Users, Crown } from "lucide-react";
+import { SearchableUserMultiSelect } from "@/components/projects/SearchableUserMultiSelect";
 import { useTeamMembers } from "@/hooks/useWorkManagement";
 import { teamMembers as allTeamMembers } from "@/data/workManagementConfig";
 
@@ -244,49 +245,44 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                 </div>
               </div>
 
-              {/* Project Owner(s) */}
-              <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0">
+              {/* Lead */}
+              <div className="flex items-start gap-3">
+                <Label className="text-sm text-muted-foreground w-28 shrink-0 pt-1">
                   <span className="flex items-center gap-1">
                     <Crown className="w-3 h-3" />
                     Lead <span className="text-destructive">*</span>
                   </span>
                 </Label>
                 <div className="flex-1">
-                  <Select
-                    value=""
-                    onValueChange={(val) => {
-                      if (val === '__all__') {
-                        selectAllAsOwners();
-                      } else {
-                        const member = filteredMembers.find(m => m.id === val);
-                        if (member) toggleOwner(member);
-                      }
-                    }}
+                  <SearchableUserMultiSelect
+                    items={availableForOwner.filter(
+                      (m) => !selectedOwners.find((o) => o.id === m.id),
+                    )}
+                    selected={selectedOwners}
+                    onToggle={toggleOwner}
                     disabled={!teamId || filteredMembers.length === 0}
-                  >
-                    <SelectTrigger className={cn(
-                      "h-9 text-sm border-border/50 bg-transparent",
-                      hasAttemptedSubmit && selectedOwners.length === 0 && "border-destructive"
-                    )}>
-                      <SelectValue placeholder={
-                        !teamId ? "Select a team first" : 
-                        filteredMembers.length === 0 ? "No members in team" : 
-                        "Add owner..."
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableForOwner.filter(m => !selectedOwners.find(o => o.id === m.id)).map((member) => (
-                        <SelectItem key={member.id} value={member.id}>
-                          {member.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder={
+                      !teamId
+                        ? "Select a team first"
+                        : filteredMembers.length === 0
+                          ? "No members in team"
+                          : "Add lead..."
+                    }
+                    searchPlaceholder="Search leads..."
+                  />
+
+                  {hasAttemptedSubmit && selectedOwners.length === 0 && (
+                    <p className="mt-1 text-xs text-destructive">Lead is required.</p>
+                  )}
+
                   {selectedOwners.length > 0 && (
                     <div className="flex gap-1.5 flex-wrap mt-2">
                       {selectedOwners.map((owner) => (
-                        <Badge key={owner.id} variant="secondary" className="gap-1 pr-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20">
+                        <Badge
+                          key={owner.id}
+                          variant="secondary"
+                          className="gap-1 pr-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
+                        >
                           <Crown className="w-3 h-3" />
                           {owner.name}
                           <button
@@ -304,47 +300,39 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
               </div>
 
               {/* Members */}
-              <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0">
+              <div className="flex items-start gap-3">
+                <Label className="text-sm text-muted-foreground w-28 shrink-0 pt-1">
                   <span className="flex items-center gap-1">
                     <Users className="w-3 h-3" />
                     Members
                   </span>
                 </Label>
                 <div className="flex-1">
-                  <Select
-                    value=""
-                    onValueChange={(val) => {
-                      if (val === '__all__') {
-                        selectAllAsMembers();
-                      } else {
-                        const member = filteredMembers.find(m => m.id === val);
-                        if (member) toggleMember(member);
-                      }
-                    }}
+                  <SearchableUserMultiSelect
+                    items={availableForMember}
+                    selected={selectedMembers}
+                    onToggle={toggleMember}
                     disabled={!teamId || filteredMembers.length === 0}
-                  >
-                    <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent">
-                      <SelectValue placeholder={
-                        !teamId ? "Select a team first" : 
-                        filteredMembers.length === 0 ? "No members in team" : 
-                        "Add member..."
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__all__">
+                    placeholder={
+                      !teamId
+                        ? "Select a team first"
+                        : filteredMembers.length === 0
+                          ? "No members in team"
+                          : "Add member..."
+                    }
+                    searchPlaceholder="Search members..."
+                    prependItem={{
+                      value: "__all__",
+                      onSelect: selectAllAsMembers,
+                      label: (
                         <span className="flex items-center gap-2">
                           <Users className="w-3 h-3" />
                           All Team Members
                         </span>
-                      </SelectItem>
-                      {availableForMember.map((member) => (
-                        <SelectItem key={member.id} value={member.id}>
-                          {member.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      ),
+                    }}
+                  />
+
                   {selectedMembers.length > 0 && (
                     <div className="flex gap-1.5 flex-wrap mt-2">
                       {selectedMembers.map((member) => (
