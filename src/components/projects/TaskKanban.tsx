@@ -3,7 +3,8 @@ import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock } from "lucide-react";
+import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag } from "lucide-react";
+import { getTagById } from "@/data/workManagementConfig";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
@@ -44,6 +45,20 @@ const importanceColors: Record<string, string> = {
   routine: "border-l-blue-400",
   important: "border-l-amber-400",
   critical: "border-l-red-500",
+};
+
+const effortColors: Record<string, string> = {
+  easy: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+  light: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+  focused: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
+  deep: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+};
+
+const importanceBadgeColors: Record<string, string> = {
+  low: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  routine: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+  important: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
+  critical: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
 };
 
 // Helper to format estimated time
@@ -190,7 +205,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                             </div>
                           </div>
 
-                          {/* Progress bar under title */}
+                          {/* 1. Progress bar under title */}
                           {task.progress !== undefined && task.progress > 0 && (
                             <div className="mt-1.5">
                               <Progress value={task.progress} colorByValue className="h-1.5" />
@@ -203,26 +218,51 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                             </p>
                           )}
                           
-                          {/* Est Time only */}
-                          {task.estimatedTime && (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
-                              <Clock className="w-3 h-3" />
-                              {formatEstimatedTime(task.estimatedTime)}
-                            </div>
-                          )}
+                          {/* 2. Est Time → 3. Importance → 4. Effort (Stage is the column) */}
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                            {task.estimatedTime && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Clock className="w-3 h-3" />
+                                {formatEstimatedTime(task.estimatedTime)}
+                              </div>
+                            )}
+                            <Badge className={`${importanceBadgeColors[task.importance]} text-xs`} variant="secondary">
+                              {task.importance}
+                            </Badge>
+                            <Badge className={`${effortColors[task.effort]} text-xs`} variant="secondary">
+                              {task.effort}
+                            </Badge>
+                          </div>
 
-                          <div className="flex items-center gap-2 mt-3">
+                          {/* 5. Responsible → 6. Due Date → 7. Tags */}
+                          <div className="flex items-center gap-2 mt-2">
+                            <UserAvatarGroup users={task.assignees} max={2} size="sm" />
                             {task.dueDate && (
                               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Calendar className="w-3 h-3" />
                                 {format(task.dueDate, "MMM d")}
                               </div>
                             )}
-                            
-                            {/* Assignees */}
-                            <div className="ml-auto">
-                              <UserAvatarGroup users={task.assignees} max={2} size="sm" />
-                            </div>
+                            {task.tags && task.tags.length > 0 && (
+                              <div className="flex items-center gap-1 ml-auto">
+                                {task.tags.slice(0, 1).map((tagId) => {
+                                  const tag = getTagById(tagId);
+                                  return (
+                                    <Badge 
+                                      key={tagId} 
+                                      variant="outline" 
+                                      className="text-[10px] px-1.5 py-0"
+                                      style={{ borderColor: tag?.color, color: tag?.color }}
+                                    >
+                                      {tag?.name || tagId}
+                                    </Badge>
+                                  );
+                                })}
+                                {task.tags.length > 1 && (
+                                  <span className="text-[10px] text-muted-foreground">+{task.tags.length - 1}</span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
