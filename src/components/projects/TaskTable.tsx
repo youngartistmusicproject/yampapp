@@ -177,7 +177,7 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-12"></TableHead>
               <TableHead>Task</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Stage</TableHead>
               <TableHead>
                 <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('effort')}>
                   Effort <ArrowUpDown className={`w-3 h-3 ${sortField === 'effort' ? 'text-primary' : ''}`} />

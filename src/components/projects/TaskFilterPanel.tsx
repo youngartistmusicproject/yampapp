@@ -146,10 +146,10 @@ export function TaskFilterPanel({
         
         <ScrollArea className="h-[400px]">
           <div className="p-3 space-y-4">
-            {/* Status Filter */}
+            {/* Stage Filter */}
             <div className="space-y-2">
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Status
+                Stage
               </Label>
               <div className="flex flex-wrap gap-1.5">
                 {statuses.map((status) => (

@@ -84,9 +84,9 @@ export function StatusManager({ open, onOpenChange, statuses, onStatusesChange }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>Manage Statuses</DialogTitle>
+          <DialogTitle>Manage Stages</DialogTitle>
           <DialogDescription>
-            Add, edit, or remove task statuses. Changes apply to all tasks.
+            Add, edit, or remove task stages. Changes apply to all tasks.
           </DialogDescription>
         </DialogHeader>
         
@@ -182,7 +182,7 @@ export function StatusManager({ open, onOpenChange, statuses, onStatusesChange }
               <Input
                 value={newStatus.name}
                 onChange={(e) => setNewStatus({ ...newStatus, name: e.target.value })}
-                placeholder="Status name..."
+                placeholder="Stage name..."
                 className="h-8 flex-1"
                 autoFocus
               />
@@ -200,7 +200,7 @@ export function StatusManager({ open, onOpenChange, statuses, onStatusesChange }
               onClick={() => setShowNewForm(true)}
             >
               <Plus className="w-4 h-4" />
-              Add Status
+              Add Stage
             </Button>
           )}
         </div>

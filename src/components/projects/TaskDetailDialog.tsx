@@ -693,11 +693,11 @@ export function TaskDetailDialog({
             <div className="p-4 sm:p-6 space-y-5">
               {/* Properties as clean rows */}
               <div className="space-y-0">
-                {/* Status */}
+                {/* Stage */}
                 <div className="flex items-center justify-between py-2.5 border-b border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Circle className="w-4 h-4" />
-                    <span className="text-sm">Status</span>
+                    <span className="text-sm">Stage</span>
                   </div>
                   <Select 
                     value={task.status} 
