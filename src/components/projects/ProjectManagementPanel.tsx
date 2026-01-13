@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { Pencil, Trash2, Plus, FolderKanban, ChevronRight, GripVertical } from "lucide-react";
+import { Pencil, Trash2, Plus, FolderKanban, ChevronRight, GripVertical, Crown } from "lucide-react";
 import { Project, Team, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { UserAvatarGroup } from "@/components/ui/user-avatar";
+import { UserAvatar, UserAvatarGroup } from "@/components/ui/user-avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import {
   Sheet,
   SheetContent,
@@ -99,8 +101,44 @@ function SortableProjectRow({ project, onEdit, onDelete }: SortableProjectRowPro
           </p>
         )}
       </div>
+      {/* Owners with crown badges */}
+      {project.owners && project.owners.length > 0 && (
+        <div className="flex -space-x-1.5">
+          {project.owners.slice(0, 2).map((owner) => (
+            <Tooltip key={owner.id}>
+              <TooltipTrigger asChild>
+                <div className="relative">
+                  <UserAvatar user={owner} size="sm" showTooltip={false} />
+                  <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-amber-500 flex items-center justify-center">
+                    <Crown className="w-2 h-2 text-white" />
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="font-medium">{owner.name}</p>
+                <p className="text-xs text-amber-500">Owner</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+          {project.owners.length > 2 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="h-5 w-5 rounded-full bg-amber-500/20 border-2 border-background flex items-center justify-center text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                  +{project.owners.length - 2}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {project.owners.slice(2).map((o) => (
+                  <p key={o.id} className="text-sm">{o.name}</p>
+                ))}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      )}
+      {/* Members */}
       {project.members && project.members.length > 0 && (
-        <UserAvatarGroup users={project.members} max={3} size="sm" />
+        <UserAvatarGroup users={project.members} max={2} size="sm" />
       )}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
@@ -430,8 +468,44 @@ function ProjectRow({
           </p>
         )}
       </div>
+      {/* Owners with crown badges */}
+      {project.owners && project.owners.length > 0 && (
+        <div className="flex -space-x-1.5">
+          {project.owners.slice(0, 2).map((owner) => (
+            <Tooltip key={owner.id}>
+              <TooltipTrigger asChild>
+                <div className="relative">
+                  <UserAvatar user={owner} size="sm" showTooltip={false} />
+                  <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-amber-500 flex items-center justify-center">
+                    <Crown className="w-2 h-2 text-white" />
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="font-medium">{owner.name}</p>
+                <p className="text-xs text-amber-500">Owner</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+          {project.owners.length > 2 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="h-5 w-5 rounded-full bg-amber-500/20 border-2 border-background flex items-center justify-center text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                  +{project.owners.length - 2}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {project.owners.slice(2).map((o) => (
+                  <p key={o.id} className="text-sm">{o.name}</p>
+                ))}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      )}
+      {/* Members */}
       {project.members && project.members.length > 0 && (
-        <UserAvatarGroup users={project.members} max={3} size="sm" />
+        <UserAvatarGroup users={project.members} max={2} size="sm" />
       )}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
