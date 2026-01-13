@@ -573,9 +573,9 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[95vw] md:max-w-[900px] p-0 gap-0 overflow-hidden rounded-xl">
+      <DialogContent className="w-full max-w-[95vw] md:max-w-[900px] max-h-[90vh] p-0 gap-0 overflow-hidden rounded-xl flex flex-col">
         {/* Header - matches TaskDialog */}
-        <div className="px-6 pt-6 pb-4 border-b border-border/50">
+        <div className="px-6 pt-6 pb-4 border-b border-border/50 shrink-0">
           <EditableText
             value={task.title}
             onSave={(value) => onTaskUpdate(task.id, { title: value })}
@@ -592,9 +592,9 @@ export function TaskDetailDialog({
         </div>
 
         {/* Main content - 2-column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] flex-1 min-h-0 overflow-hidden">
           {/* Left side - Properties */}
-          <div className="px-6 py-5 border-r border-border/50">
+          <div className="px-6 py-5 border-r border-border/50 overflow-y-auto">
             <div className="space-y-3">
               {/* Project & Status Row */}
               <div className="flex items-center gap-3">
@@ -932,7 +932,7 @@ export function TaskDetailDialog({
           </div>
 
           {/* Right side - Activity */}
-          <div className="flex flex-col min-h-0 max-h-[500px] bg-muted/20">
+          <div className="flex flex-col min-h-0 h-full bg-muted/20 overflow-hidden">
             {/* Tabs */}
             <div className="px-4 py-3 border-b border-border/50 shrink-0">
               <div className="flex gap-1">
