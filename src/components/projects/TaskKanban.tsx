@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
@@ -262,11 +262,17 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
+  const skipNextSync = useRef(false);
 
-  // Sync local tasks with props when not dragging
+  // Sync local tasks with props when not dragging (sorted by manual order)
   useEffect(() => {
+    if (skipNextSync.current) {
+      skipNextSync.current = false;
+      return;
+    }
     if (!activeTask) {
-      setLocalTasks(tasks);
+      const next = [...tasks].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      setLocalTasks(next);
     }
   }, [tasks, activeTask]);
 
@@ -319,6 +325,9 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+
+    // Prevent an immediate resync from props before the cache/backend updates
+    skipNextSync.current = true;
     setActiveTask(null);
 
     if (!over) return;
@@ -474,7 +483,11 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
         </div>
 
         <DragOverlay>
-          {activeTask ? <TaskCardOverlay task={activeTask} /> : null}
+          {activeTask ? (
+            <div>
+              <TaskCardOverlay task={activeTask} />
+            </div>
+          ) : null}
         </DragOverlay>
       </DndContext>
 

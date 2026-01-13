@@ -267,6 +267,13 @@ export default function Projects() {
         const comparison = aTime - bTime;
         return sortAscending ? comparison : -comparison;
       }
+
+      if (sortField === 'manual') {
+        const aOrder = a.sortOrder ?? 0;
+        const bOrder = b.sortOrder ?? 0;
+        const comparison = aOrder - bOrder;
+        return sortAscending ? comparison : -comparison;
+      }
       
       // Default: sort by due date chronologically, tasks without due date go last
       if (!a.dueDate && !b.dueDate) return 0;
@@ -289,6 +296,19 @@ export default function Projects() {
     if (viewingTask?.id === taskId) {
       setViewingTask(prev => prev ? { ...prev, ...updates } : null);
     }
+  };
+
+  const handleReorderTasks = (updates: { taskId: string; sortOrder: number }[]) => {
+    // When the user drags, switch to manual ordering so the UI reflects their intent
+    setSortField('manual');
+    setSortAscending(true);
+
+    reorderTasks.mutate(updates, {
+      onError: (error) => {
+        toast.error('Failed to reorder tasks');
+        console.error(error);
+      },
+    });
   };
 
   const handleEditTask = (task: Task) => {
@@ -624,7 +644,7 @@ export default function Projects() {
               onViewTask={handleViewTask} 
               onDeleteTask={handleDeleteTask}
               onDuplicateTask={handleDuplicateTask}
-              onReorderTasks={(updates) => reorderTasks.mutate(updates)}
+              onReorderTasks={handleReorderTasks}
               onToggleSort={(field) => {
                 if (sortField === field) {
                   setSortAscending(!sortAscending);
@@ -655,7 +675,7 @@ export default function Projects() {
               onViewTask={handleViewTask} 
               onDeleteTask={handleDeleteTask}
               onDuplicateTask={handleDuplicateTask}
-              onReorderTasks={(updates) => reorderTasks.mutate(updates)}
+              onReorderTasks={handleReorderTasks}
               statuses={statuses} 
             />
           )}
