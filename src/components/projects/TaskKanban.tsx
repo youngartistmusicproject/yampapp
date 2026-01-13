@@ -156,50 +156,26 @@ function SortableTaskCard({
         onClick={() => onViewTask(task)}
       >
         {/* Title Row */}
-        <div className="flex items-start gap-2 relative">
-          <div className="flex items-start gap-1.5 flex-1 min-w-0 pr-1">
-            <p className="text-sm font-medium leading-snug line-clamp-2 flex-1">
-              {task.title}
-            </p>
-            {task.isRecurring && (
-              <Repeat className="w-3 h-3 text-muted-foreground/60 flex-shrink-0 mt-0.5" />
-            )}
-            {/* Comment & Attachment indicators */}
-            {commentCount > 0 && (
-              <span className="flex items-center gap-0.5 text-muted-foreground/60 flex-shrink-0 mt-0.5">
-                <MessageSquare className="w-3 h-3" />
-                <span className="text-[10px]">{commentCount}</span>
-              </span>
-            )}
-            {attachmentCount > 0 && (
-              <span className="flex items-center gap-0.5 text-muted-foreground/60 flex-shrink-0 mt-0.5">
-                <Paperclip className="w-3 h-3" />
-                <span className="text-[10px]">{attachmentCount}</span>
-              </span>
-            )}
-          </div>
-          <div 
-            className="absolute top-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-card rounded"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
-              onClick={() => onDuplicateTask?.(task.id)}
-            >
-              <Copy className="w-3 h-3" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6 text-muted-foreground hover:text-destructive"
-              onClick={() => onDeleteClick(task)}
-            >
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          </div>
+        <div className="flex items-start gap-1.5 min-w-0">
+          <p className="text-sm font-medium leading-snug line-clamp-2 flex-1">
+            {task.title}
+          </p>
+          {task.isRecurring && (
+            <Repeat className="w-3 h-3 text-muted-foreground/60 flex-shrink-0 mt-0.5" />
+          )}
+          {/* Comment & Attachment indicators */}
+          {commentCount > 0 && (
+            <span className="flex items-center gap-0.5 text-muted-foreground/60 flex-shrink-0 mt-0.5">
+              <MessageSquare className="w-3 h-3" />
+              <span className="text-[10px]">{commentCount}</span>
+            </span>
+          )}
+          {attachmentCount > 0 && (
+            <span className="flex items-center gap-0.5 text-muted-foreground/60 flex-shrink-0 mt-0.5">
+              <Paperclip className="w-3 h-3" />
+              <span className="text-[10px]">{attachmentCount}</span>
+            </span>
+          )}
         </div>
 
         {/* Meta info - icon + label style like TaskPreviewCard */}
@@ -231,7 +207,7 @@ function SortableTaskCard({
             <span className="text-muted-foreground text-[10px] font-medium w-6 text-right">{task.progress}%</span>
           </div>
 
-          {/* Footer: Assignees + Due Date */}
+          {/* Footer: Assignees + Due Date + Actions */}
           <div className="flex items-center justify-between pt-1">
             {task.assignees && task.assignees.length > 0 ? (
               <UserAvatarGroup users={task.assignees} max={2} size="sm" />
@@ -239,11 +215,36 @@ function SortableTaskCard({
               <span className="text-xs text-muted-foreground">Unassigned</span>
             )}
             
-            {task.dueDate && (
-              <span className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-                {format(task.dueDate, "MMM d")}
-              </span>
-            )}
+            <div className="flex items-center gap-1">
+              {task.dueDate && (
+                <span className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                  {format(task.dueDate, "MMM d")}
+                </span>
+              )}
+              {/* Hover actions */}
+              <div 
+                className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                  onClick={() => onDuplicateTask?.(task.id)}
+                >
+                  <Copy className="w-3 h-3" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 text-muted-foreground hover:text-destructive"
+                  onClick={() => onDeleteClick(task)}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
