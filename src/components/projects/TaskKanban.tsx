@@ -470,7 +470,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     <>
       <DndContext
         sensors={sensors}
-        collisionDetection={collisionDetection}
+        collisionDetection={rectIntersection}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
