@@ -62,17 +62,17 @@ function TaskRow({
   onRestore: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors group">
+    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors min-w-0">
       <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 overflow-hidden">
         <p className="text-sm text-muted-foreground line-through truncate">{task.title}</p>
-        <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground/60">
-          {task.completedAt && <span>{formatCompletedTime(task.completedAt)}</span>}
+        <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground/60 min-w-0">
+          {task.completedAt && <span className="shrink-0">{formatCompletedTime(task.completedAt)}</span>}
           {project && (
             <>
-              <span>•</span>
-              <span className="flex items-center gap-1 truncate">
+              <span className="shrink-0">•</span>
+              <span className="flex items-center gap-1 min-w-0">
                 <span
                   className="h-2 w-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: project.color }}
@@ -87,7 +87,7 @@ function TaskRow({
       <Button
         variant="outline"
         size="sm"
-        className="h-7 px-2.5 text-xs gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="h-7 px-2.5 text-xs gap-1.5 flex-shrink-0"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -168,12 +168,12 @@ export function CompletedTasksPanel({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[560px] p-0 gap-0">
-        <DialogHeader className="px-4 pt-4 pb-3 border-b">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[560px] max-h-[80vh] p-0 gap-0 overflow-hidden flex flex-col">
+        <DialogHeader className="px-4 pt-4 pb-3 border-b shrink-0">
           <DialogTitle className="text-base font-semibold">Completed Tasks</DialogTitle>
         </DialogHeader>
 
-        <div className="px-4 py-3 border-b space-y-3">
+        <div className="px-4 py-3 border-b space-y-3 shrink-0">
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -185,6 +185,8 @@ export function CompletedTasksPanel({
             />
             {query && (
               <button
+                type="button"
+                aria-label="Clear search"
                 onClick={() => setQuery("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
@@ -198,6 +200,7 @@ export function CompletedTasksPanel({
             {TIME_FILTERS.map((f) => (
               <button
                 key={f.key}
+                type="button"
                 onClick={() => setTimeFilter(f.key)}
                 className={cn(
                   "px-2.5 py-1 text-xs font-medium rounded-full transition-colors",
@@ -215,29 +218,29 @@ export function CompletedTasksPanel({
           </div>
         </div>
 
-        <ScrollArea className="h-[400px]">
-          <div className="p-2">
-            {filteredTasks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
-                <CheckCircle2 className="h-8 w-8 opacity-30 mb-2" />
-                <p className="text-sm">
-                  {query ? "No tasks match your search" : "No completed tasks"}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-0.5">
-                {filteredTasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    project={getProject(task.projectId)}
-                    onRestore={() => onRestoreTask(task.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full">
+            <div className="p-2">
+              {filteredTasks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center min-h-[12rem] text-muted-foreground">
+                  <CheckCircle2 className="h-8 w-8 opacity-30 mb-2" />
+                  <p className="text-sm">{query ? "No tasks match your search" : "No completed tasks"}</p>
+                </div>
+              ) : (
+                <div className="space-y-0.5">
+                  {filteredTasks.map((task) => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      project={getProject(task.projectId)}
+                      onRestore={() => onRestoreTask(task.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
