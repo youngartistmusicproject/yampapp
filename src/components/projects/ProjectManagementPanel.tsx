@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Pencil, Trash2, Plus, FolderKanban } from "lucide-react";
+import { Pencil, Trash2, Plus, FolderKanban, ChevronRight } from "lucide-react";
 import { Project, Team, User } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -20,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProjectDialog } from "./ProjectDialog";
 
 interface ProjectManagementPanelProps {
@@ -40,9 +42,16 @@ export function ProjectManagementPanel({
   onDeleteProject,
 }: ProjectManagementPanelProps) {
   const [open, setOpen] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+
+  const selectedTeam = teams.find(t => t.id === selectedTeamId);
+  const teamProjects = selectedTeamId 
+    ? projects.filter(p => p.teamId === selectedTeamId)
+    : [];
+  const unassignedProjects = projects.filter(p => !p.teamId);
 
   const handleEdit = (project: Project) => {
     setEditingProject(project);
@@ -59,17 +68,17 @@ export function ProjectManagementPanel({
     }
   };
 
-  // Group projects by team
-  const projectsByTeam = teams.map(team => ({
-    team,
-    projects: projects.filter(p => p.teamId === team.id),
-  })).filter(group => group.projects.length > 0);
-
-  const unassignedProjects = projects.filter(p => !p.teamId);
+  // Get project count per team
+  const getProjectCount = (teamId: string) => {
+    return projects.filter(p => p.teamId === teamId).length;
+  };
 
   return (
     <>
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet open={open} onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) setSelectedTeamId(null);
+      }}>
         <SheetTrigger asChild>
           <Button 
             variant="ghost" 
@@ -79,43 +88,111 @@ export function ProjectManagementPanel({
             <FolderKanban className="w-3.5 h-3.5" />
           </Button>
         </SheetTrigger>
-        <SheetContent className="w-full sm:max-w-[480px]">
-          <SheetHeader>
-            <SheetTitle>Manage Projects</SheetTitle>
+        <SheetContent className="w-full sm:max-w-[480px] p-0 flex flex-col">
+          <SheetHeader className="px-6 py-4 border-b">
+            <SheetTitle>
+              {selectedTeamId ? (
+                <button 
+                  onClick={() => setSelectedTeamId(null)}
+                  className="flex items-center gap-2 hover:text-muted-foreground transition-colors"
+                >
+                  <span>←</span>
+                  <span>{selectedTeam?.name} Projects</span>
+                </button>
+              ) : (
+                <span>Manage Projects</span>
+              )}
+            </SheetTitle>
             <SheetDescription>
-              Create, edit, or remove projects. Assign projects to teams.
+              {selectedTeamId 
+                ? "Create, edit, or remove projects for this team."
+                : "Select a team to manage its projects."
+              }
             </SheetDescription>
           </SheetHeader>
           
-          {/* Floating Action Button */}
-          <Button 
-            size="icon"
-            onClick={() => setCreateDialogOpen(true)}
-            className="absolute bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-10 transition-transform duration-200 hover:scale-110"
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
+          {/* Floating Action Button - only show when viewing team projects */}
+          {selectedTeamId && (
+            <Button 
+              size="icon"
+              onClick={() => setCreateDialogOpen(true)}
+              className="absolute bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-10 transition-transform duration-200 hover:scale-110"
+            >
+              <Plus className="w-5 h-5" />
+            </Button>
+          )}
           
-          <div className="mt-6 space-y-6 max-h-[calc(100vh-120px)] overflow-y-auto">
-            {projects.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <FolderKanban className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">No projects yet</p>
-                <p className="text-xs mt-1">Create your first project to get started</p>
-              </div>
-            ) : (
-              <>
-                {projectsByTeam.map(({ team, projects: teamProjects }) => (
-                  <div key={team.id}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div
-                        className="w-2.5 h-2.5 rounded-full"
-                        style={{ backgroundColor: team.color || '#6366f1' }}
-                      />
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {team.name}
-                      </span>
+          <ScrollArea className="flex-1">
+            <div className="px-6 py-5 space-y-2">
+              {!selectedTeamId ? (
+                // Team selection view
+                <>
+                  {teams.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <FolderKanban className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">No teams yet</p>
+                      <p className="text-xs mt-1">Create a team first to add projects</p>
                     </div>
+                  ) : (
+                    <>
+                      {teams.map((team) => (
+                        <button
+                          key={team.id}
+                          onClick={() => setSelectedTeamId(team.id)}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:border-border hover:bg-muted/50 transition-colors text-left"
+                        >
+                          <div
+                            className="w-3 h-3 rounded-full shrink-0"
+                            style={{ backgroundColor: team.color || '#6366f1' }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{team.name}</p>
+                            {team.description && (
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                {team.description}
+                              </p>
+                            )}
+                          </div>
+                          <Badge variant="secondary" className="shrink-0">
+                            {getProjectCount(team.id)} {getProjectCount(team.id) === 1 ? 'project' : 'projects'}
+                          </Badge>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                        </button>
+                      ))}
+                      
+                      {/* Unassigned projects section */}
+                      {unassignedProjects.length > 0 && (
+                        <div className="mt-6">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              Unassigned Projects
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            {unassignedProjects.map((project) => (
+                              <ProjectRow 
+                                key={project.id} 
+                                project={project} 
+                                onEdit={handleEdit} 
+                                onDelete={handleDelete} 
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              ) : (
+                // Projects view for selected team
+                <>
+                  {teamProjects.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <FolderKanban className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">No projects in this team</p>
+                      <p className="text-xs mt-1">Click the + button to create one</p>
+                    </div>
+                  ) : (
                     <div className="space-y-2">
                       {teamProjects.map((project) => (
                         <ProjectRow 
@@ -126,31 +203,11 @@ export function ProjectManagementPanel({
                         />
                       ))}
                     </div>
-                  </div>
-                ))}
-                
-                {unassignedProjects.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Unassigned
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {unassignedProjects.map((project) => (
-                        <ProjectRow 
-                          key={project.id} 
-                          project={project} 
-                          onEdit={handleEdit} 
-                          onDelete={handleDelete} 
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+                  )}
+                </>
+              )}
+            </div>
+          </ScrollArea>
         </SheetContent>
       </Sheet>
 
@@ -159,11 +216,15 @@ export function ProjectManagementPanel({
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSubmit={(project) => {
-          onCreateProject(project);
+          onCreateProject({
+            ...project,
+            teamId: selectedTeamId || project.teamId,
+          });
           setCreateDialogOpen(false);
         }}
         availableMembers={availableMembers}
         teams={teams}
+        selectedTeamId={selectedTeamId || undefined}
       />
 
       {/* Edit Dialog */}
