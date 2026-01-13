@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Pencil, Trash2, Plus, Users, ChevronRight, UserPlus, X, GripVertical } from "lucide-react";
+import { Pencil, Trash2, Plus, Users, ChevronRight, UserPlus, X, GripVertical, Star } from "lucide-react";
 import { Team, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,13 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TeamDialog } from "./TeamDialog";
 import { useTeamMembers, useAddTeamMember, useRemoveTeamMember, useUpdateTeamMemberRole } from "@/hooks/useWorkManagement";
@@ -58,12 +52,6 @@ interface TeamManagementPanelProps {
   onDeleteTeam: (teamId: string) => void;
   onReorderTeams?: (teams: Team[]) => void;
 }
-
-const memberRoles = [
-  { id: 'admin', label: 'Admin' },
-  { id: 'member', label: 'Member' },
-  { id: 'viewer', label: 'Viewer' },
-];
 
 interface SortableTeamItemProps {
   team: Team & { memberCount?: number };
@@ -238,13 +226,14 @@ export function TeamManagementPanel({
     );
   };
 
-  const handleUpdateRole = (memberId: string, role: string) => {
+  const handleToggleTeamLeader = (memberId: string, isCurrentlyLeader: boolean) => {
     if (!selectedTeamId) return;
     
+    const newRole = isCurrentlyLeader ? 'member' : 'leader';
     updateRole.mutate(
-      { memberId, teamId: selectedTeamId, role },
+      { memberId, teamId: selectedTeamId, role: newRole },
       {
-        onSuccess: () => toast.success('Role updated'),
+        onSuccess: () => toast.success(isCurrentlyLeader ? 'Removed as Team Leader' : 'Made Team Leader'),
         onError: () => toast.error('Failed to update role'),
       }
     );
@@ -296,7 +285,7 @@ export function TeamManagementPanel({
             </SheetTitle>
             <SheetDescription>
               {selectedTeamId 
-                ? "Add or remove team members and assign roles."
+                ? "Add or remove team members. Toggle to make someone a Team Leader."
                 : "Create, edit, or remove teams. Drag to reorder."
               }
             </SheetDescription>
@@ -377,42 +366,47 @@ export function TeamManagementPanel({
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {teamMembers.map((member) => (
-                        <div
-                          key={member.id}
-                          className="flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:border-border transition-colors group"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium">
-                            {member.userName.charAt(0)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{member.userName}</p>
-                          </div>
-                          <Select
-                            value={member.role}
-                            onValueChange={(value) => handleUpdateRole(member.id, value)}
+                      {teamMembers.map((member) => {
+                        const isLeader = member.role === 'leader' || member.role === 'admin';
+                        return (
+                          <div
+                            key={member.id}
+                            className="flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:border-border transition-colors group"
                           >
-                            <SelectTrigger className="h-7 w-24 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {memberRoles.map((role) => (
-                                <SelectItem key={role.id} value={role.id}>
-                                  {role.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
-                            onClick={() => handleRemoveMember(member.id, member.userName)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      ))}
+                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium relative">
+                              {member.userName.charAt(0)}
+                              {isLeader && (
+                                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center">
+                                  <Star className="w-2.5 h-2.5 text-white fill-white" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{member.userName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {isLeader ? 'Team Leader' : 'Member'}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                                <span>Leader</span>
+                                <Switch
+                                  checked={isLeader}
+                                  onCheckedChange={() => handleToggleTeamLeader(member.id, isLeader)}
+                                />
+                              </label>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
+                                onClick={() => handleRemoveMember(member.id, member.userName)}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
