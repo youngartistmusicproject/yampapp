@@ -45,18 +45,41 @@ function parseEndDate(text: string): { endDate: Date | null; remainingText: stri
     const remainingText = untilMatch[1].trim();
     const endDateText = untilMatch[2].trim();
     
-    // Parse the end date using chrono
     const results = chrono.parse(endDateText, new Date(), { forwardDate: true });
     if (results.length > 0) {
       return { endDate: results[0].start.date(), remainingText };
     }
   }
   
-  // Check for "through X" pattern (alternative to until)
+  // Check for "ending on X" pattern
+  const endingOnMatch = text.match(/^(.+?)\s+ending\s+(?:on\s+)?(.+)$/i);
+  if (endingOnMatch) {
+    const remainingText = endingOnMatch[1].trim();
+    const endDateText = endingOnMatch[2].trim();
+    
+    const results = chrono.parse(endDateText, new Date(), { forwardDate: true });
+    if (results.length > 0) {
+      return { endDate: results[0].start.date(), remainingText };
+    }
+  }
+  
+  // Check for "through X" pattern
   const throughMatch = text.match(/^(.+?)\s+through\s+(.+)$/i);
   if (throughMatch) {
     const remainingText = throughMatch[1].trim();
     const endDateText = throughMatch[2].trim();
+    
+    const results = chrono.parse(endDateText, new Date(), { forwardDate: true });
+    if (results.length > 0) {
+      return { endDate: results[0].start.date(), remainingText };
+    }
+  }
+  
+  // Check for "stops X" or "stopping X" pattern
+  const stopsMatch = text.match(/^(.+?)\s+(?:stops?|stopping)\s+(?:on\s+)?(.+)$/i);
+  if (stopsMatch) {
+    const remainingText = stopsMatch[1].trim();
+    const endDateText = stopsMatch[2].trim();
     
     const results = chrono.parse(endDateText, new Date(), { forwardDate: true });
     if (results.length > 0) {
