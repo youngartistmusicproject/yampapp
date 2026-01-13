@@ -713,25 +713,6 @@ export default function Projects() {
             </Select>
           )}
 
-          {/* Member Filter */}
-          <Select value={selectedMember} onValueChange={setSelectedMember}>
-            <SelectTrigger className="w-[160px] h-8 text-[13px] bg-transparent border-border/50">
-              <SelectValue placeholder="Responsible" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Members</SelectItem>
-              {teamMembers.map((member) => (
-                <SelectItem key={member.id} value={member.name}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-medium">
-                      {member.name.charAt(0)}
-                    </div>
-                    {member.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         {/* Right: Search */}
