@@ -104,7 +104,7 @@ export function RecurrenceSettings({
                 <SelectTrigger className={compact ? "flex-1 h-8 text-xs" : "flex-1"}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[100]">
                   <SelectItem value="daily">
                     {recurrence.interval === 1 ? "Day" : "Days"}
                   </SelectItem>
