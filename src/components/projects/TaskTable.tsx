@@ -76,6 +76,16 @@ function formatEstimatedTime(minutes: number): string {
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
+// Helper to check if task is overdue
+function isTaskOverdue(task: Task): boolean {
+  if (!task.dueDate) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDate = new Date(task.dueDate);
+  dueDate.setHours(0, 0, 0, 0);
+  return dueDate < today && task.status !== 'done';
+}
+
 export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onToggleSort, sortField = 'dueDate', sortAscending = true, statuses }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
@@ -156,7 +166,8 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                     {task.importance}
                   </Badge>
                   {task.dueDate && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className={`text-xs ${isTaskOverdue(task) ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}`}>
+                      {isTaskOverdue(task) && '⚠ '}
                       {format(task.dueDate, "MMM d")}
                     </span>
                   )}
@@ -289,8 +300,13 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                 <TableCell>
                   <UserAvatarGroup users={task.assignees} max={3} size="md" />
                 </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {task.dueDate ? format(task.dueDate, "MMM d, yyyy") : "-"}
+                <TableCell className={isTaskOverdue(task) ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}>
+                  {task.dueDate ? (
+                    <>
+                      {isTaskOverdue(task) && '⚠ '}
+                      {format(task.dueDate, "MMM d, yyyy")}
+                    </>
+                  ) : "-"}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1 flex-wrap">
