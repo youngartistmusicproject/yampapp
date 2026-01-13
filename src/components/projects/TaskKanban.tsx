@@ -544,7 +544,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                       (dropIndicator?.kind === "column" && dropIndicator.overId === column.id) ||
                       (dropIndicator?.kind === "task" && localTasks.find(t => t.id === dropIndicator.overId)?.status === column.id)
                     )
-                      ? "bg-primary/5 ring-1 ring-primary/20"
+                      ? "bg-accent/40 ring-1 ring-accent-foreground/10"
                       : ""
                   }`}
                 >
