@@ -611,14 +611,14 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[900px] h-[95vh] sm:h-[85vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[950px] h-[90vh] sm:h-[80vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden">
         {/* Header */}
-        <div className="px-5 pt-5 pb-3 border-b border-border/50">
+        <div className="px-4 pt-3 pb-2 border-b border-border/50">
           <EditableText
             value={task.title}
             onSave={(value) => onTaskUpdate(task.id, { title: value })}
             placeholder="Task title"
-            className="text-lg font-semibold"
+            className="text-base font-semibold"
           />
           {task.howToLink ? (
             <Popover>
@@ -626,27 +626,27 @@ export function TaskDetailDialog({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 px-2 mt-1.5 text-xs text-muted-foreground hover:text-foreground gap-1"
+                  className="h-5 px-1.5 mt-1 text-[10px] text-muted-foreground hover:text-foreground gap-1"
                 >
                   <BookOpen className="w-3 h-3" />
                   How To
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-2" align="start">
-                <div className="flex flex-col gap-1">
+              <PopoverContent className="w-auto p-1.5" align="start">
+                <div className="flex flex-col gap-0.5">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="justify-start h-7 px-2 text-xs"
+                    className="justify-start h-6 px-2 text-xs"
                     onClick={() => window.open(task.howToLink, '_blank')}
                   >
-                    <BookOpen className="w-3 h-3 mr-2" />
+                    <BookOpen className="w-3 h-3 mr-1.5" />
                     Open Link
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="justify-start h-7 px-2 text-xs"
+                    className="justify-start h-6 px-2 text-xs"
                     onClick={() => {
                       const link = prompt("Edit How To link:", task.howToLink);
                       if (link?.trim()) {
@@ -654,16 +654,16 @@ export function TaskDetailDialog({
                       }
                     }}
                   >
-                    <AlignLeft className="w-3 h-3 mr-2" />
+                    <AlignLeft className="w-3 h-3 mr-1.5" />
                     Edit
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="justify-start h-7 px-2 text-xs text-destructive hover:text-destructive"
+                    className="justify-start h-6 px-2 text-xs text-destructive hover:text-destructive"
                     onClick={() => onTaskUpdate(task.id, { howToLink: undefined })}
                   >
-                    <Trash2 className="w-3 h-3 mr-2" />
+                    <Trash2 className="w-3 h-3 mr-1.5" />
                     Remove
                   </Button>
                 </div>
@@ -673,7 +673,7 @@ export function TaskDetailDialog({
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 mt-1.5 text-xs text-muted-foreground hover:text-foreground gap-1"
+              className="h-5 px-1.5 mt-1 text-[10px] text-muted-foreground hover:text-foreground gap-1"
               onClick={() => {
                 const link = prompt("Enter How To link (SOP URL):");
                 if (link?.trim()) {
@@ -688,20 +688,20 @@ export function TaskDetailDialog({
         </div>
 
         {/* Main content - two column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_340px] min-h-0 overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] min-h-0 overflow-hidden">
           {/* Left side - Task details */}
           <div className="overflow-y-auto md:border-r border-border/50 bg-background">
-            <div className="p-5 space-y-4">
+            <div className="p-4 space-y-3">
               {/* Properties as clean rows */}
               <div className="space-y-0">
                 {/* Stage */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <span className="text-xs text-muted-foreground">Stage</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30">
+                  <span className="text-[11px] text-muted-foreground">Stage</span>
                   <Select 
                     value={task.status} 
                     onValueChange={(value) => onTaskUpdate(task.id, { status: value })}
                   >
-                    <SelectTrigger className="w-auto h-7 text-xs gap-1.5 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
+                    <SelectTrigger className="w-auto h-6 text-[11px] gap-1 border-none shadow-none bg-transparent hover:bg-muted/50 px-1.5">
                       {taskStatus && (
                         <>
                           <div 
@@ -729,21 +729,21 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Effort */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground">Effort</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[11px] text-muted-foreground">Effort</span>
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
                           className="text-muted-foreground hover:text-foreground"
                         >
-                          <Info className="w-3 h-3" />
+                          <Info className="w-2.5 h-2.5" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-64 p-3 z-[70]" align="start">
-                        <p className="text-xs font-medium mb-2">Effort Levels</p>
-                        <ul className="text-xs space-y-1 text-muted-foreground">
+                      <PopoverContent className="w-56 p-2 z-[70]" align="start">
+                        <p className="text-[11px] font-medium mb-1">Effort Levels</p>
+                        <ul className="text-[11px] space-y-0.5 text-muted-foreground">
                           {effortLibrary.map((e) => (
                             <li key={e.id}>
                               <span className="font-medium text-foreground">{e.name}</span> — {e.description}
@@ -757,7 +757,7 @@ export function TaskDetailDialog({
                     value={task.effort} 
                     onValueChange={(value: Task['effort']) => onTaskUpdate(task.id, { effort: value })}
                   >
-                    <SelectTrigger className="w-auto h-7 text-xs gap-1 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
+                    <SelectTrigger className="w-auto h-6 text-[11px] gap-1 border-none shadow-none bg-transparent hover:bg-muted/50 px-1.5">
                       <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${effortColors[task.effort]}`}>
                         {task.effort}
                       </span>
@@ -771,21 +771,21 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Importance */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground">Importance</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[11px] text-muted-foreground">Importance</span>
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
                           className="text-muted-foreground hover:text-foreground"
                         >
-                          <Info className="w-3 h-3" />
+                          <Info className="w-2.5 h-2.5" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-64 p-3 z-[70]" align="start">
-                        <p className="text-xs font-medium mb-2">Importance Levels</p>
-                        <ul className="text-xs space-y-1 text-muted-foreground">
+                      <PopoverContent className="w-56 p-2 z-[70]" align="start">
+                        <p className="text-[11px] font-medium mb-1">Importance Levels</p>
+                        <ul className="text-[11px] space-y-0.5 text-muted-foreground">
                           {importanceLibrary.map((i) => (
                             <li key={i.id}>
                               <span className="font-medium text-foreground">{i.name}</span> — {i.description}
@@ -799,7 +799,7 @@ export function TaskDetailDialog({
                     value={task.importance} 
                     onValueChange={(value: Task['importance']) => onTaskUpdate(task.id, { importance: value })}
                   >
-                    <SelectTrigger className="w-auto h-7 text-xs gap-1 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
+                    <SelectTrigger className="w-auto h-6 text-[11px] gap-1 border-none shadow-none bg-transparent hover:bg-muted/50 px-1.5">
                       <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${importanceColors[task.importance]}`}>
                         {task.importance}
                       </span>
@@ -813,9 +813,9 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Due Date with Recurring */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <span className="text-xs text-muted-foreground">Due Date</span>
-                  <div className="flex items-center gap-1">
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30">
+                  <span className="text-[11px] text-muted-foreground">Due Date</span>
+                  <div className="flex items-center gap-0.5">
                     <Input
                       type="date"
                       value={task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : ""}
@@ -824,26 +824,26 @@ export function TaskDetailDialog({
                           dueDate: e.target.value ? parseInputDate(e.target.value) : undefined,
                         })
                       }
-                      className="h-7 text-xs w-auto border-none shadow-none bg-transparent text-right cursor-pointer hover:bg-muted/50 rounded px-2"
+                      className="h-6 text-[11px] w-auto border-none shadow-none bg-transparent text-right cursor-pointer hover:bg-muted/50 rounded px-1.5"
                     />
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          className={`h-7 w-7 p-0 ${task.isRecurring ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground`}
+                          className={`h-6 w-6 p-0 ${task.isRecurring ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground`}
                         >
-                          <Repeat className="w-3.5 h-3.5" />
+                          <Repeat className="w-3 h-3" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-72 p-0" align="end">
-                        <div className="p-3 space-y-3">
+                      <PopoverContent className="w-64 p-0" align="end">
+                        <div className="p-2 space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium">Repeat</span>
+                            <span className="text-[11px] font-medium">Repeat</span>
                             <Button
                               variant={task.isRecurring ? "secondary" : "outline"}
                               size="sm"
-                              className="h-6 text-xs"
+                              className="h-5 text-[10px] px-2"
                               onClick={() => {
                                 if (task.isRecurring) {
                                   onTaskUpdate(task.id, { isRecurring: false, recurrence: undefined });
@@ -860,8 +860,8 @@ export function TaskDetailDialog({
                           </div>
                           
                           {task.isRecurring && task.recurrence && (
-                            <div className="space-y-2 pt-2 border-t">
-                              <div className="flex gap-2">
+                            <div className="space-y-1.5 pt-1.5 border-t">
+                              <div className="flex gap-1.5">
                                 <Input
                                   type="number"
                                   min={1}
@@ -870,7 +870,7 @@ export function TaskDetailDialog({
                                   onChange={(e) => onTaskUpdate(task.id, {
                                     recurrence: { ...task.recurrence!, interval: parseInt(e.target.value) || 1 }
                                   })}
-                                  className="w-14 h-7 text-xs"
+                                  className="w-12 h-6 text-[11px]"
                                 />
                                 <Select
                                   value={task.recurrence.frequency}
@@ -878,7 +878,7 @@ export function TaskDetailDialog({
                                     recurrence: { ...task.recurrence!, frequency: v as any }
                                   })}
                                 >
-                                  <SelectTrigger className="flex-1 h-7 text-xs">
+                                  <SelectTrigger className="flex-1 h-6 text-[11px]">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -898,13 +898,13 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Estimated Time */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <span className="text-xs text-muted-foreground">Est. Time</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30">
+                  <span className="text-[11px] text-muted-foreground">Est. Time</span>
                   <Select 
                     value={task.estimatedTime?.toString() || ""} 
                     onValueChange={(value) => onTaskUpdate(task.id, { estimatedTime: value ? parseInt(value) : undefined })}
                   >
-                    <SelectTrigger className="w-auto h-7 text-xs gap-1 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
+                    <SelectTrigger className="w-auto h-6 text-[11px] gap-1 border-none shadow-none bg-transparent hover:bg-muted/50 px-1.5">
                       <SelectValue placeholder="—" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-50">
@@ -920,15 +920,15 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Progress */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <span className="text-xs text-muted-foreground">Progress</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30">
+                  <span className="text-[11px] text-muted-foreground">Progress</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button 
                         variant="ghost" 
-                        className="h-7 px-2 text-xs font-normal hover:bg-muted/50 gap-2"
+                        className="h-6 px-1.5 text-[11px] font-normal hover:bg-muted/50 gap-1.5"
                       >
-                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className="w-14 h-1 bg-muted rounded-full overflow-hidden">
                           <div 
                             className={`h-full rounded-full transition-all duration-300 ${getProgressColor(task.progress || 0)}`}
                             style={{ width: `${task.progress || 0}%` }}
@@ -937,14 +937,14 @@ export function TaskDetailDialog({
                         <span className="text-[10px] text-muted-foreground">{task.progress || 0}%</span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-40 p-2" align="end">
-                      <div className="grid grid-cols-4 gap-1">
+                    <PopoverContent className="w-36 p-1.5" align="end">
+                      <div className="grid grid-cols-5 gap-0.5">
                         {[0, 25, 50, 75, 100].map((value) => (
                           <Button
                             key={value}
                             variant={(task.progress || 0) === value ? "secondary" : "ghost"}
                             size="sm"
-                            className="h-7 text-[10px]"
+                            className="h-6 text-[10px] px-1"
                             onClick={() => onTaskUpdate(task.id, { progress: value })}
                           >
                             {value}%
@@ -956,8 +956,8 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Responsible */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <span className="text-xs text-muted-foreground">Responsible</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30">
+                  <span className="text-[11px] text-muted-foreground">Responsible</span>
                   <SearchableAssigneeSelect
                     members={availableMembers}
                     selectedAssignees={task.assignees || []}
@@ -967,8 +967,8 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Tags */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <span className="text-xs text-muted-foreground">Tags</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30">
+                  <span className="text-[11px] text-muted-foreground">Tags</span>
                   <SearchableTagSelect
                     tags={tagLibrary}
                     selectedTags={task.tags || []}
@@ -979,46 +979,46 @@ export function TaskDetailDialog({
               </div>
 
               {/* Description */}
-              <div className="space-y-2">
-                <span className="text-xs font-medium text-foreground">Description</span>
-                <div className="bg-muted/20 rounded-lg p-3 min-h-[60px]">
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-medium text-foreground">Description</span>
+                <div className="bg-muted/20 rounded-md p-2 min-h-[50px]">
                   <EditableText
                     value={task.description || ""}
                     onSave={(value) => onTaskUpdate(task.id, { description: value })}
                     placeholder="Add a description..."
                     multiline
-                    className="text-xs whitespace-pre-wrap"
+                    className="text-[11px] whitespace-pre-wrap"
                   />
                 </div>
               </div>
 
               {/* Subtasks Section - Collapsible */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Collapsible open={subtasksOpen} onOpenChange={setSubtasksOpen}>
                   <CollapsibleTrigger asChild>
-                    <button className="flex items-center gap-2 w-full text-left group">
-                      <div className="flex items-center gap-2 text-muted-foreground group-hover:text-foreground transition-colors">
+                    <button className="flex items-center gap-1.5 w-full text-left group">
+                      <div className="flex items-center gap-1.5 text-muted-foreground group-hover:text-foreground transition-colors">
                         {subtasksOpen ? (
-                          <ChevronDown className="w-4 h-4" />
+                          <ChevronDown className="w-3.5 h-3.5" />
                         ) : (
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="w-3.5 h-3.5" />
                         )}
-                        <ListTodo className="w-4 h-4" />
-                        <span className="text-sm font-medium text-foreground">Subtasks</span>
+                        <ListTodo className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium text-foreground">Subtasks</span>
                       </div>
                       {subtasks.length > 0 && (
-                        <span className="text-xs text-muted-foreground ml-1">
+                        <span className="text-[10px] text-muted-foreground ml-1">
                           {completedSubtasks} of {subtasks.length}
                         </span>
                       )}
                     </button>
                   </CollapsibleTrigger>
                   
-                  <CollapsibleContent className="mt-3">
+                  <CollapsibleContent className="mt-2">
                     {/* Progress bar at top */}
                     {subtasks.length > 0 && (
-                      <div className="mb-3">
-                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                      <div className="mb-2">
+                        <div className="h-1 bg-secondary rounded-full overflow-hidden">
                           <div
                             className="h-full bg-primary transition-all duration-300"
                             style={{ width: `${(completedSubtasks / subtasks.length) * 100}%` }}
@@ -1028,7 +1028,7 @@ export function TaskDetailDialog({
                     )}
 
                     {/* Subtask list */}
-                    <div className="space-y-1 bg-muted/30 rounded-lg overflow-hidden">
+                    <div className="space-y-0.5 bg-muted/30 rounded-md overflow-hidden">
                       {subtasks.map((subtask) => (
                         <EditableSubtask
                           key={subtask.id}
@@ -1045,20 +1045,20 @@ export function TaskDetailDialog({
                       ))}
 
                       {/* Always visible add subtask input */}
-                      <div className="flex items-center gap-3 px-3 py-2 border-t border-border/30">
-                        <Plus className="w-4 h-4 text-muted-foreground" />
+                      <div className="flex items-center gap-2 px-2 py-1.5 border-t border-border/30">
+                        <Plus className="w-3.5 h-3.5 text-muted-foreground" />
                         <Input
                           ref={subtaskInputRef}
                           value={newSubtaskTitle}
                           onChange={(e) => setNewSubtaskTitle(e.target.value)}
                           onKeyDown={handleSubtaskKeyDown}
                           placeholder="Add subtask..."
-                          className="h-7 text-sm flex-1 border-none shadow-none bg-transparent focus-visible:ring-0 px-0"
+                          className="h-6 text-xs flex-1 border-none shadow-none bg-transparent focus-visible:ring-0 px-0"
                         />
                         {newSubtaskTitle.trim() && (
                           <Button
                             size="sm"
-                            className="h-6 px-2 text-xs"
+                            className="h-5 px-2 text-[10px]"
                             onClick={handleAddSubtask}
                           >
                             Add
@@ -1074,36 +1074,36 @@ export function TaskDetailDialog({
 
           {/* Right side - Activity */}
           <div className="flex flex-col min-h-0 bg-muted/30">
-            <div className="px-4 py-3 border-b bg-background">
-              <div className="flex items-center gap-1">
+            <div className="px-3 py-2 border-b bg-background">
+              <div className="flex items-center gap-0.5">
                 <button
                   onClick={() => setActivityTab('comments')}
-                  className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  className={`flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded transition-colors ${
                     activityTab === 'comments' 
                       ? 'bg-muted text-foreground' 
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   }`}
                 >
-                  <MessageSquare className="w-4 h-4" />
+                  <MessageSquare className="w-3.5 h-3.5" />
                   Comments
                   {comments.length > 0 && (
-                    <Badge variant="secondary" className="text-xs h-5 ml-1">
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1 ml-0.5">
                       {comments.length}
                     </Badge>
                   )}
                 </button>
                 <button
                   onClick={() => setActivityTab('attachments')}
-                  className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  className={`flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded transition-colors ${
                     activityTab === 'attachments' 
                       ? 'bg-muted text-foreground' 
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   }`}
                 >
-                  <Paperclip className="w-4 h-4" />
-                  Attachments
+                  <Paperclip className="w-3.5 h-3.5" />
+                  Files
                   {allAttachments.length > 0 && (
-                    <Badge variant="secondary" className="text-xs h-5 ml-1">
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1 ml-0.5">
                       {allAttachments.length}
                     </Badge>
                   )}
@@ -1115,9 +1115,9 @@ export function TaskDetailDialog({
             {activityTab === 'comments' && (
               <>
                 {/* Comments list - scrollable */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-3 space-y-3">
                   {comments.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-8">
+                    <p className="text-xs text-muted-foreground text-center py-6">
                       No activity yet. Be the first to comment!
                     </p>
                   )}
