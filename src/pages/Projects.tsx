@@ -743,12 +743,10 @@ export default function Projects() {
             <span className="text-[13px] text-muted-foreground tabular-nums ml-2">
               {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
             </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
+            
             {sortField === 'manual' && (
               <button 
-                className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors bg-muted/50 px-2 py-0.5 rounded-full"
                 onClick={() => {
                   setSortField('dueDate');
                   setSortAscending(true);
@@ -756,19 +754,19 @@ export default function Projects() {
               >
                 <GripVertical className="w-3 h-3" />
                 Manual
-                <X className="w-3 h-3 ml-0.5" />
+                <X className="w-3 h-3" />
               </button>
             )}
-            
-            <button
-              onClick={() => setShowTaskDetails(!showTaskDetails)}
-              className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              title={showTaskDetails ? "Hide details" : "Show details"}
-            >
-              {showTaskDetails ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">{showTaskDetails ? "Hide details" : "Show details"}</span>
-            </button>
           </div>
+          
+          <button
+            onClick={() => setShowTaskDetails(!showTaskDetails)}
+            className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+            title={showTaskDetails ? "Hide details" : "Show details"}
+          >
+            {showTaskDetails ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{showTaskDetails ? "Hide details" : "Show details"}</span>
+          </button>
         </div>
 
         <TabsContent value="table" className="mt-0">
