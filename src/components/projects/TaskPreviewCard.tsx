@@ -94,24 +94,22 @@ export function TaskPreviewCard({ task }: TaskPreviewCardProps) {
             )}
             {task.importance && (
               <span className="text-muted-foreground">
-                Priority: <span className="capitalize font-medium text-foreground">{task.importance}</span>
+                Importance: <span className="capitalize font-medium text-foreground">{task.importance}</span>
               </span>
             )}
           </div>
         )}
 
-        {/* Progress */}
-        {task.progress > 0 && (
-          <div className="flex items-center gap-2 text-xs pt-1">
-            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-primary rounded-full transition-all"
-                style={{ width: `${task.progress}%` }}
-              />
-            </div>
-            <span className="text-muted-foreground font-medium">{task.progress}%</span>
+        {/* Progress - always visible */}
+        <div className="flex items-center gap-2 text-xs pt-1">
+          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary rounded-full transition-all"
+              style={{ width: `${task.progress}%` }}
+            />
           </div>
-        )}
+          <span className="text-muted-foreground font-medium w-8 text-right">{task.progress}%</span>
+        </div>
       </div>
     </div>
   );
