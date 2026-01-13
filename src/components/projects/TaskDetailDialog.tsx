@@ -242,11 +242,11 @@ function EditableSubtask({
   };
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 group hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0">
+    <div className="flex items-center gap-2 px-2 py-1.5 group hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0">
       <Checkbox
         checked={subtask.completed}
         onCheckedChange={onToggle}
-        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        className="h-3.5 w-3.5 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
       />
       {isEditing ? (
         <input
@@ -255,14 +255,14 @@ function EditableSubtask({
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleSave}
-          className={`flex-1 text-sm bg-transparent border-none outline-none focus:outline-none ${
+          className={`flex-1 text-xs bg-transparent border-none outline-none focus:outline-none ${
             subtask.completed ? 'line-through text-muted-foreground' : ''
           }`}
         />
       ) : (
         <span
           onClick={() => setIsEditing(true)}
-          className={`flex-1 text-sm cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 ${
+          className={`flex-1 text-xs cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 ${
             subtask.completed ? 'line-through text-muted-foreground' : ''
           }`}
         >
@@ -270,15 +270,15 @@ function EditableSubtask({
         </span>
       )}
       {subtask.assignee && (
-        <UserAvatar user={subtask.assignee} className="w-5 h-5 text-[10px]" />
+        <UserAvatar user={subtask.assignee} className="w-4 h-4 text-[8px]" />
       )}
       <Button
         variant="ghost"
         size="sm"
-        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+        className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
         onClick={onDelete}
       >
-        <Trash2 className="w-3 h-3" />
+        <Trash2 className="w-2.5 h-2.5" />
       </Button>
     </div>
   );
@@ -946,14 +946,14 @@ export function TaskDetailDialog({
                         <span className="text-sm text-muted-foreground">{task.progress || 0}%</span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-52 p-3" align="end">
-                      <div className="grid grid-cols-5 gap-1.5">
-                        {[0, 25, 50, 75, 100].map((value) => (
+                    <PopoverContent className="w-64 p-3" align="end">
+                      <div className="grid grid-cols-6 gap-1">
+                        {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((value) => (
                           <Button
                             key={value}
                             variant={(task.progress || 0) === value ? "secondary" : "ghost"}
                             size="sm"
-                            className="h-8 text-sm px-2"
+                            className="h-7 text-xs px-1"
                             onClick={() => onTaskUpdate(task.id, { progress: value })}
                           >
                             {value}%
@@ -1040,20 +1040,20 @@ export function TaskDetailDialog({
                       ))}
 
                       {/* Always visible add subtask input */}
-                      <div className="flex items-center gap-3 px-3 py-2 border-t border-border/30">
-                        <Plus className="w-4 h-4 text-muted-foreground" />
+                      <div className="flex items-center gap-2 px-2 py-1.5 border-t border-border/30">
+                        <Plus className="w-3.5 h-3.5 text-muted-foreground" />
                         <Input
                           ref={subtaskInputRef}
                           value={newSubtaskTitle}
                           onChange={(e) => setNewSubtaskTitle(e.target.value)}
                           onKeyDown={handleSubtaskKeyDown}
                           placeholder="Add subtask..."
-                          className="h-7 text-sm flex-1 border-none shadow-none bg-transparent focus-visible:ring-0 px-0"
+                          className="h-6 text-xs flex-1 border-none shadow-none bg-transparent focus-visible:ring-0 px-0"
                         />
                         {newSubtaskTitle.trim() && (
                           <Button
                             size="sm"
-                            className="h-6 px-2 text-xs"
+                            className="h-5 px-2 text-xs"
                             onClick={handleAddSubtask}
                           >
                             Add

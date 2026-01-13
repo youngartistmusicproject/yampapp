@@ -155,8 +155,8 @@ export function NaturalDateInput({
 
       {/* Preview hint */}
       {parsedPreview && inputValue && (
-        <div className="absolute left-0 right-0 top-full mt-1 px-2 py-1 bg-muted/80 rounded text-[10px] text-muted-foreground z-10">
-          → {format(parsedPreview, "EEEE, MMMM d, yyyy")}
+        <div className="absolute left-0 right-0 top-full mt-1.5 px-3 py-2 bg-popover border border-border rounded-md shadow-md text-sm text-foreground z-[70]">
+          <span className="text-muted-foreground">→</span> {format(parsedPreview, "EEEE, MMMM d, yyyy")}
         </div>
       )}
     </div>

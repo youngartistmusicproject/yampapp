@@ -157,6 +157,7 @@ export function useCreateTask() {
           is_recurring: task.isRecurring || false,
           progress: task.progress || 0,
           estimated_time: task.estimatedTime?.toString() || null,
+          // howToLink is stored client-side only for now (not in DB schema)
         })
         .select()
         .single();
