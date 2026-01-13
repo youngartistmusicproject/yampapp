@@ -247,6 +247,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">
+                      <span className="text-muted-foreground">No Project</span>
+                    </SelectItem>
                     {(projects || []).map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         <span className="flex items-center gap-2">
