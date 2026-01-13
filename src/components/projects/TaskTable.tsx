@@ -159,36 +159,25 @@ function SortableTableRow({
           />
         </div>
         
-        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-          <div className="flex items-center gap-2">
-            <span className={`text-[13px] font-medium truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-              {task.title}
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <span className={`text-[13px] font-medium truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+            {task.title}
+          </span>
+          {task.isRecurring && (
+            <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+          )}
+          {/* Comment & Attachment indicators */}
+          {commentCount > 0 && (
+            <span className="flex items-center gap-0.5 text-muted-foreground/60">
+              <MessageSquare className="w-3 h-3" />
+              <span className="text-[10px]">{commentCount}</span>
             </span>
-            {task.isRecurring && (
-              <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
-            )}
-            {/* Comment & Attachment indicators */}
-            {commentCount > 0 && (
-              <span className="flex items-center gap-0.5 text-muted-foreground/60">
-                <MessageSquare className="w-3 h-3" />
-                <span className="text-[10px]">{commentCount}</span>
-              </span>
-            )}
-            {attachmentCount > 0 && (
-              <span className="flex items-center gap-0.5 text-muted-foreground/60">
-                <Paperclip className="w-3 h-3" />
-                <span className="text-[10px]">{attachmentCount}</span>
-              </span>
-            )}
-          </div>
-          {project && (
-            <div className="flex items-center gap-1.5">
-              <span
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: project.color }}
-              />
-              <span className="text-[11px] text-muted-foreground/70 truncate">{project.name}</span>
-            </div>
+          )}
+          {attachmentCount > 0 && (
+            <span className="flex items-center gap-0.5 text-muted-foreground/60">
+              <Paperclip className="w-3 h-3" />
+              <span className="text-[10px]">{attachmentCount}</span>
+            </span>
           )}
         </div>
 
@@ -239,9 +228,23 @@ function SortableTableRow({
         </div>
       </div>
 
-      {/* Details row - right aligned with matching widths */}
+      {/* Details row */}
       {showDetails && (
-        <div className="flex items-center justify-end gap-2 text-[11px] text-muted-foreground pr-14">
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground pl-7 pr-14">
+          {/* Project indicator on left */}
+          {project && (
+            <div className="flex items-center gap-1.5 min-w-0 max-w-[120px]">
+              <span
+                className="h-2 w-2 rounded-full shrink-0"
+                style={{ backgroundColor: project.color }}
+              />
+              <span className="truncate">{project.name}</span>
+            </div>
+          )}
+          
+          {/* Spacer to push rest to right */}
+          <div className="flex-1" />
+          
           <div className="flex items-center gap-3">
             <span>
               Effort: <span className="font-medium text-foreground capitalize">{task.effort || '—'}</span>
