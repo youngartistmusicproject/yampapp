@@ -803,21 +803,42 @@ export default function Projects() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
                 <DropdownMenuItem 
-                  onClick={() => { setSortField('dueDate'); setSortAscending(true); }}
+                  onClick={() => { 
+                    if (sortField === 'dueDate') {
+                      setSortAscending(!sortAscending);
+                    } else {
+                      setSortField('dueDate'); 
+                      setSortAscending(true);
+                    }
+                  }}
                   className={cn(sortField === 'dueDate' && 'bg-muted')}
                 >
                   Due Date
                   {sortField === 'dueDate' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  onClick={() => { setSortField('effort'); setSortAscending(true); }}
+                  onClick={() => { 
+                    if (sortField === 'effort') {
+                      setSortAscending(!sortAscending);
+                    } else {
+                      setSortField('effort'); 
+                      setSortAscending(true);
+                    }
+                  }}
                   className={cn(sortField === 'effort' && 'bg-muted')}
                 >
                   Effort
                   {sortField === 'effort' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  onClick={() => { setSortField('importance'); setSortAscending(true); }}
+                  onClick={() => { 
+                    if (sortField === 'importance') {
+                      setSortAscending(!sortAscending);
+                    } else {
+                      setSortField('importance'); 
+                      setSortAscending(true);
+                    }
+                  }}
                   className={cn(sortField === 'importance' && 'bg-muted')}
                 >
                   Importance
@@ -825,7 +846,14 @@ export default function Projects() {
                 </DropdownMenuItem>
                 {activeView !== 'kanban' && (
                   <DropdownMenuItem 
-                    onClick={() => { setSortField('stage'); setSortAscending(true); }}
+                    onClick={() => { 
+                      if (sortField === 'stage') {
+                        setSortAscending(!sortAscending);
+                      } else {
+                        setSortField('stage'); 
+                        setSortAscending(true);
+                      }
+                    }}
                     className={cn(sortField === 'stage' && 'bg-muted')}
                   >
                     Stage
@@ -833,7 +861,14 @@ export default function Projects() {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem 
-                  onClick={() => { setSortField('estimatedTime'); setSortAscending(true); }}
+                  onClick={() => { 
+                    if (sortField === 'estimatedTime') {
+                      setSortAscending(!sortAscending);
+                    } else {
+                      setSortField('estimatedTime'); 
+                      setSortAscending(true);
+                    }
+                  }}
                   className={cn(sortField === 'estimatedTime' && 'bg-muted')}
                 >
                   Est. Time
