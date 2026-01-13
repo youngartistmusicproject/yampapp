@@ -205,7 +205,13 @@ function SortableTableRow({
           </div>
         </div>
       </HoverCardTrigger>
-      <HoverCardContent side="right" align="start" sideOffset={80} className="p-0 border-0 shadow-none bg-transparent z-[100]">
+      <HoverCardContent 
+        side="bottom" 
+        align="start" 
+        sideOffset={8}
+        collisionPadding={16}
+        className="p-0 border-0 shadow-none bg-transparent z-[100] hidden lg:block"
+      >
         <TaskPreviewCard task={task} />
       </HoverCardContent>
     </HoverCard>
