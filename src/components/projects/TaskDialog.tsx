@@ -141,6 +141,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     if (!title.trim()) {
       errors.title = "Task title is required";
     }
+    if (!selectedProjectId) {
+      errors.project = "Project is required";
+    }
     if (!dueDate) {
       errors.dueDate = "Due date is required";
     }
@@ -232,16 +235,18 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             <div className="space-y-3">
               {/* Project */}
               <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-24 shrink-0">Project</Label>
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">Project <span className="text-destructive">*</span></Label>
                 <Select 
                   value={selectedProjectId || "none"} 
                   onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
                 >
-                  <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent flex-1">
+                  <SelectTrigger className={cn(
+                    "h-9 text-sm border-border/50 bg-transparent flex-1",
+                    hasAttemptedSubmit && validationErrors.project && "border-destructive"
+                  )}>
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No Project</SelectItem>
                     {(projects || []).map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         <span className="flex items-center gap-2">
@@ -259,7 +264,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
               {/* Due Date */}
               <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-24 shrink-0">Due Date <span className="text-destructive">*</span></Label>
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">Due Date <span className="text-destructive">*</span></Label>
                 <div className="flex items-center gap-2 flex-1">
                   <NaturalDateInput
                     value={dueDate}
@@ -294,7 +299,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
               {/* Responsible */}
               <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-24 shrink-0">Responsible <span className="text-destructive">*</span></Label>
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">Responsible <span className="text-destructive">*</span></Label>
                 <div className={cn(
                   "rounded-md flex-1",
                   hasAttemptedSubmit && validationErrors.assignees && "ring-1 ring-destructive"
@@ -309,14 +314,14 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
               </div>
 
               {isRecurring && recurrence && (
-                <p className="text-sm text-muted-foreground pl-[108px]">
+                <p className="text-sm text-muted-foreground pl-[124px]">
                   {getRecurrenceDescription(recurrence)}
                 </p>
               )}
 
               {/* Effort */}
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 w-24 shrink-0">
+                <div className="flex items-center gap-1.5 w-28 shrink-0">
                   <Label className="text-sm text-muted-foreground">Effort <span className="text-destructive">*</span></Label>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -357,7 +362,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
               {/* Importance */}
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 w-24 shrink-0">
+                <div className="flex items-center gap-1.5 w-28 shrink-0">
                   <Label className="text-sm text-muted-foreground">Importance <span className="text-destructive">*</span></Label>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -398,7 +403,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
               {/* Tags */}
               <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-24 shrink-0">Tags</Label>
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">Tags</Label>
                 <div className="flex-1">
                   <SearchableTagSelect
                     tags={tagLibrary}
@@ -411,7 +416,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
               {/* SOP Link */}
               <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-24 shrink-0">SOP Link</Label>
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">SOP Link</Label>
                 <div className="flex items-center gap-2 flex-1">
                   <Input
                     id="howToLink"
@@ -430,7 +435,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 </div>
               </div>
               {howToLinkError && (
-                <p className="text-sm text-destructive pl-[108px]">{howToLinkError}</p>
+                <p className="text-sm text-destructive pl-[124px]">{howToLinkError}</p>
               )}
             </div>
           </div>
