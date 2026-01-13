@@ -39,20 +39,20 @@ export type StatusItem = (typeof statusLibrary)[number];
 
 // Effort options - describes the level of work required
 export const effortLibrary = [
-  { id: "easy", name: "Easy", color: "#10b981", description: "Just do it!" },
-  { id: "light", name: "Light", color: "#3b82f6", description: "Probably can do while multi-tasking." },
-  { id: "focused", name: "Focused", color: "#f59e0b", description: "Will take brain power. Limit distractions." },
-  { id: "deep", name: "Deep", color: "#ef4444", description: "Find a quiet, distraction-free environment!" },
+  { id: "easy", name: "Easy", color: "#10b981", description: "Quick, just do it" },
+  { id: "light", name: "Light", color: "#3b82f6", description: "Can multitask" },
+  { id: "focused", name: "Focused", color: "#f59e0b", description: "Needs concentration" },
+  { id: "deep", name: "Deep", color: "#ef4444", description: "No distractions" },
 ];
 
 export type EffortItem = (typeof effortLibrary)[number];
 
 // Importance options - describes the impact of the task
 export const importanceLibrary = [
-  { id: "low", name: "Low", color: "#6b7280", description: "Could do, but nothing will break if not." },
-  { id: "routine", name: "Routine", color: "#3b82f6", description: "Baseline work. Should be done." },
-  { id: "important", name: "Important", color: "#f59e0b", description: "No excuses. This must get done." },
-  { id: "critical", name: "Critical", color: "#ef4444", description: "Pull an all-nighter if you have to." },
+  { id: "low", name: "Low", color: "#6b7280", description: "Optional" },
+  { id: "routine", name: "Routine", color: "#3b82f6", description: "Standard work" },
+  { id: "important", name: "Important", color: "#f59e0b", description: "Must complete" },
+  { id: "critical", name: "Critical", color: "#ef4444", description: "Top priority" },
 ];
 
 export type ImportanceItem = (typeof importanceLibrary)[number];
