@@ -22,7 +22,7 @@ import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, GripVertical } from "lucide-react";
+import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag } from "lucide-react";
 import { getTagById } from "@/data/workManagementConfig";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -123,39 +123,40 @@ function SortableTaskCard({ task, onViewTask, onDuplicateTask, onDeleteClick }: 
   const overdue = isTaskOverdue(task);
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="cursor-grab active:cursor-grabbing"
+    >
       <Card
         className={`group border-l-4 ${importanceColors[task.importance]} ${
           overdue ? 'bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500' : ''
-        }`}
+        } hover:shadow-md hover:scale-[1.01] transition-all duration-150`}
+        onClick={() => onViewTask(task)}
       >
         <CardContent className="p-3 space-y-2 h-[120px] flex flex-col">
           {/* Task Title Row */}
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0 flex-1">
-              <div
-                {...attributes}
-                {...listeners}
-                className="cursor-grab active:cursor-grabbing p-0.5 -ml-1 hover:bg-muted rounded"
-              >
-                <GripVertical className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <p 
-                className="text-sm font-medium leading-snug line-clamp-2 cursor-pointer hover:text-primary"
-                onClick={() => onViewTask(task)}
-              >
+              <p className="text-sm font-medium leading-snug line-clamp-2">
                 {task.title}
               </p>
               {task.isRecurring && (
                 <Repeat className="w-3 h-3 text-muted-foreground flex-shrink-0" />
               )}
             </div>
-            <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <div 
+              className="flex items-center gap-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               <Button 
                 variant="ghost" 
                 size="icon" 
                 className="h-6 w-6"
-                onClick={(e) => { e.stopPropagation(); onDuplicateTask?.(task.id); }}
+                onClick={() => onDuplicateTask?.(task.id)}
               >
                 <Copy className="w-3.5 h-3.5" />
               </Button>
@@ -163,7 +164,7 @@ function SortableTaskCard({ task, onViewTask, onDuplicateTask, onDeleteClick }: 
                 variant="ghost" 
                 size="icon" 
                 className="h-6 w-6 text-destructive hover:text-destructive"
-                onClick={(e) => { e.stopPropagation(); onDeleteClick(task); }}
+                onClick={() => onDeleteClick(task)}
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </Button>
@@ -242,16 +243,13 @@ function TaskCardOverlay({ task }: { task: Task }) {
   
   return (
     <Card
-      className={`border-l-4 ${importanceColors[task.importance]} shadow-lg ${
+      className={`border-l-4 ${importanceColors[task.importance]} shadow-lg cursor-grabbing ${
         overdue ? 'bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500' : ''
       }`}
       style={{ width: '300px' }}
     >
       <CardContent className="p-3 space-y-2 h-[120px] flex flex-col">
-        <div className="flex items-center gap-1.5">
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
-          <p className="text-sm font-medium leading-snug line-clamp-2">{task.title}</p>
-        </div>
+        <p className="text-sm font-medium leading-snug line-clamp-2">{task.title}</p>
       </CardContent>
     </Card>
   );
