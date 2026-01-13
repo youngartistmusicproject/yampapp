@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
-import { Repeat, Copy, Trash2, ArrowUpDown, Clock } from "lucide-react";
+import { Repeat, Copy, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
   DragEndEvent,
@@ -18,19 +19,9 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Progress } from "@/components/ui/progress";
 import { Task } from "@/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,8 +32,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
-import { getTagById } from "@/data/workManagementConfig";
+import { TaskPreviewCard } from "./TaskPreviewCard";
 
 export interface StatusItem {
   id: string;
@@ -134,78 +130,85 @@ function SortableTableRow({
   const status = getStatusById(task.status);
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`group flex items-center gap-3 px-3 py-2.5 border-b border-border/50 cursor-grab active:cursor-grabbing transition-colors ${
-        overdue ? 'bg-destructive/5' : 'hover:bg-muted/30'
-      }`}
-      onClick={() => onViewTask(task)}
-      {...attributes}
-      {...listeners}
-    >
-      <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-        <Checkbox
-          checked={task.status === doneStatusId}
-          onCheckedChange={(checked) =>
-            onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
-          }
-          className="border-muted-foreground/40"
-        />
-      </div>
-      
-      <div className="flex-1 min-w-0 flex items-center gap-3">
-        <span className={`text-[13px] font-medium truncate ${task.status === doneStatusId ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-          {task.title}
-        </span>
-        {task.isRecurring && (
-          <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
-        )}
-      </div>
+    <HoverCard openDelay={400} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <div
+          ref={setNodeRef}
+          style={style}
+          className={`group flex items-center gap-3 px-3 py-2.5 border-b border-border/50 cursor-grab active:cursor-grabbing transition-colors ${
+            overdue ? 'bg-destructive/5' : 'hover:bg-muted/30'
+          }`}
+          onClick={() => onViewTask(task)}
+          {...attributes}
+          {...listeners}
+        >
+          <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={task.status === doneStatusId}
+              onCheckedChange={(checked) =>
+                onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+              }
+              className="border-muted-foreground/40"
+            />
+          </div>
+          
+          <div className="flex-1 min-w-0 flex items-center gap-3">
+            <span className={`text-[13px] font-medium truncate ${task.status === doneStatusId ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+              {task.title}
+            </span>
+            {task.isRecurring && (
+              <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+            )}
+          </div>
 
-      <div className="flex items-center gap-3 flex-shrink-0">
-        {status && (
-          <span 
-            className="text-[11px] font-medium px-1.5 py-0.5 rounded"
-            style={{
-              backgroundColor: `${status.color}15`,
-              color: status.color,
-            }}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {status && (
+              <span 
+                className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+                style={{
+                  backgroundColor: `${status.color}15`,
+                  color: status.color,
+                }}
+              >
+                {status.name}
+              </span>
+            )}
+            
+            <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+            
+            <span className={`text-[12px] w-14 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+              {task.dueDate ? format(task.dueDate, "MMM d") : ""}
+            </span>
+          </div>
+
+          <div 
+            className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()} 
+            onPointerDown={(e) => e.stopPropagation()}
           >
-            {status.name}
-          </span>
-        )}
-        
-        <UserAvatarGroup users={task.assignees} max={2} size="sm" />
-        
-        <span className={`text-[12px] w-14 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-          {task.dueDate ? format(task.dueDate, "MMM d") : ""}
-        </span>
-      </div>
-
-      <div 
-        className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={(e) => e.stopPropagation()} 
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-foreground"
-          onClick={() => onDuplicateTask?.(task.id)}
-        >
-          <Copy className="w-3 h-3" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-destructive"
-          onClick={() => onDeleteClick(task)}
-        >
-          <Trash2 className="w-3 h-3" />
-        </Button>
-      </div>
-    </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              onClick={() => onDuplicateTask?.(task.id)}
+            >
+              <Copy className="w-3 h-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+              onClick={() => onDeleteClick(task)}
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
+      </HoverCardTrigger>
+      <HoverCardContent side="right" align="start" className="p-0 border-0 shadow-none bg-transparent">
+        <TaskPreviewCard task={task} />
+      </HoverCardContent>
+    </HoverCard>
   );
 }
 
@@ -415,36 +418,58 @@ export function TaskTable({
         {/* Mobile Card View */}
         <div className="md:hidden space-y-3">
           <SortableContext items={localTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-            {localTasks.map((task) => (
-              <SortableMobileCard
-                key={task.id}
-                task={task}
-                onViewTask={onViewTask}
-                onTaskUpdate={onTaskUpdate}
-                onDuplicateTask={onDuplicateTask}
-                onDeleteClick={setTaskToDelete}
-                getStatusById={getStatusById}
-                doneStatusId={doneStatusId}
-              />
-            ))}
+            <AnimatePresence mode="popLayout">
+              {localTasks.map((task, index) => (
+                <motion.div
+                  key={task.id}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2, delay: index * 0.02 }}
+                >
+                  <SortableMobileCard
+                    task={task}
+                    onViewTask={onViewTask}
+                    onTaskUpdate={onTaskUpdate}
+                    onDuplicateTask={onDuplicateTask}
+                    onDeleteClick={setTaskToDelete}
+                    getStatusById={getStatusById}
+                    doneStatusId={doneStatusId}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </SortableContext>
         </div>
 
         {/* Desktop List View - Todoist style */}
         <div className="hidden md:block rounded-lg border border-border/50 bg-card overflow-hidden">
           <SortableContext items={localTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-            {localTasks.map((task) => (
-              <SortableTableRow
-                key={task.id}
-                task={task}
-                onViewTask={onViewTask}
-                onTaskUpdate={onTaskUpdate}
-                onDuplicateTask={onDuplicateTask}
-                onDeleteClick={setTaskToDelete}
-                getStatusById={getStatusById}
-                doneStatusId={doneStatusId}
-              />
-            ))}
+            <AnimatePresence mode="popLayout">
+              {localTasks.map((task, index) => (
+                <motion.div
+                  key={task.id}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ 
+                    duration: 0.2, 
+                    delay: index * 0.02,
+                    ease: "easeOut"
+                  }}
+                >
+                  <SortableTableRow
+                    task={task}
+                    onViewTask={onViewTask}
+                    onTaskUpdate={onTaskUpdate}
+                    onDuplicateTask={onDuplicateTask}
+                    onDeleteClick={setTaskToDelete}
+                    getStatusById={getStatusById}
+                    doneStatusId={doneStatusId}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </SortableContext>
         </div>
 
