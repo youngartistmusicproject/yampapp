@@ -644,9 +644,6 @@ export default function Projects() {
             tasks={allCompletedTasks}
             projects={projects}
             onRestoreTask={handleRestoreTask}
-            onArchiveTask={handleArchiveTask}
-            onArchiveOldTasks={handleArchiveOldTasks}
-            onClearArchive={handleClearArchive}
           />
         </div>
       </div>
