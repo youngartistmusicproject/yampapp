@@ -128,9 +128,16 @@ export default function Projects() {
 
   // Get filtered projects for selected team
   const filteredProjects = useMemo(() => {
-    if (selectedTeam === "all") return projects;
+    if (selectedTeam === "all") return [];
     return projects.filter((p) => p.teamId === selectedTeam);
   }, [projects, selectedTeam]);
+
+  // Reset project filter when team changes to "all"
+  useEffect(() => {
+    if (selectedTeam === "all") {
+      setSelectedProject("all");
+    }
+  }, [selectedTeam]);
 
   // Get all available tags from tasks and tag library
   const availableTags = useMemo(() => {
@@ -587,25 +594,27 @@ export default function Projects() {
             </SelectContent>
           </Select>
 
-          <Select value={selectedProject} onValueChange={setSelectedProject}>
-            <SelectTrigger className="w-[150px] h-8 text-[13px] bg-transparent border-border/50">
-              <SelectValue placeholder="Project" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
-              {filteredProjects.map((project) => (
-                <SelectItem key={project.id} value={project.id}>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: project.color }}
-                    />
-                    {project.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {selectedTeam !== "all" && (
+            <Select value={selectedProject} onValueChange={setSelectedProject}>
+              <SelectTrigger className="w-[150px] h-8 text-[13px] bg-transparent border-border/50">
+                <SelectValue placeholder="Project" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Projects</SelectItem>
+                {filteredProjects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: project.color }}
+                      />
+                      {project.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {/* Right: Search */}
