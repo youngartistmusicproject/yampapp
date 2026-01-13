@@ -27,7 +27,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, MessageSquare, Paperclip, Check } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getTagById } from "@/data/workManagementConfig";
+import { getTagById, TagItem } from "@/data/workManagementConfig";
 import { Progress, getProgressColor } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
@@ -58,6 +58,7 @@ export type SortField = 'dueDate' | 'effort' | 'importance' | 'stage' | 'estimat
 interface TaskKanbanProps {
   tasks: Task[];
   projects?: Project[];
+  tags?: TagItem[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onEditTask: (task: Task) => void;
   onViewTask: (task: Task) => void;
@@ -111,6 +112,7 @@ function isTaskOverdue(task: Task): boolean {
 interface SortableTaskCardProps {
   task: Task;
   project?: Project;
+  tags?: TagItem[];
   onViewTask: (task: Task) => void;
   onDuplicateTask?: (taskId: string) => void;
   onDeleteClick: (task: Task) => void;
@@ -123,6 +125,7 @@ interface SortableTaskCardProps {
 function SortableTaskCard({
   task,
   project,
+  tags = [],
   onViewTask,
   onDuplicateTask,
   onDeleteClick,
@@ -202,6 +205,28 @@ function SortableTaskCard({
               style={{ backgroundColor: project.color }}
             />
             <span className="text-[11px] text-muted-foreground/70 truncate">{project.name}</span>
+          </div>
+        )}
+
+        {/* Area tags */}
+        {task.tags && task.tags.length > 0 && (
+          <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+            {task.tags.slice(0, 2).map(tagId => {
+              const tag = tags.find(t => t.id === tagId);
+              if (!tag) return null;
+              return (
+                <span
+                  key={tag.id}
+                  className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
+                  style={{ backgroundColor: tag.color }}
+                >
+                  {tag.name}
+                </span>
+              );
+            })}
+            {task.tags.length > 2 && (
+              <span className="text-[10px] text-muted-foreground">+{task.tags.length - 2}</span>
+            )}
           </div>
         )}
 
@@ -330,7 +355,7 @@ const TaskCardOverlay = React.forwardRef<HTMLDivElement, { task: Task }>(functio
   );
 });
 
-export function TaskKanban({ tasks, projects = [], onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onReorderTasks, statuses, showDetails = true, sortField = 'manual', sortAscending = true, teamLeaderNames = [] }: TaskKanbanProps) {
+export function TaskKanban({ tasks, projects = [], tags = [], onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onReorderTasks, statuses, showDetails = true, sortField = 'manual', sortAscending = true, teamLeaderNames = [] }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -707,6 +732,7 @@ export function TaskKanban({ tasks, projects = [], onTaskUpdate, onEditTask, onV
                               <SortableTaskCard
                                 task={task}
                                 project={getProjectById(task.projectId)}
+                                tags={tags}
                                 onViewTask={onViewTask}
                                 onDuplicateTask={onDuplicateTask}
                                 onDeleteClick={setTaskToDelete}
