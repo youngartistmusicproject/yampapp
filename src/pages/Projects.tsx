@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, AlertTriangle, Clock, CalendarDays, ArrowUpDown } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, AlertTriangle, Clock, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -593,50 +593,20 @@ export default function Projects() {
 
       {/* Views */}
       <Tabs defaultValue="table" className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <TabsList>
-            <TabsTrigger value="table" className="gap-2">
-              <List className="w-4 h-4" />
-              Table
-            </TabsTrigger>
-            <TabsTrigger value="kanban" className="gap-2">
-              <LayoutGrid className="w-4 h-4" />
-              Kanban
-            </TabsTrigger>
-            <TabsTrigger value="timeline" className="gap-2">
-              <CalendarIcon className="w-4 h-4" />
-              Timeline
-            </TabsTrigger>
-          </TabsList>
-          
-          {/* Sort Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <ArrowUpDown className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Sort:</span> {sortField === 'dueDate' ? 'Due Date' : sortField === 'importance' ? 'Importance' : sortField === 'effort' ? 'Effort' : sortField === 'stage' ? 'Stage' : 'Est. Time'}
-                {sortAscending ? ' ↑' : ' ↓'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover">
-              <DropdownMenuItem onClick={() => { setSortField('dueDate'); setSortAscending(true); }} className={sortField === 'dueDate' ? 'bg-accent' : ''}>
-                Due Date {sortField === 'dueDate' && (sortAscending ? '↑' : '↓')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setSortField('importance'); setSortAscending(true); }} className={sortField === 'importance' ? 'bg-accent' : ''}>
-                Importance {sortField === 'importance' && (sortAscending ? '↑' : '↓')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setSortField('effort'); setSortAscending(true); }} className={sortField === 'effort' ? 'bg-accent' : ''}>
-                Effort {sortField === 'effort' && (sortAscending ? '↑' : '↓')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setSortField('stage'); setSortAscending(true); }} className={sortField === 'stage' ? 'bg-accent' : ''}>
-                Stage {sortField === 'stage' && (sortAscending ? '↑' : '↓')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setSortField('estimatedTime'); setSortAscending(true); }} className={sortField === 'estimatedTime' ? 'bg-accent' : ''}>
-                Est. Time {sortField === 'estimatedTime' && (sortAscending ? '↑' : '↓')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <TabsList>
+          <TabsTrigger value="table" className="gap-2">
+            <List className="w-4 h-4" />
+            Table
+          </TabsTrigger>
+          <TabsTrigger value="kanban" className="gap-2">
+            <LayoutGrid className="w-4 h-4" />
+            Kanban
+          </TabsTrigger>
+          <TabsTrigger value="timeline" className="gap-2">
+            <CalendarIcon className="w-4 h-4" />
+            Timeline
+          </TabsTrigger>
+        </TabsList>
 
         <TabsContent value="table" className="mt-4">
           {isLoading ? (
@@ -683,9 +653,7 @@ export default function Projects() {
               onViewTask={handleViewTask} 
               onDeleteTask={handleDeleteTask}
               onDuplicateTask={handleDuplicateTask}
-              statuses={statuses}
-              sortField={sortField}
-              sortAscending={sortAscending}
+              statuses={statuses} 
             />
           )}
         </TabsContent>

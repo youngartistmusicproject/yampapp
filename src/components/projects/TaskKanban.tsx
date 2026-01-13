@@ -1,11 +1,11 @@
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag } from "lucide-react";
-import { getTagById, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
+import { getTagById } from "@/data/workManagementConfig";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
@@ -31,8 +31,6 @@ export interface StatusItem {
   color: string;
 }
 
-export type KanbanSortField = 'dueDate' | 'importance' | 'effort' | 'stage' | 'estimatedTime';
-
 interface TaskKanbanProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
@@ -41,8 +39,6 @@ interface TaskKanbanProps {
   onDeleteTask?: (taskId: string) => void;
   onDuplicateTask?: (taskId: string) => void;
   statuses: StatusItem[];
-  sortField?: KanbanSortField;
-  sortAscending?: boolean;
 }
 
 const importanceColors: Record<string, string> = {
@@ -84,55 +80,18 @@ function isTaskOverdue(task: Task): boolean {
   return dueDate < today && task.status !== 'done';
 }
 
-export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, statuses, sortField = 'dueDate', sortAscending = true }: TaskKanbanProps) {
+export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, statuses }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
   const isDragging = useRef(false);
 
-  // Sort tasks within columns
-  const sortedTasks = useMemo(() => {
-    const effortOrder = effortLibrary.map(e => e.id);
-    const importanceOrder = importanceLibrary.map(i => i.id);
-    const stageOrder = statuses.map(s => s.id);
-    
-    return [...tasks].sort((a, b) => {
-      let comparison = 0;
-      
-      if (sortField === 'importance') {
-        const aIndex = importanceOrder.indexOf(a.importance);
-        const bIndex = importanceOrder.indexOf(b.importance);
-        comparison = aIndex - bIndex;
-      } else if (sortField === 'effort') {
-        const aIndex = effortOrder.indexOf(a.effort);
-        const bIndex = effortOrder.indexOf(b.effort);
-        comparison = aIndex - bIndex;
-      } else if (sortField === 'stage') {
-        const aIndex = stageOrder.indexOf(a.status);
-        const bIndex = stageOrder.indexOf(b.status);
-        comparison = aIndex - bIndex;
-      } else if (sortField === 'estimatedTime') {
-        const aTime = a.estimatedTime || 0;
-        const bTime = b.estimatedTime || 0;
-        if (aTime === 0 && bTime === 0) return 0;
-        if (aTime === 0) return 1;
-        if (bTime === 0) return -1;
-        comparison = aTime - bTime;
-      } else {
-        // dueDate - tasks without due date go last
-        if (!a.dueDate && !b.dueDate) return 0;
-        if (!a.dueDate) return 1;
-        if (!b.dueDate) return -1;
-        comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-      }
-      
-      return sortAscending ? comparison : -comparison;
-    });
-  }, [tasks, sortField, sortAscending, statuses]);
+  // Use tasks directly, only track dragging state for visual feedback
+  const displayTasks = tasks;
 
   const getTasksByStatus = (status: string) =>
-    sortedTasks.filter((task) => task.status === status);
+    displayTasks.filter((task) => task.status === status);
 
   const toggleColumnCollapse = (columnId: string) => {
     setCollapsedColumns(prev => {
