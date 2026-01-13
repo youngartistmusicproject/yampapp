@@ -826,7 +826,7 @@ export default function Projects() {
         open={!!viewingTask}
         onOpenChange={(open) => !open && setViewingTask(null)}
         task={viewingTask}
-        projectName={viewingTask?.projectId ? projects.find(p => p.id === viewingTask.projectId)?.name : undefined}
+        projects={projects.map(p => ({ id: p.id, name: p.name, color: p.color }))}
         onTaskUpdate={handleTaskUpdate}
         onAddComment={handleAddComment}
         onToggleReaction={handleToggleReaction}
