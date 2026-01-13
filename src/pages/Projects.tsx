@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, AlertTriangle, Clock, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -62,6 +62,7 @@ export default function Projects() {
   const [sortField, setSortField] = useState<SortField>('dueDate');
   const [sortAscending, setSortAscending] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [quickFilter, setQuickFilter] = useState<'all' | 'overdue' | 'today' | 'tomorrow' | 'upcoming'>('all');
   const [filters, setFilters] = useState<TaskFilters>({
     statuses: [],
     efforts: [],
@@ -78,21 +79,12 @@ export default function Projects() {
   useEffect(() => {
     const filterParam = searchParams.get('filter');
     if (filterParam) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
       if (filterParam === 'overdue') {
-        setFilters(prev => ({ ...prev, showOverdueOnly: true }));
+        setQuickFilter('overdue');
       } else if (filterParam === 'today') {
-        const endOfToday = new Date(today);
-        endOfToday.setHours(23, 59, 59, 999);
-        setFilters(prev => ({ ...prev, dueDateFrom: today, dueDateTo: endOfToday }));
+        setQuickFilter('today');
       } else if (filterParam === 'tomorrow') {
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const endOfTomorrow = new Date(tomorrow);
-        endOfTomorrow.setHours(23, 59, 59, 999);
-        setFilters(prev => ({ ...prev, dueDateFrom: tomorrow, dueDateTo: endOfTomorrow }));
+        setQuickFilter('tomorrow');
       }
       
       // Clear the param so it doesn't persist on refresh
@@ -125,6 +117,38 @@ export default function Projects() {
 
   // Active tasks (not completed)
   const activeTasks = useMemo(() => dbTasks.filter(task => !task.completedAt), [dbTasks]);
+
+  // Count tasks for quick filter badges
+  const quickFilterCounts = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    
+    return {
+      overdue: activeTasks.filter(t => t.dueDate && new Date(t.dueDate) < today).length,
+      today: activeTasks.filter(t => {
+        if (!t.dueDate) return false;
+        const due = new Date(t.dueDate);
+        due.setHours(0, 0, 0, 0);
+        return due.getTime() === today.getTime();
+      }).length,
+      tomorrow: activeTasks.filter(t => {
+        if (!t.dueDate) return false;
+        const due = new Date(t.dueDate);
+        due.setHours(0, 0, 0, 0);
+        return due.getTime() === tomorrow.getTime();
+      }).length,
+      upcoming: activeTasks.filter(t => {
+        if (!t.dueDate) return false;
+        const due = new Date(t.dueDate);
+        due.setHours(0, 0, 0, 0);
+        return due > tomorrow && due <= nextWeek;
+      }).length,
+    };
+  }, [activeTasks]);
   
   // Completed tasks
   const completedTasks = useMemo(() => 
@@ -139,6 +163,10 @@ export default function Projects() {
   const filteredTasks = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
     
     return activeTasks.filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -147,6 +175,25 @@ export default function Projects() {
       // Team filter - check if task's project belongs to selected team
       const taskProject = projects.find(p => p.id === task.projectId);
       const matchesTeam = selectedTeam === "all" || taskProject?.teamId === selectedTeam || !task.projectId;
+      
+      // Quick filter
+      let matchesQuickFilter = true;
+      if (quickFilter !== 'all' && task.dueDate) {
+        const dueDate = new Date(task.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
+        
+        if (quickFilter === 'overdue') {
+          matchesQuickFilter = dueDate < today;
+        } else if (quickFilter === 'today') {
+          matchesQuickFilter = dueDate.getTime() === today.getTime();
+        } else if (quickFilter === 'tomorrow') {
+          matchesQuickFilter = dueDate.getTime() === tomorrow.getTime();
+        } else if (quickFilter === 'upcoming') {
+          matchesQuickFilter = dueDate > tomorrow && dueDate <= nextWeek;
+        }
+      } else if (quickFilter !== 'all' && !task.dueDate) {
+        matchesQuickFilter = false;
+      }
       
       // Status filter
       const matchesStatus = filters.statuses.length === 0 || filters.statuses.includes(task.status);
@@ -180,7 +227,7 @@ export default function Projects() {
       const matchesOverdue = !filters.showOverdueOnly || 
         (task.dueDate && new Date(task.dueDate) < today && task.status !== 'done');
       
-      return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesEffort && matchesImportance &&
+      return matchesSearch && matchesProject && matchesTeam && matchesQuickFilter && matchesStatus && matchesEffort && matchesImportance &&
              matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
       // Define sort order for effort, importance, and stage
@@ -227,7 +274,7 @@ export default function Projects() {
       const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       return sortAscending ? comparison : -comparison;
     });
-  }, [activeTasks, searchQuery, selectedProject, selectedTeam, projects, filters, sortField, sortAscending, statuses]);
+  }, [activeTasks, searchQuery, selectedProject, selectedTeam, projects, filters, quickFilter, sortField, sortAscending, statuses]);
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
     updateTask.mutate({ taskId, updates }, {
@@ -389,6 +436,74 @@ export default function Projects() {
         onProjectSelect={setSelectedProject}
         doneStatusId={doneStatusId}
       />
+
+      {/* Quick Date Filters */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <Button
+          variant={quickFilter === 'all' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setQuickFilter('all')}
+          className="flex-shrink-0"
+        >
+          All Tasks
+        </Button>
+        <Button
+          variant={quickFilter === 'overdue' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setQuickFilter('overdue')}
+          className={`flex-shrink-0 gap-1.5 ${quickFilter !== 'overdue' && quickFilterCounts.overdue > 0 ? 'border-red-300 dark:border-red-700 text-red-600 dark:text-red-400' : ''}`}
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          Overdue
+          {quickFilterCounts.overdue > 0 && (
+            <Badge variant={quickFilter === 'overdue' ? 'secondary' : 'destructive'} className="ml-0.5 h-5 px-1.5 text-xs">
+              {quickFilterCounts.overdue}
+            </Badge>
+          )}
+        </Button>
+        <Button
+          variant={quickFilter === 'today' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setQuickFilter('today')}
+          className="flex-shrink-0 gap-1.5"
+        >
+          <Clock className="w-3.5 h-3.5" />
+          Today
+          {quickFilterCounts.today > 0 && (
+            <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-xs">
+              {quickFilterCounts.today}
+            </Badge>
+          )}
+        </Button>
+        <Button
+          variant={quickFilter === 'tomorrow' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setQuickFilter('tomorrow')}
+          className="flex-shrink-0 gap-1.5"
+        >
+          <CalendarDays className="w-3.5 h-3.5" />
+          Tomorrow
+          {quickFilterCounts.tomorrow > 0 && (
+            <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-xs">
+              {quickFilterCounts.tomorrow}
+            </Badge>
+          )}
+        </Button>
+        <Button
+          variant={quickFilter === 'upcoming' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setQuickFilter('upcoming')}
+          className="flex-shrink-0 gap-1.5"
+        >
+          <CalendarIcon className="w-3.5 h-3.5" />
+          Next 7 Days
+          {quickFilterCounts.upcoming > 0 && (
+            <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-xs">
+              {quickFilterCounts.upcoming}
+            </Badge>
+          )}
+        </Button>
+      </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
