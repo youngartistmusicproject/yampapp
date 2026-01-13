@@ -8,7 +8,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCenter,
+  closestCorners,
   DragOverlay,
 } from "@dnd-kit/core";
 import {
@@ -390,7 +390,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     <>
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
