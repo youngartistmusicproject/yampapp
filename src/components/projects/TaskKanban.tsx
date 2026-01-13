@@ -197,10 +197,12 @@ function SortableTaskCard({
             <span className="text-muted-foreground">
               Importance: <span className="capitalize font-medium text-foreground">{task.importance || '—'}</span>
             </span>
-            <span className="text-muted-foreground flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span className="font-medium text-foreground">{task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : '—'}</span>
-            </span>
+            {task.estimatedTime && (
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
+              </span>
+            )}
           </div>
 
           {/* Progress - always visible */}
