@@ -388,11 +388,7 @@ export default function Projects() {
   const handleRestoreTask = (taskId: string) => {
     updateTask.mutate({
       taskId,
-      updates: {
-        status: 'not-started',
-        // Status change clears completed_at via hook; explicitly clear archive too
-        archivedAt: null as any,
-      } as any,
+      updates: { status: 'todo', archivedAt: null as any } as any,
     }, {
       onSuccess: () => toast.success('Task restored'),
       onError: () => toast.error('Failed to restore task'),
