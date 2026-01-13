@@ -67,6 +67,16 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
   const isEditing = !!task;
 
+  // Get project members (owners + members) for the selected project
+  const selectedProject = projects.find(p => p.id === selectedProjectId);
+  const projectMembers: User[] = selectedProject
+    ? [...(selectedProject.owners || []), ...(selectedProject.members || [])]
+        .filter((user, index, self) => self.findIndex(u => u.id === user.id) === index) // dedupe
+    : [];
+  
+  // Use project members if project is selected, otherwise show all available
+  const filteredAssignees = selectedProjectId ? projectMembers : availableMembers;
+
   // Parse a date string (YYYY-MM-DD) into a local Date
   const parseInputDate = (value: string): Date => {
     const [y, m, d] = value.split("-").map(Number);
@@ -97,6 +107,19 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       resetForm();
     }
   }, [task, open]);
+
+  // Clear assignees when project changes (members differ between projects)
+  useEffect(() => {
+    if (!isEditing) {
+      // Filter out assignees that are not in the new project's members
+      const validAssignees = selectedAssignees.filter(a => 
+        projectMembers.some(pm => pm.id === a.id)
+      );
+      if (validAssignees.length !== selectedAssignees.length) {
+        setSelectedAssignees(validAssignees);
+      }
+    }
+  }, [selectedProjectId]);
 
   const resetForm = () => {
     setTitle("");
@@ -320,10 +343,11 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   hasAttemptedSubmit && validationErrors.assignees && "ring-1 ring-destructive"
                 )}>
                   <SearchableAssigneeSelect
-                    members={availableMembers}
+                    members={filteredAssignees}
                     selectedAssignees={selectedAssignees}
                     onAssigneesChange={setSelectedAssignees}
-                    placeholder="Add..."
+                    placeholder={selectedProjectId ? "Add..." : "Select project first"}
+                    disabled={!selectedProjectId}
                   />
                 </div>
               </div>
