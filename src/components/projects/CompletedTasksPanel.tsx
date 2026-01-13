@@ -66,8 +66,8 @@ function groupTasksByTime(tasks: Task[]): TaskGroup[] {
   const groups: TaskGroup[] = [
     { label: "Today", tasks: [], defaultOpen: true },
     { label: "Yesterday", tasks: [], defaultOpen: true },
-    { label: "This Week", tasks: [], defaultOpen: false },
-    { label: "This Month", tasks: [], defaultOpen: false },
+    { label: "This Week", tasks: [], defaultOpen: true },
+    { label: "This Month", tasks: [], defaultOpen: true },
     { label: "Older", tasks: [], defaultOpen: false },
   ];
   
@@ -103,6 +103,19 @@ interface TaskItemProps {
 }
 
 function TaskItem({ task, project, onRestore, onArchive, isArchived }: TaskItemProps) {
+  const handleRestore = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('TaskItem restore clicked for:', task.id, task.title);
+    onRestore();
+  };
+
+  const handleArchive = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onArchive) onArchive();
+  };
+
   return (
     <div className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors group">
       <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
@@ -134,10 +147,7 @@ function TaskItem({ task, project, onRestore, onArchive, isArchived }: TaskItemP
             variant="ghost"
             size="sm"
             className="h-6 px-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => {
-              e.stopPropagation();
-              onArchive();
-            }}
+            onClick={handleArchive}
             title="Archive"
           >
             <Archive className="w-3 h-3" />
@@ -146,12 +156,10 @@ function TaskItem({ task, project, onRestore, onArchive, isArchived }: TaskItemP
         <Button
           variant="outline"
           size="sm"
-          className="h-6 px-2 text-xs gap-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRestore();
-          }}
+          className="h-6 px-2 text-xs gap-1 flex-shrink-0"
+          onClick={handleRestore}
           title="Restore task"
+          type="button"
         >
           <RotateCcw className="w-3 h-3" />
           Restore

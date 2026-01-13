@@ -386,12 +386,22 @@ export default function Projects() {
   };
 
   const handleRestoreTask = (taskId: string) => {
+    console.log('Restoring task:', taskId);
     updateTask.mutate({ 
       taskId, 
-      updates: { status: 'not-started', completedAt: undefined, archivedAt: undefined } as any
+      updates: { 
+        status: 'not-started', 
+        completedAt: null as unknown as undefined // Explicitly set to null to clear
+      } 
     }, {
-      onSuccess: () => toast.success('Task restored'),
-      onError: () => toast.error('Failed to restore task'),
+      onSuccess: () => {
+        console.log('Task restored successfully');
+        toast.success('Task restored');
+      },
+      onError: (error) => {
+        console.error('Failed to restore task:', error);
+        toast.error('Failed to restore task');
+      },
     });
   };
 
