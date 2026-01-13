@@ -232,9 +232,9 @@ export function TagManager({ open, onOpenChange, tags, onTagsChange }: TagManage
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-[480px] p-0 flex flex-col">
         <SheetHeader className="px-6 py-4 border-b">
-          <SheetTitle>Manage Departments</SheetTitle>
+          <SheetTitle>Manage Areas</SheetTitle>
           <SheetDescription>
-            Add, edit, or remove department tags. Drag to reorder.
+            Add, edit, or remove area tags. Drag to reorder.
           </SheetDescription>
         </SheetHeader>
         
@@ -293,7 +293,7 @@ export function TagManager({ open, onOpenChange, tags, onTagsChange }: TagManage
                 <Input
                   value={newTag.name}
                   onChange={(e) => setNewTag({ ...newTag, name: e.target.value })}
-                  placeholder="Department name..."
+                  placeholder="Area name..."
                   className="h-8 flex-1"
                   autoFocus
                 />
@@ -311,7 +311,7 @@ export function TagManager({ open, onOpenChange, tags, onTagsChange }: TagManage
                 onClick={() => setShowNewForm(true)}
               >
                 <Plus className="w-4 h-4" />
-                Add Department
+                Add Area
               </Button>
             )}
           </div>

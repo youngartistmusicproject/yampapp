@@ -652,7 +652,7 @@ export default function Projects() {
                 Manage Stages
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTagManagerOpen(true)}>
-                Manage Departments
+                Manage Areas
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
