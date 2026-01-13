@@ -3,7 +3,7 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
-  role: 'owner' | 'admin' | 'staff' | 'faculty';
+  role: 'super-admin' | 'admin' | 'staff' | 'faculty';
 }
 
 export interface RecurrenceSettings {
