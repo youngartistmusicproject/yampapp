@@ -72,11 +72,17 @@ interface StatusItem {
 
 const QUICK_REACTIONS = ['👍', '❤️', '😄', '🎉', '🚀', '👀', '💯', '🔥'];
 
+interface ProjectOption {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface TaskDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task | null;
-  projectName?: string;
+  projects: ProjectOption[];
   currentUser: User;
   availableMembers: User[];
   statuses: StatusItem[];
@@ -281,7 +287,7 @@ export function TaskDetailDialog({
   open,
   onOpenChange,
   task,
-  projectName,
+  projects,
   currentUser,
   availableMembers,
   statuses,
@@ -596,16 +602,40 @@ export function TaskDetailDialog({
           {/* Left side - Properties */}
           <div className="px-6 py-5 border-r border-border/50 overflow-y-auto">
             <div className="space-y-3">
-              {/* Project & Status Row */}
+              {/* Project Row */}
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground w-28 shrink-0">Project</span>
-                {projectName ? (
-                  <span className="text-sm font-medium bg-muted/50 px-2.5 py-1 rounded">
-                    {projectName}
-                  </span>
-                ) : (
-                  <span className="text-sm text-muted-foreground">—</span>
-                )}
+                <Select 
+                  value={task.projectId || ''} 
+                  onValueChange={(value) => onTaskUpdate(task.id, { projectId: value || undefined })}
+                >
+                  <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent flex-1">
+                    {task.projectId ? (
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-2 h-2 rounded-full" 
+                          style={{ backgroundColor: projects.find(p => p.id === task.projectId)?.color || '#6b7280' }} 
+                        />
+                        {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">No Project</span>
+                    )}
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-[60]">
+                    <SelectItem value="">
+                      <span className="text-muted-foreground">No Project</span>
+                    </SelectItem>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color }} />
+                          {project.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Stage Row */}

@@ -38,6 +38,7 @@ export interface DashboardActivity {
 export interface ProjectProgress {
   id: string;
   name: string;
+  color: string;
   progress: number;
   completedTasks: number;
   totalTasks: number;
@@ -201,7 +202,7 @@ export function useDashboard() {
     queryFn: async (): Promise<ProjectProgress[]> => {
       const { data: projects, error } = await supabase
         .from('projects')
-        .select('id, name')
+        .select('id, name, color')
         .eq('status', 'active')
         .limit(3);
 
@@ -229,6 +230,7 @@ export function useDashboard() {
           return {
             id: project.id,
             name: project.name,
+            color: project.color || '#6b7280',
             progress,
             completedTasks: completed,
             totalTasks: total,
