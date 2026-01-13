@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { CheckCircle2, RotateCcw, Search, X } from "lucide-react";
 import { differenceInDays, format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 
-import { Task, Project } from "@/types";
+import { Task, Project, Team } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,11 +13,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface CompletedTasksPanelProps {
   tasks: Task[];
   projects: Project[];
+  teams: Team[];
   onRestoreTask: (taskId: string) => void;
 }
 
@@ -104,10 +112,13 @@ function TaskRow({
 export function CompletedTasksPanel({
   tasks,
   projects,
+  teams,
   onRestoreTask,
 }: CompletedTasksPanelProps) {
   const [query, setQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [teamFilter, setTeamFilter] = useState<string>("__all__");
+  const [projectFilter, setProjectFilter] = useState<string>("__all__");
 
   const completedTasks = useMemo(
     () =>
@@ -117,12 +128,41 @@ export function CompletedTasksPanel({
     [tasks]
   );
 
+  // Get projects filtered by selected team
+  const filteredProjects = useMemo(() => {
+    if (teamFilter === "__all__") return projects;
+    return projects.filter((p) => p.teamId === teamFilter);
+  }, [projects, teamFilter]);
+
+  // Reset project filter when team changes and selected project is no longer valid
+  useMemo(() => {
+    if (projectFilter !== "__all__" && projectFilter !== "__none__") {
+      const projectStillValid = filteredProjects.some((p) => p.id === projectFilter);
+      if (!projectStillValid) {
+        setProjectFilter("__all__");
+      }
+    }
+  }, [filteredProjects, projectFilter]);
+
   const filteredTasks = useMemo(() => {
     let result = completedTasks;
 
     // Time filter
     if (timeFilter !== "all") {
       result = result.filter((t) => t.completedAt && getTimeFilter(t.completedAt) === timeFilter);
+    }
+
+    // Team filter (via project's teamId)
+    if (teamFilter !== "__all__") {
+      const teamProjectIds = projects.filter((p) => p.teamId === teamFilter).map((p) => p.id);
+      result = result.filter((t) => t.projectId && teamProjectIds.includes(t.projectId));
+    }
+
+    // Project filter
+    if (projectFilter === "__none__") {
+      result = result.filter((t) => !t.projectId);
+    } else if (projectFilter !== "__all__") {
+      result = result.filter((t) => t.projectId === projectFilter);
     }
 
     // Search filter
@@ -132,7 +172,7 @@ export function CompletedTasksPanel({
     }
 
     return result;
-  }, [completedTasks, timeFilter, query]);
+  }, [completedTasks, timeFilter, teamFilter, projectFilter, projects, query]);
 
   const getProject = (projectId?: string) =>
     projectId ? projects.find((p) => p.id === projectId) : undefined;
@@ -193,6 +233,50 @@ export function CompletedTasksPanel({
                 <X className="h-4 w-4" />
               </button>
             )}
+          </div>
+
+          {/* Team & Project filters */}
+          <div className="flex gap-2">
+            <Select value={teamFilter} onValueChange={setTeamFilter}>
+              <SelectTrigger className="h-8 text-xs flex-1">
+                <SelectValue placeholder="All Teams" />
+              </SelectTrigger>
+              <SelectContent className="z-[100]">
+                <SelectItem value="__all__">All Teams</SelectItem>
+                {teams.map((team) => (
+                  <SelectItem key={team.id} value={team.id}>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 rounded-full shrink-0"
+                        style={{ backgroundColor: team.color }}
+                      />
+                      {team.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={projectFilter} onValueChange={setProjectFilter}>
+              <SelectTrigger className="h-8 text-xs flex-1">
+                <SelectValue placeholder="All Projects" />
+              </SelectTrigger>
+              <SelectContent className="z-[100]">
+                <SelectItem value="__all__">All Projects</SelectItem>
+                <SelectItem value="__none__">No Project</SelectItem>
+                {filteredProjects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 rounded-full shrink-0"
+                        style={{ backgroundColor: project.color }}
+                      />
+                      {project.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Time filters */}
