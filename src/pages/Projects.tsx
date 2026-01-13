@@ -575,7 +575,7 @@ export default function Projects() {
               setSelectedProject("all");
             }}
           >
-            <SelectTrigger className="w-[140px] h-8 text-[13px] bg-transparent border-border/50">
+            <SelectTrigger className="w-[180px] h-8 text-[13px] bg-transparent border-border/50">
               <SelectValue placeholder="Team" />
             </SelectTrigger>
             <SelectContent>
