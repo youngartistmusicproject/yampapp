@@ -272,7 +272,13 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   <NaturalDateInput
                     value={dueDate}
                     onChange={setDueDate}
-                    placeholder="e.g. next friday, April 15"
+                    onRecurrenceChange={(rec) => {
+                      if (rec) {
+                        setIsRecurring(true);
+                        setRecurrence(rec);
+                      }
+                    }}
+                    placeholder="e.g. next friday, every Monday"
                     hasError={hasAttemptedSubmit && !!validationErrors.dueDate}
                     className="flex-1 h-9"
                   />

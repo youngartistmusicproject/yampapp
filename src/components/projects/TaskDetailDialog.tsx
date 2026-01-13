@@ -670,7 +670,12 @@ export function TaskDetailDialog({
                     <NaturalDateInput
                       value={task.dueDate}
                       onChange={(date) => onTaskUpdate(task.id, { dueDate: date })}
-                      placeholder="e.g. next friday, Apr 15"
+                      onRecurrenceChange={(rec) => {
+                        if (rec) {
+                          onTaskUpdate(task.id, { isRecurring: true, recurrence: rec });
+                        }
+                      }}
+                      placeholder="e.g. next friday, every Monday"
                       className="flex-1 max-w-[280px]"
                     />
                     <Popover>
