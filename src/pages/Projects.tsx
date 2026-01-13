@@ -87,6 +87,7 @@ export default function Projects() {
     const saved = localStorage.getItem('showTaskDetails');
     return saved !== null ? JSON.parse(saved) : true;
   });
+  const [activeView, setActiveView] = useState<'table' | 'kanban'>('table');
 
   // Persist showTaskDetails preference
   useEffect(() => {
@@ -726,7 +727,7 @@ export default function Projects() {
       </div>
 
       {/* Views */}
-      <Tabs defaultValue="table" className="space-y-4">
+      <Tabs defaultValue="table" className="space-y-4" onValueChange={(v) => setActiveView(v as 'table' | 'kanban')}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TabsList className="h-8 bg-transparent p-0 gap-1">
@@ -780,13 +781,15 @@ export default function Projects() {
                   Importance
                   {sortField === 'importance' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => { setSortField('stage'); setSortAscending(true); }}
-                  className={cn(sortField === 'stage' && 'bg-muted')}
-                >
-                  Stage
-                  {sortField === 'stage' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
-                </DropdownMenuItem>
+                {activeView !== 'kanban' && (
+                  <DropdownMenuItem 
+                    onClick={() => { setSortField('stage'); setSortAscending(true); }}
+                    className={cn(sortField === 'stage' && 'bg-muted')}
+                  >
+                    Stage
+                    {sortField === 'stage' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem 
                   onClick={() => { setSortField('estimatedTime'); setSortAscending(true); }}
                   className={cn(sortField === 'estimatedTime' && 'bg-muted')}
