@@ -60,7 +60,9 @@ import { format, formatDistanceToNow } from "date-fns";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { NaturalDateInput } from "./NaturalDateInput";
+import { RecurrenceSettings } from "./RecurrenceSettings";
 import { tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
+import { RecurrenceSettings as RecurrenceSettingsType } from "@/types";
 
 interface StatusItem {
   id: string;
@@ -681,72 +683,47 @@ export function TaskDetailDialog({
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button 
-                          variant="ghost" 
+                          variant={task.isRecurring ? "default" : "ghost"}
                           size="sm"
-                          className={`h-8 w-8 p-0 ${task.isRecurring ? 'text-primary' : 'text-muted-foreground'}`}
+                          className="h-8 w-8 p-0"
                         >
                           <Repeat className="w-4 h-4" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-64 p-4" align="start">
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Repeat</span>
-                            <Button
-                              variant={task.isRecurring ? "secondary" : "outline"}
-                              size="sm"
-                              className="h-7 text-sm px-3"
-                              onClick={() => {
-                                if (task.isRecurring) {
-                                  onTaskUpdate(task.id, { isRecurring: false, recurrence: undefined });
-                                } else {
-                                  onTaskUpdate(task.id, { 
-                                    isRecurring: true, 
-                                    recurrence: { frequency: 'weekly', interval: 1 } 
-                                  });
-                                }
-                              }}
-                            >
-                              {task.isRecurring ? 'On' : 'Off'}
-                            </Button>
-                          </div>
-                          {task.isRecurring && task.recurrence && (
-                            <div className="flex gap-2 pt-3 border-t">
-                              <Input
-                                type="number"
-                                min={1}
-                                max={99}
-                                value={task.recurrence.interval}
-                                onChange={(e) => onTaskUpdate(task.id, {
-                                  recurrence: { ...task.recurrence!, interval: parseInt(e.target.value) || 1 }
-                                })}
-                                className="w-16 h-8 text-sm"
-                              />
-                              <Select
-                                value={task.recurrence.frequency}
-                                onValueChange={(v) => onTaskUpdate(task.id, {
-                                  recurrence: { ...task.recurrence!, frequency: v as any }
-                                })}
-                              >
-                                <SelectTrigger className="flex-1 h-8 text-sm">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="daily">Day(s)</SelectItem>
-                                  <SelectItem value="weekly">Week(s)</SelectItem>
-                                  <SelectItem value="monthly">Month(s)</SelectItem>
-                                  <SelectItem value="yearly">Year(s)</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )}
-                        </div>
+                      <PopoverContent className="w-80 z-[70] max-h-[400px] overflow-y-auto" align="end">
+                        <RecurrenceSettings
+                          isRecurring={task.isRecurring || false}
+                          onIsRecurringChange={(value) => {
+                            if (value && !task.recurrence) {
+                              onTaskUpdate(task.id, { 
+                                isRecurring: true, 
+                                recurrence: { frequency: 'weekly', interval: 1 } 
+                              });
+                            } else if (!value) {
+                              onTaskUpdate(task.id, { isRecurring: false, recurrence: undefined });
+                            } else {
+                              onTaskUpdate(task.id, { isRecurring: value });
+                            }
+                          }}
+                          recurrence={task.recurrence}
+                          onRecurrenceChange={(rec) => onTaskUpdate(task.id, { recurrence: rec })}
+                          compact
+                        />
                       </PopoverContent>
                     </Popover>
                   </div>
                 </div>
 
-                {/* Effort Row */}
+                {/* Recurrence Description */}
+                {task.isRecurring && task.recurrence && (
+                  <div className="flex items-center gap-3 min-h-[28px] -mt-1">
+                    <div className="w-4 shrink-0" />
+                    <div className="w-24 shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      {getRecurrenceDescription(task.recurrence)}
+                    </p>
+                  </div>
+                )}
                 <div className="flex items-center gap-3 min-h-[36px]">
                   <Zap className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="text-sm text-muted-foreground w-24 shrink-0 flex items-center gap-1.5">
@@ -1413,4 +1390,41 @@ export function TaskDetailDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+function getRecurrenceDescription(recurrence: RecurrenceSettingsType): string {
+  const { frequency, interval, daysOfWeek, dayOfMonth, endDate } = recurrence;
+
+  const frequencyLabels: Record<string, { singular: string; plural: string }> = {
+    daily: { singular: "day", plural: "days" },
+    weekly: { singular: "week", plural: "weeks" },
+    monthly: { singular: "month", plural: "months" },
+    yearly: { singular: "year", plural: "years" },
+  };
+
+  const label = frequencyLabels[frequency] || { singular: frequency, plural: frequency };
+  
+  let description = "Repeats every ";
+
+  if (interval === 1) {
+    description += label.singular;
+  } else {
+    description += `${interval} ${label.plural}`;
+  }
+
+  if (frequency === "weekly" && daysOfWeek && daysOfWeek.length > 0) {
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const days = daysOfWeek.map((d) => dayNames[d]).join(", ");
+    description += ` on ${days}`;
+  }
+
+  if (frequency === "monthly" && dayOfMonth) {
+    description += ` on day ${dayOfMonth}`;
+  }
+
+  if (endDate) {
+    description += ` until ${endDate.toLocaleDateString()}`;
+  }
+
+  return description;
 }
