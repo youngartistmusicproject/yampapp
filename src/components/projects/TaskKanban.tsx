@@ -69,6 +69,16 @@ function formatEstimatedTime(minutes: number): string {
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
+// Helper to check if task is overdue
+function isTaskOverdue(task: Task): boolean {
+  if (!task.dueDate) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDate = new Date(task.dueDate);
+  dueDate.setHours(0, 0, 0, 0);
+  return dueDate < today && task.status !== 'done';
+}
+
 export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, statuses }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
@@ -170,7 +180,9 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                     {columnTasks.map((task) => (
                       <Card
                         key={task.id}
-                        className={`group cursor-grab active:cursor-grabbing border-l-4 ${importanceColors[task.importance]} shadow-card hover:shadow-elevated transition-all`}
+                        className={`group cursor-grab active:cursor-grabbing border-l-4 ${importanceColors[task.importance]} shadow-card hover:shadow-elevated transition-all ${
+                          isTaskOverdue(task) ? 'ring-1 ring-red-400 dark:ring-red-500' : ''
+                        }`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, task.id)}
                         onClick={() => onViewTask(task)}
@@ -243,9 +255,14 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                             )}
                             
                             {task.dueDate && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <div className={`flex items-center gap-1 text-xs ${
+                                isTaskOverdue(task) ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'
+                              }`}>
                                 <Calendar className="w-3 h-3" />
-                                <span>{format(task.dueDate, "MMM d")}</span>
+                                <span>
+                                  {isTaskOverdue(task) && '⚠ '}
+                                  {format(task.dueDate, "MMM d")}
+                                </span>
                               </div>
                             )}
                             
