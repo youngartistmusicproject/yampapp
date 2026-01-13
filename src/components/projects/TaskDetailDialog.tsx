@@ -578,9 +578,14 @@ export function TaskDetailDialog({
       <DialogContent className="w-full max-w-[95vw] md:max-w-[1100px] h-[92vh] md:h-[85vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden rounded-xl">
         {/* Header - Clean and spacious */}
         <div className="px-6 pt-6 pb-5 border-b border-border/40">
-          {/* Status Badge - More prominent */}
-          {taskStatus && (
-            <div className="mb-3">
+          {/* Project & Status */}
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            {projectName && (
+              <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                {projectName}
+              </span>
+            )}
+            {taskStatus && (
               <span 
                 className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full"
                 style={{ 
@@ -591,8 +596,8 @@ export function TaskDetailDialog({
                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: taskStatus.color }} />
                 {taskStatus.name}
               </span>
-            </div>
-          )}
+            )}
+          </div>
           
           {/* Title */}
           <EditableText
@@ -830,6 +835,7 @@ export function TaskDetailDialog({
                       <SelectValue placeholder="—" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-[60]">
+                      <SelectItem value="2">2 min</SelectItem>
                       <SelectItem value="5">5 min</SelectItem>
                       <SelectItem value="15">15 min</SelectItem>
                       <SelectItem value="30">30 min</SelectItem>
@@ -858,7 +864,7 @@ export function TaskDetailDialog({
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-3" align="start">
                       <div className="flex gap-1 flex-wrap max-w-[200px]">
-                        {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((value) => (
+                        {[0, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100].map((value) => (
                           <Button
                             key={value}
                             variant={progressPercent === value ? "secondary" : "ghost"}
