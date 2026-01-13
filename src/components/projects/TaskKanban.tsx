@@ -244,7 +244,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                               onDragEnd={handleDragEnd}
                               onClick={() => onViewTask(task)}
                             >
-                              <CardContent className="p-3 space-y-2.5">
+                              <CardContent className="p-3 space-y-2 h-[140px] flex flex-col">
                                 {/* Task Title Row */}
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -279,16 +279,8 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                                 {task.progress !== undefined && task.progress > 0 && (
                                   <Progress value={task.progress} colorByValue className="h-1.5" />
                                 )}
-
-                                {/* Description */}
-                                {task.description && (
-                                  <p className="text-xs text-muted-foreground line-clamp-2">
-                                    {task.description}
-                                  </p>
-                                )}
-                                
                                 {/* Properties Row: Time | Importance | Effort */}
-                                <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40">
+                                <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40 mt-auto">
                                   {task.estimatedTime && (
                                     <div className="flex items-center gap-1 text-xs bg-muted/50 rounded px-1.5 py-0.5">
                                       <Clock className="w-3 h-3 text-muted-foreground" />
