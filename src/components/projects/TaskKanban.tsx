@@ -175,10 +175,11 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                         onDragStart={(e) => handleDragStart(e, task.id)}
                         onClick={() => onViewTask(task)}
                       >
-                        <CardContent className="p-3">
+                        <CardContent className="p-3 space-y-2.5">
+                          {/* Task Title Row */}
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                              <p className="text-sm font-medium leading-snug truncate">
+                              <p className="text-sm font-medium leading-snug line-clamp-2">
                                 {task.title}
                               </p>
                               {task.isRecurring && (
@@ -205,46 +206,52 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                             </div>
                           </div>
 
-                          {/* 1. Progress bar under title */}
+                          {/* Progress bar */}
                           {task.progress !== undefined && task.progress > 0 && (
-                            <div className="mt-1.5">
-                              <Progress value={task.progress} colorByValue className="h-1.5" />
-                            </div>
+                            <Progress value={task.progress} colorByValue className="h-1.5" />
                           )}
 
+                          {/* Description */}
                           {task.description && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            <p className="text-xs text-muted-foreground line-clamp-2">
                               {task.description}
                             </p>
                           )}
                           
-                          {/* 2. Est Time → 3. Importance → 4. Effort (Stage is the column) */}
-                          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                          {/* Properties Row: Time | Importance | Effort */}
+                          <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40">
                             {task.estimatedTime && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Clock className="w-3 h-3" />
-                                {formatEstimatedTime(task.estimatedTime)}
+                              <div className="flex items-center gap-1 text-xs bg-muted/50 rounded px-1.5 py-0.5">
+                                <Clock className="w-3 h-3 text-muted-foreground" />
+                                <span>{formatEstimatedTime(task.estimatedTime)}</span>
                               </div>
                             )}
-                            <Badge className={`${importanceBadgeColors[task.importance]} text-xs`} variant="secondary">
+                            <Badge className={`${importanceBadgeColors[task.importance]} text-[10px] capitalize`} variant="secondary">
                               {task.importance}
                             </Badge>
-                            <Badge className={`${effortColors[task.effort]} text-xs`} variant="secondary">
+                            <Badge className={`${effortColors[task.effort]} text-[10px] capitalize`} variant="secondary">
                               {task.effort}
                             </Badge>
                           </div>
 
-                          {/* 5. Responsible → 6. Due Date → 7. Tags */}
-                          <div className="flex items-center gap-2 mt-2">
-                            <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+                          {/* Footer Row: Responsible | Due Date | Tags */}
+                          <div className="flex items-center gap-2 pt-1 border-t border-border/40">
+                            {task.assignees && task.assignees.length > 0 ? (
+                              <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground italic">Unassigned</span>
+                            )}
+                            
                             {task.dueDate && (
                               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Calendar className="w-3 h-3" />
-                                {format(task.dueDate, "MMM d")}
+                                <span>{format(task.dueDate, "MMM d")}</span>
                               </div>
                             )}
+                            
                             {task.tags && task.tags.length > 0 && (
                               <div className="flex items-center gap-1 ml-auto">
+                                <Tag className="w-3 h-3 text-muted-foreground" />
                                 {task.tags.slice(0, 1).map((tagId) => {
                                   const tag = getTagById(tagId);
                                   return (
