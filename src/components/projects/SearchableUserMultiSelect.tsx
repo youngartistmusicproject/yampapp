@@ -97,7 +97,7 @@ export function SearchableUserMultiSelect({
                     <span className="flex-1 truncate">{user.name}</span>
                     {user.role && (
                       <span className="ml-2 text-xs text-muted-foreground capitalize">
-                        {user.role}
+                        {user.role.replace('-', ' ')}
                       </span>
                     )}
                   </CommandItem>
