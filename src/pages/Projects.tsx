@@ -386,13 +386,20 @@ export default function Projects() {
   };
 
   const handleRestoreTask = (taskId: string) => {
-    updateTask.mutate({
-      taskId,
-      updates: { status: 'todo', archivedAt: null as any } as any,
-    }, {
-      onSuccess: () => toast.success('Task restored'),
-      onError: () => toast.error('Failed to restore task'),
-    });
+    updateTask.mutate(
+      {
+        taskId,
+        updates: {
+          status: 'not-started',
+          completedAt: null as any,
+          archivedAt: null as any,
+        } as any,
+      },
+      {
+        onSuccess: () => toast.success('Task restored'),
+        onError: () => toast.error('Failed to restore task'),
+      }
+    );
   };
 
   const handleArchiveTask = (taskId: string) => {
