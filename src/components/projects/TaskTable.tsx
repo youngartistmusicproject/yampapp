@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Repeat, Copy, Trash2, ArrowUpDown } from "lucide-react";
+import { Repeat, Copy, Trash2, ArrowUpDown, Clock } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,14 @@ const importanceColors: Record<string, string> = {
   critical: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
 };
 
+// Helper to format estimated time
+function formatEstimatedTime(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
 export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onToggleSort, sortField = 'dueDate', sortAscending = true, statuses }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
@@ -107,14 +116,28 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                     <Repeat className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                   )}
                 </div>
-                {(task.progress > 0 || task.description) && (
+                {task.description && (
                   <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
-                    {task.progress > 0 && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground mr-1.5">{task.progress}%</span>
-                    )}
                     {task.description}
                   </p>
                 )}
+                
+                {/* Est Time & Progress row */}
+                <div className="flex items-center gap-3 mt-2">
+                  {task.estimatedTime && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="w-3 h-3" />
+                      {formatEstimatedTime(task.estimatedTime)}
+                    </div>
+                  )}
+                  {task.progress !== undefined && task.progress > 0 && (
+                    <div className="flex items-center gap-1.5 flex-1 max-w-[120px]">
+                      <Progress value={task.progress} className="h-1.5" />
+                      <span className="text-xs text-muted-foreground">{task.progress}%</span>
+                    </div>
+                  )}
+                </div>
+                
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   {(() => {
                     const status = getStatusById(task.status);
@@ -188,6 +211,8 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                   Importance <ArrowUpDown className={`w-3 h-3 ${sortField === 'importance' ? 'text-primary' : ''}`} />
                 </Button>
               </TableHead>
+              <TableHead>Est. Time</TableHead>
+              <TableHead className="w-24">Progress</TableHead>
               <TableHead>Responsible</TableHead>
               <TableHead>
                 <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('dueDate')}>
@@ -254,6 +279,19 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                   <Badge className={importanceColors[task.importance]} variant="secondary">
                     {task.importance}
                   </Badge>
+                </TableCell>
+                <TableCell className="text-muted-foreground text-sm">
+                  {task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : "-"}
+                </TableCell>
+                <TableCell>
+                  {task.progress !== undefined && task.progress > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <Progress value={task.progress} className="h-2 w-16" />
+                      <span className="text-xs text-muted-foreground">{task.progress}%</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <UserAvatarGroup users={task.assignees} max={3} size="md" />
