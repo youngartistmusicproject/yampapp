@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -743,30 +743,79 @@ export default function Projects() {
             <span className="text-[13px] text-muted-foreground tabular-nums ml-2">
               {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
             </span>
-            
-            {sortField === 'manual' && (
-              <button 
-                className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors bg-muted/50 px-2 py-0.5 rounded-full"
-                onClick={() => {
-                  setSortField('dueDate');
-                  setSortAscending(true);
-                }}
-              >
-                <GripVertical className="w-3 h-3" />
-                Manual
-                <X className="w-3 h-3" />
-              </button>
-            )}
           </div>
           
-          <button
-            onClick={() => setShowTaskDetails(!showTaskDetails)}
-            className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-            title={showTaskDetails ? "Hide details" : "Show details"}
-          >
-            {showTaskDetails ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">{showTaskDetails ? "Hide details" : "Show details"}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">
+                    {sortField === 'manual' ? 'Manual' : sortField === 'dueDate' ? 'Date' : sortField === 'effort' ? 'Effort' : sortField === 'importance' ? 'Importance' : sortField === 'stage' ? 'Stage' : 'Est. Time'}
+                  </span>
+                  {sortField !== 'manual' && (
+                    sortAscending ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem 
+                  onClick={() => { setSortField('dueDate'); setSortAscending(true); }}
+                  className={cn(sortField === 'dueDate' && 'bg-muted')}
+                >
+                  Due Date
+                  {sortField === 'dueDate' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => { setSortField('effort'); setSortAscending(true); }}
+                  className={cn(sortField === 'effort' && 'bg-muted')}
+                >
+                  Effort
+                  {sortField === 'effort' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => { setSortField('importance'); setSortAscending(true); }}
+                  className={cn(sortField === 'importance' && 'bg-muted')}
+                >
+                  Importance
+                  {sortField === 'importance' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => { setSortField('stage'); setSortAscending(true); }}
+                  className={cn(sortField === 'stage' && 'bg-muted')}
+                >
+                  Stage
+                  {sortField === 'stage' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => { setSortField('estimatedTime'); setSortAscending(true); }}
+                  className={cn(sortField === 'estimatedTime' && 'bg-muted')}
+                >
+                  Est. Time
+                  {sortField === 'estimatedTime' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+                </DropdownMenuItem>
+                {sortField === 'manual' && (
+                  <DropdownMenuItem 
+                    onClick={() => { setSortField('dueDate'); setSortAscending(true); }}
+                    className="text-muted-foreground"
+                  >
+                    <GripVertical className="w-3.5 h-3.5 mr-1.5" />
+                    Manual
+                    <X className="w-3 h-3 ml-auto" />
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <button
+              onClick={() => setShowTaskDetails(!showTaskDetails)}
+              className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+              title={showTaskDetails ? "Hide details" : "Show details"}
+            >
+              {showTaskDetails ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{showTaskDetails ? "Hide details" : "Show details"}</span>
+            </button>
+          </div>
         </div>
 
         <TabsContent value="table" className="mt-0">
