@@ -106,24 +106,31 @@ export function useTasks() {
         assigneesByTask.set(a.task_id, existing);
       });
       
-      return tasksData.map(t => ({
-        id: t.id,
-        title: t.title,
-        description: t.description || undefined,
-        status: t.status.replace('_', '-'), // Convert in_progress to in-progress for UI
-        effort: (t.effort || 'easy') as 'easy' | 'light' | 'focused' | 'deep',
-        importance: (t.importance || 'routine') as 'low' | 'routine' | 'important' | 'critical',
-        dueDate: t.due_date ? parseDateOnly(t.due_date) : undefined,
-        assignees: (assigneesByTask.get(t.id) || []).map(getUserByName),
-        projectId: t.project_id || undefined,
-        tags: t.tags || [],
-        isRecurring: t.is_recurring,
-        progress: t.progress || 0,
-        estimatedTime: t.estimated_time ? parseInt(t.estimated_time) : undefined,
-        completedAt: t.completed_at ? new Date(t.completed_at) : undefined,
-        createdAt: new Date(t.created_at),
-        updatedAt: new Date(t.updated_at),
-      })) as Task[];
+      return tasksData.map(t => {
+        // Normalize status: convert DB format to UI format
+        // Handle both legacy statuses (todo, in_progress) and new format (not_started, in_progress)
+        let normalizedStatus = t.status.replace('_', '-');
+        if (normalizedStatus === 'todo') normalizedStatus = 'not-started';
+        
+        return {
+          id: t.id,
+          title: t.title,
+          description: t.description || undefined,
+          status: normalizedStatus,
+          effort: (t.effort || 'easy') as 'easy' | 'light' | 'focused' | 'deep',
+          importance: (t.importance || 'routine') as 'low' | 'routine' | 'important' | 'critical',
+          dueDate: t.due_date ? parseDateOnly(t.due_date) : undefined,
+          assignees: (assigneesByTask.get(t.id) || []).map(getUserByName),
+          projectId: t.project_id || undefined,
+          tags: t.tags || [],
+          isRecurring: t.is_recurring,
+          progress: t.progress || 0,
+          estimatedTime: t.estimated_time ? parseInt(t.estimated_time) : undefined,
+          completedAt: t.completed_at ? new Date(t.completed_at) : undefined,
+          createdAt: new Date(t.created_at),
+          updatedAt: new Date(t.updated_at),
+        };
+      }) as Task[];
     },
   });
 }
