@@ -183,9 +183,10 @@ export default function Projects() {
       return matchesSearch && matchesProject && matchesTeam && matchesStatus && matchesEffort && matchesImportance &&
              matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
-      // Define sort order for effort and importance
+      // Define sort order for effort, importance, and stage
       const effortOrder = effortLibrary.map(e => e.id);
       const importanceOrder = importanceLibrary.map(i => i.id);
+      const stageOrder = statuses.map(s => s.id);
       
       if (sortField === 'effort') {
         const aIndex = effortOrder.indexOf(a.effort);
@@ -201,6 +202,24 @@ export default function Projects() {
         return sortAscending ? comparison : -comparison;
       }
       
+      if (sortField === 'stage') {
+        const aIndex = stageOrder.indexOf(a.status);
+        const bIndex = stageOrder.indexOf(b.status);
+        const comparison = aIndex - bIndex;
+        return sortAscending ? comparison : -comparison;
+      }
+      
+      if (sortField === 'estimatedTime') {
+        const aTime = a.estimatedTime || 0;
+        const bTime = b.estimatedTime || 0;
+        // Tasks without estimated time go last
+        if (aTime === 0 && bTime === 0) return 0;
+        if (aTime === 0) return 1;
+        if (bTime === 0) return -1;
+        const comparison = aTime - bTime;
+        return sortAscending ? comparison : -comparison;
+      }
+      
       // Default: sort by due date chronologically, tasks without due date go last
       if (!a.dueDate && !b.dueDate) return 0;
       if (!a.dueDate) return 1;
@@ -208,7 +227,7 @@ export default function Projects() {
       const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       return sortAscending ? comparison : -comparison;
     });
-  }, [activeTasks, searchQuery, selectedProject, selectedTeam, projects, filters, sortField, sortAscending]);
+  }, [activeTasks, searchQuery, selectedProject, selectedTeam, projects, filters, sortField, sortAscending, statuses]);
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
     updateTask.mutate({ taskId, updates }, {
