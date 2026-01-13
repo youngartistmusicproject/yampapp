@@ -244,7 +244,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                               onDragEnd={handleDragEnd}
                               onClick={() => onViewTask(task)}
                             >
-                              <CardContent className="p-3 space-y-2 h-[140px] flex flex-col">
+                              <CardContent className="p-3 space-y-2 h-[120px] flex flex-col">
                                 {/* Task Title Row */}
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
