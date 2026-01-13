@@ -62,7 +62,7 @@ function TaskRow({
   onRestore: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors w-full overflow-hidden">
+    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors w-full min-w-0 overflow-hidden">
       <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
 
       <div className="flex-1 min-w-0 overflow-hidden">
@@ -219,15 +219,15 @@ export function CompletedTasksPanel({
         </div>
 
         <div className="flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full max-h-[calc(80vh-180px)]">
-            <div className="p-2">
+          <ScrollArea className="h-full max-h-[calc(80vh-180px)] w-full overflow-x-hidden">
+            <div className="p-2 w-full min-w-0 overflow-x-hidden">
               {filteredTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center min-h-[12rem] text-muted-foreground">
                   <CheckCircle2 className="h-8 w-8 opacity-30 mb-2" />
                   <p className="text-sm">{query ? "No tasks match your search" : "No completed tasks"}</p>
                 </div>
               ) : (
-                <div className="space-y-0.5">
+                <div className="space-y-0.5 w-full min-w-0">
                   {filteredTasks.map((task) => (
                     <TaskRow
                       key={task.id}
