@@ -245,86 +245,64 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
               </div>
 
               {/* Project Owner(s) */}
-              <div className="flex items-start gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0 pt-2">
+              <div className="flex items-center gap-3">
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">
                   <span className="flex items-center gap-1">
                     <Crown className="w-3 h-3" />
                     Owner(s) <span className="text-destructive">*</span>
                   </span>
                 </Label>
-                <div className="flex-1 space-y-2">
+                <div className="flex-1">
+                  <Select
+                    value=""
+                    onValueChange={(val) => {
+                      if (val === '__all__') {
+                        selectAllAsOwners();
+                      } else {
+                        const member = filteredMembers.find(m => m.id === val);
+                        if (member) toggleOwner(member);
+                      }
+                    }}
+                    disabled={!teamId || filteredMembers.length === 0}
+                  >
+                    <SelectTrigger className={cn(
+                      "h-9 text-sm border-border/50 bg-transparent",
+                      hasAttemptedSubmit && selectedOwners.length === 0 && "border-destructive"
+                    )}>
+                      <SelectValue placeholder={
+                        !teamId ? "Select a team first" : 
+                        filteredMembers.length === 0 ? "No members in team" : 
+                        "Add owner..."
+                      } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">
+                        <span className="flex items-center gap-2">
+                          <Crown className="w-3 h-3 text-amber-600" />
+                          All Team Members
+                        </span>
+                      </SelectItem>
+                      {availableForOwner.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {selectedOwners.length > 0 && (
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-1.5 flex-wrap mt-2">
                       {selectedOwners.map((owner) => (
-                        <Badge key={owner.id} variant="default" className="gap-1 pr-1 bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30">
+                        <Badge key={owner.id} variant="secondary" className="gap-1 pr-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20">
                           <Crown className="w-3 h-3" />
                           {owner.name}
                           <button
                             type="button"
                             onClick={() => removeOwner(owner.id)}
-                            className="ml-1 hover:bg-amber-500/20 rounded-full p-0.5"
+                            className="ml-0.5 hover:bg-amber-500/20 rounded-full p-0.5"
                           >
                             <X className="w-3 h-3" />
                           </button>
                         </Badge>
-                      ))}
-                    </div>
-                  )}
-                  {!teamId ? (
-                    <div className={cn(
-                      "border rounded-lg p-4 text-center text-sm text-muted-foreground",
-                      hasAttemptedSubmit && selectedOwners.length === 0 ? "border-destructive" : "border-border/50"
-                    )}>
-                      Select a team first to see available members
-                    </div>
-                  ) : filteredMembers.length === 0 ? (
-                    <div className={cn(
-                      "border rounded-lg p-4 text-center text-sm text-muted-foreground",
-                      hasAttemptedSubmit && selectedOwners.length === 0 ? "border-destructive" : "border-border/50"
-                    )}>
-                      No members in this team yet
-                    </div>
-                  ) : (
-                    <div className={cn(
-                      "border rounded-lg p-2 max-h-28 overflow-y-auto space-y-1",
-                      hasAttemptedSubmit && selectedOwners.length === 0 ? "border-destructive" : "border-border/50"
-                    )}>
-                      {/* All as Owners option */}
-                      <button
-                        type="button"
-                        onClick={selectAllAsOwners}
-                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
-                          selectedOwners.length === filteredMembers.length
-                            ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                            : "hover:bg-muted"
-                        }`}
-                      >
-                        <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center">
-                          <Crown className="w-3.5 h-3.5 text-amber-600" />
-                        </div>
-                        <span className="font-medium">All Team Members</span>
-                        <span className="text-muted-foreground text-xs ml-auto">{filteredMembers.length} members</span>
-                      </button>
-                      
-                      <div className="border-t border-border/30 my-1" />
-                      
-                      {availableForOwner.map((member) => (
-                        <button
-                          key={member.id}
-                          type="button"
-                          onClick={() => toggleOwner(member)}
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
-                            selectedOwners.find((m) => m.id === member.id)
-                              ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                              : "hover:bg-muted"
-                          }`}
-                        >
-                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
-                            {member.name.charAt(0)}
-                          </div>
-                          <span>{member.name}</span>
-                          <span className="text-muted-foreground text-xs ml-auto">{member.role}</span>
-                        </button>
                       ))}
                     </div>
                   )}
@@ -332,76 +310,60 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
               </div>
 
               {/* Members */}
-              <div className="flex items-start gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0 pt-2">
+              <div className="flex items-center gap-3">
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">
                   <span className="flex items-center gap-1">
                     <Users className="w-3 h-3" />
                     Members
                   </span>
                 </Label>
-                <div className="flex-1 space-y-2">
+                <div className="flex-1">
+                  <Select
+                    value=""
+                    onValueChange={(val) => {
+                      if (val === '__all__') {
+                        selectAllAsMembers();
+                      } else {
+                        const member = filteredMembers.find(m => m.id === val);
+                        if (member) toggleMember(member);
+                      }
+                    }}
+                    disabled={!teamId || filteredMembers.length === 0}
+                  >
+                    <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent">
+                      <SelectValue placeholder={
+                        !teamId ? "Select a team first" : 
+                        filteredMembers.length === 0 ? "No members in team" : 
+                        "Add member..."
+                      } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">
+                        <span className="flex items-center gap-2">
+                          <Users className="w-3 h-3" />
+                          All Team Members
+                        </span>
+                      </SelectItem>
+                      {availableForMember.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {selectedMembers.length > 0 && (
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-1.5 flex-wrap mt-2">
                       {selectedMembers.map((member) => (
                         <Badge key={member.id} variant="secondary" className="gap-1 pr-1">
                           {member.name}
                           <button
                             type="button"
                             onClick={() => removeMember(member.id)}
-                            className="ml-1 hover:bg-muted rounded-full p-0.5"
+                            className="ml-0.5 hover:bg-muted rounded-full p-0.5"
                           >
                             <X className="w-3 h-3" />
                           </button>
                         </Badge>
-                      ))}
-                    </div>
-                  )}
-                  {!teamId ? (
-                    <div className="border border-border/50 rounded-lg p-4 text-center text-sm text-muted-foreground">
-                      Select a team first to see available members
-                    </div>
-                  ) : filteredMembers.length === 0 ? (
-                    <div className="border border-border/50 rounded-lg p-4 text-center text-sm text-muted-foreground">
-                      No members in this team yet
-                    </div>
-                  ) : (
-                    <div className="border border-border/50 rounded-lg p-2 max-h-28 overflow-y-auto space-y-1">
-                      {/* All as Members option */}
-                      <button
-                        type="button"
-                        onClick={selectAllAsMembers}
-                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
-                          selectedMembers.length === filteredMembers.length
-                            ? "bg-primary/10 text-primary"
-                            : "hover:bg-muted"
-                        }`}
-                      >
-                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                          <Users className="w-3.5 h-3.5" />
-                        </div>
-                        <span className="font-medium">All Team Members</span>
-                        <span className="text-muted-foreground text-xs ml-auto">{filteredMembers.length} members</span>
-                      </button>
-                      
-                      <div className="border-t border-border/30 my-1" />
-                      
-                      {availableForMember.map((member) => (
-                        <button
-                          key={member.id}
-                          type="button"
-                          onClick={() => toggleMember(member)}
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
-                            selectedMembers.find((m) => m.id === member.id)
-                              ? "bg-primary/10 text-primary"
-                              : "hover:bg-muted"
-                          }`}
-                        >
-                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
-                            {member.name.charAt(0)}
-                          </div>
-                          <span>{member.name}</span>
-                          <span className="text-muted-foreground text-xs ml-auto">{member.role}</span>
-                        </button>
                       ))}
                     </div>
                   )}
