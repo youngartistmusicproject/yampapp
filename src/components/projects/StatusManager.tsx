@@ -82,15 +82,14 @@ export function StatusManager({ open, onOpenChange, statuses, onStatusesChange }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px]">
-        <DialogHeader>
-          <DialogTitle>Manage Stages</DialogTitle>
-          <DialogDescription>
-            Add, edit, or remove task stages. Changes apply to all tasks.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[640px] max-h-[90vh] overflow-y-auto p-0">
+        {/* Header area - matches TaskDialog */}
+        <div className="px-6 pt-6 pb-4 border-b border-border/50">
+          <h2 className="text-xl font-semibold">Manage Stages</h2>
+          <p className="text-sm text-muted-foreground mt-1">Add, edit, or remove task stages. Changes apply to all tasks.</p>
+        </div>
         
-        <div className="space-y-2 py-4">
+        <div className="px-6 py-5 space-y-2">
           {statuses.map((status) => (
             <div
               key={status.id}
@@ -204,10 +203,10 @@ export function StatusManager({ open, onOpenChange, statuses, onStatusesChange }
             </Button>
           )}
         </div>
-
-        <DialogFooter>
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-border/50 flex justify-end">
           <Button onClick={() => onOpenChange(false)}>Done</Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

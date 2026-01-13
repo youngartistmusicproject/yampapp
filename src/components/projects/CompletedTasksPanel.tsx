@@ -208,12 +208,13 @@ export function CompletedTasksPanel({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[560px] max-h-[80vh] p-0 gap-0 flex flex-col overflow-hidden overflow-x-hidden">
-        <DialogHeader className="px-4 pt-4 pb-3 border-b shrink-0">
-          <DialogTitle className="text-base font-semibold">Completed Tasks</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[640px] max-h-[90vh] p-0 gap-0 flex flex-col overflow-hidden">
+        {/* Header area - matches TaskDialog */}
+        <div className="px-6 pt-6 pb-4 border-b border-border/50 shrink-0">
+          <h2 className="text-xl font-semibold">Completed Tasks</h2>
+        </div>
 
-        <div className="px-4 py-3 border-b space-y-3 shrink-0">
+        <div className="px-6 py-4 border-b border-border/50 space-y-3 shrink-0">
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -304,7 +305,7 @@ export function CompletedTasksPanel({
 
         <div className="flex-1 min-h-0 h-full overflow-hidden">
           <ScrollArea className="h-[50vh] sm:h-[55vh] w-full">
-            <div className="p-2 w-full min-w-0">
+            <div className="px-4 py-2 w-full min-w-0">
               {filteredTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center min-h-[12rem] text-muted-foreground">
                   <CheckCircle2 className="h-8 w-8 opacity-30 mb-2" />
