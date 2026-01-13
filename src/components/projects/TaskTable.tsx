@@ -86,6 +86,27 @@ function isTaskOverdue(task: Task): boolean {
   return dueDate < today && task.status !== 'done';
 }
 
+// Helper to check if task is due today
+function isTaskDueToday(task: Task): boolean {
+  if (!task.dueDate) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDate = new Date(task.dueDate);
+  dueDate.setHours(0, 0, 0, 0);
+  return dueDate.getTime() === today.getTime() && task.status !== 'done';
+}
+
+// Get due date styling
+function getDueDateStyle(task: Task): { className: string; icon: string } {
+  if (isTaskOverdue(task)) {
+    return { className: 'text-red-600 dark:text-red-400 font-medium', icon: '🔴' };
+  }
+  if (isTaskDueToday(task)) {
+    return { className: 'text-amber-600 dark:text-amber-400 font-medium', icon: '🟡' };
+  }
+  return { className: 'text-muted-foreground', icon: '' };
+}
+
 export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onToggleSort, sortField = 'dueDate', sortAscending = true, statuses }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
@@ -165,12 +186,15 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                   <Badge className={`${importanceColors[task.importance]} text-xs`} variant="secondary">
                     {task.importance}
                   </Badge>
-                  {task.dueDate && (
-                    <span className={`text-xs ${isTaskOverdue(task) ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}`}>
-                      {isTaskOverdue(task) && '⚠ '}
-                      {format(task.dueDate, "MMM d")}
-                    </span>
-                  )}
+                  {task.dueDate && (() => {
+                    const style = getDueDateStyle(task);
+                    return (
+                      <span className={`text-xs ${style.className}`}>
+                        {style.icon && <span className="mr-0.5">{style.icon}</span>}
+                        {format(task.dueDate, "MMM d")}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <UserAvatarGroup users={task.assignees} max={3} size="sm" />
@@ -300,13 +324,16 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                 <TableCell>
                   <UserAvatarGroup users={task.assignees} max={3} size="md" />
                 </TableCell>
-                <TableCell className={isTaskOverdue(task) ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}>
-                  {task.dueDate ? (
-                    <>
-                      {isTaskOverdue(task) && '⚠ '}
-                      {format(task.dueDate, "MMM d, yyyy")}
-                    </>
-                  ) : "-"}
+                <TableCell className={getDueDateStyle(task).className}>
+                  {task.dueDate ? (() => {
+                    const style = getDueDateStyle(task);
+                    return (
+                      <>
+                        {style.icon && <span className="mr-1">{style.icon}</span>}
+                        {format(task.dueDate, "MMM d, yyyy")}
+                      </>
+                    );
+                  })() : "-"}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1 flex-wrap">
