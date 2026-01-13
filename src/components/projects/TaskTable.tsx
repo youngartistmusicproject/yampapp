@@ -201,8 +201,8 @@ function SortableTableRow({
         </div>
       </div>
 
-      {/* Details row - always visible */}
-      <div className="flex items-center gap-4 pl-7 text-[11px] text-muted-foreground">
+      {/* Details row - right aligned */}
+      <div className="flex items-center justify-end gap-4 text-[11px] text-muted-foreground">
         <span>
           Effort: <span className="font-medium text-foreground capitalize">{task.effort || '—'}</span>
         </span>
@@ -215,7 +215,7 @@ function SortableTableRow({
             <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
           </span>
         )}
-        <div className="flex items-center gap-1.5 flex-1 max-w-[120px]">
+        <div className="flex items-center gap-1.5 w-[120px]">
           <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
             <div 
               className={`h-full rounded-full transition-all ${getProgressColor(task.progress)}`}
