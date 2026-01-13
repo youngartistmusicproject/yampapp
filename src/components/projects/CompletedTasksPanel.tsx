@@ -218,9 +218,9 @@ export function CompletedTasksPanel({
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full max-h-[calc(80vh-180px)] w-full overflow-x-hidden">
-            <div className="p-2 w-full min-w-0 overflow-x-hidden">
+        <div className="flex-1 min-h-0 h-full overflow-hidden">
+          <ScrollArea className="h-[50vh] sm:h-[55vh] w-full">
+            <div className="p-2 w-full min-w-0">
               {filteredTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center min-h-[12rem] text-muted-foreground">
                   <CheckCircle2 className="h-8 w-8 opacity-30 mb-2" />
