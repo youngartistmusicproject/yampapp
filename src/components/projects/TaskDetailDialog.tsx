@@ -611,14 +611,14 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[1000px] h-[95vh] sm:h-[90vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[900px] h-[95vh] sm:h-[85vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden">
         {/* Header */}
-        <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b">
+        <div className="px-5 pt-5 pb-3 border-b border-border/50">
           <EditableText
             value={task.title}
             onSave={(value) => onTaskUpdate(task.id, { title: value })}
             placeholder="Task title"
-            className="text-xl font-semibold"
+            className="text-lg font-semibold"
           />
           {task.howToLink ? (
             <Popover>
@@ -626,9 +626,9 @@ export function TaskDetailDialog({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 mt-2 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                  className="h-6 px-2 mt-1.5 text-xs text-muted-foreground hover:text-foreground gap-1"
                 >
-                  <BookOpen className="w-3.5 h-3.5" />
+                  <BookOpen className="w-3 h-3" />
                   How To
                 </Button>
               </PopoverTrigger>
@@ -637,16 +637,16 @@ export function TaskDetailDialog({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="justify-start h-8 px-2 text-sm"
+                    className="justify-start h-7 px-2 text-xs"
                     onClick={() => window.open(task.howToLink, '_blank')}
                   >
-                    <BookOpen className="w-3.5 h-3.5 mr-2" />
+                    <BookOpen className="w-3 h-3 mr-2" />
                     Open Link
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="justify-start h-8 px-2 text-sm"
+                    className="justify-start h-7 px-2 text-xs"
                     onClick={() => {
                       const link = prompt("Edit How To link:", task.howToLink);
                       if (link?.trim()) {
@@ -654,16 +654,16 @@ export function TaskDetailDialog({
                       }
                     }}
                   >
-                    <AlignLeft className="w-3.5 h-3.5 mr-2" />
-                    Edit Link
+                    <AlignLeft className="w-3 h-3 mr-2" />
+                    Edit
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="justify-start h-8 px-2 text-sm text-destructive hover:text-destructive"
+                    className="justify-start h-7 px-2 text-xs text-destructive hover:text-destructive"
                     onClick={() => onTaskUpdate(task.id, { howToLink: undefined })}
                   >
-                    <Trash2 className="w-3.5 h-3.5 mr-2" />
+                    <Trash2 className="w-3 h-3 mr-2" />
                     Remove
                   </Button>
                 </div>
@@ -673,7 +673,7 @@ export function TaskDetailDialog({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 mt-2 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+              className="h-6 px-2 mt-1.5 text-xs text-muted-foreground hover:text-foreground gap-1"
               onClick={() => {
                 const link = prompt("Enter How To link (SOP URL):");
                 if (link?.trim()) {
@@ -681,34 +681,31 @@ export function TaskDetailDialog({
                 }
               }}
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3 h-3" />
               Add How To
             </Button>
           )}
         </div>
 
         {/* Main content - two column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] min-h-0 overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_340px] min-h-0 overflow-hidden">
           {/* Left side - Task details */}
-          <div className="overflow-y-auto md:border-r bg-background">
-            <div className="p-4 sm:p-6 space-y-5">
+          <div className="overflow-y-auto md:border-r border-border/50 bg-background">
+            <div className="p-5 space-y-4">
               {/* Properties as clean rows */}
               <div className="space-y-0">
                 {/* Stage */}
-                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Circle className="w-4 h-4" />
-                    <span className="text-sm">Stage</span>
-                  </div>
+                <div className="flex items-center justify-between py-2 border-b border-border/30">
+                  <span className="text-xs text-muted-foreground">Stage</span>
                   <Select 
                     value={task.status} 
                     onValueChange={(value) => onTaskUpdate(task.id, { status: value })}
                   >
-                    <SelectTrigger className="w-auto h-8 text-sm gap-1.5 border-none shadow-none bg-transparent hover:bg-muted/50">
+                    <SelectTrigger className="w-auto h-7 text-xs gap-1.5 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
                       {taskStatus && (
                         <>
                           <div 
-                            className="w-2 h-2 rounded-full" 
+                            className="w-1.5 h-1.5 rounded-full" 
                             style={{ backgroundColor: taskStatus.color }}
                           />
                           {taskStatus.name}
@@ -720,7 +717,7 @@ export function TaskDetailDialog({
                         <SelectItem key={s.id} value={s.id}>
                           <div className="flex items-center gap-2">
                             <div 
-                              className="w-2 h-2 rounded-full" 
+                              className="w-1.5 h-1.5 rounded-full" 
                               style={{ backgroundColor: s.color }}
                             />
                             {s.name}
@@ -732,23 +729,21 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Effort */}
-                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Flag className="w-4 h-4" />
-                    <span className="text-sm">Effort</span>
+                <div className="flex items-center justify-between py-2 border-b border-border/30">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">Effort</span>
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          className="inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                          aria-label="View effort definitions"
+                          className="text-muted-foreground hover:text-foreground"
                         >
-                          <Info className="w-3.5 h-3.5" />
+                          <Info className="w-3 h-3" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-80 p-3 z-[70]" align="start">
-                        <p className="text-sm font-medium">Effort</p>
-                        <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
+                      <PopoverContent className="w-64 p-3 z-[70]" align="start">
+                        <p className="text-xs font-medium mb-2">Effort Levels</p>
+                        <ul className="text-xs space-y-1 text-muted-foreground">
                           {effortLibrary.map((e) => (
                             <li key={e.id}>
                               <span className="font-medium text-foreground">{e.name}</span> — {e.description}
@@ -762,10 +757,10 @@ export function TaskDetailDialog({
                     value={task.effort} 
                     onValueChange={(value: Task['effort']) => onTaskUpdate(task.id, { effort: value })}
                   >
-                    <SelectTrigger className="w-auto h-8 text-sm gap-1 border-none shadow-none bg-transparent hover:bg-muted/50">
-                      <Badge className={`${effortColors[task.effort]} text-xs capitalize`}>
+                    <SelectTrigger className="w-auto h-7 text-xs gap-1 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${effortColors[task.effort]}`}>
                         {task.effort}
-                      </Badge>
+                      </span>
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-50">
                       {effortLibrary.map(e => (
@@ -776,23 +771,21 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Importance */}
-                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Circle className="w-4 h-4" />
-                    <span className="text-sm">Importance</span>
+                <div className="flex items-center justify-between py-2 border-b border-border/30">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">Importance</span>
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          className="inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                          aria-label="View importance definitions"
+                          className="text-muted-foreground hover:text-foreground"
                         >
-                          <Info className="w-3.5 h-3.5" />
+                          <Info className="w-3 h-3" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-80 p-3 z-[70]" align="start">
-                        <p className="text-sm font-medium">Importance</p>
-                        <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
+                      <PopoverContent className="w-64 p-3 z-[70]" align="start">
+                        <p className="text-xs font-medium mb-2">Importance Levels</p>
+                        <ul className="text-xs space-y-1 text-muted-foreground">
                           {importanceLibrary.map((i) => (
                             <li key={i.id}>
                               <span className="font-medium text-foreground">{i.name}</span> — {i.description}
@@ -806,10 +799,10 @@ export function TaskDetailDialog({
                     value={task.importance} 
                     onValueChange={(value: Task['importance']) => onTaskUpdate(task.id, { importance: value })}
                   >
-                    <SelectTrigger className="w-auto h-8 text-sm gap-1 border-none shadow-none bg-transparent hover:bg-muted/50">
-                      <Badge className={`${importanceColors[task.importance]} text-xs capitalize`}>
+                    <SelectTrigger className="w-auto h-7 text-xs gap-1 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${importanceColors[task.importance]}`}>
                         {task.importance}
-                      </Badge>
+                      </span>
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-50">
                       {importanceLibrary.map(i => (
@@ -820,11 +813,8 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Due Date with Recurring */}
-                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="w-4 h-4" />
-                    <span className="text-sm">Due date</span>
-                  </div>
+                <div className="flex items-center justify-between py-2 border-b border-border/30">
+                  <span className="text-xs text-muted-foreground">Due Date</span>
                   <div className="flex items-center gap-1">
                     <Input
                       type="date"
@@ -834,30 +824,26 @@ export function TaskDetailDialog({
                           dueDate: e.target.value ? parseInputDate(e.target.value) : undefined,
                         })
                       }
-                      className="h-8 text-sm w-auto border-none shadow-none bg-transparent text-right cursor-pointer hover:bg-muted/50 rounded px-2"
+                      className="h-7 text-xs w-auto border-none shadow-none bg-transparent text-right cursor-pointer hover:bg-muted/50 rounded px-2"
                     />
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          className={`h-8 w-8 p-0 ${task.isRecurring ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground`}
-                          title={task.isRecurring && task.recurrence 
-                            ? `Repeats every ${task.recurrence.interval > 1 ? `${task.recurrence.interval} ` : ''}${task.recurrence.frequency.replace('ly', task.recurrence.interval > 1 ? 's' : '')}`
-                            : 'Set recurring'
-                          }
+                          className={`h-7 w-7 p-0 ${task.isRecurring ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground`}
                         >
-                          <Repeat className="w-4 h-4" />
+                          <Repeat className="w-3.5 h-3.5" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-80 p-0" align="end">
-                        <div className="p-4 space-y-4">
+                      <PopoverContent className="w-72 p-0" align="end">
+                        <div className="p-3 space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Repeating task</span>
+                            <span className="text-xs font-medium">Repeat</span>
                             <Button
                               variant={task.isRecurring ? "secondary" : "outline"}
                               size="sm"
-                              className="h-7"
+                              className="h-6 text-xs"
                               onClick={() => {
                                 if (task.isRecurring) {
                                   onTaskUpdate(task.id, { isRecurring: false, recurrence: undefined });
@@ -874,56 +860,34 @@ export function TaskDetailDialog({
                           </div>
                           
                           {task.isRecurring && task.recurrence && (
-                            <div className="space-y-3 pt-2 border-t">
-                              <div className="space-y-2">
-                                <span className="text-xs text-muted-foreground">Repeat every</span>
-                                <div className="flex gap-2">
-                                  <Input
-                                    type="number"
-                                    min={1}
-                                    max={99}
-                                    value={task.recurrence.interval}
-                                    onChange={(e) => onTaskUpdate(task.id, {
-                                      recurrence: { ...task.recurrence!, interval: parseInt(e.target.value) || 1 }
-                                    })}
-                                    className="w-16 h-8"
-                                  />
-                                  <Select
-                                    value={task.recurrence.frequency}
-                                    onValueChange={(v) => onTaskUpdate(task.id, {
-                                      recurrence: { ...task.recurrence!, frequency: v as any }
-                                    })}
-                                  >
-                                    <SelectTrigger className="flex-1 h-8">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="daily">Day(s)</SelectItem>
-                                      <SelectItem value="weekly">Week(s)</SelectItem>
-                                      <SelectItem value="monthly">Month(s)</SelectItem>
-                                      <SelectItem value="yearly">Year(s)</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                              
-                              <div className="space-y-2">
-                                <span className="text-xs text-muted-foreground">End date (optional)</span>
+                            <div className="space-y-2 pt-2 border-t">
+                              <div className="flex gap-2">
                                 <Input
-                                  type="date"
-                                  value={task.recurrence.endDate ? format(task.recurrence.endDate, "yyyy-MM-dd") : ""}
-                                  onChange={(e) =>
-                                    onTaskUpdate(task.id, {
-                                      recurrence: {
-                                        ...task.recurrence!,
-                                        endDate: e.target.value
-                                          ? parseInputDate(e.target.value)
-                                          : undefined,
-                                      },
-                                    })
-                                  }
-                                  className="h-8"
+                                  type="number"
+                                  min={1}
+                                  max={99}
+                                  value={task.recurrence.interval}
+                                  onChange={(e) => onTaskUpdate(task.id, {
+                                    recurrence: { ...task.recurrence!, interval: parseInt(e.target.value) || 1 }
+                                  })}
+                                  className="w-14 h-7 text-xs"
                                 />
+                                <Select
+                                  value={task.recurrence.frequency}
+                                  onValueChange={(v) => onTaskUpdate(task.id, {
+                                    recurrence: { ...task.recurrence!, frequency: v as any }
+                                  })}
+                                >
+                                  <SelectTrigger className="flex-1 h-7 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="daily">Day(s)</SelectItem>
+                                    <SelectItem value="weekly">Week(s)</SelectItem>
+                                    <SelectItem value="monthly">Month(s)</SelectItem>
+                                    <SelectItem value="yearly">Year(s)</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
                             </div>
                           )}
@@ -934,26 +898,19 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Estimated Time */}
-                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">Estimated time</span>
-                  </div>
+                <div className="flex items-center justify-between py-2 border-b border-border/30">
+                  <span className="text-xs text-muted-foreground">Est. Time</span>
                   <Select 
                     value={task.estimatedTime?.toString() || ""} 
                     onValueChange={(value) => onTaskUpdate(task.id, { estimatedTime: value ? parseInt(value) : undefined })}
                   >
-                    <SelectTrigger className="w-auto h-8 text-sm gap-1 border-none shadow-none bg-transparent hover:bg-muted/50">
-                      <SelectValue placeholder="No estimate" />
+                    <SelectTrigger className="w-auto h-7 text-xs gap-1 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
+                      <SelectValue placeholder="—" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-50">
-                      <SelectItem value="2">2 minutes</SelectItem>
-                      <SelectItem value="5">5 minutes</SelectItem>
-                      <SelectItem value="10">10 minutes</SelectItem>
-                      <SelectItem value="15">15 minutes</SelectItem>
-                      <SelectItem value="20">20 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                      <SelectItem value="45">45 minutes</SelectItem>
+                      <SelectItem value="5">5 min</SelectItem>
+                      <SelectItem value="15">15 min</SelectItem>
+                      <SelectItem value="30">30 min</SelectItem>
                       <SelectItem value="60">1 hour</SelectItem>
                       <SelectItem value="120">2 hours</SelectItem>
                       <SelectItem value="240">4 hours</SelectItem>
@@ -963,34 +920,31 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Progress */}
-                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Circle className="w-4 h-4" />
-                    <span className="text-sm">Progress</span>
-                  </div>
+                <div className="flex items-center justify-between py-2 border-b border-border/30">
+                  <span className="text-xs text-muted-foreground">Progress</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button 
                         variant="ghost" 
-                        className="h-8 px-2 text-sm font-normal hover:bg-muted/50 gap-2"
+                        className="h-7 px-2 text-xs font-normal hover:bg-muted/50 gap-2"
                       >
-                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
                           <div 
                             className={`h-full rounded-full transition-all duration-300 ${getProgressColor(task.progress || 0)}`}
                             style={{ width: `${task.progress || 0}%` }}
                           />
                         </div>
-                        <span className="text-xs text-muted-foreground w-8">{task.progress || 0}%</span>
+                        <span className="text-[10px] text-muted-foreground">{task.progress || 0}%</span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-48 p-2" align="end">
+                    <PopoverContent className="w-40 p-2" align="end">
                       <div className="grid grid-cols-4 gap-1">
-                        {[0, 10, 20, 30, 40, 50, 60, 70, 75, 80, 90, 100].map((value) => (
+                        {[0, 25, 50, 75, 100].map((value) => (
                           <Button
                             key={value}
                             variant={(task.progress || 0) === value ? "secondary" : "ghost"}
                             size="sm"
-                            className="h-8 text-xs"
+                            className="h-7 text-[10px]"
                             onClick={() => onTaskUpdate(task.id, { progress: value })}
                           >
                             {value}%
@@ -1002,11 +956,8 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Responsible */}
-                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Users className="w-4 h-4" />
-                    <span className="text-sm">Responsible</span>
-                  </div>
+                <div className="flex items-center justify-between py-2 border-b border-border/30">
+                  <span className="text-xs text-muted-foreground">Responsible</span>
                   <SearchableAssigneeSelect
                     members={availableMembers}
                     selectedAssignees={task.assignees || []}
@@ -1016,11 +967,8 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Tags */}
-                <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Tag className="w-4 h-4" />
-                    <span className="text-sm">Tags</span>
-                  </div>
+                <div className="flex items-center justify-between py-2 border-b border-border/30">
+                  <span className="text-xs text-muted-foreground">Tags</span>
                   <SearchableTagSelect
                     tags={tagLibrary}
                     selectedTags={task.tags || []}
@@ -1031,18 +979,15 @@ export function TaskDetailDialog({
               </div>
 
               {/* Description */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <AlignLeft className="w-4 h-4" />
-                  <span className="text-sm font-medium text-foreground">Description</span>
-                </div>
-                <div className="bg-muted/30 rounded-lg p-3 min-h-[80px]">
+              <div className="space-y-2">
+                <span className="text-xs font-medium text-foreground">Description</span>
+                <div className="bg-muted/20 rounded-lg p-3 min-h-[60px]">
                   <EditableText
                     value={task.description || ""}
                     onSave={(value) => onTaskUpdate(task.id, { description: value })}
                     placeholder="Add a description..."
                     multiline
-                    className="text-sm whitespace-pre-wrap"
+                    className="text-xs whitespace-pre-wrap"
                   />
                 </div>
               </div>

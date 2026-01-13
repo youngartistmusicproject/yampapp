@@ -203,23 +203,23 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Task" : "Create New Task"}</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border/50">
+          <DialogTitle className="text-base font-semibold">{isEditing ? "Edit Task" : "New Task"}</DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
             {isEditing ? "Update the task details below." : "Fill in the details below."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
+          <div className="px-5 py-4 space-y-4">
             {/* Project */}
-            <div className="space-y-2">
-              <Label htmlFor="project">What project does this belong to? <span className="text-destructive">*</span></Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Project <span className="text-destructive">*</span></Label>
               <Select 
                 value={selectedProjectId || "none"} 
                 onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent">
                   <SelectValue placeholder="Select a project" />
                 </SelectTrigger>
                 <SelectContent>
@@ -240,120 +240,132 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             </div>
 
             {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title">What task needs to get done? <span className="text-destructive">*</span></Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Task <span className="text-destructive">*</span></Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className={hasAttemptedSubmit && validationErrors.title ? "border-destructive focus-visible:ring-destructive" : ""}
+                placeholder="What needs to get done?"
+                className={cn(
+                  "h-9 text-sm border-border/50 bg-transparent",
+                  hasAttemptedSubmit && validationErrors.title && "border-destructive"
+                )}
               />
             </div>
 
             {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Are there any details that might be helpful in completing this task?</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Details</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                rows={3}
+                rows={2}
+                placeholder="Add helpful details..."
+                className="text-sm border-border/50 bg-transparent resize-none"
               />
             </div>
 
-            {/* Due Date with Recurrence */}
-            <div className="space-y-2">
-              <Label>What is the deadline for this task? <span className="text-destructive">*</span></Label>
-              <div className="flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        "w-[200px] justify-start text-left font-normal",
-                        !dueDate && "text-muted-foreground",
-                        hasAttemptedSubmit && validationErrors.dueDate && "border-destructive focus-visible:ring-destructive"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 z-[70]" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dueDate}
-                      onSelect={setDueDate}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant={isRecurring ? "default" : "outline"}
-                      size="icon"
-                      className="shrink-0"
-                    >
-                      <Repeat className="w-4 h-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 z-[70]" align="end">
-                    <RecurrenceSettings
-                      isRecurring={isRecurring}
-                      onIsRecurringChange={handleToggleRecurring}
-                      recurrence={recurrence}
-                      onRecurrenceChange={setRecurrence}
-                      compact
-                    />
-                  </PopoverContent>
-                </Popover>
+            {/* Due Date & Assignees row */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Due Date */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Due Date <span className="text-destructive">*</span></Label>
+                <div className="flex items-center gap-1">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className={cn(
+                          "h-9 flex-1 justify-start text-left text-sm font-normal border-border/50 bg-transparent",
+                          !dueDate && "text-muted-foreground",
+                          hasAttemptedSubmit && validationErrors.dueDate && "border-destructive"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                        {dueDate ? format(dueDate, "MMM d") : "Pick date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-[70]" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={dueDate}
+                        onSelect={setDueDate}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant={isRecurring ? "default" : "ghost"}
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                      >
+                        <Repeat className="w-3.5 h-3.5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72 z-[70]" align="end">
+                      <RecurrenceSettings
+                        isRecurring={isRecurring}
+                        onIsRecurringChange={handleToggleRecurring}
+                        recurrence={recurrence}
+                        onRecurrenceChange={setRecurrence}
+                        compact
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-              {isRecurring && recurrence && (
-                <p className="text-xs text-muted-foreground">
-                  {getRecurrenceDescription(recurrence)}
-                </p>
-              )}
+
+              {/* Assignees */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Responsible <span className="text-destructive">*</span></Label>
+                <div className={cn(
+                  "rounded-md",
+                  hasAttemptedSubmit && validationErrors.assignees && "ring-1 ring-destructive"
+                )}>
+                  <SearchableAssigneeSelect
+                    members={availableMembers}
+                    selectedAssignees={selectedAssignees}
+                    onAssigneesChange={setSelectedAssignees}
+                    placeholder="Add..."
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Assignees */}
-            <div className="space-y-2">
-              <Label>Who is responsible for this task? <span className="text-destructive">*</span></Label>
-              <div className={hasAttemptedSubmit && validationErrors.assignees ? "rounded-md ring-1 ring-destructive" : ""}>
-                <SearchableAssigneeSelect
-                  members={availableMembers}
-                  selectedAssignees={selectedAssignees}
-                  onAssigneesChange={setSelectedAssignees}
-                  placeholder="Search and select assignees..."
-                />
-              </div>
-            </div>
+            {isRecurring && recurrence && (
+              <p className="text-xs text-muted-foreground -mt-2">
+                {getRecurrenceDescription(recurrence)}
+              </p>
+            )}
 
             {/* Separator */}
-            <Separator className="my-4" />
+            <Separator className="my-2" />
 
             {/* Effort & Importance - side by side */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {/* Effort */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
-                  <Label htmlFor="effort">Effort <span className="text-destructive">*</span></Label>
+                  <Label className="text-xs text-muted-foreground">Effort <span className="text-destructive">*</span></Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        className="inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        aria-label="View effort definitions"
+                        className="text-muted-foreground hover:text-foreground"
                       >
-                        <Info className="w-3.5 h-3.5" />
+                        <Info className="w-3 h-3" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-80 p-3 z-[70]" align="start">
-                      <p className="text-sm font-medium">Effort</p>
-                      <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
+                    <PopoverContent className="w-64 p-3 z-[70]" align="start">
+                      <p className="text-xs font-medium mb-2">Effort Levels</p>
+                      <ul className="text-xs space-y-1 text-muted-foreground">
                         {effortLibrary.map((e) => (
                           <li key={e.id} className="flex">
                             <span className="font-medium text-foreground shrink-0">{e.name}</span>
@@ -365,8 +377,11 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   </Popover>
                 </div>
                 <Select value={effort || ""} onValueChange={(v) => setEffort(v as Task["effort"])}>
-                  <SelectTrigger className={hasAttemptedSubmit && validationErrors.effort ? "border-destructive focus-visible:ring-destructive" : ""}>
-                    <SelectValue placeholder="Select effort" />
+                  <SelectTrigger className={cn(
+                    "h-9 text-sm border-border/50 bg-transparent",
+                    hasAttemptedSubmit && validationErrors.effort && "border-destructive"
+                  )}>
+                    <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
                     {effortLibrary.map(e => (
@@ -377,22 +392,21 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
               </div>
 
               {/* Importance */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-1">
-                  <Label htmlFor="importance">Importance <span className="text-destructive">*</span></Label>
+                  <Label className="text-xs text-muted-foreground">Importance <span className="text-destructive">*</span></Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        className="inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        aria-label="View importance definitions"
+                        className="text-muted-foreground hover:text-foreground"
                       >
-                        <Info className="w-3.5 h-3.5" />
+                        <Info className="w-3 h-3" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-80 p-3 z-[70]" align="start">
-                      <p className="text-sm font-medium">Importance</p>
-                      <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
+                    <PopoverContent className="w-64 p-3 z-[70]" align="start">
+                      <p className="text-xs font-medium mb-2">Importance Levels</p>
+                      <ul className="text-xs space-y-1 text-muted-foreground">
                         {importanceLibrary.map((i) => (
                           <li key={i.id} className="flex">
                             <span className="font-medium text-foreground shrink-0">{i.name}</span>
@@ -404,8 +418,11 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   </Popover>
                 </div>
                 <Select value={importance || ""} onValueChange={(v) => setImportance(v as Task["importance"])}>
-                  <SelectTrigger className={hasAttemptedSubmit && validationErrors.importance ? "border-destructive focus-visible:ring-destructive" : ""}>
-                    <SelectValue placeholder="Select importance" />
+                  <SelectTrigger className={cn(
+                    "h-9 text-sm border-border/50 bg-transparent",
+                    hasAttemptedSubmit && validationErrors.importance && "border-destructive"
+                  )}>
+                    <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
                     {importanceLibrary.map(i => (
@@ -417,33 +434,34 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             </div>
 
             {/* Tags */}
-            <div className="space-y-2">
-              <Label>Tags</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Tags</Label>
               <SearchableTagSelect
                 tags={tagLibrary}
                 selectedTags={selectedTags}
                 onTagsChange={setSelectedTags}
-                placeholder="Search and select tags..."
+                placeholder="Add tags..."
               />
             </div>
 
             {/* Connect SOP */}
-            <div className="space-y-2">
-              <Label htmlFor="howToLink">Connect SOP</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">SOP Link</Label>
               <div className="flex items-center gap-2">
-                {howToLink && !howToLinkError ? (
-                  <BookOpen className="w-4 h-4 text-muted-foreground shrink-0" />
-                ) : (
-                  <Plus className="w-4 h-4 text-muted-foreground shrink-0" />
-                )}
                 <Input
                   id="howToLink"
                   type="url"
-                  placeholder="Add link to SOP documentation..."
+                  placeholder="https://..."
                   value={howToLink}
                   onChange={(e) => handleHowToLinkChange(e.target.value)}
-                  className={`flex-1 ${howToLinkError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  className={cn(
+                    "h-9 text-sm border-border/50 bg-transparent flex-1",
+                    howToLinkError && "border-destructive"
+                  )}
                 />
+                {howToLink && !howToLinkError && (
+                  <BookOpen className="w-4 h-4 text-primary shrink-0" />
+                )}
               </div>
               {howToLinkError && (
                 <p className="text-xs text-destructive">{howToLinkError}</p>
@@ -451,12 +469,12 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border/50 bg-muted/30">
+            <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">{isEditing ? "Save Changes" : "Create Task"}</Button>
-          </DialogFooter>
+            <Button type="submit" size="sm">{isEditing ? "Save" : "Create"}</Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
