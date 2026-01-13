@@ -140,7 +140,7 @@ export function useCreateTask() {
         .insert({
           title: task.title,
           description: task.description || null,
-          status: (task.status || 'todo').replace('-', '_'),
+          status: (task.status || 'not-started').replace('-', '_'),
           effort: task.effort || 'easy',
           importance: task.importance || 'routine',
           due_date: task.dueDate ? formatDateForDB(task.dueDate) : null,
@@ -201,8 +201,8 @@ export function useUpdateTask() {
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.status !== undefined) {
         updateData.status = updates.status.replace('-', '_');
-        // Handle completion
-        if (updates.status === 'done') {
+        // Handle completion - set completed_at timestamp when status is 'completed'
+        if (updates.status === 'completed') {
           updateData.completed_at = new Date().toISOString();
         } else {
           updateData.completed_at = null;
@@ -313,7 +313,7 @@ export function useDuplicateTask() {
         .insert({
           title: `${original.title} (Copy)`,
           description: original.description,
-          status: 'todo',
+          status: 'not_started',
           effort: original.effort,
           importance: original.importance,
           due_date: original.due_date,

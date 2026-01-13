@@ -211,11 +211,11 @@ export default function Dashboard() {
                   >
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        task.status === 'done' ? 'bg-green-500' :
+                        task.status === 'completed' ? 'bg-green-500' :
                         task.status === 'in_progress' ? 'bg-primary' : 'bg-muted-foreground'
                       }`} />
                       <div className="min-w-0 flex-1">
-                        <p className={`text-xs sm:text-sm font-medium truncate ${task.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>
+                        <p className={`text-xs sm:text-sm font-medium truncate ${task.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>
                           {task.title}
                         </p>
                         <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">

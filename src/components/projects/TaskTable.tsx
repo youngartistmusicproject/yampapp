@@ -69,9 +69,28 @@ const importanceColors: Record<string, string> = {
 
 export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onToggleSort, sortField = 'dueDate', sortAscending = true, statuses }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [completingTasks, setCompletingTasks] = useState<Set<string>>(new Set());
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
   const completedStatusId = 'completed';
   const defaultStatusId = 'not-started';
+
+  const handleCompleteTask = (taskId: string, checked: boolean) => {
+    if (checked) {
+      // Add to completing set to trigger animation
+      setCompletingTasks(prev => new Set(prev).add(taskId));
+      // After animation delay, update the task
+      setTimeout(() => {
+        onTaskUpdate(taskId, { status: completedStatusId });
+        setCompletingTasks(prev => {
+          const next = new Set(prev);
+          next.delete(taskId);
+          return next;
+        });
+      }, 500);
+    } else {
+      onTaskUpdate(taskId, { status: defaultStatusId });
+    }
+  };
 
   const handleDeleteConfirm = () => {
     if (taskToDelete && onDeleteTask) {
@@ -87,16 +106,16 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
         {tasks.map((task) => (
           <div 
             key={task.id}
-            className="rounded-lg border bg-card p-4 shadow-card cursor-pointer hover:bg-muted/50 transition-colors"
+            className={`rounded-lg border bg-card p-4 shadow-card cursor-pointer hover:bg-muted/50 transition-all duration-500 ${
+              completingTasks.has(task.id) ? 'opacity-0 scale-95 translate-x-4' : ''
+            }`}
             onClick={() => onViewTask(task)}
           >
             <div className="flex items-start gap-3">
               <div onClick={(e) => e.stopPropagation()}>
                 <Checkbox
-                  checked={task.status === completedStatusId}
-                  onCheckedChange={(checked) =>
-                    onTaskUpdate(task.id, { status: checked ? completedStatusId : defaultStatusId })
-                  }
+                  checked={task.status === completedStatusId || completingTasks.has(task.id)}
+                  onCheckedChange={(checked) => handleCompleteTask(task.id, !!checked)}
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -201,13 +220,17 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
           </TableHeader>
           <TableBody>
             {tasks.map((task) => (
-              <TableRow key={task.id} className="group cursor-pointer" onClick={() => onViewTask(task)}>
+              <TableRow 
+                key={task.id} 
+                className={`group cursor-pointer transition-all duration-500 ${
+                  completingTasks.has(task.id) ? 'opacity-0 scale-95 translate-x-4' : ''
+                }`} 
+                onClick={() => onViewTask(task)}
+              >
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={task.status === completedStatusId}
-                    onCheckedChange={(checked) =>
-                      onTaskUpdate(task.id, { status: checked ? completedStatusId : defaultStatusId })
-                    }
+                    checked={task.status === completedStatusId || completingTasks.has(task.id)}
+                    onCheckedChange={(checked) => handleCompleteTask(task.id, !!checked)}
                   />
                 </TableCell>
                 <TableCell>
