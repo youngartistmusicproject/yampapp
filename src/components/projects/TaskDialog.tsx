@@ -300,6 +300,12 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 </div>
               </div>
 
+              {isRecurring && recurrence && (
+                <p className="text-xs text-muted-foreground pl-[124px] -mt-1">
+                  {getRecurrenceDescription(recurrence)}
+                </p>
+              )}
+
               {/* Responsible */}
               <div className="flex items-center gap-3">
                 <Label className="text-sm text-muted-foreground w-28 shrink-0">Responsible <span className="text-destructive">*</span></Label>
@@ -315,12 +321,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   />
                 </div>
               </div>
-
-              {isRecurring && recurrence && (
-                <p className="text-sm text-muted-foreground pl-[124px]">
-                  {getRecurrenceDescription(recurrence)}
-                </p>
-              )}
 
               {/* Effort */}
               <div className="flex items-center gap-3">
