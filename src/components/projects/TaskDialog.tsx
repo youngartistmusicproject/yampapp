@@ -202,59 +202,61 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border/50">
-          <DialogTitle className="text-base font-semibold">{isEditing ? "Edit Task" : "New Task"}</DialogTitle>
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[600px] max-h-[85vh] overflow-y-auto p-0">
+        <DialogHeader className="px-5 pt-4 pb-2 border-b border-border/50">
+          <DialogTitle className="text-sm font-semibold">{isEditing ? "Edit Task" : "New Task"}</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             {isEditing ? "Update the task details below." : "Fill in the details below."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="px-5 py-4 space-y-4">
-            {/* Project */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Project <span className="text-destructive">*</span></Label>
-              <Select 
-                value={selectedProjectId || "none"} 
-                onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
-              >
-                <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent">
-                  <SelectValue placeholder="Select a project" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No Project</SelectItem>
-                  {(projects || []).map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      <span className="flex items-center gap-2">
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: p.color }}
-                        />
-                        <span>{p.name}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="px-5 py-3 space-y-3">
+            {/* Project & Title row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Project <span className="text-destructive">*</span></Label>
+                <Select 
+                  value={selectedProjectId || "none"} 
+                  onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
+                >
+                  <SelectTrigger className="h-8 text-sm border-border/50 bg-transparent">
+                    <SelectValue placeholder="Select a project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Project</SelectItem>
+                    {(projects || []).map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: p.color }}
+                          />
+                          <span>{p.name}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Title */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Task <span className="text-destructive">*</span></Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="What needs to get done?"
-                className={cn(
-                  "h-9 text-sm border-border/50 bg-transparent",
-                  hasAttemptedSubmit && validationErrors.title && "border-destructive"
-                )}
-              />
+              {/* Title */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Task <span className="text-destructive">*</span></Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="What needs to get done?"
+                  className={cn(
+                    "h-8 text-sm border-border/50 bg-transparent",
+                    hasAttemptedSubmit && validationErrors.title && "border-destructive"
+                  )}
+                />
+              </div>
             </div>
 
             {/* Description */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Details</Label>
               <Textarea
                 id="description"
@@ -262,14 +264,14 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
                 placeholder="Add helpful details..."
-                className="text-sm border-border/50 bg-transparent resize-none"
+                className="text-sm border-border/50 bg-transparent resize-none min-h-[60px]"
               />
             </div>
 
             {/* Due Date & Assignees row */}
             <div className="grid grid-cols-2 gap-3">
               {/* Due Date with NLP */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Due Date <span className="text-destructive">*</span></Label>
                 <div className="flex items-center gap-1">
                   <NaturalDateInput
@@ -277,7 +279,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                     onChange={setDueDate}
                     placeholder="e.g. next friday, Apr 15"
                     hasError={hasAttemptedSubmit && !!validationErrors.dueDate}
-                    className="flex-1"
+                    className="flex-1 h-8"
                   />
                   <Popover>
                     <PopoverTrigger asChild>
@@ -285,7 +287,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                         type="button"
                         variant={isRecurring ? "default" : "ghost"}
                         size="icon"
-                        className="h-9 w-9 shrink-0"
+                        className="h-8 w-8 shrink-0"
                       >
                         <Repeat className="w-3.5 h-3.5" />
                       </Button>
@@ -304,7 +306,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
               </div>
 
               {/* Assignees */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Responsible <span className="text-destructive">*</span></Label>
                 <div className={cn(
                   "rounded-md",
@@ -327,12 +329,12 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             )}
 
             {/* Separator */}
-            <Separator className="my-2" />
+            <Separator className="my-1" />
 
-            {/* Effort & Importance - side by side */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Effort, Importance, Tags - 3 columns */}
+            <div className="grid grid-cols-3 gap-3">
               {/* Effort */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <div className="flex items-center gap-1">
                   <Label className="text-xs text-muted-foreground">Effort <span className="text-destructive">*</span></Label>
                   <Popover>
@@ -344,9 +346,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                         <Info className="w-3 h-3" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-64 p-3 z-[70]" align="start">
-                      <p className="text-xs font-medium mb-2">Effort Levels</p>
-                      <ul className="text-xs space-y-1 text-muted-foreground">
+                    <PopoverContent className="w-56 p-2 z-[70]" align="start">
+                      <p className="text-xs font-medium mb-1.5">Effort Levels</p>
+                      <ul className="text-xs space-y-0.5 text-muted-foreground">
                         {effortLibrary.map((e) => (
                           <li key={e.id} className="flex">
                             <span className="font-medium text-foreground shrink-0">{e.name}</span>
@@ -359,7 +361,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 </div>
                 <Select value={effort || ""} onValueChange={(v) => setEffort(v as Task["effort"])}>
                   <SelectTrigger className={cn(
-                    "h-9 text-sm border-border/50 bg-transparent",
+                    "h-8 text-sm border-border/50 bg-transparent",
                     hasAttemptedSubmit && validationErrors.effort && "border-destructive"
                   )}>
                     <SelectValue placeholder="Select" />
@@ -373,7 +375,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
               </div>
 
               {/* Importance */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <div className="flex items-center gap-1">
                   <Label className="text-xs text-muted-foreground">Importance <span className="text-destructive">*</span></Label>
                   <Popover>
@@ -385,9 +387,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                         <Info className="w-3 h-3" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-64 p-3 z-[70]" align="start">
-                      <p className="text-xs font-medium mb-2">Importance Levels</p>
-                      <ul className="text-xs space-y-1 text-muted-foreground">
+                    <PopoverContent className="w-56 p-2 z-[70]" align="start">
+                      <p className="text-xs font-medium mb-1.5">Importance Levels</p>
+                      <ul className="text-xs space-y-0.5 text-muted-foreground">
                         {importanceLibrary.map((i) => (
                           <li key={i.id} className="flex">
                             <span className="font-medium text-foreground shrink-0">{i.name}</span>
@@ -400,7 +402,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 </div>
                 <Select value={importance || ""} onValueChange={(v) => setImportance(v as Task["importance"])}>
                   <SelectTrigger className={cn(
-                    "h-9 text-sm border-border/50 bg-transparent",
+                    "h-8 text-sm border-border/50 bg-transparent",
                     hasAttemptedSubmit && validationErrors.importance && "border-destructive"
                   )}>
                     <SelectValue placeholder="Select" />
@@ -412,21 +414,21 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            {/* Tags */}
-            <div className="space-y-1.5">
+              {/* Tags */}
+              <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Tags</Label>
-              <SearchableTagSelect
-                tags={tagLibrary}
-                selectedTags={selectedTags}
-                onTagsChange={setSelectedTags}
-                placeholder="Add tags..."
-              />
+                <SearchableTagSelect
+                  tags={tagLibrary}
+                  selectedTags={selectedTags}
+                  onTagsChange={setSelectedTags}
+                  placeholder="Add..."
+                />
+              </div>
             </div>
 
             {/* Connect SOP */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">SOP Link</Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -436,12 +438,12 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   value={howToLink}
                   onChange={(e) => handleHowToLinkChange(e.target.value)}
                   className={cn(
-                    "h-9 text-sm border-border/50 bg-transparent flex-1",
+                    "h-8 text-sm border-border/50 bg-transparent flex-1",
                     howToLinkError && "border-destructive"
                   )}
                 />
                 {howToLink && !howToLinkError && (
-                  <BookOpen className="w-4 h-4 text-primary shrink-0" />
+                  <BookOpen className="w-3.5 h-3.5 text-primary shrink-0" />
                 )}
               </div>
               {howToLinkError && (
@@ -450,11 +452,11 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border/50 bg-muted/30">
-            <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+          <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-border/50 bg-muted/30">
+            <Button type="button" variant="ghost" size="sm" className="h-8" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" size="sm">{isEditing ? "Save" : "Create"}</Button>
+            <Button type="submit" size="sm" className="h-8">{isEditing ? "Save" : "Create"}</Button>
           </div>
         </form>
       </DialogContent>
