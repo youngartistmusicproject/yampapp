@@ -90,6 +90,7 @@ export interface Project {
   description?: string;
   color: string;
   tasks: Task[];
+  owners: User[];
   members: User[];
   teamId: string;
   createdAt: Date;

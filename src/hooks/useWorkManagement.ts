@@ -285,7 +285,7 @@ export function useDeleteTeam() {
   });
 }
 
-// Fetch all projects with their team info and members
+// Fetch all projects with their team info, owners, and members
 export function useProjects() {
   return useQuery({
     queryKey: ['projects'],
@@ -297,19 +297,27 @@ export function useProjects() {
       
       if (error) throw error;
       
-      // Fetch all project members
+      // Fetch all project members with roles
       const { data: membersData, error: membersError } = await supabase
         .from('project_members')
         .select('*');
       
       if (membersError) throw membersError;
       
-      // Group members by project_id
+      // Group owners and members by project_id
+      const ownersByProject = new Map<string, string[]>();
       const membersByProject = new Map<string, string[]>();
+      
       membersData?.forEach(pm => {
-        const existing = membersByProject.get(pm.project_id) || [];
-        existing.push(pm.user_name);
-        membersByProject.set(pm.project_id, existing);
+        if (pm.role === 'owner') {
+          const existing = ownersByProject.get(pm.project_id) || [];
+          existing.push(pm.user_name);
+          ownersByProject.set(pm.project_id, existing);
+        } else {
+          const existing = membersByProject.get(pm.project_id) || [];
+          existing.push(pm.user_name);
+          membersByProject.set(pm.project_id, existing);
+        }
       });
       
       return data.map(p => ({
@@ -321,6 +329,7 @@ export function useProjects() {
         dueDate: p.due_date ? parseDateOnly(p.due_date) : undefined,
         teamId: p.team_id,
         tasks: [] as Task[],
+        owners: (ownersByProject.get(p.id) || []).map(getUserByName),
         members: (membersByProject.get(p.id) || []).map(getUserByName),
         createdAt: new Date(p.created_at),
         sortOrder: (p as any).sort_order || 0,
@@ -809,7 +818,7 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (project: { name: string; description?: string; teamId?: string; color?: string; members?: User[] }) => {
+    mutationFn: async (project: { name: string; description?: string; teamId?: string; color?: string; owners?: User[]; members?: User[] }) => {
       const { data, error } = await supabase
         .from('projects')
         .insert({
@@ -824,11 +833,23 @@ export function useCreateProject() {
       
       if (error) throw error;
       
+      // Insert project owners
+      if (project.owners && project.owners.length > 0) {
+        const ownerInserts = project.owners.map(m => ({
+          project_id: data.id,
+          user_name: m.name,
+          role: 'owner',
+        }));
+        
+        await supabase.from('project_members').insert(ownerInserts);
+      }
+      
       // Insert project members
       if (project.members && project.members.length > 0) {
         const memberInserts = project.members.map(m => ({
           project_id: data.id,
           user_name: m.name,
+          role: 'member',
         }));
         
         await supabase.from('project_members').insert(memberInserts);
@@ -858,7 +879,7 @@ export function useUpdateProject() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; teamId?: string; color?: string; members?: User[] } }) => {
+    mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; teamId?: string; color?: string; owners?: User[]; members?: User[] } }) => {
       const { data, error } = await supabase
         .from('projects')
         .update({
@@ -873,14 +894,27 @@ export function useUpdateProject() {
       
       if (error) throw error;
       
-      // Sync project members - delete existing and insert new
-      if (updates.members !== undefined) {
+      // Sync project owners and members - delete existing and insert new
+      if (updates.owners !== undefined || updates.members !== undefined) {
         await supabase.from('project_members').delete().eq('project_id', projectId);
         
-        if (updates.members.length > 0) {
+        // Insert owners
+        if (updates.owners && updates.owners.length > 0) {
+          const ownerInserts = updates.owners.map(m => ({
+            project_id: projectId,
+            user_name: m.name,
+            role: 'owner',
+          }));
+          
+          await supabase.from('project_members').insert(ownerInserts);
+        }
+        
+        // Insert members
+        if (updates.members && updates.members.length > 0) {
           const memberInserts = updates.members.map(m => ({
             project_id: projectId,
             user_name: m.name,
+            role: 'member',
           }));
           
           await supabase.from('project_members').insert(memberInserts);
