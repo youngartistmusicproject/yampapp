@@ -441,15 +441,15 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 </Select>
               </div>
 
-              {/* Tags */}
+              {/* Areas */}
               <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0">Tags</Label>
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">Areas</Label>
                 <div className="flex-1">
                   <SearchableTagSelect
                     tags={tags}
                     selectedTags={selectedTags}
                     onTagsChange={setSelectedTags}
-                    placeholder="Add tags..."
+                    placeholder="Add areas..."
                   />
                 </div>
               </div>
