@@ -128,26 +128,33 @@ function TaskItem({ task, project, onRestore, onArchive, isArchived }: TaskItemP
           )}
         </div>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1">
         {!isArchived && onArchive && (
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 px-2"
-            onClick={onArchive}
+            className="h-6 px-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              onArchive();
+            }}
             title="Archive"
           >
             <Archive className="w-3 h-3" />
           </Button>
         )}
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="h-6 px-2"
-          onClick={onRestore}
-          title="Restore"
+          className="h-6 px-2 text-xs gap-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRestore();
+          }}
+          title="Restore task"
         >
           <RotateCcw className="w-3 h-3" />
+          Restore
         </Button>
       </div>
     </div>
