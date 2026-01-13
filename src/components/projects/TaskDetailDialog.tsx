@@ -573,321 +573,260 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[95vw] md:max-w-[1100px] h-[92vh] md:h-[85vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden rounded-xl">
-        {/* Header - Clean and spacious */}
-        <div className="px-6 pt-6 pb-5 border-b border-border/40">
-          {/* Project & Status */}
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            {projectName && (
-              <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded">
-                {projectName}
-              </span>
-            )}
-            {taskStatus && (
-              <span 
-                className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full"
-                style={{ 
-                  backgroundColor: `${taskStatus.color}20`,
-                  color: taskStatus.color 
-                }}
-              >
-                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: taskStatus.color }} />
-                {taskStatus.name}
-              </span>
-            )}
-          </div>
-          
-          {/* Title */}
+      <DialogContent className="w-full max-w-[95vw] md:max-w-[900px] p-0 gap-0 overflow-hidden rounded-xl">
+        {/* Header - matches TaskDialog */}
+        <div className="px-6 pt-6 pb-4 border-b border-border/50">
           <EditableText
             value={task.title}
             onSave={(value) => onTaskUpdate(task.id, { title: value })}
-            placeholder="Task title"
-            className="text-2xl font-semibold tracking-tight"
+            placeholder="What needs to get done?"
+            className="text-xl font-semibold"
           />
-          
-          {/* Description */}
           <EditableText
             value={task.description || ""}
             onSave={(value) => onTaskUpdate(task.id, { description: value })}
-            placeholder="Add a description..."
+            placeholder="Add helpful details..."
             multiline
-            className="text-sm text-muted-foreground mt-2 leading-relaxed"
+            className="text-sm text-muted-foreground mt-2"
           />
-
-          {/* Quick Actions */}
-          {task.howToLink && (
-            <div className="mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-sm gap-2"
-                onClick={() => window.open(task.howToLink, '_blank')}
-              >
-                <BookOpen className="w-4 h-4" />
-                How To
-                <ExternalLink className="w-3 h-3 opacity-50" />
-              </Button>
-            </div>
-          )}
         </div>
 
         {/* Main content - 2-column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_380px] min-h-0 overflow-hidden">
-          {/* Left side - Properties & Subtasks */}
-          <div className="overflow-y-auto border-r border-border/40">
-            <div className="p-6 space-y-4">
-              {/* Properties - Single column layout for better alignment */}
-              <div className="space-y-3">
-                {/* Status Row */}
-                <div className="flex items-center gap-3 min-h-[36px]">
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0" />
-                  <span className="text-sm text-muted-foreground w-24 shrink-0">Status</span>
-                  <Select value={task.status} onValueChange={(value) => onTaskUpdate(task.id, { status: value })}>
-                    <SelectTrigger className="h-8 text-sm border-0 bg-muted/30 hover:bg-muted/50 w-auto min-w-[120px]">
-                      {taskStatus && (
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: taskStatus.color }} />
-                          {taskStatus.name}
-                        </div>
-                      )}
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover z-[60]">
-                      {statuses.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-                            {s.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Due Date Row */}
-                <div className="flex items-center gap-3 min-h-[36px]">
-                  <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground w-28 shrink-0">Due Date</span>
-                  <div className="flex items-center gap-2 flex-1">
-                    <NaturalDateInput
-                      value={task.dueDate}
-                      onChange={(date) => onTaskUpdate(task.id, { dueDate: date })}
-                      onRecurrenceChange={(rec) => {
-                        if (rec) {
-                          onTaskUpdate(task.id, { isRecurring: true, recurrence: rec });
-                        }
-                      }}
-                      placeholder="e.g. next friday, every Monday"
-                      className="flex-1"
-                    />
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          variant={task.isRecurring ? "default" : "ghost"}
-                          size="icon"
-                          className="h-9 w-9 shrink-0"
-                        >
-                          <Repeat className="w-4 h-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80 z-[70] max-h-[400px] overflow-y-auto" align="end">
-                        <RecurrenceSettings
-                          isRecurring={task.isRecurring || false}
-                          onIsRecurringChange={(value) => {
-                            if (value && !task.recurrence) {
-                              onTaskUpdate(task.id, { 
-                                isRecurring: true, 
-                                recurrence: { frequency: 'weekly', interval: 1 } 
-                              });
-                            } else if (!value) {
-                              onTaskUpdate(task.id, { isRecurring: false, recurrence: undefined });
-                            } else {
-                              onTaskUpdate(task.id, { isRecurring: value });
-                            }
-                          }}
-                          recurrence={task.recurrence}
-                          onRecurrenceChange={(rec) => onTaskUpdate(task.id, { recurrence: rec })}
-                          compact
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-
-                {/* Recurrence Description */}
-                {task.isRecurring && task.recurrence && (
-                  <p className="text-xs text-muted-foreground pl-[140px] -mt-1">
-                    {getRecurrenceDescription(task.recurrence)}
-                  </p>
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] overflow-hidden">
+          {/* Left side - Properties */}
+          <div className="px-6 py-5 border-r border-border/50">
+            <div className="space-y-3">
+              {/* Project & Status Row */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-28 shrink-0">Project</span>
+                {projectName ? (
+                  <span className="text-sm font-medium bg-muted/50 px-2.5 py-1 rounded">
+                    {projectName}
+                  </span>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
                 )}
-                <div className="flex items-center gap-3 min-h-[36px]">
-                  <Zap className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground w-24 shrink-0 flex items-center gap-1.5">
-                    Effort
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button type="button" className="opacity-50 hover:opacity-100">
-                          <Info className="w-3 h-3" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 p-3 z-[70]" align="start">
-                        <ul className="text-xs space-y-1.5 text-muted-foreground">
-                          {effortLibrary.map((e) => (
-                            <li key={e.id} className="flex gap-2">
-                              <span className="font-medium text-foreground shrink-0">{e.name}</span>
-                              <span>— {e.description}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </PopoverContent>
-                    </Popover>
-                  </span>
-                  <Select value={task.effort} onValueChange={(value: Task['effort']) => onTaskUpdate(task.id, { effort: value })}>
-                    <SelectTrigger className="h-8 text-sm border-0 bg-transparent hover:bg-muted/30 w-auto p-0 gap-0">
-                      <span className={`px-2.5 py-1 rounded-md text-sm font-medium capitalize ${effortConfig[task.effort]?.bg} ${effortConfig[task.effort]?.text}`}>
-                        {task.effort}
-                      </span>
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover z-[60]">
-                      {effortLibrary.map(e => (
-                        <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              </div>
 
-                {/* Importance Row */}
-                <div className="flex items-center gap-3 min-h-[36px]">
-                  <Target className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground w-24 shrink-0 flex items-center gap-1.5">
-                    Importance
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button type="button" className="opacity-50 hover:opacity-100">
-                          <Info className="w-3 h-3" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 p-3 z-[70]" align="start">
-                        <ul className="text-xs space-y-1.5 text-muted-foreground">
-                          {importanceLibrary.map((i) => (
-                            <li key={i.id} className="flex gap-2">
-                              <span className="font-medium text-foreground shrink-0">{i.name}</span>
-                              <span>— {i.description}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </PopoverContent>
-                    </Popover>
-                  </span>
-                  <Select value={task.importance} onValueChange={(value: Task['importance']) => onTaskUpdate(task.id, { importance: value })}>
-                    <SelectTrigger className="h-8 text-sm border-0 bg-transparent hover:bg-muted/30 w-auto p-0 gap-0">
-                      <span className={`px-2.5 py-1 rounded-md text-sm font-medium capitalize ${importanceConfig[task.importance]?.bg} ${importanceConfig[task.importance]?.text}`}>
-                        {task.importance}
-                      </span>
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover z-[60]">
-                      {importanceLibrary.map(i => (
-                        <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Stage Row */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-28 shrink-0">Stage</span>
+                <Select value={task.status} onValueChange={(value) => onTaskUpdate(task.id, { status: value })}>
+                  <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent flex-1">
+                    {taskStatus && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: taskStatus.color }} />
+                        {taskStatus.name}
+                      </div>
+                    )}
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-[60]">
+                    {statuses.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                          {s.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                {/* Est. Time Row */}
-                <div className="flex items-center gap-3 min-h-[36px]">
-                  <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground w-24 shrink-0">Est. Time</span>
-                  <Select 
-                    value={task.estimatedTime?.toString() || ""} 
-                    onValueChange={(value) => onTaskUpdate(task.id, { estimatedTime: value ? parseInt(value) : undefined })}
-                  >
-                    <SelectTrigger className="h-8 text-sm border-0 bg-muted/30 hover:bg-muted/50 w-auto min-w-[100px]">
-                      <SelectValue placeholder="—" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover z-[60]">
-                      <SelectItem value="2">2 min</SelectItem>
-                      <SelectItem value="5">5 min</SelectItem>
-                      <SelectItem value="15">15 min</SelectItem>
-                      <SelectItem value="30">30 min</SelectItem>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="120">2 hours</SelectItem>
-                      <SelectItem value="240">4 hours</SelectItem>
-                      <SelectItem value="480">8+ hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Progress Row */}
-                <div className="flex items-center gap-3 min-h-[36px]">
-                  <div className="w-4 h-4 flex items-center justify-center text-muted-foreground shrink-0">
-                    <span className="text-xs font-medium">{progressPercent}%</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground w-24 shrink-0">Progress</span>
+              {/* Due Date Row */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-28 shrink-0">Due Date</span>
+                <div className="flex items-center gap-2 flex-1">
+                  <NaturalDateInput
+                    value={task.dueDate}
+                    onChange={(date) => onTaskUpdate(task.id, { dueDate: date })}
+                    onRecurrenceChange={(rec) => {
+                      if (rec) {
+                        onTaskUpdate(task.id, { isRecurring: true, recurrence: rec });
+                      }
+                    }}
+                    placeholder="e.g. next friday, every Monday"
+                    className="flex-1 h-9"
+                  />
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button className="flex-1 max-w-[200px] h-2 bg-secondary rounded-full overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
+                      <Button 
+                        variant={task.isRecurring ? "default" : "ghost"}
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                      >
+                        <Repeat className="w-4 h-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 z-[70] max-h-[400px] overflow-y-auto" align="end">
+                      <RecurrenceSettings
+                        isRecurring={task.isRecurring || false}
+                        onIsRecurringChange={(value) => {
+                          if (value && !task.recurrence) {
+                            onTaskUpdate(task.id, { 
+                              isRecurring: true, 
+                              recurrence: { frequency: 'weekly', interval: 1 } 
+                            });
+                          } else if (!value) {
+                            onTaskUpdate(task.id, { isRecurring: false, recurrence: undefined });
+                          } else {
+                            onTaskUpdate(task.id, { isRecurring: value });
+                          }
+                        }}
+                        recurrence={task.recurrence}
+                        onRecurrenceChange={(rec) => onTaskUpdate(task.id, { recurrence: rec })}
+                        compact
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+
+              {task.isRecurring && task.recurrence && (
+                <p className="text-xs text-muted-foreground pl-[124px] -mt-1">
+                  {getRecurrenceDescription(task.recurrence)}
+                </p>
+              )}
+
+              {/* Responsible Row */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-28 shrink-0">Responsible</span>
+                <div className="flex-1">
+                  <SearchableAssigneeSelect
+                    members={availableMembers}
+                    selectedAssignees={task.assignees || []}
+                    onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })}
+                    placeholder="Add..."
+                  />
+                </div>
+              </div>
+
+              {/* Effort Row */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 w-28 shrink-0">
+                  <span className="text-sm text-muted-foreground">Effort</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button type="button" className="text-muted-foreground hover:text-foreground">
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-3 z-[70]" align="start">
+                      <p className="text-sm font-medium mb-2">Effort Levels</p>
+                      <ul className="text-sm space-y-1 text-muted-foreground">
+                        {effortLibrary.map((e) => (
+                          <li key={e.id} className="flex">
+                            <span className="font-medium text-foreground shrink-0">{e.name}</span>
+                            <span className="ml-1">— {e.description}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <Select value={task.effort || ""} onValueChange={(value: Task['effort']) => onTaskUpdate(task.id, { effort: value })}>
+                  <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent flex-1">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-[60]">
+                    {effortLibrary.map(e => (
+                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Importance Row */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 w-28 shrink-0">
+                  <span className="text-sm text-muted-foreground">Importance</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button type="button" className="text-muted-foreground hover:text-foreground">
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-3 z-[70]" align="start">
+                      <p className="text-sm font-medium mb-2">Importance Levels</p>
+                      <ul className="text-sm space-y-1 text-muted-foreground">
+                        {importanceLibrary.map((i) => (
+                          <li key={i.id} className="flex">
+                            <span className="font-medium text-foreground shrink-0">{i.name}</span>
+                            <span className="ml-1">— {i.description}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <Select value={task.importance || ""} onValueChange={(value: Task['importance']) => onTaskUpdate(task.id, { importance: value })}>
+                  <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent flex-1">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-[60]">
+                    {importanceLibrary.map(i => (
+                      <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Progress Row */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-28 shrink-0">Progress</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center gap-3 flex-1">
+                      <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
                         <div 
                           className={`h-full rounded-full transition-all duration-300 ${getProgressColor(progressPercent)}`}
                           style={{ width: `${progressPercent}%` }}
                         />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-3" align="start">
-                      <div className="flex gap-1 flex-wrap max-w-[200px]">
-                        {[0, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100].map((value) => (
-                          <Button
-                            key={value}
-                            variant={progressPercent === value ? "secondary" : "ghost"}
-                            size="sm"
-                            className="h-7 w-10 text-xs"
-                            onClick={() => onTaskUpdate(task.id, { progress: value })}
-                          >
-                            {value}%
-                          </Button>
-                        ))}
                       </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                      <span className="text-sm text-muted-foreground w-10">{progressPercent}%</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-3 z-[70]" align="start">
+                    <div className="flex gap-1 flex-wrap max-w-[200px]">
+                      {[0, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100].map((value) => (
+                        <Button
+                          key={value}
+                          variant={progressPercent === value ? "secondary" : "ghost"}
+                          size="sm"
+                          className="h-7 w-10 text-xs"
+                          onClick={() => onTaskUpdate(task.id, { progress: value })}
+                        >
+                          {value}%
+                        </Button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-                {/* Responsible Row */}
-                <div className="flex items-center gap-3 min-h-[36px]">
-                  <Users className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground w-24 shrink-0">Responsible</span>
-                  <div className="flex-1">
-                    <SearchableAssigneeSelect
-                      members={availableMembers}
-                      selectedAssignees={task.assignees || []}
-                      onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })}
-                      placeholder="Add..."
-                    />
-                  </div>
+              {/* Tags Row */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-28 shrink-0">Tags</span>
+                <div className="flex-1">
+                  <SearchableTagSelect
+                    tags={tagLibrary}
+                    selectedTags={task.tags || []}
+                    onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
+                    placeholder="Add tags..."
+                  />
                 </div>
+              </div>
 
-                {/* Tags Row */}
-                <div className="flex items-center gap-3 min-h-[36px]">
-                  <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground w-24 shrink-0">Tags</span>
-                  <div className="flex-1">
-                    <SearchableTagSelect
-                      tags={tagLibrary}
-                      selectedTags={task.tags || []}
-                      onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
-                      placeholder="Add..."
-                    />
-                  </div>
-                </div>
-
-                {/* How To Row */}
-                <div className="flex items-center gap-3 min-h-[36px]">
-                  <BookOpen className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground w-24 shrink-0">How To</span>
+              {/* SOP Link Row */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-28 shrink-0">SOP Link</span>
+                <div className="flex items-center gap-2 flex-1">
                   {task.howToLink ? (
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 text-sm px-2 text-primary hover:text-primary justify-start truncate"
+                        className="h-9 text-sm px-2 text-primary hover:text-primary justify-start flex-1 truncate"
                         onClick={() => window.open(task.howToLink, '_blank')}
                       >
                         <ExternalLink className="w-3.5 h-3.5 mr-1.5 shrink-0" />
@@ -895,34 +834,38 @@ export function TaskDetailDialog({
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                        size="icon"
+                        className="h-9 w-9 text-muted-foreground hover:text-destructive shrink-0"
                         onClick={() => onTaskUpdate(task.id, { howToLink: undefined })}
                       >
                         <X className="w-4 h-4" />
                       </Button>
-                    </div>
+                    </>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-sm px-2 text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        const link = prompt("Enter How To link (SOP URL):");
-                        if (link?.trim()) {
-                          onTaskUpdate(task.id, { howToLink: link.trim() });
+                    <Input
+                      type="url"
+                      placeholder="https://..."
+                      className="h-9 text-sm border-border/50 bg-transparent flex-1"
+                      onBlur={(e) => {
+                        if (e.target.value.trim()) {
+                          onTaskUpdate(task.id, { howToLink: e.target.value.trim() });
                         }
                       }}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add link
-                    </Button>
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const target = e.target as HTMLInputElement;
+                          if (target.value.trim()) {
+                            onTaskUpdate(task.id, { howToLink: target.value.trim() });
+                          }
+                        }
+                      }}
+                    />
                   )}
                 </div>
               </div>
 
-              {/* Subtasks */}
-              <div className="space-y-3 pt-4 border-t border-border/40">
+              {/* Subtasks Section */}
+              <div className="pt-4 border-t border-border/50">
                 <Collapsible open={subtasksOpen} onOpenChange={setSubtasksOpen}>
                   <CollapsibleTrigger asChild>
                     <button className="flex items-center justify-between w-full group">
@@ -965,7 +908,7 @@ export function TaskDetailDialog({
                       ))}
 
                       {/* Add subtask input */}
-                      <div className="flex items-center gap-2 py-1.5 px-2 -mx-2">
+                      <div className="flex items-center gap-2 py-1.5">
                         <Plus className="w-4 h-4 text-muted-foreground" />
                         <Input
                           ref={subtaskInputRef}
@@ -989,9 +932,9 @@ export function TaskDetailDialog({
           </div>
 
           {/* Right side - Activity */}
-          <div className="flex flex-col min-h-0 bg-muted/20">
+          <div className="flex flex-col min-h-0 max-h-[500px] bg-muted/20">
             {/* Tabs */}
-            <div className="px-4 py-3 border-b border-border/40">
+            <div className="px-4 py-3 border-b border-border/50 shrink-0">
               <div className="flex gap-1">
                 <button
                   onClick={() => setActivityTab('comments')}
