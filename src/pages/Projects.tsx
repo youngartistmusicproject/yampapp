@@ -83,7 +83,15 @@ export default function Projects() {
     dueDateTo: undefined,
     showOverdueOnly: false,
   });
-  const [showTaskDetails, setShowTaskDetails] = useState(true);
+  const [showTaskDetails, setShowTaskDetails] = useState(() => {
+    const saved = localStorage.getItem('showTaskDetails');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  // Persist showTaskDetails preference
+  useEffect(() => {
+    localStorage.setItem('showTaskDetails', JSON.stringify(showTaskDetails));
+  }, [showTaskDetails]);
 
   // Apply filters from URL params
   useEffect(() => {
