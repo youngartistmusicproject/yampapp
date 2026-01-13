@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
+import { TagItem } from "@/data/workManagementConfig";
 
 export interface StatusItem {
   id: string;
@@ -46,6 +47,7 @@ export type SortField = 'dueDate' | 'effort' | 'importance' | 'stage' | 'estimat
 interface TaskTableProps {
   tasks: Task[];
   projects?: Project[];
+  tags?: TagItem[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onEditTask: (task: Task) => void;
   onViewTask: (task: Task) => void;
@@ -93,6 +95,7 @@ function isTaskOverdue(task: Task): boolean {
 interface SortableTableRowProps {
   task: Task;
   project?: Project;
+  tags?: TagItem[];
   onViewTask: (task: Task) => void;
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onDuplicateTask?: (taskId: string) => void;
@@ -106,6 +109,7 @@ interface SortableTableRowProps {
 function SortableTableRow({
   task,
   project,
+  tags = [],
   onViewTask,
   onTaskUpdate,
   onDuplicateTask,
@@ -239,6 +243,28 @@ function SortableTableRow({
                 style={{ backgroundColor: project.color }}
               />
               <span className="truncate">{project.name}</span>
+            </div>
+          )}
+
+          {/* Area tags */}
+          {task.tags && task.tags.length > 0 && (
+            <div className="flex items-center gap-1">
+              {task.tags.slice(0, 2).map(tagId => {
+                const tag = tags.find(t => t.id === tagId);
+                if (!tag) return null;
+                return (
+                  <span
+                    key={tag.id}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
+                    style={{ backgroundColor: tag.color }}
+                  >
+                    {tag.name}
+                  </span>
+                );
+              })}
+              {task.tags.length > 2 && (
+                <span className="text-[10px] text-muted-foreground">+{task.tags.length - 2}</span>
+              )}
             </div>
           )}
           
@@ -402,6 +428,7 @@ function SortableMobileCard({
 export function TaskTable({
   tasks,
   projects = [],
+  tags = [],
   onTaskUpdate,
   onEditTask,
   onViewTask,
@@ -530,6 +557,7 @@ export function TaskTable({
                   <SortableTableRow
                     task={task}
                     project={getProjectById(task.projectId)}
+                    tags={tags}
                     onViewTask={onViewTask}
                     onTaskUpdate={onTaskUpdate}
                     onDuplicateTask={onDuplicateTask}
