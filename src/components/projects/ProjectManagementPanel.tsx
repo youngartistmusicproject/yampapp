@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Pencil, Trash2, Plus, FolderKanban, GripVertical, Crown } from "lucide-react";
+import { Pencil, Trash2, Plus, FolderKanban, GripVertical, Crown, Tag } from "lucide-react";
 import { Project, User } from "@/types";
+import { getProjectCategoryById } from "@/data/workManagementConfig";
 import { Button } from "@/components/ui/button";
 import { UserAvatar, UserAvatarGroup } from "@/components/ui/user-avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -62,7 +63,29 @@ function SortableProjectRow({ project, onEdit, onDelete }: { project: Project; o
       </button>
       <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color || '#3b82f6' }} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{project.name}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium truncate">{project.name}</p>
+          {project.tags && project.tags.length > 0 && (
+            <div className="flex gap-1">
+              {project.tags.slice(0, 2).map(tagId => {
+                const cat = getProjectCategoryById(tagId);
+                if (!cat) return null;
+                return (
+                  <span
+                    key={tagId}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
+                    style={{ backgroundColor: cat.color }}
+                  >
+                    {cat.name}
+                  </span>
+                );
+              })}
+              {project.tags.length > 2 && (
+                <span className="text-xs text-muted-foreground">+{project.tags.length - 2}</span>
+              )}
+            </div>
+          )}
+        </div>
         {project.description && <p className="text-xs text-muted-foreground truncate mt-0.5">{project.description}</p>}
       </div>
       {project.owners && project.owners.length > 0 && (

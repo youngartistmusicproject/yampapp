@@ -8,9 +8,10 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { X, Users, Crown } from "lucide-react";
+import { X, Users, Crown, Tag } from "lucide-react";
 import { SearchableUserMultiSelect } from "@/components/projects/SearchableUserMultiSelect";
-import { teamMembers as allTeamMembers } from "@/data/workManagementConfig";
+import { teamMembers as allTeamMembers, projectCategoryLibrary } from "@/data/workManagementConfig";
+import { SearchableTagSelect } from "@/components/projects/SearchableTagSelect";
 
 interface ProjectDialogProps {
   open: boolean;
@@ -35,6 +36,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(projectColors[0]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedOwners, setSelectedOwners] = useState<User[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
@@ -47,12 +49,14 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
       setName(project.name);
       setDescription(project.description || "");
       setColor(project.color || projectColors[0]);
+      setSelectedTags(project.tags || []);
       setSelectedOwners(project.owners || []);
       setSelectedMembers(project.members || []);
     } else {
       setName("");
       setDescription("");
       setColor(projectColors[0]);
+      setSelectedTags([]);
       setSelectedOwners([]);
       setSelectedMembers([]);
     }
@@ -72,6 +76,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
       name,
       description,
       color,
+      tags: selectedTags,
       owners: selectedOwners,
       members: selectedMembers,
     });
@@ -80,6 +85,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
     setName("");
     setDescription("");
     setColor(projectColors[0]);
+    setSelectedTags([]);
     setSelectedOwners([]);
     setSelectedMembers([]);
     setHasAttemptedSubmit(false);
@@ -262,6 +268,24 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Categories */}
+              <div className="flex items-start gap-3">
+                <Label className="text-sm text-muted-foreground w-28 shrink-0 pt-1">
+                  <span className="flex items-center gap-1">
+                    <Tag className="w-3 h-3" />
+                    Categories
+                  </span>
+                </Label>
+                <div className="flex-1">
+                  <SearchableTagSelect
+                    tags={projectCategoryLibrary}
+                    selectedTags={selectedTags}
+                    onTagsChange={setSelectedTags}
+                    placeholder="Add category..."
+                  />
                 </div>
               </div>
             </div>
