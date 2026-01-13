@@ -563,6 +563,7 @@ export type Database = {
           archived_at: string | null
           assignee: string | null
           completed_at: string | null
+          completed_by: string | null
           created_at: string
           description: string | null
           due_date: string | null
@@ -592,6 +593,7 @@ export type Database = {
           archived_at?: string | null
           assignee?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
@@ -621,6 +623,7 @@ export type Database = {
           archived_at?: string | null
           assignee?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null

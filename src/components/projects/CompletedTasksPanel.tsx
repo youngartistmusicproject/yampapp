@@ -75,8 +75,14 @@ function TaskRow({
 
       <div className="flex-1 min-w-0 w-0 overflow-hidden">
         <p className="text-sm text-muted-foreground line-through truncate w-full min-w-0">{task.title}</p>
-        <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground/60">
+        <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground/60 flex-wrap">
           {task.completedAt && <span className="shrink-0">{formatCompletedTime(task.completedAt)}</span>}
+          {task.completedBy && (
+            <>
+              <span className="shrink-0">•</span>
+              <span className="shrink-0">by {task.completedBy}</span>
+            </>
+          )}
           {project && (
             <>
               <span className="shrink-0">•</span>
