@@ -134,70 +134,78 @@ function SortableTableRow({
   const status = getStatusById(task.status);
 
   return (
-    <TableRow
+    <div
       ref={setNodeRef}
       style={style}
-      className={`group cursor-grab active:cursor-grabbing ${overdue ? 'bg-destructive/5' : 'hover:bg-muted/30'}`}
+      className={`group flex items-center gap-3 px-3 py-2.5 border-b border-border/50 cursor-grab active:cursor-grabbing transition-colors ${
+        overdue ? 'bg-destructive/5' : 'hover:bg-muted/30'
+      }`}
       onClick={() => onViewTask(task)}
       {...attributes}
       {...listeners}
     >
-      <TableCell onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
         <Checkbox
           checked={task.status === doneStatusId}
           onCheckedChange={(checked) =>
             onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
           }
+          className="border-muted-foreground/40"
         />
-      </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-2">
-          <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
-            {task.title}
-          </p>
-          {task.isRecurring && (
-            <Repeat className="w-3 h-3 text-muted-foreground/60" />
-          )}
-        </div>
-      </TableCell>
-      <TableCell>
-        <span 
-          className="text-xs px-2 py-0.5 rounded-full"
-          style={{
-            backgroundColor: status ? `${status.color}15` : undefined,
-            color: status?.color,
-          }}
-        >
-          {status?.name || task.status}
+      </div>
+      
+      <div className="flex-1 min-w-0 flex items-center gap-3">
+        <span className={`text-[13px] font-medium truncate ${task.status === doneStatusId ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+          {task.title}
         </span>
-      </TableCell>
-      <TableCell>
+        {task.isRecurring && (
+          <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+        )}
+      </div>
+
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {status && (
+          <span 
+            className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+            style={{
+              backgroundColor: `${status.color}15`,
+              color: status.color,
+            }}
+          >
+            {status.name}
+          </span>
+        )}
+        
         <UserAvatarGroup users={task.assignees} max={2} size="sm" />
-      </TableCell>
-      <TableCell className={overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}>
-        {task.dueDate ? format(task.dueDate, "MMM d") : "—"}
-      </TableCell>
-      <TableCell onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={() => onDuplicateTask?.(task.id)}
-          >
-            <Copy className="w-3.5 h-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-            onClick={() => onDeleteClick(task)}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
+        
+        <span className={`text-[12px] w-14 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+          {task.dueDate ? format(task.dueDate, "MMM d") : ""}
+        </span>
+      </div>
+
+      <div 
+        className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => e.stopPropagation()} 
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+          onClick={() => onDuplicateTask?.(task.id)}
+        >
+          <Copy className="w-3 h-3" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+          onClick={() => onDeleteClick(task)}
+        >
+          <Trash2 className="w-3 h-3" />
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -422,52 +430,22 @@ export function TaskTable({
           </SortableContext>
         </div>
 
-        {/* Desktop Table View */}
-        <div className="rounded-lg border bg-card hidden md:block overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-b">
-                <TableHead className="w-12"></TableHead>
-                <TableHead className="font-medium">Task</TableHead>
-                <TableHead className="font-medium">
-                  <button 
-                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    onClick={() => onToggleSort?.('stage')}
-                  >
-                    Status
-                    {sortField === 'stage' && <ArrowUpDown className="w-3 h-3 text-primary" />}
-                  </button>
-                </TableHead>
-                <TableHead className="font-medium">Responsible</TableHead>
-                <TableHead className="font-medium">
-                  <button 
-                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    onClick={() => onToggleSort?.('dueDate')}
-                  >
-                    Due
-                    {sortField === 'dueDate' && <ArrowUpDown className="w-3 h-3 text-primary" />}
-                  </button>
-                </TableHead>
-                <TableHead className="w-20"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <SortableContext items={localTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-                {localTasks.map((task) => (
-                  <SortableTableRow
-                    key={task.id}
-                    task={task}
-                    onViewTask={onViewTask}
-                    onTaskUpdate={onTaskUpdate}
-                    onDuplicateTask={onDuplicateTask}
-                    onDeleteClick={setTaskToDelete}
-                    getStatusById={getStatusById}
-                    doneStatusId={doneStatusId}
-                  />
-                ))}
-              </SortableContext>
-            </TableBody>
-          </Table>
+        {/* Desktop List View - Todoist style */}
+        <div className="hidden md:block rounded-lg border border-border/50 bg-card overflow-hidden">
+          <SortableContext items={localTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+            {localTasks.map((task) => (
+              <SortableTableRow
+                key={task.id}
+                task={task}
+                onViewTask={onViewTask}
+                onTaskUpdate={onTaskUpdate}
+                onDuplicateTask={onDuplicateTask}
+                onDeleteClick={setTaskToDelete}
+                getStatusById={getStatusById}
+                doneStatusId={doneStatusId}
+              />
+            ))}
+          </SortableContext>
         </div>
 
         <DragOverlay>

@@ -442,178 +442,86 @@ export default function Projects() {
     : projects.find(p => p.id === selectedProject)?.name || "Project";
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Page Header - Spacious */}
-      <div className="flex items-start justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight">
-            Work Management
-          </h1>
-          <p className="text-muted-foreground">
-            Manage your projects and tasks
-          </p>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="icon" className="rounded-full h-11 w-11 flex-shrink-0 shadow-md">
-              <Plus className="w-5 h-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem onClick={() => setTaskDialogOpen(true)} className="gap-2.5 py-2.5">
-              <ListTodo className="w-4 h-4" />
-              New Task
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setProjectDialogOpen(true)} className="gap-2.5 py-2.5">
-              <FolderPlus className="w-4 h-4" />
-              New Project
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+    <div className="space-y-6 animate-fade-in">
+      {/* Page Header - Todoist style: simple and clean */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-foreground">
+          Work Management
+        </h1>
+        <Button 
+          onClick={() => setTaskDialogOpen(true)}
+          size="sm"
+          className="gap-1.5 h-8 rounded-md"
+        >
+          <Plus className="w-4 h-4" />
+          Add task
+        </Button>
       </div>
 
-      {/* Filters Bar - Spacious with dropdowns */}
-      <div className="space-y-6">
-        {/* Team & Project Dropdowns + Search */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex gap-3">
-            {/* Team Dropdown */}
-            <Select 
-              value={selectedTeam} 
-              onValueChange={(val) => {
-                setSelectedTeam(val);
-                setSelectedProject("all");
-              }}
-            >
-              <SelectTrigger className="w-[160px] bg-background">
-                <SelectValue placeholder="Select team" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Teams</SelectItem>
-                {dbTeams.map((team) => (
-                  <SelectItem key={team.id} value={team.id}>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: team.color }}
-                      />
-                      {team.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* Filters Row - Clean and minimal */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        {/* Left: Dropdowns */}
+        <div className="flex items-center gap-2">
+          <Select 
+            value={selectedTeam} 
+            onValueChange={(val) => {
+              setSelectedTeam(val);
+              setSelectedProject("all");
+            }}
+          >
+            <SelectTrigger className="w-[140px] h-8 text-[13px] bg-transparent border-border/50">
+              <SelectValue placeholder="Team" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Teams</SelectItem>
+              {dbTeams.map((team) => (
+                <SelectItem key={team.id} value={team.id}>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: team.color }}
+                    />
+                    {team.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            {/* Project Dropdown */}
-            <Select value={selectedProject} onValueChange={setSelectedProject}>
-              <SelectTrigger className="w-[180px] bg-background">
-                <SelectValue placeholder="Select project" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
-                {filteredProjects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: project.color }}
-                      />
-                      {project.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Search */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search tasks..."
-              className="pl-9 bg-background"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+          <Select value={selectedProject} onValueChange={setSelectedProject}>
+            <SelectTrigger className="w-[150px] h-8 text-[13px] bg-transparent border-border/50">
+              <SelectValue placeholder="Project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              {filteredProjects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: project.color }}
+                    />
+                    {project.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Quick Filter Chips */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setQuickFilter('all')}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-              quickFilter === 'all'
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            All Tasks
-          </button>
-          <button
-            onClick={() => setQuickFilter('overdue')}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5",
-              quickFilter === 'overdue'
-                ? "bg-destructive text-destructive-foreground shadow-sm"
-                : quickFilterCounts.overdue > 0
-                  ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            Overdue
-            {quickFilterCounts.overdue > 0 && (
-              <span className="text-xs tabular-nums">{quickFilterCounts.overdue}</span>
-            )}
-          </button>
-          <button
-            onClick={() => setQuickFilter('today')}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5",
-              quickFilter === 'today'
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            Today
-            {quickFilterCounts.today > 0 && (
-              <span className="text-xs tabular-nums opacity-70">{quickFilterCounts.today}</span>
-            )}
-          </button>
-          <button
-            onClick={() => setQuickFilter('tomorrow')}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5",
-              quickFilter === 'tomorrow'
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            Tomorrow
-            {quickFilterCounts.tomorrow > 0 && (
-              <span className="text-xs tabular-nums opacity-70">{quickFilterCounts.tomorrow}</span>
-            )}
-          </button>
-          <button
-            onClick={() => setQuickFilter('upcoming')}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5",
-              quickFilter === 'upcoming'
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            Next 7 Days
-            {quickFilterCounts.upcoming > 0 && (
-              <span className="text-xs tabular-nums opacity-70">{quickFilterCounts.upcoming}</span>
-            )}
-          </button>
+        {/* Right: Search */}
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search..."
+            className="pl-8 h-8 text-[13px] bg-transparent border-border/50"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
 
-          {/* Divider */}
-          <div className="h-5 w-px bg-border mx-1" />
-
-          {/* Advanced Filters & Actions */}
+        {/* Actions */}
+        <div className="flex items-center gap-1 ml-auto">
           <TaskFilterPanel
             filters={filters}
             onFiltersChange={setFilters}
@@ -625,64 +533,63 @@ export default function Projects() {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="gap-1.5 text-muted-foreground hover:text-foreground" 
+            className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground" 
             onClick={() => setStatusManagerOpen(true)}
           >
-            <Settings2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Stages</span>
+            <Settings2 className="w-3.5 h-3.5" />
+          </Button>
+
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground" 
+            onClick={() => setProjectDialogOpen(true)}
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
           </Button>
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
-                <CheckCircle2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Completed</span>
+              <Button variant="ghost" size="sm" className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" />
                 {completedTasks.length > 0 && (
-                  <Badge variant="secondary" className="h-5 px-1.5 text-xs">
-                    {completedTasks.length}
-                  </Badge>
+                  <span className="text-xs">{completedTasks.length}</span>
                 )}
               </Button>
             </SheetTrigger>
-            <SheetContent className="w-full sm:w-[400px] md:w-[540px]">
+            <SheetContent className="w-full sm:w-[400px]">
               <SheetHeader>
-                <SheetTitle>Completed Tasks</SheetTitle>
-                <SheetDescription>
-                  View and restore recently completed tasks
+                <SheetTitle className="text-base">Completed</SheetTitle>
+                <SheetDescription className="text-[13px]">
+                  Recently completed tasks
                 </SheetDescription>
               </SheetHeader>
               <ScrollArea className="h-[calc(100vh-120px)] mt-4 pr-4">
                 {completedTasks.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-                    <CheckCircle2 className="w-8 h-8 mb-2 opacity-50" />
-                    <p>No completed tasks yet</p>
+                    <CheckCircle2 className="w-6 h-6 mb-2 opacity-40" />
+                    <p className="text-[13px]">No completed tasks</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-1">
                     {completedTasks.map((task) => (
                       <div
                         key={task.id}
-                        className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                        className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors group"
                       >
-                        <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm line-through text-muted-foreground">
+                          <p className="text-[13px] line-through text-muted-foreground truncate">
                             {task.title}
                           </p>
-                          {task.completedAt && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Completed {format(task.completedAt, "MMM d, yyyy 'at' h:mm a")}
-                            </p>
-                          )}
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="gap-1.5 h-8 flex-shrink-0"
+                          className="h-6 px-2 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleRestoreTask(task.id)}
                         >
-                          <RotateCcw className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">Restore</span>
+                          <RotateCcw className="w-3 h-3" />
                         </Button>
                       </div>
                     ))}
@@ -694,49 +601,134 @@ export default function Projects() {
         </div>
       </div>
 
+      {/* Quick Filters - Todoist style tabs */}
+      <div className="flex items-center gap-1 border-b border-border/50 -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6">
+        <button
+          onClick={() => setQuickFilter('all')}
+          className={cn(
+            "px-3 py-2 text-[13px] font-medium transition-colors relative",
+            quickFilter === 'all'
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          All
+          {quickFilter === 'all' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setQuickFilter('overdue')}
+          className={cn(
+            "px-3 py-2 text-[13px] font-medium transition-colors relative flex items-center gap-1.5",
+            quickFilter === 'overdue'
+              ? "text-destructive"
+              : quickFilterCounts.overdue > 0
+                ? "text-destructive/80 hover:text-destructive"
+                : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Overdue
+          {quickFilterCounts.overdue > 0 && (
+            <span className="text-xs tabular-nums">{quickFilterCounts.overdue}</span>
+          )}
+          {quickFilter === 'overdue' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-destructive rounded-t-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setQuickFilter('today')}
+          className={cn(
+            "px-3 py-2 text-[13px] font-medium transition-colors relative flex items-center gap-1.5",
+            quickFilter === 'today'
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Today
+          {quickFilterCounts.today > 0 && (
+            <span className="text-xs tabular-nums opacity-60">{quickFilterCounts.today}</span>
+          )}
+          {quickFilter === 'today' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setQuickFilter('tomorrow')}
+          className={cn(
+            "px-3 py-2 text-[13px] font-medium transition-colors relative flex items-center gap-1.5",
+            quickFilter === 'tomorrow'
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Tomorrow
+          {quickFilterCounts.tomorrow > 0 && (
+            <span className="text-xs tabular-nums opacity-60">{quickFilterCounts.tomorrow}</span>
+          )}
+          {quickFilter === 'tomorrow' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setQuickFilter('upcoming')}
+          className={cn(
+            "px-3 py-2 text-[13px] font-medium transition-colors relative flex items-center gap-1.5",
+            quickFilter === 'upcoming'
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Upcoming
+          {quickFilterCounts.upcoming > 0 && (
+            <span className="text-xs tabular-nums opacity-60">{quickFilterCounts.upcoming}</span>
+          )}
+          {quickFilter === 'upcoming' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+          )}
+        </button>
+      </div>
+
       {/* Views */}
-      <Tabs defaultValue="table" className="space-y-6">
-        <div className="flex items-center gap-3">
-          <TabsList className="bg-muted/50">
-            <TabsTrigger value="table" className="gap-2">
-              <List className="w-4 h-4" />
-              Table
-            </TabsTrigger>
-            <TabsTrigger value="kanban" className="gap-2">
-              <LayoutGrid className="w-4 h-4" />
-              Kanban
-            </TabsTrigger>
-            <TabsTrigger value="timeline" className="gap-2">
-              <CalendarIcon className="w-4 h-4" />
-              Timeline
-            </TabsTrigger>
-          </TabsList>
-          
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
-          </span>
+      <Tabs defaultValue="table" className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TabsList className="h-8 bg-transparent p-0 gap-1">
+              <TabsTrigger value="table" className="h-7 px-2.5 text-[13px] data-[state=active]:bg-muted rounded-md">
+                <List className="w-3.5 h-3.5 mr-1.5" />
+                List
+              </TabsTrigger>
+              <TabsTrigger value="kanban" className="h-7 px-2.5 text-[13px] data-[state=active]:bg-muted rounded-md">
+                <LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
+                Board
+              </TabsTrigger>
+            </TabsList>
+            
+            <span className="text-[13px] text-muted-foreground tabular-nums ml-2">
+              {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
+            </span>
+          </div>
           
           {sortField === 'manual' && (
-            <Badge 
-              variant="secondary" 
-              className="gap-1.5 pl-2 pr-1 py-1 cursor-pointer hover:bg-secondary/80 transition-colors"
+            <button 
+              className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => {
                 setSortField('dueDate');
                 setSortAscending(true);
               }}
             >
               <GripVertical className="w-3 h-3" />
-              <span className="text-xs">Manual order</span>
-              <X className="w-3 h-3 ml-0.5 opacity-60 hover:opacity-100" />
-            </Badge>
+              Manual
+              <X className="w-3 h-3 ml-0.5" />
+            </button>
           )}
         </div>
 
         <TabsContent value="table" className="mt-0">
           {isLoading ? (
-            <div className="space-y-3">
+            <div className="space-y-1">
               {[1, 2, 3, 4, 5].map(i => (
-                <Skeleton key={i} className="h-16 w-full" />
+                <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
           ) : (
