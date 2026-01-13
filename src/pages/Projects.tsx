@@ -807,6 +807,8 @@ export default function Projects() {
               </DropdownMenuContent>
             </DropdownMenu>
             
+            <div className="h-4 w-px bg-border" />
+            
             <button
               onClick={() => setShowTaskDetails(!showTaskDetails)}
               className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
