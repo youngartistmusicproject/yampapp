@@ -2,20 +2,19 @@ import { useState } from "react";
 import { Plus, GripVertical, Pencil, Trash2, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface StatusItem {
   id: string;
@@ -81,133 +80,137 @@ export function StatusManager({ open, onOpenChange, statuses, onStatusesChange }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-[640px] max-h-[90vh] overflow-y-auto p-0">
-        {/* Header area - matches TaskDialog */}
-        <div className="px-6 pt-6 pb-4 border-b border-border/50">
-          <h2 className="text-xl font-semibold">Manage Stages</h2>
-          <p className="text-sm text-muted-foreground mt-1">Add, edit, or remove task stages. Changes apply to all tasks.</p>
-        </div>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-[480px] p-0 flex flex-col">
+        <SheetHeader className="px-6 py-4 border-b">
+          <SheetTitle>Manage Stages</SheetTitle>
+          <SheetDescription>
+            Add, edit, or remove task stages. Changes apply to all tasks.
+          </SheetDescription>
+        </SheetHeader>
         
-        <div className="px-6 py-5 space-y-2">
-          {statuses.map((status) => (
-            <div
-              key={status.id}
-              className="flex items-center gap-2 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-            >
-              <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
-              
-              {editingId === status.id ? (
-                <>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        className="w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0"
-                        style={{ backgroundColor: editColor }}
-                      />
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2" align="start">
-                      <div className="grid grid-cols-5 gap-1">
-                        {colorPresets.map((color) => (
-                          <button
-                            key={color}
-                            className={`w-6 h-6 rounded-full border-2 ${editColor === color ? 'border-foreground' : 'border-transparent'}`}
-                            style={{ backgroundColor: color }}
-                            onClick={() => setEditColor(color)}
-                          />
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="h-8 flex-1"
-                    autoFocus
-                  />
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={saveEdit}>
-                    <Check className="w-4 h-4 text-green-600" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={cancelEdit}>
-                    <X className="w-4 h-4 text-muted-foreground" />
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: status.color }}
-                  />
-                  <span className="flex-1 font-medium text-sm">{status.name}</span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(status)}>
-                    <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8"
-                    onClick={() => deleteStatus(status.id)}
-                    disabled={statuses.length <= 2}
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
-                  </Button>
-                </>
-              )}
-            </div>
-          ))}
+        <ScrollArea className="flex-1">
+          <div className="px-6 py-5 space-y-2">
+            {statuses.map((status) => (
+              <div
+                key={status.id}
+                className="flex items-center gap-2 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+              >
+                <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
+                
+                {editingId === status.id ? (
+                  <>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          className="w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0"
+                          style={{ backgroundColor: editColor }}
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-2 z-[100]" align="start">
+                        <div className="grid grid-cols-5 gap-1">
+                          {colorPresets.map((color) => (
+                            <button
+                              key={color}
+                              className={`w-6 h-6 rounded-full border-2 ${editColor === color ? 'border-foreground' : 'border-transparent'}`}
+                              style={{ backgroundColor: color }}
+                              onClick={() => setEditColor(color)}
+                            />
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="h-8 flex-1"
+                      autoFocus
+                    />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={saveEdit}>
+                      <Check className="w-4 h-4 text-green-600" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={cancelEdit}>
+                      <X className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: status.color }}
+                    />
+                    <span className="flex-1 font-medium text-sm">{status.name}</span>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(status)}>
+                      <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => deleteStatus(status.id)}
+                      disabled={statuses.length <= 2}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            ))}
 
-          {showNewForm ? (
-            <div className="flex items-center gap-2 p-2 rounded-lg border border-dashed bg-muted/30">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0"
-                    style={{ backgroundColor: newStatus.color }}
-                  />
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-2" align="start">
-                  <div className="grid grid-cols-5 gap-1">
-                    {colorPresets.map((color) => (
-                      <button
-                        key={color}
-                        className={`w-6 h-6 rounded-full border-2 ${newStatus.color === color ? 'border-foreground' : 'border-transparent'}`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => setNewStatus({ ...newStatus, color })}
-                      />
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Input
-                value={newStatus.name}
-                onChange={(e) => setNewStatus({ ...newStatus, name: e.target.value })}
-                placeholder="Stage name..."
-                className="h-8 flex-1"
-                autoFocus
-              />
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={addStatus}>
-                <Check className="w-4 h-4 text-green-600" />
+            {showNewForm ? (
+              <div className="flex items-center gap-2 p-2 rounded-lg border border-dashed bg-muted/30">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0"
+                      style={{ backgroundColor: newStatus.color }}
+                    />
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2 z-[100]" align="start">
+                    <div className="grid grid-cols-5 gap-1">
+                      {colorPresets.map((color) => (
+                        <button
+                          key={color}
+                          className={`w-6 h-6 rounded-full border-2 ${newStatus.color === color ? 'border-foreground' : 'border-transparent'}`}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setNewStatus({ ...newStatus, color })}
+                        />
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Input
+                  value={newStatus.name}
+                  onChange={(e) => setNewStatus({ ...newStatus, name: e.target.value })}
+                  placeholder="Stage name..."
+                  className="h-8 flex-1"
+                  autoFocus
+                />
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={addStatus}>
+                  <Check className="w-4 h-4 text-green-600" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowNewForm(false)}>
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                className="w-full gap-2 border-dashed" 
+                onClick={() => setShowNewForm(true)}
+              >
+                <Plus className="w-4 h-4" />
+                Add Stage
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowNewForm(false)}>
-                <X className="w-4 h-4 text-muted-foreground" />
-              </Button>
-            </div>
-          ) : (
-            <Button 
-              variant="outline" 
-              className="w-full gap-2 border-dashed" 
-              onClick={() => setShowNewForm(true)}
-            >
-              <Plus className="w-4 h-4" />
-              Add Stage
-            </Button>
-          )}
-        </div>
+            )}
+          </div>
+        </ScrollArea>
+
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border/50 flex justify-end">
+        <div className="px-6 py-4 border-t flex justify-end">
           <Button onClick={() => onOpenChange(false)}>Done</Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
