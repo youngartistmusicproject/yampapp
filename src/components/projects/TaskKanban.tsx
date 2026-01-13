@@ -4,7 +4,7 @@ import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, Minimize2, Maximize2 } from "lucide-react";
+import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag } from "lucide-react";
 import { getTagById } from "@/data/workManagementConfig";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -39,8 +39,6 @@ interface TaskKanbanProps {
   onDeleteTask?: (taskId: string) => void;
   onDuplicateTask?: (taskId: string) => void;
   statuses: StatusItem[];
-  compactMode?: boolean;
-  onCompactModeChange?: (compact: boolean) => void;
 }
 
 const importanceColors: Record<string, string> = {
@@ -82,7 +80,7 @@ function isTaskOverdue(task: Task): boolean {
   return dueDate < today && task.status !== 'done';
 }
 
-export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, statuses, compactMode = false, onCompactModeChange }: TaskKanbanProps) {
+export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, statuses }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
@@ -157,29 +155,6 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
 
   return (
     <>
-      {/* Compact Mode Toggle */}
-      {onCompactModeChange && (
-        <div className="flex justify-end mb-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onCompactModeChange(!compactMode)}
-            className="gap-2"
-          >
-            {compactMode ? (
-              <>
-                <Maximize2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Expand Cards</span>
-              </>
-            ) : (
-              <>
-                <Minimize2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Compact View</span>
-              </>
-            )}
-          </Button>
-        </div>
-      )}
       <div className="flex gap-4 overflow-x-auto pb-4">
         {statuses.map((column) => {
           const isCollapsed = collapsedColumns.has(column.id);
@@ -269,120 +244,97 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                               onDragEnd={handleDragEnd}
                               onClick={() => onViewTask(task)}
                             >
-                              <CardContent className={`p-3 flex flex-col ${compactMode ? 'space-y-1 h-[72px]' : 'space-y-2 h-[140px]'}`}>
+                              <CardContent className="p-3 space-y-2 h-[140px] flex flex-col">
                                 {/* Task Title Row */}
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                    <p className={`font-medium leading-snug ${compactMode ? 'text-xs line-clamp-1' : 'text-sm line-clamp-2'}`}>
+                                    <p className="text-sm font-medium leading-snug line-clamp-2">
                                       {task.title}
                                     </p>
                                     {task.isRecurring && (
                                       <Repeat className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                                     )}
                                   </div>
-                                  {!compactMode && (
-                                    <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="h-6 w-6"
-                                        onClick={(e) => { e.stopPropagation(); onDuplicateTask?.(task.id); }}
-                                      >
-                                        <Copy className="w-3.5 h-3.5" />
-                                      </Button>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="h-6 w-6 text-destructive hover:text-destructive"
-                                        onClick={(e) => { e.stopPropagation(); setTaskToDelete(task); }}
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </Button>
-                                    </div>
-                                  )}
+                                  <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-6 w-6"
+                                      onClick={(e) => { e.stopPropagation(); onDuplicateTask?.(task.id); }}
+                                    >
+                                      <Copy className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-6 w-6 text-destructive hover:text-destructive"
+                                      onClick={(e) => { e.stopPropagation(); setTaskToDelete(task); }}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
                                 </div>
 
-                                {/* Progress bar - only in full mode */}
-                                {!compactMode && task.progress !== undefined && task.progress > 0 && (
+                                {/* Progress bar */}
+                                {task.progress !== undefined && task.progress > 0 && (
                                   <Progress value={task.progress} colorByValue className="h-1.5" />
                                 )}
+                                {/* Properties Row: Time | Importance | Effort */}
+                                <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40 mt-auto">
+                                  {task.estimatedTime && (
+                                    <div className="flex items-center gap-1 text-xs bg-muted/50 rounded px-1.5 py-0.5">
+                                      <Clock className="w-3 h-3 text-muted-foreground" />
+                                      <span>{formatEstimatedTime(task.estimatedTime)}</span>
+                                    </div>
+                                  )}
+                                  <Badge className={`${importanceBadgeColors[task.importance]} text-[10px] capitalize`} variant="secondary">
+                                    {task.importance}
+                                  </Badge>
+                                  <Badge className={`${effortColors[task.effort]} text-[10px] capitalize`} variant="secondary">
+                                    {task.effort}
+                                  </Badge>
+                                </div>
 
-                                {/* Compact mode: single row with key info */}
-                                {compactMode ? (
-                                  <div className="flex items-center gap-2 mt-auto text-[10px]">
-                                    {task.assignees && task.assignees.length > 0 && (
-                                      <UserAvatarGroup users={task.assignees} max={1} size="sm" />
-                                    )}
-                                    {task.dueDate && (
-                                      <span className={overdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}>
+                                {/* Footer Row: Responsible | Due Date | Tags */}
+                                <div className="flex items-center gap-2 pt-1 border-t border-border/40">
+                                  {task.assignees && task.assignees.length > 0 ? (
+                                    <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+                                  ) : (
+                                    <span className="text-[10px] text-muted-foreground italic">Unassigned</span>
+                                  )}
+                                  
+                                  {task.dueDate && (
+                                    <div className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}`}>
+                                      <Calendar className="w-3 h-3" />
+                                      <span>
                                         {overdue && '⚠ '}
                                         {format(task.dueDate, "MMM d")}
                                       </span>
-                                    )}
-                                    <Badge className={`${importanceBadgeColors[task.importance]} text-[9px] px-1 py-0 capitalize`} variant="secondary">
-                                      {task.importance.charAt(0).toUpperCase()}
-                                    </Badge>
-                                  </div>
-                                ) : (
-                                  <>
-                                    {/* Properties Row: Time | Importance | Effort */}
-                                    <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40 mt-auto">
-                                      {task.estimatedTime && (
-                                        <div className="flex items-center gap-1 text-xs bg-muted/50 rounded px-1.5 py-0.5">
-                                          <Clock className="w-3 h-3 text-muted-foreground" />
-                                          <span>{formatEstimatedTime(task.estimatedTime)}</span>
-                                        </div>
-                                      )}
-                                      <Badge className={`${importanceBadgeColors[task.importance]} text-[10px] capitalize`} variant="secondary">
-                                        {task.importance}
-                                      </Badge>
-                                      <Badge className={`${effortColors[task.effort]} text-[10px] capitalize`} variant="secondary">
-                                        {task.effort}
-                                      </Badge>
                                     </div>
-
-                                    {/* Footer Row: Responsible | Due Date | Tags */}
-                                    <div className="flex items-center gap-2 pt-1 border-t border-border/40">
-                                      {task.assignees && task.assignees.length > 0 ? (
-                                        <UserAvatarGroup users={task.assignees} max={2} size="sm" />
-                                      ) : (
-                                        <span className="text-[10px] text-muted-foreground italic">Unassigned</span>
-                                      )}
-                                      
-                                      {task.dueDate && (
-                                        <div className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}`}>
-                                          <Calendar className="w-3 h-3" />
-                                          <span>
-                                            {overdue && '⚠ '}
-                                            {format(task.dueDate, "MMM d")}
-                                          </span>
-                                        </div>
-                                      )}
-                                      
-                                      {task.tags && task.tags.length > 0 && (
-                                        <div className="flex items-center gap-1 ml-auto">
-                                          <Tag className="w-3 h-3 text-muted-foreground" />
-                                          {task.tags.slice(0, 1).map((tagId) => {
-                                            const tag = getTagById(tagId);
-                                            return (
-                                              <Badge 
-                                                key={tagId} 
-                                                variant="outline" 
-                                                className="text-[10px] px-1.5 py-0"
-                                                style={{ borderColor: tag?.color, color: tag?.color }}
-                                              >
-                                                {tag?.name || tagId}
-                                              </Badge>
-                                            );
-                                          })}
-                                          {task.tags.length > 1 && (
-                                            <span className="text-[10px] text-muted-foreground">+{task.tags.length - 1}</span>
-                                          )}
-                                        </div>
+                                  )}
+                                  
+                                  {task.tags && task.tags.length > 0 && (
+                                    <div className="flex items-center gap-1 ml-auto">
+                                      <Tag className="w-3 h-3 text-muted-foreground" />
+                                      {task.tags.slice(0, 1).map((tagId) => {
+                                        const tag = getTagById(tagId);
+                                        return (
+                                          <Badge 
+                                            key={tagId} 
+                                            variant="outline" 
+                                            className="text-[10px] px-1.5 py-0"
+                                            style={{ borderColor: tag?.color, color: tag?.color }}
+                                          >
+                                            {tag?.name || tagId}
+                                          </Badge>
+                                        );
+                                      })}
+                                      {task.tags.length > 1 && (
+                                        <span className="text-[10px] text-muted-foreground">+{task.tags.length - 1}</span>
                                       )}
                                     </div>
-                                  </>
-                                )}
+                                  )}
+                                </div>
                               </CardContent>
                             </Card>
                           </motion.div>

@@ -63,7 +63,6 @@ export default function Projects() {
   const [sortAscending, setSortAscending] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const [quickFilter, setQuickFilter] = useState<'all' | 'overdue' | 'today' | 'tomorrow' | 'upcoming'>('all');
-  const [kanbanCompactMode, setKanbanCompactMode] = useState(false);
   const [filters, setFilters] = useState<TaskFilters>({
     statuses: [],
     efforts: [],
@@ -654,9 +653,7 @@ export default function Projects() {
               onViewTask={handleViewTask} 
               onDeleteTask={handleDeleteTask}
               onDuplicateTask={handleDuplicateTask}
-              statuses={statuses}
-              compactMode={kanbanCompactMode}
-              onCompactModeChange={setKanbanCompactMode}
+              statuses={statuses} 
             />
           )}
         </TabsContent>
