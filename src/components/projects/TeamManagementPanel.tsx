@@ -161,7 +161,7 @@ export function TeamManagementPanel({
             <Button 
               size="icon"
               onClick={() => setCreateDialogOpen(true)}
-              className="absolute bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-10"
+              className="absolute bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-10 transition-transform duration-200 hover:scale-110"
             >
               <Plus className="w-5 h-5" />
             </Button>
