@@ -671,7 +671,7 @@ export function TaskDetailDialog({
                       value={task.dueDate}
                       onChange={(date) => onTaskUpdate(task.id, { dueDate: date })}
                       placeholder="e.g. next friday, Apr 15"
-                      className="flex-1 max-w-[200px]"
+                      className="flex-1 max-w-[280px]"
                     />
                     <Popover>
                       <PopoverTrigger asChild>
