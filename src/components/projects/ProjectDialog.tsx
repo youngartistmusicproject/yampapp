@@ -249,7 +249,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                 <Label className="text-sm text-muted-foreground w-28 shrink-0">
                   <span className="flex items-center gap-1">
                     <Crown className="w-3 h-3" />
-                    Owner(s) <span className="text-destructive">*</span>
+                    Lead <span className="text-destructive">*</span>
                   </span>
                 </Label>
                 <div className="flex-1">
