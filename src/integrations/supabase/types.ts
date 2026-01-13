@@ -458,6 +458,7 @@ export type Database = {
           due_date: string | null
           id: string
           name: string
+          sort_order: number | null
           status: string
           team_id: string | null
           updated_at: string
@@ -469,6 +470,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           name: string
+          sort_order?: number | null
           status?: string
           team_id?: string | null
           updated_at?: string
@@ -480,6 +482,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           name?: string
+          sort_order?: number | null
           status?: string
           team_id?: string | null
           updated_at?: string

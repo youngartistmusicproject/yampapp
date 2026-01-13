@@ -293,7 +293,7 @@ export function useProjects() {
       const { data, error } = await supabase
         .from('projects')
         .select('*, teams(id, name)')
-        .order('name');
+        .order('sort_order', { ascending: true });
       
       if (error) throw error;
       
@@ -308,7 +308,30 @@ export function useProjects() {
         tasks: [] as Task[],
         members: [] as User[],
         createdAt: new Date(p.created_at),
+        sortOrder: (p as any).sort_order || 0,
       }));
+    },
+  });
+}
+
+// Reorder projects
+export function useReorderProjects() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (projects: { id: string; sortOrder: number }[]) => {
+      const updates = projects.map((project, index) => 
+        supabase
+          .from('projects')
+          .update({ sort_order: index })
+          .eq('id', project.id)
+      );
+      
+      await Promise.all(updates);
+      return projects;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 }
