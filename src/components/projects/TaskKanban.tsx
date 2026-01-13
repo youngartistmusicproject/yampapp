@@ -25,7 +25,7 @@ import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag } from "lucide-react";
+import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, MessageSquare, Paperclip } from "lucide-react";
 import { getTagById } from "@/data/workManagementConfig";
 import { Progress, getProgressColor } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -131,6 +131,8 @@ function SortableTaskCard({
   };
 
   const overdue = isTaskOverdue(task);
+  const commentCount = task.comments?.length || 0;
+  const attachmentCount = task.attachments?.length || 0;
 
   return (
     <div
@@ -161,6 +163,19 @@ function SortableTaskCard({
             </p>
             {task.isRecurring && (
               <Repeat className="w-3 h-3 text-muted-foreground/60 flex-shrink-0 mt-0.5" />
+            )}
+            {/* Comment & Attachment indicators */}
+            {commentCount > 0 && (
+              <span className="flex items-center gap-0.5 text-muted-foreground/60 flex-shrink-0 mt-0.5">
+                <MessageSquare className="w-3 h-3" />
+                <span className="text-[10px]">{commentCount}</span>
+              </span>
+            )}
+            {attachmentCount > 0 && (
+              <span className="flex items-center gap-0.5 text-muted-foreground/60 flex-shrink-0 mt-0.5">
+                <Paperclip className="w-3 h-3" />
+                <span className="text-[10px]">{attachmentCount}</span>
+              </span>
             )}
           </div>
           <div 
