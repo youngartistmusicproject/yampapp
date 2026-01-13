@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, useEffect, useRef } from "react";
 import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -84,15 +84,13 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
-  const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks);
+  const isDragging = useRef(false);
 
-  // Sync optimistic tasks with props when tasks change externally
-  if (tasks !== optimisticTasks && !draggingTaskId) {
-    setOptimisticTasks(tasks);
-  }
+  // Use tasks directly, only track dragging state for visual feedback
+  const displayTasks = tasks;
 
   const getTasksByStatus = (status: string) =>
-    optimisticTasks.filter((task) => task.status === status);
+    displayTasks.filter((task) => task.status === status);
 
   const toggleColumnCollapse = (columnId: string) => {
     setCollapsedColumns(prev => {
@@ -121,11 +119,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     e.preventDefault();
     const taskId = e.dataTransfer.getData("taskId");
     if (taskId) {
-      // Optimistic update: immediately move task in local state
-      setOptimisticTasks(prev => 
-        prev.map(task => task.id === taskId ? { ...task, status } : task)
-      );
-      // Then persist to database
+      // Persist to database - React Query will update the UI
       onTaskUpdate(taskId, { status });
     }
     setDragOverColumn(null);
