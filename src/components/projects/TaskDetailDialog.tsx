@@ -611,32 +611,32 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[1000px] h-[90vh] sm:h-[85vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[1050px] h-[92vh] sm:h-[88vh] !grid !grid-rows-[auto_1fr] p-0 gap-0 overflow-hidden">
         {/* Header with title and description */}
-        <div className="px-5 pt-4 pb-3 border-b border-border/50">
+        <div className="px-6 pt-5 pb-4 border-b border-border/50">
           <EditableText
             value={task.title}
             onSave={(value) => onTaskUpdate(task.id, { title: value })}
             placeholder="Task title"
-            className="text-lg font-semibold"
+            className="text-xl font-semibold"
           />
           <EditableText
             value={task.description || ""}
             onSave={(value) => onTaskUpdate(task.id, { description: value })}
             placeholder="Add a description..."
             multiline
-            className="text-sm text-muted-foreground mt-1"
+            className="text-base text-muted-foreground mt-2"
           />
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-3 mt-3">
             {task.howToLink ? (
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                    className="h-8 px-3 text-sm text-muted-foreground hover:text-foreground gap-2"
                   >
-                    <BookOpen className="w-3.5 h-3.5" />
+                    <BookOpen className="w-4 h-4" />
                     How To
                   </Button>
                 </PopoverTrigger>
@@ -645,16 +645,16 @@ export function TaskDetailDialog({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="justify-start h-7 px-2 text-xs"
+                      className="justify-start h-8 px-3 text-sm"
                       onClick={() => window.open(task.howToLink, '_blank')}
                     >
-                      <BookOpen className="w-3.5 h-3.5 mr-2" />
+                      <BookOpen className="w-4 h-4 mr-2" />
                       Open Link
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="justify-start h-7 px-2 text-xs"
+                      className="justify-start h-8 px-3 text-sm"
                       onClick={() => {
                         const link = prompt("Edit How To link:", task.howToLink);
                         if (link?.trim()) {
@@ -662,16 +662,16 @@ export function TaskDetailDialog({
                         }
                       }}
                     >
-                      <AlignLeft className="w-3.5 h-3.5 mr-2" />
+                      <AlignLeft className="w-4 h-4 mr-2" />
                       Edit
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="justify-start h-7 px-2 text-xs text-destructive hover:text-destructive"
+                      className="justify-start h-8 px-3 text-sm text-destructive hover:text-destructive"
                       onClick={() => onTaskUpdate(task.id, { howToLink: undefined })}
                     >
-                      <Trash2 className="w-3.5 h-3.5 mr-2" />
+                      <Trash2 className="w-4 h-4 mr-2" />
                       Remove
                     </Button>
                   </div>
@@ -681,7 +681,7 @@ export function TaskDetailDialog({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                className="h-8 px-3 text-sm text-muted-foreground hover:text-foreground gap-2"
                 onClick={() => {
                   const link = prompt("Enter How To link (SOP URL):");
                   if (link?.trim()) {
@@ -689,7 +689,7 @@ export function TaskDetailDialog({
                   }
                 }}
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4" />
                 Add How To
               </Button>
             )}
@@ -697,24 +697,24 @@ export function TaskDetailDialog({
         </div>
 
         {/* Main content - two column layout with more room for comments */}
-        <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] min-h-0 overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] min-h-0 overflow-hidden">
           {/* Left side - Task properties (narrower) */}
-          <div className="overflow-y-auto md:border-r border-border/50 bg-muted/20">
-            <div className="p-4 space-y-4">
+          <div className="overflow-y-auto md:border-r border-border/50 bg-muted/10">
+            <div className="p-5 space-y-5">
               {/* Properties as clean rows */}
               <div className="space-y-0">
                 {/* Stage */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <span className="text-xs text-muted-foreground">Stage</span>
+                <div className="flex items-center justify-between py-3 border-b border-border/30">
+                  <span className="text-sm text-muted-foreground">Stage</span>
                   <Select 
                     value={task.status} 
                     onValueChange={(value) => onTaskUpdate(task.id, { status: value })}
                   >
-                    <SelectTrigger className="w-auto h-7 text-xs gap-1.5 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
+                    <SelectTrigger className="w-auto h-8 text-sm gap-2 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
                       {taskStatus && (
                         <>
                           <div 
-                            className="w-2 h-2 rounded-full" 
+                            className="w-2.5 h-2.5 rounded-full" 
                             style={{ backgroundColor: taskStatus.color }}
                           />
                           {taskStatus.name}
@@ -726,7 +726,7 @@ export function TaskDetailDialog({
                         <SelectItem key={s.id} value={s.id}>
                           <div className="flex items-center gap-2">
                             <div 
-                              className="w-2 h-2 rounded-full" 
+                              className="w-2.5 h-2.5 rounded-full" 
                               style={{ backgroundColor: s.color }}
                             />
                             {s.name}
@@ -738,21 +738,21 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Effort */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground">Effort</span>
+                <div className="flex items-center justify-between py-3 border-b border-border/30">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Effort</span>
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
                           className="text-muted-foreground hover:text-foreground"
                         >
-                          <Info className="w-3 h-3" />
+                          <Info className="w-3.5 h-3.5" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-60 p-3 z-[70]" align="start">
-                        <p className="text-xs font-medium mb-2">Effort Levels</p>
-                        <ul className="text-xs space-y-1 text-muted-foreground">
+                      <PopoverContent className="w-64 p-3 z-[70]" align="start">
+                        <p className="text-sm font-medium mb-2">Effort Levels</p>
+                        <ul className="text-sm space-y-1 text-muted-foreground">
                           {effortLibrary.map((e) => (
                             <li key={e.id}>
                               <span className="font-medium text-foreground">{e.name}</span> — {e.description}
@@ -766,8 +766,8 @@ export function TaskDetailDialog({
                     value={task.effort} 
                     onValueChange={(value: Task['effort']) => onTaskUpdate(task.id, { effort: value })}
                   >
-                    <SelectTrigger className="w-auto h-7 text-xs gap-1.5 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${effortColors[task.effort]}`}>
+                    <SelectTrigger className="w-auto h-8 text-sm gap-2 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
+                      <span className={`px-2.5 py-1 rounded text-sm font-medium capitalize ${effortColors[task.effort]}`}>
                         {task.effort}
                       </span>
                     </SelectTrigger>
@@ -780,21 +780,21 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Importance */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground">Importance</span>
+                <div className="flex items-center justify-between py-3 border-b border-border/30">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Importance</span>
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
                           className="text-muted-foreground hover:text-foreground"
                         >
-                          <Info className="w-3 h-3" />
+                          <Info className="w-3.5 h-3.5" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-60 p-3 z-[70]" align="start">
-                        <p className="text-xs font-medium mb-2">Importance Levels</p>
-                        <ul className="text-xs space-y-1 text-muted-foreground">
+                      <PopoverContent className="w-64 p-3 z-[70]" align="start">
+                        <p className="text-sm font-medium mb-2">Importance Levels</p>
+                        <ul className="text-sm space-y-1 text-muted-foreground">
                           {importanceLibrary.map((i) => (
                             <li key={i.id}>
                               <span className="font-medium text-foreground">{i.name}</span> — {i.description}
@@ -808,8 +808,8 @@ export function TaskDetailDialog({
                     value={task.importance} 
                     onValueChange={(value: Task['importance']) => onTaskUpdate(task.id, { importance: value })}
                   >
-                    <SelectTrigger className="w-auto h-7 text-xs gap-1.5 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${importanceColors[task.importance]}`}>
+                    <SelectTrigger className="w-auto h-8 text-sm gap-2 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
+                      <span className={`px-2.5 py-1 rounded text-sm font-medium capitalize ${importanceColors[task.importance]}`}>
                         {task.importance}
                       </span>
                     </SelectTrigger>
@@ -822,9 +822,9 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Due Date with Recurring */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <span className="text-xs text-muted-foreground">Due Date</span>
-                  <div className="flex items-center gap-1">
+                <div className="flex items-center justify-between py-3 border-b border-border/30">
+                  <span className="text-sm text-muted-foreground">Due Date</span>
+                  <div className="flex items-center gap-2">
                     <Input
                       type="date"
                       value={task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : ""}
@@ -833,26 +833,26 @@ export function TaskDetailDialog({
                           dueDate: e.target.value ? parseInputDate(e.target.value) : undefined,
                         })
                       }
-                      className="h-7 text-xs w-auto border-none shadow-none bg-transparent text-right cursor-pointer hover:bg-muted/50 rounded px-2"
+                      className="h-8 text-sm w-auto border-none shadow-none bg-transparent text-right cursor-pointer hover:bg-muted/50 rounded px-2"
                     />
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          className={`h-7 w-7 p-0 ${task.isRecurring ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground`}
+                          className={`h-8 w-8 p-0 ${task.isRecurring ? 'text-primary' : 'text-muted-foreground'} hover:text-foreground`}
                         >
-                          <Repeat className="w-3.5 h-3.5" />
+                          <Repeat className="w-4 h-4" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-64 p-3" align="end">
-                        <div className="space-y-3">
+                      <PopoverContent className="w-72 p-4" align="end">
+                        <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium">Repeat</span>
+                            <span className="text-sm font-medium">Repeat</span>
                             <Button
                               variant={task.isRecurring ? "secondary" : "outline"}
                               size="sm"
-                              className="h-6 text-xs px-2"
+                              className="h-7 text-sm px-3"
                               onClick={() => {
                                 if (task.isRecurring) {
                                   onTaskUpdate(task.id, { isRecurring: false, recurrence: undefined });
@@ -869,8 +869,8 @@ export function TaskDetailDialog({
                           </div>
                           
                           {task.isRecurring && task.recurrence && (
-                            <div className="space-y-2 pt-2 border-t">
-                              <div className="flex gap-2">
+                            <div className="space-y-3 pt-3 border-t">
+                              <div className="flex gap-3">
                                 <Input
                                   type="number"
                                   min={1}
@@ -879,7 +879,7 @@ export function TaskDetailDialog({
                                   onChange={(e) => onTaskUpdate(task.id, {
                                     recurrence: { ...task.recurrence!, interval: parseInt(e.target.value) || 1 }
                                   })}
-                                  className="w-14 h-7 text-xs"
+                                  className="w-16 h-8 text-sm"
                                 />
                                 <Select
                                   value={task.recurrence.frequency}
@@ -887,7 +887,7 @@ export function TaskDetailDialog({
                                     recurrence: { ...task.recurrence!, frequency: v as any }
                                   })}
                                 >
-                                  <SelectTrigger className="flex-1 h-7 text-xs">
+                                  <SelectTrigger className="flex-1 h-8 text-sm">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -907,13 +907,13 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Estimated Time */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <span className="text-xs text-muted-foreground">Est. Time</span>
+                <div className="flex items-center justify-between py-3 border-b border-border/30">
+                  <span className="text-sm text-muted-foreground">Est. Time</span>
                   <Select 
                     value={task.estimatedTime?.toString() || ""} 
                     onValueChange={(value) => onTaskUpdate(task.id, { estimatedTime: value ? parseInt(value) : undefined })}
                   >
-                    <SelectTrigger className="w-auto h-7 text-xs gap-1.5 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
+                    <SelectTrigger className="w-auto h-8 text-sm gap-2 border-none shadow-none bg-transparent hover:bg-muted/50 px-2">
                       <SelectValue placeholder="—" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-50">
@@ -929,31 +929,31 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Progress */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <span className="text-xs text-muted-foreground">Progress</span>
+                <div className="flex items-center justify-between py-3 border-b border-border/30">
+                  <span className="text-sm text-muted-foreground">Progress</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button 
                         variant="ghost" 
-                        className="h-7 px-2 text-xs font-normal hover:bg-muted/50 gap-2"
+                        className="h-8 px-3 text-sm font-normal hover:bg-muted/50 gap-3"
                       >
-                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
                           <div 
                             className={`h-full rounded-full transition-all duration-300 ${getProgressColor(task.progress || 0)}`}
                             style={{ width: `${task.progress || 0}%` }}
                           />
                         </div>
-                        <span className="text-xs text-muted-foreground">{task.progress || 0}%</span>
+                        <span className="text-sm text-muted-foreground">{task.progress || 0}%</span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-44 p-2" align="end">
-                      <div className="grid grid-cols-5 gap-1">
+                    <PopoverContent className="w-52 p-3" align="end">
+                      <div className="grid grid-cols-5 gap-1.5">
                         {[0, 25, 50, 75, 100].map((value) => (
                           <Button
                             key={value}
                             variant={(task.progress || 0) === value ? "secondary" : "ghost"}
                             size="sm"
-                            className="h-7 text-xs px-1"
+                            className="h-8 text-sm px-2"
                             onClick={() => onTaskUpdate(task.id, { progress: value })}
                           >
                             {value}%
@@ -965,8 +965,8 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Responsible */}
-                <div className="flex items-center justify-between py-2 border-b border-border/30">
-                  <span className="text-xs text-muted-foreground">Responsible</span>
+                <div className="flex items-center justify-between py-3 border-b border-border/30">
+                  <span className="text-sm text-muted-foreground">Responsible</span>
                   <SearchableAssigneeSelect
                     members={availableMembers}
                     selectedAssignees={task.assignees || []}
@@ -976,8 +976,8 @@ export function TaskDetailDialog({
                 </div>
 
                 {/* Tags */}
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-xs text-muted-foreground">Tags</span>
+                <div className="flex items-center justify-between py-3">
+                  <span className="text-sm text-muted-foreground">Tags</span>
                   <SearchableTagSelect
                     tags={tagLibrary}
                     selectedTags={task.tags || []}
