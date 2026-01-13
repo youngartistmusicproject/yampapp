@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, X, GripVertical, ChevronDown } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,6 +83,7 @@ export default function Projects() {
     dueDateTo: undefined,
     showOverdueOnly: false,
   });
+  const [showTaskDetails, setShowTaskDetails] = useState(true);
 
   // Apply filters from URL params
   useEffect(() => {
@@ -734,6 +735,15 @@ export default function Projects() {
             <span className="text-[13px] text-muted-foreground tabular-nums ml-2">
               {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
             </span>
+            
+            <button
+              onClick={() => setShowTaskDetails(!showTaskDetails)}
+              className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors ml-2"
+              title={showTaskDetails ? "Hide details" : "Show details"}
+            >
+              {showTaskDetails ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{showTaskDetails ? "Hide details" : "Show details"}</span>
+            </button>
           </div>
           
           {sortField === 'manual' && (
@@ -777,7 +787,8 @@ export default function Projects() {
               }}
               sortField={sortField}
               sortAscending={sortAscending}
-              statuses={statuses} 
+              statuses={statuses}
+              showDetails={showTaskDetails}
             />
           )}
         </TabsContent>

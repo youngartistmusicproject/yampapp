@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
-import { Repeat, Copy, Trash2, Clock } from "lucide-react";
+import { Repeat, Copy, Trash2, Clock, MessageSquare, Paperclip } from "lucide-react";
 import { getProgressColor } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -55,6 +55,7 @@ interface TaskTableProps {
   sortField?: SortField;
   sortAscending?: boolean;
   statuses: StatusItem[];
+  showDetails?: boolean;
 }
 
 const effortColors: Record<string, string> = {
@@ -95,6 +96,7 @@ interface SortableTableRowProps {
   onDeleteClick: (task: Task) => void;
   getStatusById: (id: string) => StatusItem | undefined;
   doneStatusId: string;
+  showDetails: boolean;
 }
 
 function SortableTableRow({
@@ -105,6 +107,7 @@ function SortableTableRow({
   onDeleteClick,
   getStatusById,
   doneStatusId,
+  showDetails,
 }: SortableTableRowProps) {
   const {
     attributes,
@@ -124,12 +127,14 @@ function SortableTableRow({
   const overdue = isTaskOverdue(task);
   const status = getStatusById(task.status);
   const isDone = task.status === doneStatusId;
+  const commentCount = task.comments?.length || 0;
+  const attachmentCount = task.attachments?.length || 0;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex flex-col gap-1.5 px-3 py-2.5 border-b border-border/50 cursor-grab active:cursor-grabbing transition-colors ${
+      className={`group flex flex-col gap-1 px-3 py-2.5 border-b border-border/50 cursor-grab active:cursor-grabbing transition-colors ${
         overdue ? 'bg-destructive/5' : 'hover:bg-muted/30'
       }`}
       onClick={() => onViewTask(task)}
@@ -155,12 +160,26 @@ function SortableTableRow({
           {task.isRecurring && (
             <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
           )}
+          {/* Comment & Attachment indicators */}
+          {commentCount > 0 && (
+            <span className="flex items-center gap-0.5 text-muted-foreground/60">
+              <MessageSquare className="w-3 h-3" />
+              <span className="text-[10px]">{commentCount}</span>
+            </span>
+          )}
+          {attachmentCount > 0 && (
+            <span className="flex items-center gap-0.5 text-muted-foreground/60">
+              <Paperclip className="w-3 h-3" />
+              <span className="text-[10px]">{attachmentCount}</span>
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-3 flex-shrink-0">
+        {/* Right side info - fixed widths for alignment */}
+        <div className="flex items-center gap-2 flex-shrink-0">
           {status && (
             <span 
-              className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+              className="text-[11px] font-medium px-1.5 py-0.5 rounded w-20 text-center truncate"
               style={{
                 backgroundColor: `${status.color}15`,
                 color: status.color,
@@ -170,7 +189,9 @@ function SortableTableRow({
             </span>
           )}
           
-          <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+          <div className="w-14">
+            <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+          </div>
           
           <span className={`text-[12px] w-14 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
             {task.dueDate ? format(task.dueDate, "MMM d") : ""}
@@ -178,7 +199,7 @@ function SortableTableRow({
         </div>
 
         <div 
-          className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity w-14 justify-end"
           onClick={(e) => e.stopPropagation()} 
           onPointerDown={(e) => e.stopPropagation()}
         >
@@ -201,30 +222,34 @@ function SortableTableRow({
         </div>
       </div>
 
-      {/* Details row - right aligned */}
-      <div className="flex items-center justify-end gap-4 text-[11px] text-muted-foreground">
-        <span>
-          Effort: <span className="font-medium text-foreground capitalize">{task.effort || '—'}</span>
-        </span>
-        <span>
-          Importance: <span className="font-medium text-foreground capitalize">{task.importance || '—'}</span>
-        </span>
-        {task.estimatedTime && (
-          <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
-          </span>
-        )}
-        <div className="flex items-center gap-1.5 w-[120px]">
-          <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-            <div 
-              className={`h-full rounded-full transition-all ${getProgressColor(task.progress)}`}
-              style={{ width: `${task.progress}%` }}
-            />
+      {/* Details row - right aligned with matching widths */}
+      {showDetails && (
+        <div className="flex items-center justify-end gap-2 text-[11px] text-muted-foreground pr-14">
+          <div className="flex items-center gap-3">
+            <span>
+              Effort: <span className="font-medium text-foreground capitalize">{task.effort || '—'}</span>
+            </span>
+            <span>
+              Importance: <span className="font-medium text-foreground capitalize">{task.importance || '—'}</span>
+            </span>
+            {task.estimatedTime && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
+              </span>
+            )}
           </div>
-          <span className="text-[10px] font-medium w-6 text-right">{task.progress}%</span>
+          <div className="flex items-center gap-1.5 w-28">
+            <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
+                style={{ width: `${task.progress || 0}%` }}
+              />
+            </div>
+            <span className="text-[10px] font-medium w-6 text-right">{task.progress || 0}%</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -364,6 +389,7 @@ export function TaskTable({
   sortField = 'dueDate',
   sortAscending = true,
   statuses,
+  showDetails = true,
 }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -483,6 +509,7 @@ export function TaskTable({
                     onDeleteClick={setTaskToDelete}
                     getStatusById={getStatusById}
                     doneStatusId={doneStatusId}
+                    showDetails={showDetails}
                   />
                 </motion.div>
               ))}
