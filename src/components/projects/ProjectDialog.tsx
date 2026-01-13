@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Project, User, Team } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,9 +49,17 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
   const [color, setColor] = useState(projectColors[0]);
   const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
   const [teamId, setTeamId] = useState(selectedTeamId || teams[0]?.id || "");
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setHasAttemptedSubmit(true);
+    
+    // Validate required fields
+    if (!teamId) {
+      return;
+    }
+    
     onSubmit({
       name,
       description,
@@ -64,6 +73,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
     setColor(projectColors[0]);
     setSelectedMembers([]);
     setTeamId(selectedTeamId || teams[0]?.id || "");
+    setHasAttemptedSubmit(false);
   };
 
   const toggleMember = (member: User) => {
@@ -106,9 +116,12 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
             <div className="space-y-3">
               {/* Team */}
               <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0">Team</Label>
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">Team <span className="text-destructive">*</span></Label>
                 <Select value={teamId} onValueChange={setTeamId}>
-                  <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent flex-1">
+                  <SelectTrigger className={cn(
+                    "h-9 text-sm border-border/50 bg-transparent flex-1",
+                    hasAttemptedSubmit && !teamId && "border-destructive"
+                  )}>
                     <SelectValue placeholder="Select a team" />
                   </SelectTrigger>
                   <SelectContent>
