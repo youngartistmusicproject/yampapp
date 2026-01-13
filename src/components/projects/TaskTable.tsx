@@ -86,27 +86,6 @@ function isTaskOverdue(task: Task): boolean {
   return dueDate < today && task.status !== 'done';
 }
 
-// Helper to check if task is due today
-function isTaskDueToday(task: Task): boolean {
-  if (!task.dueDate) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dueDate = new Date(task.dueDate);
-  dueDate.setHours(0, 0, 0, 0);
-  return dueDate.getTime() === today.getTime() && task.status !== 'done';
-}
-
-// Get due date styling
-function getDueDateStyle(task: Task): { className: string; icon: string } {
-  if (isTaskOverdue(task)) {
-    return { className: 'text-red-600 dark:text-red-400 font-medium', icon: '🔴' };
-  }
-  if (isTaskDueToday(task)) {
-    return { className: 'text-amber-600 dark:text-amber-400 font-medium', icon: '🟡' };
-  }
-  return { className: 'text-muted-foreground', icon: '' };
-}
-
 export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onToggleSort, sortField = 'dueDate', sortAscending = true, statuses }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
@@ -123,10 +102,14 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
     <>
       {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
-        {tasks.map((task) => (
+        {tasks.map((task) => {
+          const overdue = isTaskOverdue(task);
+          return (
           <div 
             key={task.id}
-            className="rounded-lg border bg-card p-4 shadow-card cursor-pointer hover:bg-muted/50 transition-colors"
+            className={`rounded-lg border p-4 shadow-card cursor-pointer hover:bg-muted/50 transition-colors ${
+              overdue ? 'bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800' : 'bg-card'
+            }`}
             onClick={() => onViewTask(task)}
           >
             <div className="flex items-start gap-3">
@@ -186,15 +169,12 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                   <Badge className={`${importanceColors[task.importance]} text-xs`} variant="secondary">
                     {task.importance}
                   </Badge>
-                  {task.dueDate && (() => {
-                    const style = getDueDateStyle(task);
-                    return (
-                      <span className={`text-xs ${style.className}`}>
-                        {style.icon && <span className="mr-0.5">{style.icon}</span>}
-                        {format(task.dueDate, "MMM d")}
-                      </span>
-                    );
-                  })()}
+                  {task.dueDate && (
+                    <span className={`text-xs ${overdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}`}>
+                      {overdue && '⚠ '}
+                      {format(task.dueDate, "MMM d")}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <UserAvatarGroup users={task.assignees} max={3} size="sm" />
@@ -220,7 +200,8 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Desktop Table View */}
@@ -262,8 +243,14 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tasks.map((task) => (
-              <TableRow key={task.id} className="group cursor-pointer" onClick={() => onViewTask(task)}>
+            {tasks.map((task) => {
+              const overdue = isTaskOverdue(task);
+              return (
+              <TableRow 
+                key={task.id} 
+                className={`group cursor-pointer ${overdue ? 'bg-red-50 dark:bg-red-950/30' : ''}`} 
+                onClick={() => onViewTask(task)}
+              >
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={task.status === doneStatusId}
@@ -324,16 +311,13 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                 <TableCell>
                   <UserAvatarGroup users={task.assignees} max={3} size="md" />
                 </TableCell>
-                <TableCell className={getDueDateStyle(task).className}>
-                  {task.dueDate ? (() => {
-                    const style = getDueDateStyle(task);
-                    return (
-                      <>
-                        {style.icon && <span className="mr-1">{style.icon}</span>}
-                        {format(task.dueDate, "MMM d, yyyy")}
-                      </>
-                    );
-                  })() : "-"}
+                <TableCell className={overdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}>
+                  {task.dueDate ? (
+                    <>
+                      {overdue && '⚠ '}
+                      {format(task.dueDate, "MMM d, yyyy")}
+                    </>
+                  ) : "-"}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1 flex-wrap">
@@ -378,7 +362,8 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </div>
