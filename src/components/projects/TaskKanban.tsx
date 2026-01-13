@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -8,8 +9,11 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCorners,
+  closestCenter,
+  pointerWithin,
+  rectIntersection,
   DragOverlay,
+  CollisionDetection,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -102,9 +106,16 @@ interface SortableTaskCardProps {
   onViewTask: (task: Task) => void;
   onDuplicateTask?: (taskId: string) => void;
   onDeleteClick: (task: Task) => void;
+  dropIndicatorPosition?: "before" | "after";
 }
 
-function SortableTaskCard({ task, onViewTask, onDuplicateTask, onDeleteClick }: SortableTaskCardProps) {
+function SortableTaskCard({
+  task,
+  onViewTask,
+  onDuplicateTask,
+  onDeleteClick,
+  dropIndicatorPosition,
+}: SortableTaskCardProps) {
   const {
     attributes,
     listeners,
@@ -123,16 +134,23 @@ function SortableTaskCard({ task, onViewTask, onDuplicateTask, onDeleteClick }: 
   const overdue = isTaskOverdue(task);
 
   return (
-    <div 
-      ref={setNodeRef} 
+    <div
+      ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className="cursor-grab active:cursor-grabbing"
+      className="relative cursor-grab active:cursor-grabbing"
     >
+      {dropIndicatorPosition === "before" && (
+        <div className="pointer-events-none absolute -top-1 left-2 right-2 h-0.5 rounded-full bg-primary/70" />
+      )}
+      {dropIndicatorPosition === "after" && (
+        <div className="pointer-events-none absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-primary/70" />
+      )}
+
       <Card
         className={`group border-l-4 ${importanceColors[task.importance]} ${
-          overdue ? 'bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500' : ''
+          overdue ? "bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500" : ""
         } hover:shadow-md hover:scale-[1.01] transition-all duration-150`}
         onClick={() => onViewTask(task)}
       >
@@ -238,22 +256,27 @@ function SortableTaskCard({ task, onViewTask, onDuplicateTask, onDeleteClick }: 
   );
 }
 
-function TaskCardOverlay({ task }: { task: Task }) {
+const TaskCardOverlay = React.forwardRef<HTMLDivElement, { task: Task }>(function TaskCardOverlay(
+  { task },
+  ref,
+) {
   const overdue = isTaskOverdue(task);
-  
+
   return (
-    <Card
-      className={`border-l-4 ${importanceColors[task.importance]} shadow-lg cursor-grabbing ${
-        overdue ? 'bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500' : ''
-      }`}
-      style={{ width: '300px' }}
-    >
-      <CardContent className="p-3 space-y-2 h-[120px] flex flex-col">
-        <p className="text-sm font-medium leading-snug line-clamp-2">{task.title}</p>
-      </CardContent>
-    </Card>
+    <div ref={ref}>
+      <Card
+        className={`border-l-4 ${importanceColors[task.importance]} shadow-lg cursor-grabbing ${
+          overdue ? "bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500" : ""
+        }`}
+        style={{ width: "300px" }}
+      >
+        <CardContent className="p-3 space-y-2 h-[120px] flex flex-col">
+          <p className="text-sm font-medium leading-snug line-clamp-2">{task.title}</p>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+});
 
 export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onReorderTasks, statuses }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
@@ -261,6 +284,11 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
   const skipNextSync = useRef(false);
+  const [dropIndicator, setDropIndicator] = useState<
+    | { kind: "task"; overId: string; position: "before" | "after" }
+    | { kind: "column"; overId: string; position: "end" }
+    | null
+  >(null);
 
   // Sync local tasks with props when not dragging (sorted by manual order)
   useEffect(() => {
@@ -299,26 +327,54 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = localTasks.find(t => t.id === event.active.id);
+    setDropIndicator(null);
     setActiveTask(task || null);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
-    if (!over) return;
+
+    if (!over) {
+      setDropIndicator(null);
+      return;
+    }
+
+    if (over.id === active.id) {
+      setDropIndicator(null);
+      return;
+    }
 
     const activeTask = localTasks.find(t => t.id === active.id);
     if (!activeTask) return;
 
-    // Check if dropped over a column or another task
     const overId = over.id as string;
     const isOverColumn = statuses.some(s => s.id === overId);
-    
-    if (isOverColumn && activeTask.status !== overId) {
-      // Moving to a different column
-      setLocalTasks(prev => 
-        prev.map(t => t.id === active.id ? { ...t, status: overId } : t)
-      );
+    const overTask = localTasks.find(t => t.id === overId);
+
+    if (isOverColumn) {
+      setDropIndicator({ kind: "column", overId, position: "end" });
+
+      if (activeTask.status !== overId) {
+        // Moving to a different column
+        setLocalTasks(prev =>
+          prev.map(t => t.id === active.id ? { ...t, status: overId } : t)
+        );
+      }
+      return;
     }
+
+    if (overTask) {
+      // If moving within the same column, show whether the drop will be before/after the hovered card
+      const columnTasks = localTasks.filter(t => t.status === overTask.status);
+      const activeIndex = columnTasks.findIndex(t => t.id === active.id);
+      const overIndex = columnTasks.findIndex(t => t.id === overId);
+
+      const position = activeIndex !== -1 && overIndex !== -1 && activeIndex < overIndex ? "after" : "before";
+      setDropIndicator({ kind: "task", overId, position });
+      return;
+    }
+
+    setDropIndicator(null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -327,6 +383,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     // Prevent an immediate resync from props before the cache/backend updates
     skipNextSync.current = true;
     setActiveTask(null);
+    setDropIndicator(null);
 
     if (!over) return;
 
@@ -339,22 +396,45 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
 
     // Determine target status
     const targetStatus = isOverColumn ? overId : (overTask?.status || activeTaskData.status);
-    
-    // Get tasks in the target column (excluding the dragged task if coming from different column)
-    const columnTasksWithoutActive = localTasks.filter(
-      t => t.status === targetStatus && t.id !== active.id
-    );
-    
-    // Find where to insert
-    const overIndex = overTask ? columnTasksWithoutActive.findIndex(t => t.id === over.id) : columnTasksWithoutActive.length;
-    const insertIndex = overIndex >= 0 ? overIndex : columnTasksWithoutActive.length;
-    
-    // Build new column order
-    const newColumnTasks = [
-      ...columnTasksWithoutActive.slice(0, insertIndex),
-      { ...activeTaskData, status: targetStatus },
-      ...columnTasksWithoutActive.slice(insertIndex),
-    ];
+
+    let newColumnTasks: Task[] = [];
+
+    if (isOverColumn) {
+      // Dropped on a column: move to end
+      const columnTasksWithoutActive = localTasks.filter(
+        t => t.status === targetStatus && t.id !== active.id
+      );
+      newColumnTasks = [...columnTasksWithoutActive, { ...activeTaskData, status: targetStatus }];
+    } else if (overTask && overTask.status === activeTaskData.status) {
+      // Same column reorder: use arrayMove so moving "down" goes after the hovered card
+      const columnTasks = localTasks.filter(t => t.status === targetStatus);
+      const activeIndex = columnTasks.findIndex(t => t.id === active.id);
+      const overIndex = columnTasks.findIndex(t => t.id === overId);
+      if (activeIndex === -1 || overIndex === -1) return;
+      newColumnTasks = arrayMove(columnTasks, activeIndex, overIndex);
+    } else {
+      // Different column over a task
+      const columnTasksWithoutActive = localTasks.filter(
+        t => t.status === targetStatus && t.id !== active.id
+      );
+
+      const baseIndex = overTask
+        ? columnTasksWithoutActive.findIndex(t => t.id === overId)
+        : columnTasksWithoutActive.length;
+
+      const insertIndex =
+        baseIndex === -1
+          ? columnTasksWithoutActive.length
+          : dropIndicator?.kind === "task" && dropIndicator.overId === overId && dropIndicator.position === "after"
+            ? baseIndex + 1
+            : baseIndex;
+
+      newColumnTasks = [
+        ...columnTasksWithoutActive.slice(0, insertIndex),
+        { ...activeTaskData, status: targetStatus },
+        ...columnTasksWithoutActive.slice(insertIndex),
+      ];
+    }
 
     // Update local state immediately for visual feedback
     setLocalTasks(prev => {
@@ -390,10 +470,15 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     <>
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={collisionDetection}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        onDragCancel={() => {
+          skipNextSync.current = false;
+          setActiveTask(null);
+          setDropIndicator(null);
+        }}
       >
         <div className="flex gap-4 overflow-x-auto pb-4">
           {statuses.map((column) => {
@@ -452,25 +537,39 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                       items={columnTasks.map(t => t.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <div className="space-y-2 min-h-[100px] h-full">
+                      <div className="relative space-y-2 min-h-[100px] h-full">
                         <AnimatePresence>
-                          {columnTasks.map((task) => (
-                            <motion.div
-                              key={task.id}
-                              initial={{ opacity: 0, y: -10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: 10 }}
-                              transition={{ duration: 0.15 }}
-                            >
-                              <SortableTaskCard
-                                task={task}
-                                onViewTask={onViewTask}
-                                onDuplicateTask={onDuplicateTask}
-                                onDeleteClick={setTaskToDelete}
-                              />
-                            </motion.div>
-                          ))}
+                          {columnTasks.map((task) => {
+                            const dropPos =
+                              dropIndicator?.kind === "task" &&
+                              dropIndicator.overId === task.id &&
+                              activeTask?.id !== task.id
+                                ? dropIndicator.position
+                                : undefined;
+
+                            return (
+                              <motion.div
+                                key={task.id}
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                transition={{ duration: 0.15 }}
+                              >
+                                <SortableTaskCard
+                                  task={task}
+                                  onViewTask={onViewTask}
+                                  onDuplicateTask={onDuplicateTask}
+                                  onDeleteClick={setTaskToDelete}
+                                  dropIndicatorPosition={dropPos}
+                                />
+                              </motion.div>
+                            );
+                          })}
                         </AnimatePresence>
+
+                        {dropIndicator?.kind === "column" && dropIndicator.overId === column.id && (
+                          <div className="pointer-events-none absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-primary/70" />
+                        )}
                       </div>
                     </SortableContext>
                   </CollapsibleContent>
