@@ -70,7 +70,6 @@ export function useProjects() {
         name: p.name,
         description: p.description,
         color: p.color || '#3b82f6',
-        tags: (p as any).tags || [],
         status: p.status,
         dueDate: p.due_date ? parseDateOnly(p.due_date) : undefined,
         tasks: [] as Task[],
@@ -567,14 +566,13 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (project: { name: string; description?: string; color?: string; tags?: string[]; owners?: User[]; members?: User[] }) => {
+    mutationFn: async (project: { name: string; description?: string; color?: string; owners?: User[]; members?: User[] }) => {
       const { data, error } = await supabase
         .from('projects')
         .insert({
           name: project.name,
           description: project.description || null,
           color: project.color || '#3b82f6',
-          tags: project.tags || [],
           status: 'active',
         })
         .select()
@@ -628,16 +626,14 @@ export function useUpdateProject() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; color?: string; tags?: string[]; owners?: User[]; members?: User[] } }) => {
-      const updatePayload: Record<string, any> = {};
-      if (updates.name !== undefined) updatePayload.name = updates.name;
-      if (updates.description !== undefined) updatePayload.description = updates.description;
-      if (updates.color !== undefined) updatePayload.color = updates.color;
-      if (updates.tags !== undefined) updatePayload.tags = updates.tags;
-      
+    mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; color?: string; owners?: User[]; members?: User[] } }) => {
       const { data, error } = await supabase
         .from('projects')
-        .update(updatePayload)
+        .update({
+          name: updates.name,
+          description: updates.description,
+          color: updates.color,
+        })
         .eq('id', projectId)
         .select()
         .single();

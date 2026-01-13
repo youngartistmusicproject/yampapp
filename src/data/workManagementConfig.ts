@@ -1,6 +1,6 @@
 import { User } from "@/types";
 
-// Predefined tag library for tasks - only admins can modify this list
+// Predefined tag library - only admins can modify this list
 export const tagLibrary = [
   { id: "teaching", name: "Teaching", color: "#3b82f6" },
   { id: "planning", name: "Planning", color: "#8b5cf6" },
@@ -17,26 +17,6 @@ export const tagLibrary = [
 ];
 
 export type TagItem = (typeof tagLibrary)[number];
-
-// Predefined category library for projects - used to organize and filter projects
-export const projectCategoryLibrary = [
-  { id: "marketing", name: "Marketing", color: "#ec4899" },
-  { id: "development", name: "Development", color: "#3b82f6" },
-  { id: "operations", name: "Operations", color: "#10b981" },
-  { id: "design", name: "Design", color: "#a855f7" },
-  { id: "sales", name: "Sales", color: "#f59e0b" },
-  { id: "hr", name: "HR", color: "#14b8a6" },
-  { id: "finance", name: "Finance", color: "#6b7280" },
-  { id: "research", name: "Research", color: "#0ea5e9" },
-  { id: "events", name: "Events", color: "#eb5c5c" },
-  { id: "internal", name: "Internal", color: "#84cc16" },
-];
-
-export type ProjectCategoryItem = (typeof projectCategoryLibrary)[number];
-
-export function getProjectCategoryById(id: string): ProjectCategoryItem | undefined {
-  return projectCategoryLibrary.find(cat => cat.id === id);
-}
 
 // Custom statuses - configurable by admins
 export const statusLibrary = [

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown, Tag } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ import {
 import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
-import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary, projectCategoryLibrary, getProjectCategoryById } from "@/data/workManagementConfig";
+import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { useTasks, useProjects, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useReorderTasks, useCompleteRecurringTask, useReorderProjects } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
@@ -62,9 +62,6 @@ export default function Projects() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProject, setSelectedProject] = useState<string>(() => {
     return localStorage.getItem('workManagement_selectedProject') || 'all';
-  });
-  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
-    return localStorage.getItem('workManagement_selectedCategory') || 'all';
   });
   const [selectedMember, setSelectedMember] = useState<string>(() => {
     return localStorage.getItem('workManagement_selectedMember') || 'all';
@@ -128,7 +125,6 @@ export default function Projects() {
       name: p.name,
       description: p.description,
       color: p.color || '#3b82f6',
-      tags: (p as any).tags || [],
       tasks: [],
       owners: p.owners || [],
       members: p.members || [],
@@ -141,18 +137,8 @@ export default function Projects() {
   }, [selectedProject]);
 
   useEffect(() => {
-    localStorage.setItem('workManagement_selectedCategory', selectedCategory);
-  }, [selectedCategory]);
-
-  useEffect(() => {
     localStorage.setItem('workManagement_selectedMember', selectedMember);
   }, [selectedMember]);
-
-  // Filter projects by selected category
-  const filteredProjects = useMemo(() => {
-    if (selectedCategory === 'all') return projects;
-    return projects.filter(p => p.tags?.includes(selectedCategory));
-  }, [projects, selectedCategory]);
 
   // Get all available tags from tasks and tag library
   const availableTags = useMemo(() => {
@@ -165,22 +151,14 @@ export default function Projects() {
   // Active tasks (not completed)
   const activeTasks = useMemo(() => dbTasks.filter(task => !task.completedAt), [dbTasks]);
 
-  // Get project IDs that match the selected category
-  const categoryProjectIds = useMemo(() => {
-    if (selectedCategory === 'all') return null; // null means no filter
-    return new Set(filteredProjects.map(p => p.id));
-  }, [selectedCategory, filteredProjects]);
-
-  // Tasks filtered by project and category selection (for quick filter counts)
+  // Tasks filtered by project selection (for quick filter counts)
   const projectFilteredTasks = useMemo(() => {
     return activeTasks.filter(task => {
-      // Category filter - filter by projects that have the category
-      if (categoryProjectIds && !categoryProjectIds.has(task.projectId || '')) return false;
       // Project filter
       if (selectedProject !== "all" && task.projectId !== selectedProject) return false;
       return true;
     });
-  }, [activeTasks, selectedProject, categoryProjectIds]);
+  }, [activeTasks, selectedProject]);
 
   // Count tasks for quick filter badges (based on project filtered tasks)
   const quickFilterCounts = useMemo(() => {
@@ -233,9 +211,6 @@ export default function Projects() {
     
     return activeTasks.filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      // Category filter - filter by projects that have the category
-      const matchesCategory = !categoryProjectIds || categoryProjectIds.has(task.projectId || '');
       
       // Project filter - only applies when a specific project is selected
       const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
@@ -295,7 +270,7 @@ export default function Projects() {
       const matchesOverdue = !filters.showOverdueOnly || 
         (task.dueDate && new Date(task.dueDate) < today && task.status !== 'done');
       
-      return matchesSearch && matchesCategory && matchesProject && matchesQuickFilter && matchesStatus && matchesEffort && matchesImportance &&
+      return matchesSearch && matchesProject && matchesQuickFilter && matchesStatus && matchesEffort && matchesImportance &&
              matchesAssignee && matchesMember && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
       // Define sort order for effort, importance, and stage
@@ -349,7 +324,7 @@ export default function Projects() {
       const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       return sortAscending ? comparison : -comparison;
     });
-  }, [activeTasks, searchQuery, selectedProject, categoryProjectIds, selectedMember, filters, quickFilter, sortField, sortAscending, statuses]);
+  }, [activeTasks, searchQuery, selectedProject, selectedMember, filters, quickFilter, sortField, sortAscending, statuses]);
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
     // Find the task to check if it's recurring
@@ -563,9 +538,6 @@ export default function Projects() {
       name: newProject.name,
       description: newProject.description,
       color: newProject.color,
-      tags: newProject.tags,
-      owners: newProject.owners,
-      members: newProject.members,
     }, {
       onSuccess: () => {
         toast.success('Project created');
@@ -574,15 +546,8 @@ export default function Projects() {
     });
   };
 
-  const handleUpdateProject = (projectId: string, updates: Partial<Project>) => {
-    updateProject.mutate({ projectId, updates: {
-      name: updates.name,
-      description: updates.description,
-      color: updates.color,
-      tags: updates.tags,
-      owners: updates.owners,
-      members: updates.members,
-    } }, {
+  const handleUpdateProject = (projectId: string, updates: Partial<{ name: string; description?: string; color: string }>) => {
+    updateProject.mutate({ projectId, updates }, {
       onSuccess: () => toast.success('Project updated'),
       onError: () => toast.error('Failed to update project'),
     });
@@ -627,38 +592,13 @@ export default function Projects() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         {/* Left: Dropdowns */}
         <div className="flex items-center gap-2">
-          {/* Category filter */}
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[140px] h-8 text-[13px] bg-transparent border-border/50">
-              <div className="flex items-center gap-1.5">
-                <Tag className="w-3 h-3" />
-                <SelectValue placeholder="Category" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {projectCategoryLibrary.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: category.color }}
-                    />
-                    {category.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Project filter */}
           <Select value={selectedProject} onValueChange={setSelectedProject}>
-            <SelectTrigger className="w-[180px] h-8 text-[13px] bg-transparent border-border/50">
+            <SelectTrigger className="w-[200px] h-8 text-[13px] bg-transparent border-border/50">
               <SelectValue placeholder="Project" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Projects</SelectItem>
-              {filteredProjects.map((project) => (
+              {projects.map((project) => (
                 <SelectItem key={project.id} value={project.id}>
                   <div className="flex items-center gap-2">
                     <span
