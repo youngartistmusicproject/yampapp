@@ -27,7 +27,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag } from "lucide-react";
 import { getTagById } from "@/data/workManagementConfig";
-import { Progress } from "@/components/ui/progress";
+import { Progress, getProgressColor } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
 import {
@@ -209,7 +209,7 @@ function SortableTaskCard({
           <div className="flex items-center gap-2 text-xs">
             <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
               <div 
-                className="h-full bg-primary rounded-full transition-all"
+                className={`h-full rounded-full transition-all ${getProgressColor(task.progress)}`}
                 style={{ width: `${task.progress}%` }}
               />
             </div>
