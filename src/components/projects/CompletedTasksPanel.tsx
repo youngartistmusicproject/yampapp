@@ -62,17 +62,17 @@ function TaskRow({
   onRestore: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors min-w-0">
+    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors overflow-hidden">
       <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
 
-      <div className="flex-1 min-w-0 overflow-hidden">
-        <p className="text-sm text-muted-foreground line-through truncate">{task.title}</p>
-        <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground/60 min-w-0">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-muted-foreground line-through truncate max-w-full">{task.title}</p>
+        <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground/60">
           {task.completedAt && <span className="shrink-0">{formatCompletedTime(task.completedAt)}</span>}
           {project && (
             <>
               <span className="shrink-0">•</span>
-              <span className="flex items-center gap-1 min-w-0">
+              <span className="flex items-center gap-1 min-w-0 max-w-[120px]">
                 <span
                   className="h-2 w-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: project.color }}
@@ -168,7 +168,7 @@ export function CompletedTasksPanel({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[560px] max-h-[80vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[560px] max-h-[80vh] p-0 gap-0 flex flex-col overflow-hidden">
         <DialogHeader className="px-4 pt-4 pb-3 border-b shrink-0">
           <DialogTitle className="text-base font-semibold">Completed Tasks</DialogTitle>
         </DialogHeader>
@@ -218,8 +218,8 @@ export function CompletedTasksPanel({
           </div>
         </div>
 
-        <div className="flex-1 min-h-0">
-          <ScrollArea className="h-full">
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full max-h-[calc(80vh-180px)]">
             <div className="p-2">
               {filteredTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center min-h-[12rem] text-muted-foreground">
