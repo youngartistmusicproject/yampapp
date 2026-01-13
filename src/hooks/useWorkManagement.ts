@@ -38,7 +38,7 @@ export function useTeams() {
       const { data, error } = await supabase
         .from('teams')
         .select('*, team_members(count)')
-        .order('name');
+        .order('sort_order', { ascending: true });
       
       if (error) throw error;
       return data.map(team => ({
@@ -47,7 +47,31 @@ export function useTeams() {
         color: team.color || '#6366f1',
         description: team.description,
         memberCount: (team.team_members as any)?.[0]?.count || 0,
+        sortOrder: (team as any).sort_order || 0,
       }));
+    },
+  });
+}
+
+// Reorder teams
+export function useReorderTeams() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (teams: { id: string; sortOrder: number }[]) => {
+      // Update each team's sort_order
+      const updates = teams.map((team, index) => 
+        supabase
+          .from('teams')
+          .update({ sort_order: index })
+          .eq('id', team.id)
+      );
+      
+      await Promise.all(updates);
+      return teams;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
     },
   });
 }

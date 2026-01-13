@@ -668,6 +668,7 @@ export type Database = {
           icon: string | null
           id: string
           name: string
+          sort_order: number | null
           updated_at: string
         }
         Insert: {
@@ -677,6 +678,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name: string
+          sort_order?: number | null
           updated_at?: string
         }
         Update: {
@@ -686,6 +688,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+          sort_order?: number | null
           updated_at?: string
         }
         Relationships: []
