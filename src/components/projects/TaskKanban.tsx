@@ -1,6 +1,5 @@
 import * as React from "react";
 import { useState, useCallback, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
   DragEndEvent,
@@ -590,34 +589,32 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                       strategy={verticalListSortingStrategy}
                     >
                       <KanbanColumnDropZone id={column.id} className="relative space-y-2 min-h-[100px] h-full">
-                        <AnimatePresence>
-                          {columnTasks.map((task) => {
-                            const dropPos =
-                              dropIndicator?.kind === "task" &&
-                              dropIndicator.overId === task.id &&
-                              activeTask?.id !== task.id
-                                ? dropIndicator.position
-                                : undefined;
+                        {columnTasks.map((task) => {
+                          const dropPos =
+                            dropIndicator?.kind === "task" &&
+                            dropIndicator.overId === task.id &&
+                            activeTask?.id !== task.id
+                              ? dropIndicator.position
+                              : undefined;
 
-                            return (
-                              <motion.div
-                                key={task.id}
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 10 }}
-                                transition={{ duration: 0.15 }}
-                              >
-                                <SortableTaskCard
-                                  task={task}
-                                  onViewTask={onViewTask}
-                                  onDuplicateTask={onDuplicateTask}
-                                  onDeleteClick={setTaskToDelete}
-                                  dropIndicatorPosition={dropPos}
-                                />
-                              </motion.div>
-                            );
-                          })}
-                        </AnimatePresence>
+                          // Skip rendering the actively dragged task in its original position
+                          const isBeingDragged = activeTask?.id === task.id;
+
+                          return (
+                            <div
+                              key={task.id}
+                              style={{ opacity: isBeingDragged ? 0.4 : 1 }}
+                            >
+                              <SortableTaskCard
+                                task={task}
+                                onViewTask={onViewTask}
+                                onDuplicateTask={onDuplicateTask}
+                                onDeleteClick={setTaskToDelete}
+                                dropIndicatorPosition={dropPos}
+                              />
+                            </div>
+                          );
+                        })}
 
                         {dropIndicator?.kind === "column" && dropIndicator.overId === column.id && (
                           <div className="pointer-events-none absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-primary/70" />
