@@ -62,11 +62,11 @@ function TaskRow({
   onRestore: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors overflow-hidden">
+    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors w-full min-w-0 overflow-hidden">
       <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-muted-foreground line-through truncate max-w-full">{task.title}</p>
+        <p className="text-sm text-muted-foreground line-through truncate w-full">{task.title}</p>
         <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground/60">
           {task.completedAt && <span className="shrink-0">{formatCompletedTime(task.completedAt)}</span>}
           {project && (
