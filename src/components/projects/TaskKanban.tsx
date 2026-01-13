@@ -217,24 +217,26 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
 
                 <CollapsibleContent className="h-full flex-1">
                   <div className="space-y-2 min-h-[100px] h-full">
-                    <AnimatePresence mode="popLayout">
+                    <AnimatePresence>
                       {columnTasks.map((task) => {
                         const overdue = isTaskOverdue(task);
                         return (
                           <motion.div
                             key={task.id}
-                            layout
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
+                            layoutId={task.id}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            whileHover={{ y: -2, boxShadow: "0 8px 25px -5px rgba(0, 0, 0, 0.15)" }}
                             transition={{
-                              layout: { type: "spring", stiffness: 350, damping: 30 },
-                              opacity: { duration: 0.2 },
-                              scale: { duration: 0.2 }
+                              layout: { type: "spring", stiffness: 400, damping: 30 },
+                              opacity: { duration: 0.15 },
+                              y: { duration: 0.15 }
                             }}
+                            className="rounded-lg"
                           >
                             <Card
-                              className={`group cursor-grab active:cursor-grabbing border-l-4 ${importanceColors[task.importance]} shadow-card hover:shadow-elevated transition-shadow ${
+                              className={`group cursor-grab active:cursor-grabbing border-l-4 ${importanceColors[task.importance]} ${
                                 overdue ? 'bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500' : ''
                               } ${draggingTaskId === task.id ? 'opacity-50 scale-95' : ''}`}
                               draggable
