@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
-import { Pencil, Trash2, Plus, Users, ChevronRight, UserPlus, X, GripVertical, Star } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Pencil, Trash2, Plus, Users, ChevronRight, UserPlus, X, GripVertical, Star, Search } from "lucide-react";
 import { Team, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -160,6 +161,7 @@ export function TeamManagementPanel({
   const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [addingMember, setAddingMember] = useState(false);
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
   const [localTeams, setLocalTeams] = useState(teams);
 
   // Keep local teams in sync with props when teams change
@@ -256,6 +258,29 @@ export function TeamManagementPanel({
     u => !teamMembers.some(m => m.userName === u.name)
   );
 
+  // Filter available users by search query
+  const filteredAvailableToAdd = useMemo(() => {
+    if (!memberSearchQuery.trim()) return availableToAdd;
+    const query = memberSearchQuery.toLowerCase();
+    return availableToAdd.filter(
+      u => u.name.toLowerCase().includes(query) || u.role.toLowerCase().includes(query)
+    );
+  }, [availableToAdd, memberSearchQuery]);
+
+  // Helper to format role for display
+  const formatRole = (role: string) => {
+    return role
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Get user role from availableUsers by name
+  const getUserRoleByName = (userName: string): string | undefined => {
+    const user = availableUsers.find(u => u.name === userName);
+    return user?.role;
+  };
+
   return (
     <>
       <Sheet open={open} onOpenChange={setOpen}>
@@ -331,25 +356,48 @@ export function TeamManagementPanel({
                           variant="ghost"
                           size="sm"
                           className="h-6 w-6 p-0"
-                          onClick={() => setAddingMember(false)}
+                          onClick={() => {
+                            setAddingMember(false);
+                            setMemberSearchQuery("");
+                          }}
                         >
                           <X className="w-3.5 h-3.5" />
                         </Button>
                       </div>
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search by name or role..."
+                          value={memberSearchQuery}
+                          onChange={(e) => setMemberSearchQuery(e.target.value)}
+                          className="pl-8 h-8 text-sm"
+                        />
+                      </div>
                       <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {availableToAdd.map((user) => (
-                          <button
-                            key={user.id}
-                            onClick={() => handleAddMember(user.name)}
-                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm hover:bg-muted transition-colors"
-                          >
-                            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
-                              {user.name.charAt(0)}
-                            </div>
-                            <span>{user.name}</span>
-                            <span className="text-muted-foreground text-xs ml-auto capitalize">{user.role}</span>
-                          </button>
-                        ))}
+                        {filteredAvailableToAdd.length === 0 ? (
+                          <p className="text-xs text-muted-foreground text-center py-2">
+                            {memberSearchQuery ? "No matching users" : "No users available"}
+                          </p>
+                        ) : (
+                          filteredAvailableToAdd.map((user) => (
+                            <button
+                              key={user.id}
+                              onClick={() => {
+                                handleAddMember(user.name);
+                                setMemberSearchQuery("");
+                              }}
+                              className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm hover:bg-muted transition-colors"
+                            >
+                              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
+                                {user.name.charAt(0)}
+                              </div>
+                              <span>{user.name}</span>
+                              <span className="text-muted-foreground text-xs ml-auto">
+                                {formatRole(user.role)}
+                              </span>
+                            </button>
+                          ))
+                        )}
                       </div>
                     </div>
                   )}
@@ -393,7 +441,8 @@ export function TeamManagementPanel({
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium truncate">{member.userName}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {isLeader ? 'Team Leader' : 'Member'}
+                                  {isLeader && <span className="text-amber-600 font-medium">Team Leader • </span>}
+                                  {formatRole(getUserRoleByName(member.userName) || 'Member')}
                                 </p>
                               </div>
                               <div className="flex items-center gap-2">
