@@ -41,7 +41,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
-import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useReorderTasks } from "@/hooks/useWorkManagement";
+import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useReorderTasks, useCompleteRecurringTask } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
@@ -57,6 +57,7 @@ export default function Projects() {
   const duplicateTask = useDuplicateTask();
   const createProject = useCreateProject();
   const reorderTasks = useReorderTasks();
+  const completeRecurringTask = useCompleteRecurringTask();
   
   const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -298,6 +299,32 @@ export default function Projects() {
   }, [activeTasks, searchQuery, selectedProject, selectedTeam, projects, filters, quickFilter, sortField, sortAscending, statuses]);
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
+    // Find the task to check if it's recurring
+    const task = dbTasks.find(t => t.id === taskId);
+    
+    // If marking a recurring task as done, use the special hook
+    if (updates.status === 'done' && task?.isRecurring && task?.recurrence) {
+      completeRecurringTask.mutate({ task }, {
+        onSuccess: (result) => {
+          if (result.nextTask) {
+            toast.success('Recurring task completed! Next instance created.');
+          } else if ((result as any).seriesEnded) {
+            toast.success('Recurring task series completed!');
+          }
+        },
+        onError: (error) => {
+          toast.error('Failed to complete recurring task');
+          console.error(error);
+        },
+      });
+      
+      // Update viewing task optimistically
+      if (viewingTask?.id === taskId) {
+        setViewingTask(prev => prev ? { ...prev, ...updates } : null);
+      }
+      return;
+    }
+    
     updateTask.mutate({ taskId, updates }, {
       onError: (error) => {
         toast.error('Failed to update task');
