@@ -5,12 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -31,7 +29,8 @@ import { tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagem
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { RecurrenceSettings } from "./RecurrenceSettings";
-import { Repeat, BookOpen, Plus, Info, CalendarIcon } from "lucide-react";
+import { NaturalDateInput } from "./NaturalDateInput";
+import { Repeat, BookOpen, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 export interface StatusItem {
   id: string;
@@ -269,35 +268,17 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
             {/* Due Date & Assignees row */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Due Date */}
+              {/* Due Date with NLP */}
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Due Date <span className="text-destructive">*</span></Label>
                 <div className="flex items-center gap-1">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className={cn(
-                          "h-9 flex-1 justify-start text-left text-sm font-normal border-border/50 bg-transparent",
-                          !dueDate && "text-muted-foreground",
-                          hasAttemptedSubmit && validationErrors.dueDate && "border-destructive"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                        {dueDate ? format(dueDate, "MMM d") : "Pick date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[70]" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={dueDate}
-                        onSelect={setDueDate}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <NaturalDateInput
+                    value={dueDate}
+                    onChange={setDueDate}
+                    placeholder="e.g. next friday, Apr 15"
+                    hasError={hasAttemptedSubmit && !!validationErrors.dueDate}
+                    className="flex-1"
+                  />
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
