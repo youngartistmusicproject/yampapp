@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown, Users } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,6 @@ import { TaskDialog } from "@/components/projects/TaskDialog";
 import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
 import { ProjectManagementPanel } from "@/components/projects/ProjectManagementPanel";
-import { TeamDialog } from "@/components/projects/TeamDialog";
-import { TeamManagementPanel } from "@/components/projects/TeamManagementPanel";
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
 import { CompletedTasksPanel } from "@/components/projects/CompletedTasksPanel";
@@ -36,7 +34,7 @@ import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
-import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useCreateTeam, useUpdateTeam, useDeleteTeam, useReorderTasks, useCompleteRecurringTask, useReorderTeams, useReorderProjects, useAllTeamLeaders } from "@/hooks/useWorkManagement";
+import { useTasks, useProjects, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useReorderTasks, useCompleteRecurringTask, useReorderProjects } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
@@ -44,8 +42,6 @@ const currentUser = teamMembers[0];
 export default function Projects() {
   const { data: dbTasks = [], isLoading: tasksLoading } = useTasks();
   const { data: dbProjects = [], isLoading: projectsLoading } = useProjects();
-  const { data: dbTeams = [] } = useTeams();
-  const { data: teamLeaderNames = [] } = useAllTeamLeaders();
   
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
@@ -54,12 +50,8 @@ export default function Projects() {
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProjectMutation = useDeleteProject();
-  const createTeam = useCreateTeam();
-  const updateTeam = useUpdateTeam();
-  const deleteTeamMutation = useDeleteTeam();
   const reorderTasks = useReorderTasks();
   const completeRecurringTask = useCompleteRecurringTask();
-  const reorderTeams = useReorderTeams();
   const reorderProjects = useReorderProjects();
   
   const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
@@ -68,9 +60,6 @@ export default function Projects() {
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTeam, setSelectedTeam] = useState<string>(() => {
-    return localStorage.getItem('workManagement_selectedTeam') || 'all';
-  });
   const [selectedProject, setSelectedProject] = useState<string>(() => {
     return localStorage.getItem('workManagement_selectedProject') || 'all';
   });
@@ -139,24 +128,9 @@ export default function Projects() {
       tasks: [],
       owners: p.owners || [],
       members: p.members || [],
-      teamId: p.teamId || '',
       createdAt: p.createdAt,
     }));
   }, [dbProjects]);
-
-  // Get filtered projects for selected team
-  const filteredProjects = useMemo(() => {
-    if (selectedTeam === "all") return [];
-    return projects.filter((p) => p.teamId === selectedTeam);
-  }, [projects, selectedTeam]);
-
-  // Persist team/project filters and reset project when team changes
-  useEffect(() => {
-    localStorage.setItem('workManagement_selectedTeam', selectedTeam);
-    if (selectedTeam === "all") {
-      setSelectedProject("all");
-    }
-  }, [selectedTeam]);
 
   useEffect(() => {
     localStorage.setItem('workManagement_selectedProject', selectedProject);
@@ -177,21 +151,16 @@ export default function Projects() {
   // Active tasks (not completed)
   const activeTasks = useMemo(() => dbTasks.filter(task => !task.completedAt), [dbTasks]);
 
-  // Tasks filtered by team/project selection (for quick filter counts)
-  const teamProjectFilteredTasks = useMemo(() => {
+  // Tasks filtered by project selection (for quick filter counts)
+  const projectFilteredTasks = useMemo(() => {
     return activeTasks.filter(task => {
-      // Team filter
-      const taskProject = projects.find(p => p.id === task.projectId);
-      if (selectedTeam !== "all") {
-        if (!taskProject || taskProject.teamId !== selectedTeam) return false;
-      }
       // Project filter
       if (selectedProject !== "all" && task.projectId !== selectedProject) return false;
       return true;
     });
-  }, [activeTasks, projects, selectedTeam, selectedProject]);
+  }, [activeTasks, selectedProject]);
 
-  // Count tasks for quick filter badges (based on team/project filtered tasks)
+  // Count tasks for quick filter badges (based on project filtered tasks)
   const quickFilterCounts = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -201,27 +170,27 @@ export default function Projects() {
     nextWeek.setDate(nextWeek.getDate() + 7);
     
     return {
-      overdue: teamProjectFilteredTasks.filter(t => t.dueDate && new Date(t.dueDate) < today).length,
-      today: teamProjectFilteredTasks.filter(t => {
+      overdue: projectFilteredTasks.filter(t => t.dueDate && new Date(t.dueDate) < today).length,
+      today: projectFilteredTasks.filter(t => {
         if (!t.dueDate) return false;
         const due = new Date(t.dueDate);
         due.setHours(0, 0, 0, 0);
         return due.getTime() === today.getTime();
       }).length,
-      tomorrow: teamProjectFilteredTasks.filter(t => {
+      tomorrow: projectFilteredTasks.filter(t => {
         if (!t.dueDate) return false;
         const due = new Date(t.dueDate);
         due.setHours(0, 0, 0, 0);
         return due.getTime() === tomorrow.getTime();
       }).length,
-      upcoming: teamProjectFilteredTasks.filter(t => {
+      upcoming: projectFilteredTasks.filter(t => {
         if (!t.dueDate) return false;
         const due = new Date(t.dueDate);
         due.setHours(0, 0, 0, 0);
         return due > tomorrow && due <= nextWeek;
       }).length,
     };
-  }, [teamProjectFilteredTasks]);
+  }, [projectFilteredTasks]);
   
   // All completed tasks (including archived) for the panel
   const allCompletedTasks = useMemo(() => 
@@ -242,14 +211,6 @@ export default function Projects() {
     
     return activeTasks.filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      // Team filter - task must belong to a project within the selected team
-      const taskProject = projects.find(p => p.id === task.projectId);
-      let matchesTeam = true;
-      if (selectedTeam !== "all") {
-        // Only show tasks that have a project AND that project belongs to the selected team
-        matchesTeam = !!taskProject && taskProject.teamId === selectedTeam;
-      }
       
       // Project filter - only applies when a specific project is selected
       const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
@@ -309,7 +270,7 @@ export default function Projects() {
       const matchesOverdue = !filters.showOverdueOnly || 
         (task.dueDate && new Date(task.dueDate) < today && task.status !== 'done');
       
-      return matchesSearch && matchesProject && matchesTeam && matchesQuickFilter && matchesStatus && matchesEffort && matchesImportance &&
+      return matchesSearch && matchesProject && matchesQuickFilter && matchesStatus && matchesEffort && matchesImportance &&
              matchesAssignee && matchesMember && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
       // Define sort order for effort, importance, and stage
@@ -363,7 +324,7 @@ export default function Projects() {
       const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       return sortAscending ? comparison : -comparison;
     });
-  }, [activeTasks, searchQuery, selectedProject, selectedTeam, selectedMember, projects, filters, quickFilter, sortField, sortAscending, statuses]);
+  }, [activeTasks, searchQuery, selectedProject, selectedMember, filters, quickFilter, sortField, sortAscending, statuses]);
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
     // Find the task to check if it's recurring
@@ -576,7 +537,6 @@ export default function Projects() {
     createProject.mutate({
       name: newProject.name,
       description: newProject.description,
-      teamId: newProject.teamId,
       color: newProject.color,
     }, {
       onSuccess: () => {
@@ -586,7 +546,7 @@ export default function Projects() {
     });
   };
 
-  const handleUpdateProject = (projectId: string, updates: Partial<{ name: string; description?: string; teamId?: string; color: string }>) => {
+  const handleUpdateProject = (projectId: string, updates: Partial<{ name: string; description?: string; color: string }>) => {
     updateProject.mutate({ projectId, updates }, {
       onSuccess: () => toast.success('Project updated'),
       onError: () => toast.error('Failed to update project'),
@@ -605,45 +565,8 @@ export default function Projects() {
     });
   };
 
-  const handleAddTeam = (newTeam: { name: string; description?: string; color: string }) => {
-    createTeam.mutate({
-      name: newTeam.name,
-      description: newTeam.description,
-      color: newTeam.color,
-    }, {
-      onSuccess: () => {
-        toast.success('Team created');
-      },
-      onError: () => toast.error('Failed to create team'),
-    });
-  };
-
-  const handleUpdateTeam = (teamId: string, updates: Partial<{ name: string; description?: string; color: string }>) => {
-    updateTeam.mutate({ teamId, updates }, {
-      onSuccess: () => toast.success('Team updated'),
-      onError: () => toast.error('Failed to update team'),
-    });
-  };
-
-  const handleDeleteTeam = (teamId: string) => {
-    deleteTeamMutation.mutate(teamId, {
-      onSuccess: () => {
-        toast.success('Team deleted');
-        if (selectedTeam === teamId) {
-          setSelectedTeam('all');
-        }
-      },
-      onError: () => toast.error('Failed to delete team'),
-    });
-  };
-
   const isLoading = tasksLoading || projectsLoading;
 
-  // Get current team/project names for display
-  const currentTeamName = selectedTeam === "all" 
-    ? "All Teams" 
-    : dbTeams.find(t => t.id === selectedTeam)?.name || "Team";
-  
   const currentProjectName = selectedProject === "all"
     ? "All Projects"
     : projects.find(p => p.id === selectedProject)?.name || "Project";
@@ -669,54 +592,25 @@ export default function Projects() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         {/* Left: Dropdowns */}
         <div className="flex items-center gap-2">
-          <Select 
-            value={selectedTeam} 
-            onValueChange={(val) => {
-              setSelectedTeam(val);
-              setSelectedProject("all");
-            }}
-          >
-            <SelectTrigger className="w-[220px] h-8 text-[13px] bg-transparent border-border/50">
-              <SelectValue placeholder="Team" />
+          <Select value={selectedProject} onValueChange={setSelectedProject}>
+            <SelectTrigger className="w-[200px] h-8 text-[13px] bg-transparent border-border/50">
+              <SelectValue placeholder="Project" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Teams</SelectItem>
-              {dbTeams.map((team) => (
-                <SelectItem key={team.id} value={team.id}>
+              <SelectItem value="all">All Projects</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
                   <div className="flex items-center gap-2">
                     <span
                       className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: team.color }}
+                      style={{ backgroundColor: project.color }}
                     />
-                    {team.name}
+                    {project.name}
                   </div>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-
-          {selectedTeam !== "all" && (
-            <Select value={selectedProject} onValueChange={setSelectedProject}>
-              <SelectTrigger className="w-[150px] h-8 text-[13px] bg-transparent border-border/50">
-                <SelectValue placeholder="Project" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
-                {filteredProjects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: project.color }}
-                      />
-                      {project.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
         </div>
 
         {/* Right: Search */}
@@ -749,19 +643,8 @@ export default function Projects() {
             <Settings2 className="w-3.5 h-3.5" />
           </Button>
 
-          <TeamManagementPanel
-            teams={dbTeams}
-            onCreateTeam={handleAddTeam}
-            onUpdateTeam={handleUpdateTeam}
-            onDeleteTeam={handleDeleteTeam}
-            onReorderTeams={(teams) => {
-              reorderTeams.mutate(teams.map((t, i) => ({ id: t.id, sortOrder: i })));
-            }}
-          />
-
           <ProjectManagementPanel
             projects={projects}
-            teams={dbTeams}
             availableMembers={teamMembers}
             onCreateProject={handleAddProject}
             onUpdateProject={handleUpdateProject}
@@ -774,7 +657,6 @@ export default function Projects() {
           <CompletedTasksPanel
             tasks={allCompletedTasks}
             projects={projects}
-            teams={dbTeams}
             onRestoreTask={handleRestoreTask}
           />
         </div>
@@ -1035,7 +917,6 @@ export default function Projects() {
               sortAscending={sortAscending}
               statuses={statuses}
               showDetails={showTaskDetails}
-              teamLeaderNames={teamLeaderNames}
             />
           )}
         </TabsContent>
@@ -1067,7 +948,6 @@ export default function Projects() {
               showDetails={showTaskDetails}
               sortField={sortField}
               sortAscending={sortAscending}
-              teamLeaderNames={teamLeaderNames}
             />
           )}
         </TabsContent>
