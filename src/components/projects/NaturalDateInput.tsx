@@ -38,12 +38,67 @@ const DAY_MAP: Record<string, number> = {
   sat: 6, saturday: 6,
 };
 
+function parseEndDate(text: string): { endDate: Date | null; remainingText: string } {
+  // Check for "until X" pattern
+  const untilMatch = text.match(/^(.+?)\s+until\s+(.+)$/i);
+  if (untilMatch) {
+    const remainingText = untilMatch[1].trim();
+    const endDateText = untilMatch[2].trim();
+    
+    // Parse the end date using chrono
+    const results = chrono.parse(endDateText, new Date(), { forwardDate: true });
+    if (results.length > 0) {
+      return { endDate: results[0].start.date(), remainingText };
+    }
+  }
+  
+  // Check for "through X" pattern (alternative to until)
+  const throughMatch = text.match(/^(.+?)\s+through\s+(.+)$/i);
+  if (throughMatch) {
+    const remainingText = throughMatch[1].trim();
+    const endDateText = throughMatch[2].trim();
+    
+    const results = chrono.parse(endDateText, new Date(), { forwardDate: true });
+    if (results.length > 0) {
+      return { endDate: results[0].start.date(), remainingText };
+    }
+  }
+  
+  // Check for "for X weeks/months" pattern
+  const forWeeksMatch = text.match(/^(.+?)\s+for\s+(\d+)\s+(weeks?|months?)$/i);
+  if (forWeeksMatch) {
+    const remainingText = forWeeksMatch[1].trim();
+    const count = parseInt(forWeeksMatch[2]);
+    const unit = forWeeksMatch[3].toLowerCase();
+    
+    let endDate = new Date();
+    if (unit.startsWith('week')) {
+      endDate = addWeeks(endDate, count);
+    } else if (unit.startsWith('month')) {
+      endDate = addMonths(endDate, count);
+    }
+    return { endDate, remainingText };
+  }
+  
+  return { endDate: null, remainingText: text };
+}
+
+function formatEndDate(endDate: Date): string {
+  return format(endDate, "MMM d, yyyy");
+}
+
 function parseRecurrence(text: string): ParsedResult {
   const lowerText = text.toLowerCase().trim();
   
+  // First extract any end date
+  const { endDate, remainingText } = parseEndDate(lowerText);
+  const patternText = remainingText.toLowerCase().trim();
+  
+  let result: ParsedResult = { date: null, recurrence: null };
+  
   // Pattern: "every day" or "daily"
-  if (/^(every\s+day|daily)$/i.test(lowerText)) {
-    return {
+  if (/^(every\s+day|daily)$/i.test(patternText)) {
+    result = {
       date: new Date(),
       recurrence: { frequency: "daily", interval: 1 },
       recurrenceText: "Repeats every day",
@@ -51,10 +106,10 @@ function parseRecurrence(text: string): ParsedResult {
   }
 
   // Pattern: "every X days"
-  const everyXDays = lowerText.match(/^every\s+(\d+)\s+days?$/i);
+  const everyXDays = patternText.match(/^every\s+(\d+)\s+days?$/i);
   if (everyXDays) {
     const interval = parseInt(everyXDays[1]);
-    return {
+    result = {
       date: new Date(),
       recurrence: { frequency: "daily", interval },
       recurrenceText: `Repeats every ${interval} days`,
@@ -62,9 +117,9 @@ function parseRecurrence(text: string): ParsedResult {
   }
 
   // Pattern: "every week" or "weekly"
-  if (/^(every\s+week|weekly)$/i.test(lowerText)) {
+  if (/^(every\s+week|weekly)$/i.test(patternText)) {
     const today = new Date();
-    return {
+    result = {
       date: today,
       recurrence: { frequency: "weekly", interval: 1, daysOfWeek: [today.getDay()] },
       recurrenceText: "Repeats every week",
@@ -72,11 +127,11 @@ function parseRecurrence(text: string): ParsedResult {
   }
 
   // Pattern: "every X weeks"
-  const everyXWeeks = lowerText.match(/^every\s+(\d+)\s+weeks?$/i);
+  const everyXWeeks = patternText.match(/^every\s+(\d+)\s+weeks?$/i);
   if (everyXWeeks) {
     const interval = parseInt(everyXWeeks[1]);
     const today = new Date();
-    return {
+    result = {
       date: today,
       recurrence: { frequency: "weekly", interval, daysOfWeek: [today.getDay()] },
       recurrenceText: `Repeats every ${interval} weeks`,
@@ -84,18 +139,17 @@ function parseRecurrence(text: string): ParsedResult {
   }
 
   // Pattern: "every Monday" or "every Mon"
-  const everyDayMatch = lowerText.match(/^every\s+(sun(?:day)?|mon(?:day)?|tue(?:s(?:day)?)?|wed(?:s|nesday)?|thu(?:r(?:s(?:day)?)?)?|fri(?:day)?|sat(?:urday)?)$/i);
+  const everyDayMatch = patternText.match(/^every\s+(sun(?:day)?|mon(?:day)?|tue(?:s(?:day)?)?|wed(?:s|nesday)?|thu(?:r(?:s(?:day)?)?)?|fri(?:day)?|sat(?:urday)?)$/i);
   if (everyDayMatch) {
     const dayName = everyDayMatch[1].toLowerCase();
     const dayNum = DAY_MAP[dayName];
     if (dayNum !== undefined) {
       const today = new Date();
       const todayDay = today.getDay();
-      // Calculate next occurrence of that day
       const daysUntil = (dayNum - todayDay + 7) % 7 || 7;
       const nextDate = addDays(today, daysUntil);
       
-      return {
+      result = {
         date: nextDate,
         recurrence: { frequency: "weekly", interval: 1, daysOfWeek: [dayNum] },
         recurrenceText: `Repeats every ${format(nextDate, "EEEE")}`,
@@ -103,39 +157,57 @@ function parseRecurrence(text: string): ParsedResult {
     }
   }
 
-  // Pattern: "every Mon, Wed, Fri" or "every Monday and Friday"
-  const everyMultipleDays = lowerText.match(/^every\s+(.+)$/i);
-  if (everyMultipleDays) {
-    const daysText = everyMultipleDays[1];
-    const dayMatches = daysText.match(/(sun(?:day)?|mon(?:day)?|tue(?:s(?:day)?)?|wed(?:s|nesday)?|thu(?:r(?:s(?:day)?)?)?|fri(?:day)?|sat(?:urday)?)/gi);
+  // Pattern: "every weekday" or "weekdays"
+  if (/^(every\s+weekday|weekdays)$/i.test(patternText)) {
+    const today = new Date();
+    const todayDay = today.getDay();
+    let nextDate = today;
+    if (todayDay === 0) nextDate = addDays(today, 1);
+    else if (todayDay === 6) nextDate = addDays(today, 2);
     
-    if (dayMatches && dayMatches.length > 1) {
-      const daysOfWeek = [...new Set(dayMatches.map(d => DAY_MAP[d.toLowerCase()]))].filter(d => d !== undefined).sort((a, b) => a - b);
+    result = {
+      date: nextDate,
+      recurrence: { frequency: "weekly", interval: 1, daysOfWeek: [1, 2, 3, 4, 5] },
+      recurrenceText: "Repeats every weekday (Mon-Fri)",
+    };
+  }
+
+  // Pattern: "every Mon, Wed, Fri" or "every Monday and Friday"
+  if (!result.recurrence) {
+    const everyMultipleDays = patternText.match(/^every\s+(.+)$/i);
+    if (everyMultipleDays) {
+      const daysText = everyMultipleDays[1];
+      const dayMatches = daysText.match(/(sun(?:day)?|mon(?:day)?|tue(?:s(?:day)?)?|wed(?:s|nesday)?|thu(?:r(?:s(?:day)?)?)?|fri(?:day)?|sat(?:urday)?)/gi);
       
-      if (daysOfWeek.length > 0) {
-        const today = new Date();
-        const todayDay = today.getDay();
-        // Find next occurrence
-        let nextDayNum = daysOfWeek.find(d => d > todayDay) ?? daysOfWeek[0];
-        const daysUntil = (nextDayNum - todayDay + 7) % 7 || 7;
-        const nextDate = addDays(today, daysUntil);
+      if (dayMatches && dayMatches.length >= 1) {
+        const daysOfWeek = [...new Set(dayMatches.map(d => DAY_MAP[d.toLowerCase()]))].filter(d => d !== undefined).sort((a, b) => a - b);
         
-        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        const selectedDayNames = daysOfWeek.map(d => dayNames[d]).join(", ");
-        
-        return {
-          date: nextDate,
-          recurrence: { frequency: "weekly", interval: 1, daysOfWeek },
-          recurrenceText: `Repeats every ${selectedDayNames}`,
-        };
+        if (daysOfWeek.length > 0) {
+          const today = new Date();
+          const todayDay = today.getDay();
+          let nextDayNum = daysOfWeek.find(d => d > todayDay) ?? daysOfWeek[0];
+          const daysUntil = (nextDayNum - todayDay + 7) % 7 || 7;
+          const nextDate = addDays(today, daysUntil);
+          
+          const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+          const selectedDayNames = daysOfWeek.map(d => dayNames[d]).join(", ");
+          
+          result = {
+            date: nextDate,
+            recurrence: { frequency: "weekly", interval: 1, daysOfWeek },
+            recurrenceText: daysOfWeek.length === 1 
+              ? `Repeats every ${format(nextDate, "EEEE")}`
+              : `Repeats every ${selectedDayNames}`,
+          };
+        }
       }
     }
   }
 
   // Pattern: "every month" or "monthly"
-  if (/^(every\s+month|monthly)$/i.test(lowerText)) {
+  if (/^(every\s+month|monthly)$/i.test(patternText)) {
     const today = new Date();
-    return {
+    result = {
       date: today,
       recurrence: { frequency: "monthly", interval: 1, dayOfMonth: today.getDate() },
       recurrenceText: `Repeats every month on day ${today.getDate()}`,
@@ -143,11 +215,11 @@ function parseRecurrence(text: string): ParsedResult {
   }
 
   // Pattern: "every X months"
-  const everyXMonths = lowerText.match(/^every\s+(\d+)\s+months?$/i);
+  const everyXMonths = patternText.match(/^every\s+(\d+)\s+months?$/i);
   if (everyXMonths) {
     const interval = parseInt(everyXMonths[1]);
     const today = new Date();
-    return {
+    result = {
       date: today,
       recurrence: { frequency: "monthly", interval, dayOfMonth: today.getDate() },
       recurrenceText: `Repeats every ${interval} months on day ${today.getDate()}`,
@@ -155,33 +227,27 @@ function parseRecurrence(text: string): ParsedResult {
   }
 
   // Pattern: "every year" or "yearly" or "annually"
-  if (/^(every\s+year|yearly|annually)$/i.test(lowerText)) {
+  if (/^(every\s+year|yearly|annually)$/i.test(patternText)) {
     const today = new Date();
-    return {
+    result = {
       date: today,
       recurrence: { frequency: "yearly", interval: 1 },
       recurrenceText: "Repeats every year",
     };
   }
 
-  // Pattern: "every weekday" or "weekdays"
-  if (/^(every\s+weekday|weekdays)$/i.test(lowerText)) {
-    const today = new Date();
-    const todayDay = today.getDay();
-    // If today is weekend, find next Monday
-    let nextDate = today;
-    if (todayDay === 0) nextDate = addDays(today, 1);
-    else if (todayDay === 6) nextDate = addDays(today, 2);
-    
-    return {
-      date: nextDate,
-      recurrence: { frequency: "weekly", interval: 1, daysOfWeek: [1, 2, 3, 4, 5] },
-      recurrenceText: "Repeats every weekday (Mon-Fri)",
-    };
+  // If we found a recurrence and have an end date, add it
+  if (result.recurrence && endDate) {
+    result.recurrence.endDate = endDate;
+    result.recurrenceText = `${result.recurrenceText} until ${formatEndDate(endDate)}`;
   }
 
-  // No recurrence pattern found, try regular date parsing
-  return { date: null, recurrence: null };
+  // No recurrence pattern found
+  if (!result.recurrence) {
+    return { date: null, recurrence: null };
+  }
+  
+  return result;
 }
 
 function parseNaturalDate(text: string): Date | null {
