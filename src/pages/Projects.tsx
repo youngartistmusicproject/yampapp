@@ -143,13 +143,6 @@ export default function Projects() {
     localStorage.setItem('workManagement_selectedMember', selectedMember);
   }, [selectedMember]);
 
-  // Get all available tags from current tags state and tasks
-  const availableTags = useMemo(() => {
-    return Array.from(new Set([
-      ...tags.map(t => t.id),
-      ...dbTasks.flatMap(t => t.tags || [])
-    ]));
-  }, [dbTasks, tags]);
 
   // Active tasks (not completed)
   const activeTasks = useMemo(() => dbTasks.filter(task => !task.completedAt), [dbTasks]);
@@ -634,7 +627,7 @@ export default function Projects() {
             onFiltersChange={setFilters}
             statuses={statuses}
             availableMembers={teamMembers}
-            availableTags={tags.map(t => t.id)}
+            availableTags={tags}
           />
           
           <DropdownMenu>

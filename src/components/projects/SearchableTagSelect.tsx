@@ -72,9 +72,9 @@ export function SearchableTagSelect({
       </PopoverTrigger>
       <PopoverContent className="w-64 p-0 z-50 bg-popover" align="end">
         <Command>
-          <CommandInput placeholder="Search tags..." />
+          <CommandInput placeholder="Search areas..." />
           <CommandList>
-            <CommandEmpty>No tags found.</CommandEmpty>
+            <CommandEmpty>No areas found.</CommandEmpty>
             <CommandGroup>
               {tags.map((tag) => (
                 <CommandItem

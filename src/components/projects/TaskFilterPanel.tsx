@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { User } from "@/types";
 import { StatusItem } from "./StatusManager";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
+import { effortLibrary, importanceLibrary, TagItem } from "@/data/workManagementConfig";
 
 export interface TaskFilters {
   statuses: string[];
@@ -39,7 +39,7 @@ interface TaskFilterPanelProps {
   onFiltersChange: (filters: TaskFilters) => void;
   statuses: StatusItem[];
   availableMembers: User[];
-  availableTags: string[];
+  availableTags: TagItem[];
 }
 
 export function TaskFilterPanel({
@@ -258,20 +258,27 @@ export function TaskFilterPanel({
 
             <Separator />
 
-            {/* Tags Filter */}
+            {/* Areas Filter */}
             <div className="space-y-2">
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Tags
+                Areas
               </Label>
               <div className="flex flex-wrap gap-1.5">
                 {availableTags.map((tag) => (
                   <Badge
-                    key={tag}
-                    variant={filters.tags.includes(tag) ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => handleTagToggle(tag)}
+                    key={tag.id}
+                    variant={filters.tags.includes(tag.id) ? "default" : "outline"}
+                    className="cursor-pointer gap-1.5"
+                    onClick={() => handleTagToggle(tag.id)}
+                    style={filters.tags.includes(tag.id) ? { backgroundColor: tag.color } : {}}
                   >
-                    {tag}
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ 
+                        backgroundColor: filters.tags.includes(tag.id) ? "white" : tag.color 
+                      }}
+                    />
+                    {tag.name}
                   </Badge>
                 ))}
               </div>
