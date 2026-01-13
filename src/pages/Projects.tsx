@@ -712,6 +712,10 @@ export default function Projects() {
             </TabsTrigger>
           </TabsList>
           
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
+          </span>
+          
           {sortField === 'manual' && (
             <Badge 
               variant="secondary" 
