@@ -128,6 +128,7 @@ export function useTasks() {
           estimatedTime: t.estimated_time ? parseInt(t.estimated_time) : undefined,
           completedAt: t.completed_at ? new Date(t.completed_at) : undefined,
           sortOrder: t.sort_order || 0,
+          howToLink: (t as any).how_to_link || undefined,
           createdAt: new Date(t.created_at),
           updatedAt: new Date(t.updated_at),
         };
@@ -157,7 +158,7 @@ export function useCreateTask() {
           is_recurring: task.isRecurring || false,
           progress: task.progress || 0,
           estimated_time: task.estimatedTime?.toString() || null,
-          // howToLink is stored client-side only for now (not in DB schema)
+          how_to_link: task.howToLink || null,
         })
         .select()
         .single();
@@ -231,6 +232,7 @@ export function useUpdateTask() {
       if (updates.completedAt !== undefined) {
         updateData.completed_at = updates.completedAt ? updates.completedAt.toISOString() : null;
       }
+      if (updates.howToLink !== undefined) updateData.how_to_link = updates.howToLink || null;
       
       // Update task if there are fields to update
       if (Object.keys(updateData).length > 0) {
