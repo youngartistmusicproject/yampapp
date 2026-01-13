@@ -667,8 +667,8 @@ export function TaskDetailDialog({
                 {/* Due Date Row */}
                 <div className="flex items-center gap-3 min-h-[36px]">
                   <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-muted-foreground w-24 shrink-0">Due Date</span>
-                  <div className="flex items-center gap-1 flex-1">
+                  <span className="text-sm text-muted-foreground w-28 shrink-0">Due Date</span>
+                  <div className="flex items-center gap-2 flex-1">
                     <NaturalDateInput
                       value={task.dueDate}
                       onChange={(date) => onTaskUpdate(task.id, { dueDate: date })}
@@ -678,14 +678,14 @@ export function TaskDetailDialog({
                         }
                       }}
                       placeholder="e.g. next friday, every Monday"
-                      className="flex-1 max-w-[280px]"
+                      className="flex-1"
                     />
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button 
                           variant={task.isRecurring ? "default" : "ghost"}
-                          size="sm"
-                          className="h-8 w-8 p-0"
+                          size="icon"
+                          className="h-9 w-9 shrink-0"
                         >
                           <Repeat className="w-4 h-4" />
                         </Button>
@@ -716,13 +716,9 @@ export function TaskDetailDialog({
 
                 {/* Recurrence Description */}
                 {task.isRecurring && task.recurrence && (
-                  <div className="flex items-center gap-3 min-h-[28px] -mt-1">
-                    <div className="w-4 shrink-0" />
-                    <div className="w-24 shrink-0" />
-                    <p className="text-xs text-muted-foreground">
-                      {getRecurrenceDescription(task.recurrence)}
-                    </p>
-                  </div>
+                  <p className="text-xs text-muted-foreground pl-[140px] -mt-1">
+                    {getRecurrenceDescription(task.recurrence)}
+                  </p>
                 )}
                 <div className="flex items-center gap-3 min-h-[36px]">
                   <Zap className="w-4 h-4 text-muted-foreground shrink-0" />
