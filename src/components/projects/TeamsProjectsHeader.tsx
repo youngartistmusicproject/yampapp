@@ -1,6 +1,3 @@
-import { useState } from "react";
-import { ChevronDown, Users, FolderKanban } from "lucide-react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Project, Task, Team } from "@/types";
 
@@ -18,193 +15,101 @@ interface TeamsProjectsHeaderProps {
 export function TeamsProjectsHeader({
   teams,
   projects,
-  tasks,
   selectedTeam,
   selectedProject,
   onTeamSelect,
   onProjectSelect,
-  doneStatusId,
 }: TeamsProjectsHeaderProps) {
-  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set(["all"]));
-
-  const toggleTeamExpand = (teamId: string) => {
-    setExpandedTeams((prev) => {
-      const next = new Set(prev);
-      if (next.has(teamId)) {
-        next.delete(teamId);
-      } else {
-        next.add(teamId);
-      }
-      return next;
-    });
-  };
-
-  // Calculate project progress
-  const getProjectProgress = (projectId: string) => {
-    const projectTasks = tasks.filter((t) => t.projectId === projectId);
-    if (projectTasks.length === 0) return { progress: 0, completed: 0, total: 0 };
-    
-    const completed = projectTasks.filter(
-      (t) => t.status === doneStatusId || t.completedAt
-    ).length;
-    
-    return {
-      progress: Math.round((completed / projectTasks.length) * 100),
-      completed,
-      total: projectTasks.length,
-    };
-  };
-
   // Get filtered projects for a team
   const getTeamProjects = (teamId: string) => {
     if (teamId === "all") return projects;
     return projects.filter((p) => p.teamId === teamId);
   };
 
-  const isTeamExpanded = (teamId: string) => expandedTeams.has(teamId);
+  const filteredProjects = getTeamProjects(selectedTeam);
 
   return (
-    <div className="space-y-2">
-      {/* Teams Row */}
-      <ScrollArea className="w-full">
-        <div className="flex gap-1.5 pb-1">
-          {/* All Teams */}
+    <div className="space-y-3">
+      {/* Teams Row - Minimal text tabs */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
+        <button
+          onClick={() => {
+            onTeamSelect("all");
+            onProjectSelect("all");
+          }}
+          className={cn(
+            "px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap",
+            selectedTeam === "all"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          )}
+        >
+          All Teams
+        </button>
+
+        {teams.map((team) => (
           <button
+            key={team.id}
             onClick={() => {
-              onTeamSelect("all");
+              onTeamSelect(team.id);
               onProjectSelect("all");
-              toggleTeamExpand("all");
             }}
             className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors",
-              selectedTeam === "all"
+              "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap",
+              selectedTeam === team.id
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
           >
-            <Users className="w-3.5 h-3.5" />
-            <span>All</span>
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: team.color }}
+            />
+            {team.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Projects Row - Subtle underline style */}
+      {filteredProjects.length > 0 && (
+        <div className="flex items-center gap-1 border-b border-border overflow-x-auto scrollbar-none">
+          <button
+            onClick={() => onProjectSelect("all")}
+            className={cn(
+              "px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap relative",
+              selectedProject === "all"
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            All Projects
+            {selectedProject === "all" && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+            )}
           </button>
 
-          {teams.map((team) => {
-            const teamProjects = getTeamProjects(team.id);
-            
-            return (
-              <button
-                key={team.id}
-                onClick={() => {
-                  onTeamSelect(team.id);
-                  onProjectSelect("all");
-                  toggleTeamExpand(team.id);
-                }}
-                className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors",
-                  selectedTeam === team.id
-                    ? "text-white"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                )}
-                style={
-                  selectedTeam === team.id
-                    ? { backgroundColor: team.color }
-                    : {}
-                }
-              >
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{
-                    backgroundColor: selectedTeam === team.id ? "white" : team.color,
-                  }}
-                />
-                <span>{team.name}</span>
-                <span className={cn(
-                  "text-xs",
-                  selectedTeam === team.id ? "text-white/70" : "text-muted-foreground"
-                )}>
-                  {teamProjects.length}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
-
-      {/* Projects Row */}
-      {(isTeamExpanded(selectedTeam) || selectedTeam === "all") && (
-        <ScrollArea className="w-full">
-          <div className="flex gap-1.5 pb-1">
-            {/* All Projects */}
+          {filteredProjects.map((project) => (
             <button
-              onClick={() => onProjectSelect("all")}
+              key={project.id}
+              onClick={() => onProjectSelect(project.id)}
               className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors",
-                selectedProject === "all"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                "flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap relative",
+                selectedProject === project.id
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <FolderKanban className="w-3.5 h-3.5" />
-              <span>All Projects</span>
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: project.color }}
+              />
+              {project.name}
+              {selectedProject === project.id && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+              )}
             </button>
-
-            {getTeamProjects(selectedTeam).map((project) => {
-              const projectProgress = getProjectProgress(project.id);
-              
-              return (
-                <button
-                  key={project.id}
-                  onClick={() => onProjectSelect(project.id)}
-                  className={cn(
-                    "flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors",
-                    selectedProject === project.id
-                      ? "text-white"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  )}
-                  style={
-                    selectedProject === project.id
-                      ? { backgroundColor: project.color }
-                      : {}
-                  }
-                >
-                  <div
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{
-                      backgroundColor: selectedProject === project.id ? "white" : project.color,
-                    }}
-                  />
-                  <span>{project.name}</span>
-                  
-                  {/* Progress bar */}
-                  <div className="flex items-center gap-1.5">
-                    <div 
-                      className="h-1 w-12 rounded-full overflow-hidden"
-                      style={{ 
-                        backgroundColor: selectedProject === project.id ? "rgba(255,255,255,0.3)" : "hsl(var(--border))" 
-                      }}
-                    >
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${projectProgress.progress}%`,
-                          backgroundColor: selectedProject === project.id ? "white" : project.color,
-                        }}
-                      />
-                    </div>
-                    <span 
-                      className={cn(
-                        "text-xs tabular-nums",
-                        selectedProject === project.id ? "text-white/70" : "text-muted-foreground"
-                      )}
-                    >
-                      {projectProgress.progress}%
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+          ))}
+        </div>
       )}
     </div>
   );
