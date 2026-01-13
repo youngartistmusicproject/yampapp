@@ -40,9 +40,9 @@ export type StatusItem = (typeof statusLibrary)[number];
 // Effort options - describes the level of work required
 export const effortLibrary = [
   { id: "easy", name: "Easy", color: "#10b981", description: "Just do it!" },
-  { id: "light", name: "Light", color: "#3b82f6", description: "Probably can do while multi-tasking" },
-  { id: "focused", name: "Focused", color: "#f59e0b", description: "Do with limited distractions" },
-  { id: "deep", name: "Deep", color: "#ef4444", description: "Find a quiet place with no distractions" },
+  { id: "light", name: "Light", color: "#3b82f6", description: "Probably can do while multi-tasking." },
+  { id: "focused", name: "Focused", color: "#f59e0b", description: "Will take brain power. Limit distractions." },
+  { id: "deep", name: "Deep", color: "#ef4444", description: "Find a quiet, distraction-free environment!" },
 ];
 
 export type EffortItem = (typeof effortLibrary)[number];
