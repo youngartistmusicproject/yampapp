@@ -59,6 +59,7 @@ import {
 import { format, formatDistanceToNow } from "date-fns";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { SearchableTagSelect } from "./SearchableTagSelect";
+import { NaturalDateInput } from "./NaturalDateInput";
 import { tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 
 interface StatusItem {
@@ -93,11 +94,6 @@ const formatFileSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
-
-const parseInputDate = (value: string): Date => {
-  const [y, m, d] = value.split("-").map(Number);
-  return new Date(y, (m || 1) - 1, d || 1);
 };
 
 // Inline editable text component
@@ -670,16 +666,12 @@ export function TaskDetailDialog({
                 <div className="flex items-center gap-3 min-h-[36px]">
                   <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="text-sm text-muted-foreground w-24 shrink-0">Due Date</span>
-                  <div className="flex items-center gap-2 flex-1">
-                    <Input
-                      type="date"
-                      value={task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : ""}
-                      onChange={(e) =>
-                        onTaskUpdate(task.id, {
-                          dueDate: e.target.value ? parseInputDate(e.target.value) : undefined,
-                        })
-                      }
-                      className="h-8 text-sm border-0 bg-muted/30 hover:bg-muted/50 w-auto"
+                  <div className="flex items-center gap-1 flex-1">
+                    <NaturalDateInput
+                      value={task.dueDate}
+                      onChange={(date) => onTaskUpdate(task.id, { dueDate: date })}
+                      placeholder="e.g. next friday, Apr 15"
+                      className="flex-1 max-w-[200px]"
                     />
                     <Popover>
                       <PopoverTrigger asChild>
