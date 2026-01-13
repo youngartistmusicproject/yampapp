@@ -301,6 +301,8 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
   const skipNextSync = useRef(false);
   const dragStartStatusRef = useRef<{ taskId: string; status: string } | null>(null);
+  // Keeps local UI stable while react-query applies partial optimistic updates (e.g. sort order before status).
+  const pendingTaskOverrides = useRef<Map<string, Partial<Task>>>(new Map());
   const [dropIndicator, setDropIndicator] = useState<
     | { kind: "task"; overId: string; position: "before" | "after" }
     | { kind: "column"; overId: string; position: "end" }
@@ -313,9 +315,23 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
       skipNextSync.current = false;
       return;
     }
+
     if (!activeTask) {
-      const next = [...tasks].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-      setLocalTasks(next);
+      const merged = tasks
+        .map((t) => {
+          const override = pendingTaskOverrides.current.get(t.id);
+          if (!override) return t;
+
+          const shouldClear =
+            (override.status === undefined || t.status === override.status) &&
+            (override.sortOrder === undefined || (t.sortOrder ?? 0) === (override.sortOrder ?? 0));
+
+          if (shouldClear) pendingTaskOverrides.current.delete(t.id);
+          return { ...t, ...override };
+        })
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+      setLocalTasks(merged);
     }
   }, [tasks, activeTask]);
 
@@ -493,6 +509,8 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     // Update status if changed (compare to status at drag start, since we optimistically update during drag-over)
     const shouldUpdateStatus = (startedInStatus ?? activeTaskData.status) !== targetStatus;
     if (shouldUpdateStatus) {
+      // Prevent brief "snap back" if the tasks cache updates sort_order before status.
+      pendingTaskOverrides.current.set(active.id as string, { status: targetStatus });
       onTaskUpdate(active.id as string, { status: targetStatus });
     }
 
