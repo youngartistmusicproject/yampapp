@@ -65,9 +65,9 @@ export function RecurrenceSettings({
   };
 
   return (
-    <div className={compact ? "space-y-4" : "space-y-4 rounded-lg border p-4"}>
+    <div className={compact ? "space-y-3" : "space-y-4 rounded-lg border p-4"}>
       <div className="flex items-center justify-between">
-        <Label htmlFor="recurring" className="font-medium">
+        <Label htmlFor="recurring" className={compact ? "text-xs font-medium" : "font-medium"}>
           Repeating Task
         </Label>
         <Switch
@@ -78,79 +78,69 @@ export function RecurrenceSettings({
       </div>
 
       {isRecurring && recurrence && (
-        <div className="space-y-4 pt-2">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Repeat Every</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  min={1}
-                  max={99}
-                  value={recurrence.interval}
-                  onChange={(e) =>
-                    updateRecurrence({ interval: parseInt(e.target.value) || 1 })
-                  }
-                  className="w-20"
-                />
-                <Select
-                  value={recurrence.frequency}
-                  onValueChange={(v) =>
-                    updateRecurrence({
-                      frequency: v as RecurrenceSettingsType["frequency"],
-                    })
-                  }
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">
-                      {recurrence.interval === 1 ? "Day" : "Days"}
-                    </SelectItem>
-                    <SelectItem value="weekly">
-                      {recurrence.interval === 1 ? "Week" : "Weeks"}
-                    </SelectItem>
-                    <SelectItem value="monthly">
-                      {recurrence.interval === 1 ? "Month" : "Months"}
-                    </SelectItem>
-                    <SelectItem value="yearly">
-                      {recurrence.interval === 1 ? "Year" : "Years"}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>End Date (Optional)</Label>
+        <div className={compact ? "space-y-3 pt-2 border-t" : "space-y-4 pt-2"}>
+          {/* Frequency row */}
+          <div className="space-y-1.5">
+            <Label className={compact ? "text-xs text-muted-foreground" : ""}>Repeat Every</Label>
+            <div className="flex gap-2">
               <Input
-                type="date"
-                value={recurrence.endDate ? format(recurrence.endDate, "yyyy-MM-dd") : ""}
+                type="number"
+                min={1}
+                max={99}
+                value={recurrence.interval}
                 onChange={(e) =>
+                  updateRecurrence({ interval: parseInt(e.target.value) || 1 })
+                }
+                className={compact ? "w-14 h-8 text-xs" : "w-20"}
+              />
+              <Select
+                value={recurrence.frequency}
+                onValueChange={(v) =>
                   updateRecurrence({
-                    endDate: e.target.value ? parseInputDate(e.target.value) : undefined,
+                    frequency: v as RecurrenceSettingsType["frequency"],
                   })
                 }
-              />
+              >
+                <SelectTrigger className={compact ? "flex-1 h-8 text-xs" : "flex-1"}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">
+                    {recurrence.interval === 1 ? "Day" : "Days"}
+                  </SelectItem>
+                  <SelectItem value="weekly">
+                    {recurrence.interval === 1 ? "Week" : "Weeks"}
+                  </SelectItem>
+                  <SelectItem value="monthly">
+                    {recurrence.interval === 1 ? "Month" : "Months"}
+                  </SelectItem>
+                  <SelectItem value="yearly">
+                    {recurrence.interval === 1 ? "Year" : "Years"}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
+          {/* Weekly days */}
           {recurrence.frequency === "weekly" && (
-            <div className="space-y-2">
-              <Label>Repeat On</Label>
+            <div className="space-y-1.5">
+              <Label className={compact ? "text-xs text-muted-foreground" : ""}>On</Label>
               <ToggleGroup
                 type="multiple"
                 value={(recurrence.daysOfWeek || []).map(String)}
                 onValueChange={handleDaysOfWeekChange}
-                className="justify-start"
+                className="justify-start gap-1"
               >
                 {DAYS_OF_WEEK.map((day) => (
                   <ToggleGroupItem
                     key={day.value}
                     value={String(day.value)}
                     aria-label={day.label}
-                    className="w-9 h-9 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    className={compact 
+                      ? "w-7 h-7 text-[10px] data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                      : "w-9 h-9 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    }
                   >
                     {day.label}
                   </ToggleGroupItem>
@@ -159,9 +149,10 @@ export function RecurrenceSettings({
             </div>
           )}
 
+          {/* Monthly day */}
           {recurrence.frequency === "monthly" && (
-            <div className="space-y-2">
-              <Label>Day of Month</Label>
+            <div className="space-y-1.5">
+              <Label className={compact ? "text-xs text-muted-foreground" : ""}>Day of Month</Label>
               <Input
                 type="number"
                 min={1}
@@ -172,12 +163,27 @@ export function RecurrenceSettings({
                     dayOfMonth: parseInt(e.target.value) || 1,
                   })
                 }
-                className="w-20"
+                className={compact ? "w-14 h-8 text-xs" : "w-20"}
               />
             </div>
           )}
 
-          <p className="text-xs text-muted-foreground">
+          {/* End date */}
+          <div className="space-y-1.5">
+            <Label className={compact ? "text-xs text-muted-foreground" : ""}>End Date</Label>
+            <Input
+              type="date"
+              value={recurrence.endDate ? format(recurrence.endDate, "yyyy-MM-dd") : ""}
+              onChange={(e) =>
+                updateRecurrence({
+                  endDate: e.target.value ? parseInputDate(e.target.value) : undefined,
+                })
+              }
+              className={compact ? "h-8 text-xs" : ""}
+            />
+          </div>
+
+          <p className="text-[10px] text-muted-foreground">
             {getRecurrenceDescription(recurrence)}
           </p>
         </div>
