@@ -65,8 +65,8 @@ function TaskRow({
     <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors w-full min-w-0 overflow-hidden">
       <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
 
-      <div className="flex-1 min-w-0 overflow-hidden">
-        <p className="text-sm text-muted-foreground line-through truncate">{task.title}</p>
+      <div className="flex-1 min-w-0 w-0 overflow-hidden">
+        <p className="text-sm text-muted-foreground line-through truncate w-full min-w-0">{task.title}</p>
         <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground/60">
           {task.completedAt && <span className="shrink-0">{formatCompletedTime(task.completedAt)}</span>}
           {project && (
@@ -168,7 +168,7 @@ export function CompletedTasksPanel({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[560px] max-h-[80vh] p-0 gap-0 flex flex-col overflow-hidden">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[560px] max-h-[80vh] p-0 gap-0 flex flex-col overflow-hidden overflow-x-hidden">
         <DialogHeader className="px-4 pt-4 pb-3 border-b shrink-0">
           <DialogTitle className="text-base font-semibold">Completed Tasks</DialogTitle>
         </DialogHeader>
