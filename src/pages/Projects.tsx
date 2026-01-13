@@ -201,11 +201,17 @@ export default function Projects() {
     
     return activeTasks.filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
       
-      // Team filter - check if task's project belongs to selected team
+      // Team filter - task must belong to a project within the selected team
       const taskProject = projects.find(p => p.id === task.projectId);
-      const matchesTeam = selectedTeam === "all" || taskProject?.teamId === selectedTeam || !task.projectId;
+      let matchesTeam = true;
+      if (selectedTeam !== "all") {
+        // Only show tasks that have a project AND that project belongs to the selected team
+        matchesTeam = !!taskProject && taskProject.teamId === selectedTeam;
+      }
+      
+      // Project filter - only applies when a specific project is selected
+      const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
       
       // Quick filter
       let matchesQuickFilter = true;
@@ -857,6 +863,12 @@ export default function Projects() {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
+          ) : filteredTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <ListTodo className="h-10 w-10 opacity-30 mb-3" />
+              <p className="text-sm font-medium">No tasks</p>
+              <p className="text-xs mt-1">Create a task to get started</p>
+            </div>
           ) : (
             <TaskTable 
               tasks={filteredTasks} 
@@ -888,6 +900,12 @@ export default function Projects() {
               {[1, 2, 3, 4].map(i => (
                 <Skeleton key={i} className="h-96 w-80 flex-shrink-0" />
               ))}
+            </div>
+          ) : filteredTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <ListTodo className="h-10 w-10 opacity-30 mb-3" />
+              <p className="text-sm font-medium">No tasks</p>
+              <p className="text-xs mt-1">Create a task to get started</p>
             </div>
           ) : (
             <TaskKanban 
