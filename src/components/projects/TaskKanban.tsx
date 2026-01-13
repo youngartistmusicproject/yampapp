@@ -181,26 +181,26 @@ function SortableTaskCard({
           )}
         </div>
 
-        {/* Meta info - icon + label style like TaskPreviewCard */}
-        <div className="space-y-1.5 mt-2 pt-2 border-t border-border/50 min-h-[72px] flex flex-col">
-          {/* Effort, Importance & Est. Time - all on one line */}
-          <div className="flex items-center gap-3 text-xs flex-wrap">
+        {/* Meta info */}
+        <div className="mt-2 pt-2 border-t border-border/50 flex flex-col gap-1.5">
+          {/* Effort & Importance */}
+          <div className="flex items-center gap-3 text-xs">
             <span className="text-muted-foreground">
               Effort: <span className="capitalize font-medium text-foreground">{task.effort || '—'}</span>
             </span>
             <span className="text-muted-foreground">
               Importance: <span className="capitalize font-medium text-foreground">{task.importance || '—'}</span>
             </span>
+          </div>
+
+          {/* Est. Time + Progress on same line */}
+          <div className="flex items-center gap-2 text-xs">
             {task.estimatedTime && (
-              <span className="text-muted-foreground flex items-center gap-1">
+              <span className="text-muted-foreground flex items-center gap-1 flex-shrink-0">
                 <Clock className="w-3 h-3" />
                 <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
               </span>
             )}
-          </div>
-
-          {/* Progress - always visible */}
-          <div className="flex items-center gap-2 text-xs">
             <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
               <div 
                 className={`h-full rounded-full transition-all ${getProgressColor(task.progress)}`}
@@ -211,7 +211,7 @@ function SortableTaskCard({
           </div>
 
           {/* Footer: Assignees + Due Date */}
-          <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center justify-between">
             {task.assignees && task.assignees.length > 0 ? (
               <UserAvatarGroup users={task.assignees} max={2} size="sm" />
             ) : (
@@ -225,39 +225,43 @@ function SortableTaskCard({
             )}
           </div>
 
-          {/* Hover actions - bottom center */}
+          {/* Hover actions - expand on hover */}
           <div 
-            className="flex items-center justify-center gap-1 pt-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
+            className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-200"
           >
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6 text-muted-foreground hover:text-green-600"
-              onClick={() => onCompleteTask?.(task.id)}
-              title="Mark complete"
+            <div 
+              className="overflow-hidden flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
             >
-              <Check className="w-3.5 h-3.5" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
-              onClick={() => onDuplicateTask?.(task.id)}
-              title="Duplicate"
-            >
-              <Copy className="w-3 h-3" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6 text-muted-foreground hover:text-destructive"
-              onClick={() => onDeleteClick(task)}
-              title="Delete"
-            >
-              <Trash2 className="w-3 h-3" />
-            </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 text-muted-foreground hover:text-green-600"
+                onClick={() => onCompleteTask?.(task.id)}
+                title="Mark complete"
+              >
+                <Check className="w-3.5 h-3.5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                onClick={() => onDuplicateTask?.(task.id)}
+                title="Duplicate"
+              >
+                <Copy className="w-3 h-3" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                onClick={() => onDeleteClick(task)}
+                title="Delete"
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
