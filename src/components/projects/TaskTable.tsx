@@ -130,11 +130,6 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                     <Repeat className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                   )}
                 </div>
-                {task.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
-                    {task.description}
-                  </p>
-                )}
                 {/* Progress bar under task name */}
                 {task.progress !== undefined && task.progress > 0 && (
                   <div className="mt-1.5">
@@ -271,11 +266,6 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                     </div>
                     {task.progress > 0 && (
                       <Progress value={task.progress} colorByValue className="h-1.5 w-24" />
-                    )}
-                    {task.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-1">
-                        {task.description}
-                      </p>
                     )}
                   </div>
                 </TableCell>
