@@ -58,8 +58,12 @@ export default function Projects() {
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTeam, setSelectedTeam] = useState<string>("all");
-  const [selectedProject, setSelectedProject] = useState<string>("all");
+  const [selectedTeam, setSelectedTeam] = useState<string>(() => {
+    return localStorage.getItem('workManagement_selectedTeam') || 'all';
+  });
+  const [selectedProject, setSelectedProject] = useState<string>(() => {
+    return localStorage.getItem('workManagement_selectedProject') || 'all';
+  });
   const [sortField, setSortField] = useState<SortField>('dueDate');
   const [sortAscending, setSortAscending] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -132,12 +136,17 @@ export default function Projects() {
     return projects.filter((p) => p.teamId === selectedTeam);
   }, [projects, selectedTeam]);
 
-  // Reset project filter when team changes to "all"
+  // Persist team/project filters and reset project when team changes
   useEffect(() => {
+    localStorage.setItem('workManagement_selectedTeam', selectedTeam);
     if (selectedTeam === "all") {
       setSelectedProject("all");
     }
   }, [selectedTeam]);
+
+  useEffect(() => {
+    localStorage.setItem('workManagement_selectedProject', selectedProject);
+  }, [selectedProject]);
 
   // Get all available tags from tasks and tag library
   const availableTags = useMemo(() => {
