@@ -79,27 +79,6 @@ function isTaskOverdue(task: Task): boolean {
   return dueDate < today && task.status !== 'done';
 }
 
-// Helper to check if task is due today
-function isTaskDueToday(task: Task): boolean {
-  if (!task.dueDate) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dueDate = new Date(task.dueDate);
-  dueDate.setHours(0, 0, 0, 0);
-  return dueDate.getTime() === today.getTime() && task.status !== 'done';
-}
-
-// Get due date styling
-function getDueDateStyle(task: Task): { className: string; icon: string } {
-  if (isTaskOverdue(task)) {
-    return { className: 'text-red-600 dark:text-red-400 font-medium', icon: '🔴' };
-  }
-  if (isTaskDueToday(task)) {
-    return { className: 'text-amber-600 dark:text-amber-400 font-medium', icon: '🟡' };
-  }
-  return { className: 'text-muted-foreground', icon: '' };
-}
-
 export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, statuses }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
@@ -198,12 +177,13 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
 
                 <CollapsibleContent>
                   <div className="space-y-2">
-                    {columnTasks.map((task) => (
+                    {columnTasks.map((task) => {
+                      const overdue = isTaskOverdue(task);
+                      return (
                       <Card
                         key={task.id}
                         className={`group cursor-grab active:cursor-grabbing border-l-4 ${importanceColors[task.importance]} shadow-card hover:shadow-elevated transition-all ${
-                          isTaskOverdue(task) ? 'ring-1 ring-red-400 dark:ring-red-500' : 
-                          isTaskDueToday(task) ? 'ring-1 ring-amber-400 dark:ring-amber-500' : ''
+                          overdue ? 'bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500' : ''
                         }`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, task.id)}
@@ -276,18 +256,15 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                               <span className="text-[10px] text-muted-foreground italic">Unassigned</span>
                             )}
                             
-                            {task.dueDate && (() => {
-                              const style = getDueDateStyle(task);
-                              return (
-                                <div className={`flex items-center gap-1 text-xs ${style.className}`}>
-                                  <Calendar className="w-3 h-3" />
-                                  <span>
-                                    {style.icon && <span className="mr-0.5">{style.icon}</span>}
-                                    {format(task.dueDate, "MMM d")}
-                                  </span>
-                                </div>
-                              );
-                            })()}
+                            {task.dueDate && (
+                              <div className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}`}>
+                                <Calendar className="w-3 h-3" />
+                                <span>
+                                  {overdue && '⚠ '}
+                                  {format(task.dueDate, "MMM d")}
+                                </span>
+                              </div>
+                            )}
                             
                             {task.tags && task.tags.length > 0 && (
                               <div className="flex items-center gap-1 ml-auto">
@@ -313,7 +290,8 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CollapsibleContent>
               </div>
