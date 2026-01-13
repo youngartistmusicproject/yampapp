@@ -492,7 +492,6 @@ export type Database = {
           name: string
           sort_order: number | null
           status: string
-          team_id: string | null
           updated_at: string
         }
         Insert: {
@@ -504,7 +503,6 @@ export type Database = {
           name: string
           sort_order?: number | null
           status?: string
-          team_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -516,18 +514,9 @@ export type Database = {
           name?: string
           sort_order?: number | null
           status?: string
-          team_id?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "projects_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       task_assignees: {
         Row: {
@@ -665,71 +654,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      team_members: {
-        Row: {
-          id: string
-          joined_at: string
-          role: string | null
-          team_id: string
-          user_name: string
-        }
-        Insert: {
-          id?: string
-          joined_at?: string
-          role?: string | null
-          team_id: string
-          user_name: string
-        }
-        Update: {
-          id?: string
-          joined_at?: string
-          role?: string | null
-          team_id?: string
-          user_name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "team_members_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      teams: {
-        Row: {
-          color: string | null
-          created_at: string
-          description: string | null
-          icon: string | null
-          id: string
-          name: string
-          sort_order: number | null
-          updated_at: string
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          icon?: string | null
-          id?: string
-          name: string
-          sort_order?: number | null
-          updated_at?: string
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          icon?: string | null
-          id?: string
-          name?: string
-          sort_order?: number | null
-          updated_at?: string
-        }
-        Relationships: []
       }
       typing_indicators: {
         Row: {

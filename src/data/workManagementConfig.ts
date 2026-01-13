@@ -1,13 +1,4 @@
-import { User, Team } from "@/types";
-
-// Teams - organizational hierarchy above projects
-export const teamsLibrary: Team[] = [
-  { id: "operations", name: "Operations", color: "#6366f1", description: "Day-to-day business operations" },
-  { id: "teachers", name: "Teachers", color: "#10b981", description: "Teaching staff and instruction" },
-  { id: "sales-marketing", name: "Sales & Marketing", color: "#f59e0b", description: "Sales and marketing activities" },
-  { id: "students", name: "Students", color: "#3b82f6", description: "Student-related tasks and activities" },
-  { id: "finance-accounting", name: "Finance & Accounting", color: "#8b5cf6", description: "Financial operations and accounting" },
-];
+import { User } from "@/types";
 
 // Predefined tag library - only admins can modify this list
 export const tagLibrary = [

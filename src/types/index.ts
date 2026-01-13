@@ -78,13 +78,6 @@ export interface Task {
   updatedAt: Date;
 }
 
-export interface Team {
-  id: string;
-  name: string;
-  color: string;
-  description?: string;
-}
-
 export interface Project {
   id: string;
   name: string;
@@ -93,7 +86,6 @@ export interface Project {
   tasks: Task[];
   owners: User[];
   members: User[];
-  teamId: string;
   createdAt: Date;
 }
 
