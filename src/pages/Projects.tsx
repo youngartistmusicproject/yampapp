@@ -650,6 +650,7 @@ export default function Projects() {
           <CompletedTasksPanel
             tasks={allCompletedTasks}
             projects={projects}
+            teams={dbTeams}
             onRestoreTask={handleRestoreTask}
           />
         </div>
