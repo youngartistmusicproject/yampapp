@@ -606,8 +606,8 @@ export function TaskDetailDialog({
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground w-28 shrink-0">Project</span>
                 <Select 
-                  value={task.projectId || ''} 
-                  onValueChange={(value) => onTaskUpdate(task.id, { projectId: value || undefined })}
+                  value={task.projectId || '__none__'} 
+                  onValueChange={(value) => onTaskUpdate(task.id, { projectId: value === '__none__' ? null : value })}
                 >
                   <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent flex-1">
                     {task.projectId ? (
@@ -623,7 +623,7 @@ export function TaskDetailDialog({
                     )}
                   </SelectTrigger>
                   <SelectContent className="bg-popover z-[60]">
-                    <SelectItem value="">
+                    <SelectItem value="__none__">
                       <span className="text-muted-foreground">No Project</span>
                     </SelectItem>
                     {projects.map((project) => (
