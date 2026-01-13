@@ -1000,11 +1000,11 @@ export function TaskDetailDialog({
                   </Popover>
                 </div>
 
-                {/* Assignees */}
+                {/* Responsible */}
                 <div className="flex items-center justify-between py-2.5 border-b border-border/50">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Users className="w-4 h-4" />
-                    <span className="text-sm">Assignees</span>
+                    <span className="text-sm">Responsible</span>
                   </div>
                   <SearchableAssigneeSelect
                     members={availableMembers}

@@ -230,10 +230,10 @@ export function TaskFilterPanel({
 
             <Separator />
 
-            {/* Assignee Filter */}
+            {/* Responsible Filter */}
             <div className="space-y-2">
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Assignee
+                Responsible
               </Label>
               <div className="space-y-1.5">
                 {availableMembers.map((member) => (
