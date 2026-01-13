@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { Repeat, Copy, Trash2, Clock } from "lucide-react";
+import { getProgressColor } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
@@ -217,7 +218,7 @@ function SortableTableRow({
         <div className="flex items-center gap-1.5 flex-1 max-w-[120px]">
           <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
             <div 
-              className="h-full bg-primary rounded-full transition-all"
+              className={`h-full rounded-full transition-all ${getProgressColor(task.progress)}`}
               style={{ width: `${task.progress}%` }}
             />
           </div>
