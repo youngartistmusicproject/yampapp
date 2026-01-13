@@ -366,47 +366,56 @@ export function TeamManagementPanel({
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {teamMembers.map((member) => {
-                        const isLeader = member.role === 'leader' || member.role === 'admin';
-                        return (
-                          <div
-                            key={member.id}
-                            className="flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:border-border transition-colors group"
-                          >
-                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium relative">
-                              {member.userName.charAt(0)}
-                              {isLeader && (
-                                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center">
-                                  <Star className="w-2.5 h-2.5 text-white fill-white" />
-                                </div>
-                              )}
+                      {/* Sort team leaders first */}
+                      {[...teamMembers]
+                        .sort((a, b) => {
+                          const aIsLeader = a.role === 'leader' || a.role === 'admin';
+                          const bIsLeader = b.role === 'leader' || b.role === 'admin';
+                          if (aIsLeader && !bIsLeader) return -1;
+                          if (!aIsLeader && bIsLeader) return 1;
+                          return a.userName.localeCompare(b.userName);
+                        })
+                        .map((member) => {
+                          const isLeader = member.role === 'leader' || member.role === 'admin';
+                          return (
+                            <div
+                              key={member.id}
+                              className="flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:border-border transition-colors group"
+                            >
+                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium relative">
+                                {member.userName.charAt(0)}
+                                {isLeader && (
+                                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center">
+                                    <Star className="w-2.5 h-2.5 text-white fill-white" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{member.userName}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {isLeader ? 'Team Leader' : 'Member'}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                                  <span>Team Leader</span>
+                                  <Switch
+                                    checked={isLeader}
+                                    onCheckedChange={() => handleToggleTeamLeader(member.id, isLeader)}
+                                  />
+                                </label>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
+                                  onClick={() => handleRemoveMember(member.id, member.userName)}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{member.userName}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {isLeader ? 'Team Leader' : 'Member'}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                                <span>Leader</span>
-                                <Switch
-                                  checked={isLeader}
-                                  onCheckedChange={() => handleToggleTeamLeader(member.id, isLeader)}
-                                />
-                              </label>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
-                                onClick={() => handleRemoveMember(member.id, member.userName)}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
                     </div>
                   )}
                 </div>

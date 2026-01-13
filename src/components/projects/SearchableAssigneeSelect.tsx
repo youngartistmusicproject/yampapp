@@ -97,11 +97,11 @@ export function SearchableAssigneeSelect({
                         ? "opacity-100"
                         : "opacity-0"
                     )}
-                  />
+                   />
                   <UserAvatar user={member} size="sm" showTooltip={false} />
                   <span className="ml-2">{member.name}</span>
                   <span className="ml-auto text-xs text-muted-foreground capitalize">
-                    {member.role}
+                    {member.role.replace('-', ' ')}
                   </span>
                 </CommandItem>
               ))}
