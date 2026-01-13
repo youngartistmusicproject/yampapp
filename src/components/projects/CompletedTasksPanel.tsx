@@ -207,11 +207,8 @@ export function CompletedTasksPanel({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground gap-1">
+        <Button variant="ghost" size="sm" className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground">
           <CheckCircle2 className="w-3.5 h-3.5" />
-          {totalCount > 0 && (
-            <span className="text-xs">{totalCount}</span>
-          )}
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:w-[420px]">
