@@ -51,8 +51,8 @@ export function SearchableTagSelect({
       <PopoverTrigger asChild>
         <button className="flex items-center gap-1.5 hover:bg-muted/50 rounded px-2 py-1 -mr-2 transition-colors">
           {selectedTagObjects.length > 0 ? (
-            <div className="flex items-center gap-1 flex-wrap justify-end">
-              {selectedTagObjects.slice(0, 2).map((tag) => (
+            <div className="flex items-center gap-1 flex-wrap">
+              {selectedTagObjects.map((tag) => (
                 <span
                   key={tag.id}
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white"
@@ -61,11 +61,6 @@ export function SearchableTagSelect({
                   {tag.name}
                 </span>
               ))}
-              {selectedTagObjects.length > 2 && (
-                <span className="text-xs text-muted-foreground">
-                  +{selectedTagObjects.length - 2}
-                </span>
-              )}
             </div>
           ) : (
             <span className="text-sm text-muted-foreground flex items-center gap-1">
