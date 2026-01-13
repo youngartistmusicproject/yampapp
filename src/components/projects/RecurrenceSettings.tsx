@@ -204,12 +204,12 @@ function getRecurrenceDescription(recurrence: RecurrenceSettingsType): string {
 
   const label = frequencyLabels[frequency] || { singular: frequency, plural: frequency };
   
-  let description = "Repeats ";
+  let description = "Repeats every ";
 
   if (interval === 1) {
     description += label.singular;
   } else {
-    description += `every ${interval} ${label.plural}`;
+    description += `${interval} ${label.plural}`;
   }
 
   if (frequency === "weekly" && daysOfWeek && daysOfWeek.length > 0) {
