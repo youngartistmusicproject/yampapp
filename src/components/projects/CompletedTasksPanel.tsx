@@ -69,6 +69,7 @@ function TaskRow({
   project?: Project;
   onRestore: () => void;
 }) {
+  console.log('TaskRow debug:', { taskId: task.id, projectId: task.projectId, project: project?.name });
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors w-full min-w-0 overflow-hidden">
       <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
