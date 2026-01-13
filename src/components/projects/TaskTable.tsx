@@ -188,7 +188,7 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                   Importance <ArrowUpDown className={`w-3 h-3 ${sortField === 'importance' ? 'text-primary' : ''}`} />
                 </Button>
               </TableHead>
-              <TableHead>Assignees</TableHead>
+              <TableHead>Responsible</TableHead>
               <TableHead>
                 <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('dueDate')}>
                   Due Date <ArrowUpDown className={`w-3 h-3 ${sortField === 'dueDate' ? 'text-primary' : ''}`} />
