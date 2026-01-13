@@ -56,6 +56,7 @@ interface TaskTableProps {
   sortAscending?: boolean;
   statuses: StatusItem[];
   showDetails?: boolean;
+  teamLeaderNames?: string[];
 }
 
 const effortColors: Record<string, string> = {
@@ -97,6 +98,7 @@ interface SortableTableRowProps {
   getStatusById: (id: string) => StatusItem | undefined;
   doneStatusId: string;
   showDetails: boolean;
+  teamLeaderNames?: string[];
 }
 
 function SortableTableRow({
@@ -108,6 +110,7 @@ function SortableTableRow({
   getStatusById,
   doneStatusId,
   showDetails,
+  teamLeaderNames = [],
 }: SortableTableRowProps) {
   const {
     attributes,
@@ -190,7 +193,7 @@ function SortableTableRow({
           )}
           
           <div className="w-14">
-            <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+            <UserAvatarGroup users={task.assignees} max={2} size="sm" teamLeaderIds={teamLeaderNames} />
           </div>
           
           <span className={`text-[12px] w-14 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
@@ -270,6 +273,7 @@ interface SortableMobileCardProps {
   onDeleteClick: (task: Task) => void;
   getStatusById: (id: string) => StatusItem | undefined;
   doneStatusId: string;
+  teamLeaderNames?: string[];
 }
 
 function SortableMobileCard({
@@ -280,6 +284,7 @@ function SortableMobileCard({
   onDeleteClick,
   getStatusById,
   doneStatusId,
+  teamLeaderNames = [],
 }: SortableMobileCardProps) {
   const {
     attributes,
@@ -347,7 +352,7 @@ function SortableMobileCard({
           </div>
           
           <div className="flex items-center justify-between mt-3">
-            <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+            <UserAvatarGroup users={task.assignees} max={2} size="sm" teamLeaderIds={teamLeaderNames} />
             <div 
               className="flex items-center gap-1" 
               onClick={(e) => e.stopPropagation()}
@@ -390,6 +395,7 @@ export function TaskTable({
   sortAscending = true,
   statuses,
   showDetails = true,
+  teamLeaderNames = [],
 }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -478,6 +484,7 @@ export function TaskTable({
                     onDeleteClick={setTaskToDelete}
                     getStatusById={getStatusById}
                     doneStatusId={doneStatusId}
+                    teamLeaderNames={teamLeaderNames}
                   />
                 </motion.div>
               ))}
@@ -510,6 +517,7 @@ export function TaskTable({
                     getStatusById={getStatusById}
                     doneStatusId={doneStatusId}
                     showDetails={showDetails}
+                    teamLeaderNames={teamLeaderNames}
                   />
                 </motion.div>
               ))}
