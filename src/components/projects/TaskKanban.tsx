@@ -21,7 +21,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Task } from "@/types";
+import { Task, Project } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -57,6 +57,7 @@ export type SortField = 'dueDate' | 'effort' | 'importance' | 'stage' | 'estimat
 
 interface TaskKanbanProps {
   tasks: Task[];
+  projects?: Project[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onEditTask: (task: Task) => void;
   onViewTask: (task: Task) => void;
@@ -109,6 +110,7 @@ function isTaskOverdue(task: Task): boolean {
 
 interface SortableTaskCardProps {
   task: Task;
+  project?: Project;
   onViewTask: (task: Task) => void;
   onDuplicateTask?: (taskId: string) => void;
   onDeleteClick: (task: Task) => void;
@@ -120,6 +122,7 @@ interface SortableTaskCardProps {
 
 function SortableTaskCard({
   task,
+  project,
   onViewTask,
   onDuplicateTask,
   onDeleteClick,
@@ -190,6 +193,17 @@ function SortableTaskCard({
             </span>
           )}
         </div>
+
+        {/* Project indicator */}
+        {project && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <span
+              className="h-2 w-2 rounded-full shrink-0"
+              style={{ backgroundColor: project.color }}
+            />
+            <span className="text-[11px] text-muted-foreground/70 truncate">{project.name}</span>
+          </div>
+        )}
 
         {/* Meta info */}
         <div className="mt-2 pt-2 border-t border-border/50 flex flex-col gap-1.5">
@@ -316,7 +330,7 @@ const TaskCardOverlay = React.forwardRef<HTMLDivElement, { task: Task }>(functio
   );
 });
 
-export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onReorderTasks, statuses, showDetails = true, sortField = 'manual', sortAscending = true, teamLeaderNames = [] }: TaskKanbanProps) {
+export function TaskKanban({ tasks, projects = [], onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onReorderTasks, statuses, showDetails = true, sortField = 'manual', sortAscending = true, teamLeaderNames = [] }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -324,6 +338,8 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
   const skipNextSync = useRef(false);
   const dragStartStatusRef = useRef<{ taskId: string; status: string } | null>(null);
   // Keeps local UI stable while react-query applies partial optimistic updates (e.g. sort order before status).
+
+  const getProjectById = (id?: string) => id ? projects.find(p => p.id === id) : undefined;
   const pendingTaskOverrides = useRef<Map<string, Partial<Task>>>(new Map());
   const [dropIndicator, setDropIndicator] = useState<
     | { kind: "task"; overId: string; position: "before" | "after" }
@@ -690,6 +706,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                             >
                               <SortableTaskCard
                                 task={task}
+                                project={getProjectById(task.projectId)}
                                 onViewTask={onViewTask}
                                 onDuplicateTask={onDuplicateTask}
                                 onDeleteClick={setTaskToDelete}

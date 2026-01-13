@@ -1016,6 +1016,7 @@ export default function Projects() {
           ) : (
             <TaskTable 
               tasks={filteredTasks} 
+              projects={projects}
               onTaskUpdate={handleTaskUpdate} 
               onEditTask={handleEditTask} 
               onViewTask={handleViewTask} 
@@ -1055,6 +1056,7 @@ export default function Projects() {
           ) : (
             <TaskKanban 
               tasks={filteredTasks} 
+              projects={projects}
               onTaskUpdate={handleTaskUpdate} 
               onEditTask={handleEditTask} 
               onViewTask={handleViewTask} 

@@ -20,7 +20,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Task } from "@/types";
+import { Task, Project } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -45,6 +45,7 @@ export type SortField = 'dueDate' | 'effort' | 'importance' | 'stage' | 'estimat
 
 interface TaskTableProps {
   tasks: Task[];
+  projects?: Project[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onEditTask: (task: Task) => void;
   onViewTask: (task: Task) => void;
@@ -91,6 +92,7 @@ function isTaskOverdue(task: Task): boolean {
 
 interface SortableTableRowProps {
   task: Task;
+  project?: Project;
   onViewTask: (task: Task) => void;
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onDuplicateTask?: (taskId: string) => void;
@@ -103,6 +105,7 @@ interface SortableTableRowProps {
 
 function SortableTableRow({
   task,
+  project,
   onViewTask,
   onTaskUpdate,
   onDuplicateTask,
@@ -156,25 +159,36 @@ function SortableTableRow({
           />
         </div>
         
-        <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className={`text-[13px] font-medium truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-            {task.title}
-          </span>
-          {task.isRecurring && (
-            <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
-          )}
-          {/* Comment & Attachment indicators */}
-          {commentCount > 0 && (
-            <span className="flex items-center gap-0.5 text-muted-foreground/60">
-              <MessageSquare className="w-3 h-3" />
-              <span className="text-[10px]">{commentCount}</span>
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <span className={`text-[13px] font-medium truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+              {task.title}
             </span>
-          )}
-          {attachmentCount > 0 && (
-            <span className="flex items-center gap-0.5 text-muted-foreground/60">
-              <Paperclip className="w-3 h-3" />
-              <span className="text-[10px]">{attachmentCount}</span>
-            </span>
+            {task.isRecurring && (
+              <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+            )}
+            {/* Comment & Attachment indicators */}
+            {commentCount > 0 && (
+              <span className="flex items-center gap-0.5 text-muted-foreground/60">
+                <MessageSquare className="w-3 h-3" />
+                <span className="text-[10px]">{commentCount}</span>
+              </span>
+            )}
+            {attachmentCount > 0 && (
+              <span className="flex items-center gap-0.5 text-muted-foreground/60">
+                <Paperclip className="w-3 h-3" />
+                <span className="text-[10px]">{attachmentCount}</span>
+              </span>
+            )}
+          </div>
+          {project && (
+            <div className="flex items-center gap-1.5">
+              <span
+                className="h-2 w-2 rounded-full shrink-0"
+                style={{ backgroundColor: project.color }}
+              />
+              <span className="text-[11px] text-muted-foreground/70 truncate">{project.name}</span>
+            </div>
           )}
         </div>
 
@@ -384,6 +398,7 @@ function SortableMobileCard({
 
 export function TaskTable({
   tasks,
+  projects = [],
   onTaskUpdate,
   onEditTask,
   onViewTask,
@@ -409,6 +424,7 @@ export function TaskTable({
   }, [tasks, activeTask]);
 
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
+  const getProjectById = (id?: string) => id ? projects.find(p => p.id === id) : undefined;
   const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
 
   const sensors = useSensors(
@@ -510,6 +526,7 @@ export function TaskTable({
                 >
                   <SortableTableRow
                     task={task}
+                    project={getProjectById(task.projectId)}
                     onViewTask={onViewTask}
                     onTaskUpdate={onTaskUpdate}
                     onDuplicateTask={onDuplicateTask}
