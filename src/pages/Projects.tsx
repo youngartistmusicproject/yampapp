@@ -11,6 +11,7 @@ import { TaskDialog } from "@/components/projects/TaskDialog";
 import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
 import { TeamDialog } from "@/components/projects/TeamDialog";
+import { TeamManagementPanel } from "@/components/projects/TeamManagementPanel";
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
 import { CompletedTasksPanel } from "@/components/projects/CompletedTasksPanel";
@@ -34,7 +35,7 @@ import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
-import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useCreateTeam, useReorderTasks, useCompleteRecurringTask } from "@/hooks/useWorkManagement";
+import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useCreateTeam, useUpdateTeam, useDeleteTeam, useReorderTasks, useCompleteRecurringTask } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
@@ -50,13 +51,14 @@ export default function Projects() {
   const duplicateTask = useDuplicateTask();
   const createProject = useCreateProject();
   const createTeam = useCreateTeam();
+  const updateTeam = useUpdateTeam();
+  const deleteTeamMutation = useDeleteTeam();
   const reorderTasks = useReorderTasks();
   const completeRecurringTask = useCompleteRecurringTask();
   
   const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
-  const [teamDialogOpen, setTeamDialogOpen] = useState(false);
   const [statusManagerOpen, setStatusManagerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
@@ -576,9 +578,27 @@ export default function Projects() {
     }, {
       onSuccess: () => {
         toast.success('Team created');
-        setTeamDialogOpen(false);
       },
       onError: () => toast.error('Failed to create team'),
+    });
+  };
+
+  const handleUpdateTeam = (teamId: string, updates: Partial<{ name: string; description?: string; color: string }>) => {
+    updateTeam.mutate({ teamId, updates }, {
+      onSuccess: () => toast.success('Team updated'),
+      onError: () => toast.error('Failed to update team'),
+    });
+  };
+
+  const handleDeleteTeam = (teamId: string) => {
+    deleteTeamMutation.mutate(teamId, {
+      onSuccess: () => {
+        toast.success('Team deleted');
+        if (selectedTeam === teamId) {
+          setSelectedTeam('all');
+        }
+      },
+      onError: () => toast.error('Failed to delete team'),
     });
   };
 
@@ -693,14 +713,12 @@ export default function Projects() {
             <Settings2 className="w-3.5 h-3.5" />
           </Button>
 
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground" 
-            onClick={() => setTeamDialogOpen(true)}
-          >
-            <Users className="w-3.5 h-3.5" />
-          </Button>
+          <TeamManagementPanel
+            teams={dbTeams}
+            onCreateTeam={handleAddTeam}
+            onUpdateTeam={handleUpdateTeam}
+            onDeleteTeam={handleDeleteTeam}
+          />
 
           <Button 
             variant="ghost" 
@@ -1056,13 +1074,6 @@ export default function Projects() {
         onOpenChange={setStatusManagerOpen}
         statuses={statuses}
         onStatusesChange={setStatuses}
-      />
-
-      {/* Team Dialog */}
-      <TeamDialog
-        open={teamDialogOpen}
-        onOpenChange={setTeamDialogOpen}
-        onSubmit={handleAddTeam}
       />
     </div>
   );
