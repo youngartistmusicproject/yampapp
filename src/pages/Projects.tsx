@@ -136,7 +136,8 @@ export default function Projects() {
       description: p.description,
       color: p.color || '#3b82f6',
       tasks: [],
-      members: [] as User[],
+      owners: p.owners || [],
+      members: p.members || [],
       teamId: p.teamId || '',
       createdAt: p.createdAt,
     }));

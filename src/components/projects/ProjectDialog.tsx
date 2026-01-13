@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, Users } from "lucide-react";
+import { X, Users, Crown } from "lucide-react";
 import { useTeamMembers } from "@/hooks/useWorkManagement";
 import { teamMembers as allTeamMembers } from "@/data/workManagementConfig";
 
@@ -44,6 +44,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(projectColors[0]);
+  const [selectedOwners, setSelectedOwners] = useState<User[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
   const [teamId, setTeamId] = useState("");
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
@@ -78,21 +79,24 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
       setName(project.name);
       setDescription(project.description || "");
       setColor(project.color || projectColors[0]);
+      setSelectedOwners(project.owners || []);
       setSelectedMembers(project.members || []);
       setTeamId(project.teamId || "");
     } else {
       setName("");
       setDescription("");
       setColor(projectColors[0]);
+      setSelectedOwners([]);
       setSelectedMembers([]);
       setTeamId(selectedTeamId || teams[0]?.id || "");
     }
     setHasAttemptedSubmit(false);
   }, [project, open, selectedTeamId, teams]);
 
-  // Clear selected members when team changes (unless editing)
+  // Clear selected owners and members when team changes (unless editing)
   useEffect(() => {
     if (!isEditing && teamId) {
+      setSelectedOwners([]);
       setSelectedMembers([]);
     }
   }, [teamId, isEditing]);
@@ -101,8 +105,8 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
     e.preventDefault();
     setHasAttemptedSubmit(true);
     
-    // Validate required fields
-    if (!teamId || selectedMembers.length === 0) {
+    // Validate required fields - at least one owner required
+    if (!teamId || selectedOwners.length === 0) {
       return;
     }
     
@@ -110,6 +114,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
       name,
       description,
       color,
+      owners: selectedOwners,
       members: selectedMembers,
       teamId,
     });
@@ -118,30 +123,56 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
     setName("");
     setDescription("");
     setColor(projectColors[0]);
+    setSelectedOwners([]);
     setSelectedMembers([]);
     setTeamId(selectedTeamId || teams[0]?.id || "");
     setHasAttemptedSubmit(false);
     onOpenChange(false);
   };
 
+  const toggleOwner = (member: User) => {
+    // If already an owner, remove from owners
+    if (selectedOwners.find(m => m.id === member.id)) {
+      setSelectedOwners(prev => prev.filter(m => m.id !== member.id));
+    } else {
+      // Add as owner, remove from members if present
+      setSelectedOwners(prev => [...prev, member]);
+      setSelectedMembers(prev => prev.filter(m => m.id !== member.id));
+    }
+  };
+
   const toggleMember = (member: User) => {
-    setSelectedMembers((prev) =>
-      prev.find((m) => m.id === member.id)
-        ? prev.filter((m) => m.id !== member.id)
-        : [...prev, member]
-    );
+    // If already a member, remove from members
+    if (selectedMembers.find(m => m.id === member.id)) {
+      setSelectedMembers(prev => prev.filter(m => m.id !== member.id));
+    } else {
+      // Add as member, remove from owners if present
+      setSelectedMembers(prev => [...prev, member]);
+      setSelectedOwners(prev => prev.filter(m => m.id !== member.id));
+    }
+  };
+
+  const removeOwner = (memberId: string) => {
+    setSelectedOwners(prev => prev.filter(m => m.id !== memberId));
   };
 
   const removeMember = (memberId: string) => {
-    setSelectedMembers((prev) => prev.filter((m) => m.id !== memberId));
+    setSelectedMembers(prev => prev.filter(m => m.id !== memberId));
   };
 
-  const selectAllMembers = () => {
+  const selectAllAsOwners = () => {
+    setSelectedOwners(filteredMembers);
+    setSelectedMembers([]);
+  };
+
+  const selectAllAsMembers = () => {
     setSelectedMembers(filteredMembers);
+    setSelectedOwners([]);
   };
 
-  const areAllMembersSelected = filteredMembers.length > 0 && 
-    filteredMembers.every(m => selectedMembers.some(sm => sm.id === m.id));
+  // Get available members for each role (excluding those already selected in the other role)
+  const availableForOwner = filteredMembers.filter(m => !selectedMembers.find(sm => sm.id === m.id));
+  const availableForMember = filteredMembers.filter(m => !selectedOwners.find(so => so.id === m.id));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -213,9 +244,101 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                 </div>
               </div>
 
+              {/* Project Owner(s) */}
+              <div className="flex items-start gap-3">
+                <Label className="text-sm text-muted-foreground w-28 shrink-0 pt-2">
+                  <span className="flex items-center gap-1">
+                    <Crown className="w-3 h-3" />
+                    Owner(s) <span className="text-destructive">*</span>
+                  </span>
+                </Label>
+                <div className="flex-1 space-y-2">
+                  {selectedOwners.length > 0 && (
+                    <div className="flex gap-2 flex-wrap">
+                      {selectedOwners.map((owner) => (
+                        <Badge key={owner.id} variant="default" className="gap-1 pr-1 bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30">
+                          <Crown className="w-3 h-3" />
+                          {owner.name}
+                          <button
+                            type="button"
+                            onClick={() => removeOwner(owner.id)}
+                            className="ml-1 hover:bg-amber-500/20 rounded-full p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {!teamId ? (
+                    <div className={cn(
+                      "border rounded-lg p-4 text-center text-sm text-muted-foreground",
+                      hasAttemptedSubmit && selectedOwners.length === 0 ? "border-destructive" : "border-border/50"
+                    )}>
+                      Select a team first to see available members
+                    </div>
+                  ) : filteredMembers.length === 0 ? (
+                    <div className={cn(
+                      "border rounded-lg p-4 text-center text-sm text-muted-foreground",
+                      hasAttemptedSubmit && selectedOwners.length === 0 ? "border-destructive" : "border-border/50"
+                    )}>
+                      No members in this team yet
+                    </div>
+                  ) : (
+                    <div className={cn(
+                      "border rounded-lg p-2 max-h-28 overflow-y-auto space-y-1",
+                      hasAttemptedSubmit && selectedOwners.length === 0 ? "border-destructive" : "border-border/50"
+                    )}>
+                      {/* All as Owners option */}
+                      <button
+                        type="button"
+                        onClick={selectAllAsOwners}
+                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
+                          selectedOwners.length === filteredMembers.length
+                            ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                            : "hover:bg-muted"
+                        }`}
+                      >
+                        <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center">
+                          <Crown className="w-3.5 h-3.5 text-amber-600" />
+                        </div>
+                        <span className="font-medium">All Team Members</span>
+                        <span className="text-muted-foreground text-xs ml-auto">{filteredMembers.length} members</span>
+                      </button>
+                      
+                      <div className="border-t border-border/30 my-1" />
+                      
+                      {availableForOwner.map((member) => (
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() => toggleOwner(member)}
+                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
+                            selectedOwners.find((m) => m.id === member.id)
+                              ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                              : "hover:bg-muted"
+                          }`}
+                        >
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
+                            {member.name.charAt(0)}
+                          </div>
+                          <span>{member.name}</span>
+                          <span className="text-muted-foreground text-xs ml-auto">{member.role}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Members */}
               <div className="flex items-start gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0 pt-2">Members <span className="text-destructive">*</span></Label>
+                <Label className="text-sm text-muted-foreground w-28 shrink-0 pt-2">
+                  <span className="flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    Members
+                  </span>
+                </Label>
                 <div className="flex-1 space-y-2">
                   {selectedMembers.length > 0 && (
                     <div className="flex gap-2 flex-wrap">
@@ -234,30 +357,21 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                     </div>
                   )}
                   {!teamId ? (
-                    <div className={cn(
-                      "border rounded-lg p-4 text-center text-sm text-muted-foreground",
-                      hasAttemptedSubmit && selectedMembers.length === 0 ? "border-destructive" : "border-border/50"
-                    )}>
+                    <div className="border border-border/50 rounded-lg p-4 text-center text-sm text-muted-foreground">
                       Select a team first to see available members
                     </div>
                   ) : filteredMembers.length === 0 ? (
-                    <div className={cn(
-                      "border rounded-lg p-4 text-center text-sm text-muted-foreground",
-                      hasAttemptedSubmit && selectedMembers.length === 0 ? "border-destructive" : "border-border/50"
-                    )}>
+                    <div className="border border-border/50 rounded-lg p-4 text-center text-sm text-muted-foreground">
                       No members in this team yet
                     </div>
                   ) : (
-                    <div className={cn(
-                      "border rounded-lg p-2 max-h-32 overflow-y-auto space-y-1",
-                      hasAttemptedSubmit && selectedMembers.length === 0 ? "border-destructive" : "border-border/50"
-                    )}>
-                      {/* All Team Members option */}
+                    <div className="border border-border/50 rounded-lg p-2 max-h-28 overflow-y-auto space-y-1">
+                      {/* All as Members option */}
                       <button
                         type="button"
-                        onClick={selectAllMembers}
+                        onClick={selectAllAsMembers}
                         className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
-                          areAllMembersSelected
+                          selectedMembers.length === filteredMembers.length
                             ? "bg-primary/10 text-primary"
                             : "hover:bg-muted"
                         }`}
@@ -271,7 +385,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                       
                       <div className="border-t border-border/30 my-1" />
                       
-                      {filteredMembers.map((member) => (
+                      {availableForMember.map((member) => (
                         <button
                           key={member.id}
                           type="button"
