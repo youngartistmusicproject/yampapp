@@ -63,7 +63,7 @@ export const teamMembers: User[] = [
     id: "u1", 
     name: "Sarah Johnson", 
     email: "sarah@company.com", 
-    role: "owner",
+    role: "super-admin",
     avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face"
   },
   { 
