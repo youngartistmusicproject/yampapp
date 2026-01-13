@@ -1,4 +1,5 @@
-import { useState, useCallback, memo, useEffect, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Task } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -216,122 +217,136 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
 
                 <CollapsibleContent className="h-full flex-1">
                   <div className="space-y-2 min-h-[100px] h-full">
-                    {columnTasks.map((task) => {
-                      const overdue = isTaskOverdue(task);
-                      return (
-                      <Card
-                        key={task.id}
-                        className={`group cursor-grab active:cursor-grabbing border-l-4 ${importanceColors[task.importance]} shadow-card hover:shadow-elevated transition-all ${
-                          overdue ? 'bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500' : ''
-                        } ${draggingTaskId === task.id ? 'opacity-50 scale-95' : ''}`}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, task.id)}
-                        onDragEnd={handleDragEnd}
-                        onClick={() => onViewTask(task)}
-                      >
-                        <CardContent className="p-3 space-y-2.5">
-                          {/* Task Title Row */}
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                              <p className="text-sm font-medium leading-snug line-clamp-2">
-                                {task.title}
-                              </p>
-                              {task.isRecurring && (
-                                <Repeat className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                              )}
-                            </div>
-                            <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-6 w-6"
-                                onClick={(e) => { e.stopPropagation(); onDuplicateTask?.(task.id); }}
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-6 w-6 text-destructive hover:text-destructive"
-                                onClick={(e) => { e.stopPropagation(); setTaskToDelete(task); }}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* Progress bar */}
-                          {task.progress !== undefined && task.progress > 0 && (
-                            <Progress value={task.progress} colorByValue className="h-1.5" />
-                          )}
-
-                          {/* Description */}
-                          {task.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {task.description}
-                            </p>
-                          )}
-                          
-                          {/* Properties Row: Time | Importance | Effort */}
-                          <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40">
-                            {task.estimatedTime && (
-                              <div className="flex items-center gap-1 text-xs bg-muted/50 rounded px-1.5 py-0.5">
-                                <Clock className="w-3 h-3 text-muted-foreground" />
-                                <span>{formatEstimatedTime(task.estimatedTime)}</span>
-                              </div>
-                            )}
-                            <Badge className={`${importanceBadgeColors[task.importance]} text-[10px] capitalize`} variant="secondary">
-                              {task.importance}
-                            </Badge>
-                            <Badge className={`${effortColors[task.effort]} text-[10px] capitalize`} variant="secondary">
-                              {task.effort}
-                            </Badge>
-                          </div>
-
-                          {/* Footer Row: Responsible | Due Date | Tags */}
-                          <div className="flex items-center gap-2 pt-1 border-t border-border/40">
-                            {task.assignees && task.assignees.length > 0 ? (
-                              <UserAvatarGroup users={task.assignees} max={2} size="sm" />
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground italic">Unassigned</span>
-                            )}
-                            
-                            {task.dueDate && (
-                              <div className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}`}>
-                                <Calendar className="w-3 h-3" />
-                                <span>
-                                  {overdue && '⚠ '}
-                                  {format(task.dueDate, "MMM d")}
-                                </span>
-                              </div>
-                            )}
-                            
-                            {task.tags && task.tags.length > 0 && (
-                              <div className="flex items-center gap-1 ml-auto">
-                                <Tag className="w-3 h-3 text-muted-foreground" />
-                                {task.tags.slice(0, 1).map((tagId) => {
-                                  const tag = getTagById(tagId);
-                                  return (
-                                    <Badge 
-                                      key={tagId} 
-                                      variant="outline" 
-                                      className="text-[10px] px-1.5 py-0"
-                                      style={{ borderColor: tag?.color, color: tag?.color }}
+                    <AnimatePresence mode="popLayout">
+                      {columnTasks.map((task) => {
+                        const overdue = isTaskOverdue(task);
+                        return (
+                          <motion.div
+                            key={task.id}
+                            layout
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{
+                              layout: { type: "spring", stiffness: 350, damping: 30 },
+                              opacity: { duration: 0.2 },
+                              scale: { duration: 0.2 }
+                            }}
+                          >
+                            <Card
+                              className={`group cursor-grab active:cursor-grabbing border-l-4 ${importanceColors[task.importance]} shadow-card hover:shadow-elevated transition-shadow ${
+                                overdue ? 'bg-red-50 dark:bg-red-950/30 ring-1 ring-red-400 dark:ring-red-500' : ''
+                              } ${draggingTaskId === task.id ? 'opacity-50 scale-95' : ''}`}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, task.id)}
+                              onDragEnd={handleDragEnd}
+                              onClick={() => onViewTask(task)}
+                            >
+                              <CardContent className="p-3 space-y-2.5">
+                                {/* Task Title Row */}
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                    <p className="text-sm font-medium leading-snug line-clamp-2">
+                                      {task.title}
+                                    </p>
+                                    {task.isRecurring && (
+                                      <Repeat className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-6 w-6"
+                                      onClick={(e) => { e.stopPropagation(); onDuplicateTask?.(task.id); }}
                                     >
-                                      {tag?.name || tagId}
-                                    </Badge>
-                                  );
-                                })}
-                                {task.tags.length > 1 && (
-                                  <span className="text-[10px] text-muted-foreground">+{task.tags.length - 1}</span>
+                                      <Copy className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-6 w-6 text-destructive hover:text-destructive"
+                                      onClick={(e) => { e.stopPropagation(); setTaskToDelete(task); }}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {/* Progress bar */}
+                                {task.progress !== undefined && task.progress > 0 && (
+                                  <Progress value={task.progress} colorByValue className="h-1.5" />
                                 )}
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                      );
-                    })}
+
+                                {/* Description */}
+                                {task.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2">
+                                    {task.description}
+                                  </p>
+                                )}
+                                
+                                {/* Properties Row: Time | Importance | Effort */}
+                                <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/40">
+                                  {task.estimatedTime && (
+                                    <div className="flex items-center gap-1 text-xs bg-muted/50 rounded px-1.5 py-0.5">
+                                      <Clock className="w-3 h-3 text-muted-foreground" />
+                                      <span>{formatEstimatedTime(task.estimatedTime)}</span>
+                                    </div>
+                                  )}
+                                  <Badge className={`${importanceBadgeColors[task.importance]} text-[10px] capitalize`} variant="secondary">
+                                    {task.importance}
+                                  </Badge>
+                                  <Badge className={`${effortColors[task.effort]} text-[10px] capitalize`} variant="secondary">
+                                    {task.effort}
+                                  </Badge>
+                                </div>
+
+                                {/* Footer Row: Responsible | Due Date | Tags */}
+                                <div className="flex items-center gap-2 pt-1 border-t border-border/40">
+                                  {task.assignees && task.assignees.length > 0 ? (
+                                    <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+                                  ) : (
+                                    <span className="text-[10px] text-muted-foreground italic">Unassigned</span>
+                                  )}
+                                  
+                                  {task.dueDate && (
+                                    <div className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground'}`}>
+                                      <Calendar className="w-3 h-3" />
+                                      <span>
+                                        {overdue && '⚠ '}
+                                        {format(task.dueDate, "MMM d")}
+                                      </span>
+                                    </div>
+                                  )}
+                                  
+                                  {task.tags && task.tags.length > 0 && (
+                                    <div className="flex items-center gap-1 ml-auto">
+                                      <Tag className="w-3 h-3 text-muted-foreground" />
+                                      {task.tags.slice(0, 1).map((tagId) => {
+                                        const tag = getTagById(tagId);
+                                        return (
+                                          <Badge 
+                                            key={tagId} 
+                                            variant="outline" 
+                                            className="text-[10px] px-1.5 py-0"
+                                            style={{ borderColor: tag?.color, color: tag?.color }}
+                                          >
+                                            {tag?.name || tagId}
+                                          </Badge>
+                                        );
+                                      })}
+                                      {task.tags.length > 1 && (
+                                        <span className="text-[10px] text-muted-foreground">+{task.tags.length - 1}</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
                   </div>
                 </CollapsibleContent>
               </div>
