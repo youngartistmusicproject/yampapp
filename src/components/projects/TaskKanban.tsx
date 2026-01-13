@@ -364,7 +364,17 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     }
 
     if (overTask) {
-      // If moving within the same column, show whether the drop will be before/after the hovered card
+      // Check if moving to a different column via hovering over a task
+      if (activeTask.status !== overTask.status) {
+        // Moving to a different column - update status
+        setLocalTasks(prev =>
+          prev.map(t => t.id === active.id ? { ...t, status: overTask.status } : t)
+        );
+        setDropIndicator({ kind: "task", overId, position: "after" });
+        return;
+      }
+
+      // Same column reorder: show whether the drop will be before/after the hovered card
       const columnTasks = localTasks.filter(t => t.status === overTask.status);
       const activeIndex = columnTasks.findIndex(t => t.id === active.id);
       const overIndex = columnTasks.findIndex(t => t.id === overId);
