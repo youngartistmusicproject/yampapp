@@ -57,6 +57,41 @@ interface SortableProjectRowProps {
   onDelete: (project: Project) => void;
 }
 
+function MemberAvatars({ members }: { members: User[] }) {
+  const maxVisible = 7;
+  const visibleMembers = members.slice(0, maxVisible);
+  const remainingCount = members.length - maxVisible;
+
+  if (members.length === 0) return null;
+
+  return (
+    <div className="flex items-center -space-x-1.5 shrink-0">
+      {visibleMembers.map((member, index) => (
+        <div
+          key={member.id}
+          className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-medium border-2 border-background"
+          style={{ zIndex: maxVisible - index }}
+          title={member.name}
+        >
+          {member.avatar ? (
+            <img src={member.avatar} alt={member.name} className="w-full h-full rounded-full object-cover" />
+          ) : (
+            member.name.charAt(0).toUpperCase()
+          )}
+        </div>
+      ))}
+      {remainingCount > 0 && (
+        <div 
+          className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium border-2 border-background"
+          title={`${remainingCount} more members`}
+        >
+          +{remainingCount}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SortableProjectRow({ project, onEdit, onDelete }: SortableProjectRowProps) {
   const {
     attributes,
@@ -98,6 +133,7 @@ function SortableProjectRow({ project, onEdit, onDelete }: SortableProjectRowPro
           </p>
         )}
       </div>
+      <MemberAvatars members={project.members || []} />
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           variant="ghost"
@@ -426,6 +462,7 @@ function ProjectRow({
           </p>
         )}
       </div>
+      <MemberAvatars members={project.members || []} />
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           variant="ghost"
