@@ -184,7 +184,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit Task" : "Create New Task"}</DialogTitle>
           <DialogDescription>
-            {isEditing ? "Update the task details below." : "Add a new task to your project. Fill in the details below."}
+            {isEditing ? "Update the task details below." : "Fill in the details below."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
