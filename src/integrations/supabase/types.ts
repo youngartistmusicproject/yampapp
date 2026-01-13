@@ -532,6 +532,7 @@ export type Database = {
           due_date: string | null
           effort: string | null
           estimated_time: string | null
+          how_to_link: string | null
           id: string
           importance: string | null
           is_recurring: boolean
@@ -552,6 +553,7 @@ export type Database = {
           due_date?: string | null
           effort?: string | null
           estimated_time?: string | null
+          how_to_link?: string | null
           id?: string
           importance?: string | null
           is_recurring?: boolean
@@ -572,6 +574,7 @@ export type Database = {
           due_date?: string | null
           effort?: string | null
           estimated_time?: string | null
+          how_to_link?: string | null
           id?: string
           importance?: string | null
           is_recurring?: boolean
