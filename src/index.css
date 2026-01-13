@@ -104,6 +104,15 @@
     @apply border-border;
   }
   
+  /* Remove focus rings globally - use subtle border changes instead */
+  *:focus {
+    outline: none !important;
+  }
+  
+  *:focus-visible {
+    outline: none !important;
+  }
+  
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
