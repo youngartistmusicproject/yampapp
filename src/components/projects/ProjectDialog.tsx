@@ -176,7 +176,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-[640px] max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[640px] max-h-[90vh] overflow-y-auto p-0 top-[10%] translate-y-0 data-[state=open]:slide-in-from-top-[5%] data-[state=closed]:slide-out-to-top-[5%]">
         <form onSubmit={handleSubmit}>
           {/* Header area - matches TaskDialog */}
           <div className="px-6 pt-6 pb-4 border-b border-border/50">
