@@ -69,7 +69,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
         id: tm.userName.toLowerCase().replace(/\s+/g, '-'),
         name: tm.userName,
         email: `${tm.userName.toLowerCase().replace(/\s+/g, '.')}@company.com`,
-        role: (tm.role === 'admin' ? 'admin' : 'staff') as User['role'],
+        role: (tm.role === 'owner' ? 'owner' : tm.role === 'admin' ? 'admin' : 'staff') as User['role'],
       };
     });
   }, [teamMembersData]);
