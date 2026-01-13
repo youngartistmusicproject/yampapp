@@ -684,3 +684,83 @@ export function useCreateProject() {
     },
   });
 }
+
+// Update an existing project
+export function useUpdateProject() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; teamId?: string; color?: string } }) => {
+      const { data, error } = await supabase
+        .from('projects')
+        .update({
+          name: updates.name,
+          description: updates.description,
+          team_id: updates.teamId,
+          color: updates.color,
+        })
+        .eq('id', projectId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Log activity
+      await supabase.from('activity_log').insert({
+        user_name: 'You',
+        action: 'updated project',
+        target_type: 'project',
+        target_title: data.name,
+        target_id: data.id,
+      });
+      
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
+    },
+  });
+}
+
+// Delete a project
+export function useDeleteProject() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      // First get the project name for activity log
+      const { data: project } = await supabase
+        .from('projects')
+        .select('name')
+        .eq('id', projectId)
+        .single();
+      
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId);
+      
+      if (error) throw error;
+      
+      // Log activity
+      if (project) {
+        await supabase.from('activity_log').insert({
+          user_name: 'You',
+          action: 'deleted project',
+          target_type: 'project',
+          target_title: project.name,
+          target_id: projectId,
+        });
+      }
+      
+      return projectId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
+    },
+  });
+}

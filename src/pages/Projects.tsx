@@ -10,6 +10,7 @@ import { TaskKanban } from "@/components/projects/TaskKanban";
 import { TaskDialog } from "@/components/projects/TaskDialog";
 import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
+import { ProjectManagementPanel } from "@/components/projects/ProjectManagementPanel";
 import { TeamDialog } from "@/components/projects/TeamDialog";
 import { TeamManagementPanel } from "@/components/projects/TeamManagementPanel";
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
@@ -35,7 +36,7 @@ import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
-import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useCreateTeam, useUpdateTeam, useDeleteTeam, useReorderTasks, useCompleteRecurringTask } from "@/hooks/useWorkManagement";
+import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useCreateTeam, useUpdateTeam, useDeleteTeam, useReorderTasks, useCompleteRecurringTask } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
@@ -50,6 +51,8 @@ export default function Projects() {
   const deleteTask = useDeleteTask();
   const duplicateTask = useDuplicateTask();
   const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
+  const deleteProjectMutation = useDeleteProject();
   const createTeam = useCreateTeam();
   const updateTeam = useUpdateTeam();
   const deleteTeamMutation = useDeleteTeam();
@@ -58,7 +61,6 @@ export default function Projects() {
   
   const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
-  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [statusManagerOpen, setStatusManagerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
@@ -564,9 +566,27 @@ export default function Projects() {
     }, {
       onSuccess: () => {
         toast.success('Project created');
-        setProjectDialogOpen(false);
       },
       onError: () => toast.error('Failed to create project'),
+    });
+  };
+
+  const handleUpdateProject = (projectId: string, updates: Partial<{ name: string; description?: string; teamId?: string; color: string }>) => {
+    updateProject.mutate({ projectId, updates }, {
+      onSuccess: () => toast.success('Project updated'),
+      onError: () => toast.error('Failed to update project'),
+    });
+  };
+
+  const handleDeleteProject = (projectId: string) => {
+    deleteProjectMutation.mutate(projectId, {
+      onSuccess: () => {
+        toast.success('Project deleted');
+        if (selectedProject === projectId) {
+          setSelectedProject('all');
+        }
+      },
+      onError: () => toast.error('Failed to delete project'),
     });
   };
 
@@ -720,14 +740,14 @@ export default function Projects() {
             onDeleteTeam={handleDeleteTeam}
           />
 
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground" 
-            onClick={() => setProjectDialogOpen(true)}
-          >
-            <FolderPlus className="w-3.5 h-3.5" />
-          </Button>
+          <ProjectManagementPanel
+            projects={projects}
+            teams={dbTeams}
+            availableMembers={teamMembers}
+            onCreateProject={handleAddProject}
+            onUpdateProject={handleUpdateProject}
+            onDeleteProject={handleDeleteProject}
+          />
 
           <CompletedTasksPanel
             tasks={allCompletedTasks}
@@ -1059,14 +1079,6 @@ export default function Projects() {
         statuses={statuses}
       />
 
-      {/* Project Dialog */}
-      <ProjectDialog
-        open={projectDialogOpen}
-        onOpenChange={setProjectDialogOpen}
-        onSubmit={handleAddProject}
-        availableMembers={teamMembers}
-        teams={dbTeams}
-      />
 
       {/* Status Manager */}
       <StatusManager
