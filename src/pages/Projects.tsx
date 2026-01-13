@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
+import { CompletedTasksPanel } from "@/components/projects/CompletedTasksPanel";
 import { Task, Project, User, TaskComment } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,16 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
@@ -183,10 +175,9 @@ export default function Projects() {
     };
   }, [activeTasks]);
   
-  // Completed tasks
-  const completedTasks = useMemo(() => 
-    dbTasks.filter(task => task.completedAt)
-      .sort((a, b) => (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0)),
+  // All completed tasks (including archived) for the panel
+  const allCompletedTasks = useMemo(() => 
+    dbTasks.filter(task => task.completedAt),
     [dbTasks]
   );
 
@@ -397,10 +388,66 @@ export default function Projects() {
   const handleRestoreTask = (taskId: string) => {
     updateTask.mutate({ 
       taskId, 
-      updates: { status: 'todo', completedAt: undefined } 
+      updates: { status: 'not-started', completedAt: undefined, archivedAt: undefined } as any
     }, {
       onSuccess: () => toast.success('Task restored'),
       onError: () => toast.error('Failed to restore task'),
+    });
+  };
+
+  const handleArchiveTask = (taskId: string) => {
+    updateTask.mutate({ 
+      taskId, 
+      updates: { archivedAt: new Date() } as any
+    }, {
+      onSuccess: () => toast.success('Task archived'),
+      onError: () => toast.error('Failed to archive task'),
+    });
+  };
+
+  const handleArchiveOldTasks = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const oldTasks = allCompletedTasks.filter(t => {
+      if (!t.completedAt || t.archivedAt) return false;
+      return differenceInDays(today, t.completedAt) > 7;
+    });
+    
+    if (oldTasks.length === 0) {
+      toast.info('No tasks older than 7 days to archive');
+      return;
+    }
+    
+    // Archive all old tasks
+    Promise.all(
+      oldTasks.map(task => 
+        updateTask.mutateAsync({ 
+          taskId: task.id, 
+          updates: { archivedAt: new Date() } as any
+        })
+      )
+    ).then(() => {
+      toast.success(`Archived ${oldTasks.length} tasks`);
+    }).catch(() => {
+      toast.error('Failed to archive some tasks');
+    });
+  };
+
+  const handleClearArchive = () => {
+    const archivedTasks = allCompletedTasks.filter(t => t.archivedAt);
+    
+    if (archivedTasks.length === 0) {
+      toast.info('No archived tasks to delete');
+      return;
+    }
+    
+    Promise.all(
+      archivedTasks.map(task => deleteTask.mutateAsync(task.id))
+    ).then(() => {
+      toast.success(`Deleted ${archivedTasks.length} archived tasks`);
+    }).catch(() => {
+      toast.error('Failed to delete some tasks');
     });
   };
 
@@ -593,56 +640,14 @@ export default function Projects() {
             <FolderPlus className="w-3.5 h-3.5" />
           </Button>
 
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                {completedTasks.length > 0 && (
-                  <span className="text-xs">{completedTasks.length}</span>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="w-full sm:w-[400px]">
-              <SheetHeader>
-                <SheetTitle className="text-base">Completed</SheetTitle>
-                <SheetDescription className="text-[13px]">
-                  Recently completed tasks
-                </SheetDescription>
-              </SheetHeader>
-              <ScrollArea className="h-[calc(100vh-120px)] mt-4 pr-4">
-                {completedTasks.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-                    <CheckCircle2 className="w-6 h-6 mb-2 opacity-40" />
-                    <p className="text-[13px]">No completed tasks</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {completedTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors group"
-                      >
-                        <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] line-through text-muted-foreground truncate">
-                            {task.title}
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleRestoreTask(task.id)}
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </SheetContent>
-          </Sheet>
+          <CompletedTasksPanel
+            tasks={allCompletedTasks}
+            projects={projects}
+            onRestoreTask={handleRestoreTask}
+            onArchiveTask={handleArchiveTask}
+            onArchiveOldTasks={handleArchiveOldTasks}
+            onClearArchive={handleClearArchive}
+          />
         </div>
       </div>
 
