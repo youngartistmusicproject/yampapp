@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
@@ -263,8 +263,8 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
 
-  // Sync local tasks with props
-  useMemo(() => {
+  // Sync local tasks with props when not dragging
+  useEffect(() => {
     if (!activeTask) {
       setLocalTasks(tasks);
     }
@@ -333,41 +333,42 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     // Determine target status
     const targetStatus = isOverColumn ? overId : (overTask?.status || activeTaskData.status);
     
-    // Get tasks in the target column
-    const columnTasks = localTasks.filter(t => t.status === targetStatus);
+    // Get tasks in the target column (excluding the dragged task if coming from different column)
+    const columnTasksWithoutActive = localTasks.filter(
+      t => t.status === targetStatus && t.id !== active.id
+    );
     
-    if (active.id !== over.id) {
-      // Reorder within/across columns
-      const activeIndex = columnTasks.findIndex(t => t.id === active.id);
-      const overIndex = columnTasks.findIndex(t => t.id === over.id);
-      
-      let newColumnTasks = columnTasks;
-      if (activeIndex !== -1 && overIndex !== -1) {
-        newColumnTasks = arrayMove(columnTasks, activeIndex, overIndex);
-      } else if (activeIndex === -1) {
-        // Task coming from another column
-        const insertIndex = overIndex >= 0 ? overIndex : columnTasks.length;
-        newColumnTasks = [...columnTasks.slice(0, insertIndex), activeTaskData, ...columnTasks.slice(insertIndex)];
-      }
+    // Find where to insert
+    const overIndex = overTask ? columnTasksWithoutActive.findIndex(t => t.id === over.id) : columnTasksWithoutActive.length;
+    const insertIndex = overIndex >= 0 ? overIndex : columnTasksWithoutActive.length;
+    
+    // Build new column order
+    const newColumnTasks = [
+      ...columnTasksWithoutActive.slice(0, insertIndex),
+      { ...activeTaskData, status: targetStatus },
+      ...columnTasksWithoutActive.slice(insertIndex),
+    ];
 
-      // Calculate new sort orders
-      const updates = newColumnTasks.map((task, index) => ({
-        taskId: task.id,
-        sortOrder: index * 10,
-      }));
+    // Update local state immediately for visual feedback
+    setLocalTasks(prev => {
+      const otherTasks = prev.filter(t => t.status !== targetStatus && t.id !== active.id);
+      return [...otherTasks, ...newColumnTasks];
+    });
 
-      // Update status if changed
-      if (activeTaskData.status !== targetStatus) {
-        onTaskUpdate(active.id as string, { status: targetStatus });
-      }
+    // Calculate new sort orders for the column
+    const updates = newColumnTasks.map((task, index) => ({
+      taskId: task.id,
+      sortOrder: index * 10,
+    }));
 
-      // Update sort orders
-      if (onReorderTasks && updates.length > 0) {
-        onReorderTasks(updates);
-      }
-    } else if (activeTaskData.status !== targetStatus) {
-      // Just moving to another column without reordering
+    // Update status if changed
+    if (activeTaskData.status !== targetStatus) {
       onTaskUpdate(active.id as string, { status: targetStatus });
+    }
+
+    // Update sort orders
+    if (onReorderTasks && updates.length > 0) {
+      onReorderTasks(updates);
     }
   };
 
