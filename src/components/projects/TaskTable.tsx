@@ -8,7 +8,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCenter,
+  closestCorners,
   DragOverlay,
 } from "@dnd-kit/core";
 import {
@@ -462,7 +462,7 @@ export function TaskTable({
     <>
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
