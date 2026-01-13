@@ -393,7 +393,7 @@ export default function Projects() {
           
           <Button variant="outline" size="sm" className="gap-2 flex-shrink-0" onClick={() => setStatusManagerOpen(true)}>
             <Settings2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Statuses</span>
+            <span className="hidden sm:inline">Stages</span>
           </Button>
           <Sheet>
             <SheetTrigger asChild>
