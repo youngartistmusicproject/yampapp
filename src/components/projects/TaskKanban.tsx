@@ -9,7 +9,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCenter,
+  useDroppable,
   pointerWithin,
   rectIntersection,
   DragOverlay,
@@ -256,6 +256,23 @@ function SortableTaskCard({
   );
 }
 
+function KanbanColumnDropZone({
+  id,
+  className,
+  children,
+}: {
+  id: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} className={className}>
+      {children}
+    </div>
+  );
+}
+
 const TaskCardOverlay = React.forwardRef<HTMLDivElement, { task: Task }>(function TaskCardOverlay(
   { task },
   ref,
@@ -309,6 +326,12 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
       },
     })
   );
+
+  const collisionDetection = useCallback<CollisionDetection>((args) => {
+    const pointerCollisions = pointerWithin(args);
+    if (pointerCollisions.length > 0) return pointerCollisions;
+    return rectIntersection(args);
+  }, []);
 
   const getTasksByStatus = useCallback((status: string) =>
     localTasks.filter((task) => task.status === status), [localTasks]);
@@ -480,7 +503,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
     <>
       <DndContext
         sensors={sensors}
-        collisionDetection={rectIntersection}
+        collisionDetection={collisionDetection}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
@@ -547,7 +570,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                       items={columnTasks.map(t => t.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <div className="relative space-y-2 min-h-[100px] h-full">
+                      <KanbanColumnDropZone id={column.id} className="relative space-y-2 min-h-[100px] h-full">
                         <AnimatePresence>
                           {columnTasks.map((task) => {
                             const dropPos =
@@ -580,7 +603,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                         {dropIndicator?.kind === "column" && dropIndicator.overId === column.id && (
                           <div className="pointer-events-none absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-primary/70" />
                         )}
-                      </div>
+                      </KanbanColumnDropZone>
                     </SortableContext>
                   </CollapsibleContent>
                 </div>
