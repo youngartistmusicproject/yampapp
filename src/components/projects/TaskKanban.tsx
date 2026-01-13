@@ -150,14 +150,19 @@ function SortableTaskCard({
       <div
         className={`group rounded-lg border bg-card p-3 transition-colors ${
           overdue ? "bg-destructive/5 border-destructive/30" : "hover:bg-muted/30"
-        }`}
+        } ${task.importance ? importanceColors[task.importance] : ""} border-l-4`}
         onClick={() => onViewTask(task)}
       >
-        {/* Title */}
+        {/* Title Row */}
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-medium leading-snug line-clamp-2 flex-1">
-            {task.title}
-          </p>
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <p className="text-sm font-medium leading-snug line-clamp-2">
+              {task.title}
+            </p>
+            {task.isRecurring && (
+              <Repeat className="w-3 h-3 text-muted-foreground/60 flex-shrink-0" />
+            )}
+          </div>
           <div 
             className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
             onClick={(e) => e.stopPropagation()}
@@ -181,6 +186,51 @@ function SortableTaskCard({
             </Button>
           </div>
         </div>
+
+        {/* Effort & Importance Badges */}
+        {(task.effort || task.importance) && (
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            {task.effort && (
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${effortColors[task.effort]}`}>
+                {task.effort}
+              </span>
+            )}
+            {task.importance && (
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${importanceBadgeColors[task.importance]}`}>
+                {task.importance}
+              </span>
+            )}
+            {task.estimatedTime && (
+              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                <Clock className="w-3 h-3" />
+                {formatEstimatedTime(task.estimatedTime)}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Tags */}
+        {task.tags && task.tags.length > 0 && (
+          <div className="flex items-center gap-1 mt-2 flex-wrap">
+            {task.tags.slice(0, 2).map((tagId) => {
+              const tag = getTagById(tagId);
+              return tag ? (
+                <span
+                  key={tagId}
+                  className="text-[10px] px-1.5 py-0.5 rounded"
+                  style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                >
+                  {tag.name}
+                </span>
+              ) : null;
+            })}
+            {task.tags.length > 2 && (
+              <span className="text-[10px] text-muted-foreground">
+                +{task.tags.length - 2}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Footer: Assignees + Due Date */}
         <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50">
