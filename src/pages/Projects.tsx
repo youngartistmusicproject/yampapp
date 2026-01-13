@@ -71,6 +71,9 @@ export default function Projects() {
   const [selectedProject, setSelectedProject] = useState<string>(() => {
     return localStorage.getItem('workManagement_selectedProject') || 'all';
   });
+  const [selectedMember, setSelectedMember] = useState<string>(() => {
+    return localStorage.getItem('workManagement_selectedMember') || 'all';
+  });
   const [sortField, setSortField] = useState<SortField>('dueDate');
   const [sortAscending, setSortAscending] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -154,6 +157,10 @@ export default function Projects() {
   useEffect(() => {
     localStorage.setItem('workManagement_selectedProject', selectedProject);
   }, [selectedProject]);
+
+  useEffect(() => {
+    localStorage.setItem('workManagement_selectedMember', selectedMember);
+  }, [selectedMember]);
 
   // Get all available tags from tasks and tag library
   const availableTags = useMemo(() => {
@@ -271,9 +278,13 @@ export default function Projects() {
       // Importance filter
       const matchesImportance = filters.importances.length === 0 || filters.importances.includes(task.importance);
       
-      // Assignee filter
+      // Assignee filter from panel
       const matchesAssignee = filters.assignees.length === 0 || 
         task.assignees?.some(a => filters.assignees.includes(a.id));
+      
+      // Quick member filter (dropdown)
+      const matchesMember = selectedMember === "all" || 
+        task.assignees?.some(a => a.name === selectedMember);
       
       // Tags filter
       const matchesTags = filters.tags.length === 0 || 
@@ -295,7 +306,7 @@ export default function Projects() {
         (task.dueDate && new Date(task.dueDate) < today && task.status !== 'done');
       
       return matchesSearch && matchesProject && matchesTeam && matchesQuickFilter && matchesStatus && matchesEffort && matchesImportance &&
-             matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
+             matchesAssignee && matchesMember && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
       // Define sort order for effort, importance, and stage
       const effortOrder = effortLibrary.map(e => e.id);
@@ -348,7 +359,7 @@ export default function Projects() {
       const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       return sortAscending ? comparison : -comparison;
     });
-  }, [activeTasks, searchQuery, selectedProject, selectedTeam, projects, filters, quickFilter, sortField, sortAscending, statuses]);
+  }, [activeTasks, searchQuery, selectedProject, selectedTeam, selectedMember, projects, filters, quickFilter, sortField, sortAscending, statuses]);
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
     // Find the task to check if it's recurring
@@ -701,6 +712,26 @@ export default function Projects() {
               </SelectContent>
             </Select>
           )}
+
+          {/* Member Filter */}
+          <Select value={selectedMember} onValueChange={setSelectedMember}>
+            <SelectTrigger className="w-[160px] h-8 text-[13px] bg-transparent border-border/50">
+              <SelectValue placeholder="Responsible" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Members</SelectItem>
+              {teamMembers.map((member) => (
+                <SelectItem key={member.id} value={member.name}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-medium">
+                      {member.name.charAt(0)}
+                    </div>
+                    {member.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Right: Search */}
