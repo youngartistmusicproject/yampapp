@@ -30,14 +30,14 @@ function getUserByName(name: string): User {
   };
 }
 
-// Fetch all teams
+// Fetch all teams with member counts
 export function useTeams() {
   return useQuery({
     queryKey: ['teams'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('teams')
-        .select('*')
+        .select('*, team_members(count)')
         .order('name');
       
       if (error) throw error;
@@ -46,7 +46,103 @@ export function useTeams() {
         name: team.name,
         color: team.color || '#6366f1',
         description: team.description,
+        memberCount: (team.team_members as any)?.[0]?.count || 0,
       }));
+    },
+  });
+}
+
+// Fetch team members for a specific team
+export function useTeamMembers(teamId: string | null) {
+  return useQuery({
+    queryKey: ['team-members', teamId],
+    queryFn: async () => {
+      if (!teamId) return [];
+      
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('*')
+        .eq('team_id', teamId)
+        .order('user_name');
+      
+      if (error) throw error;
+      return data.map(m => ({
+        id: m.id,
+        teamId: m.team_id,
+        userName: m.user_name,
+        role: m.role || 'member',
+        joinedAt: new Date(m.joined_at),
+      }));
+    },
+    enabled: !!teamId,
+  });
+}
+
+// Add a member to a team
+export function useAddTeamMember() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ teamId, userName, role = 'member' }: { teamId: string; userName: string; role?: string }) => {
+      const { data, error } = await supabase
+        .from('team_members')
+        .insert({
+          team_id: teamId,
+          user_name: userName,
+          role,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['team-members', variables.teamId] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+    },
+  });
+}
+
+// Remove a member from a team
+export function useRemoveTeamMember() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ memberId, teamId }: { memberId: string; teamId: string }) => {
+      const { error } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('id', memberId);
+      
+      if (error) throw error;
+      return memberId;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['team-members', variables.teamId] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+    },
+  });
+}
+
+// Update a team member's role
+export function useUpdateTeamMemberRole() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ memberId, teamId, role }: { memberId: string; teamId: string; role: string }) => {
+      const { data, error } = await supabase
+        .from('team_members')
+        .update({ role })
+        .eq('id', memberId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['team-members', variables.teamId] });
     },
   });
 }
