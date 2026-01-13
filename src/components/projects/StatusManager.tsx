@@ -91,7 +91,7 @@ export function StatusManager({ open, onOpenChange, statuses, onStatusesChange }
         </DialogHeader>
         
         <div className="space-y-2 py-4">
-          {statuses.filter(s => s.id !== 'completed').map((status) => (
+          {statuses.map((status) => (
             <div
               key={status.id}
               className="flex items-center gap-2 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors"

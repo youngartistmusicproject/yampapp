@@ -715,7 +715,7 @@ export function TaskDetailDialog({
                       )}
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-50">
-                      {statuses.filter(s => s.id !== 'completed').map((s) => (
+                      {statuses.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
                           <div className="flex items-center gap-2">
                             <div 

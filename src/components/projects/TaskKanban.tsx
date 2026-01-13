@@ -88,7 +88,7 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
   return (
     <>
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {statuses.filter(s => s.id !== 'completed').map((column) => {
+        {statuses.map((column) => {
           const isCollapsed = collapsedColumns.has(column.id);
           const columnTasks = getTasksByStatus(column.id);
           

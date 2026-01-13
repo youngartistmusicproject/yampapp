@@ -12,7 +12,7 @@ interface TeamsProjectsHeaderProps {
   selectedProject: string;
   onTeamSelect: (teamId: string) => void;
   onProjectSelect: (projectId: string) => void;
-  completedStatusId: string;
+  doneStatusId: string;
 }
 
 export function TeamsProjectsHeader({
@@ -23,7 +23,7 @@ export function TeamsProjectsHeader({
   selectedProject,
   onTeamSelect,
   onProjectSelect,
-  completedStatusId,
+  doneStatusId,
 }: TeamsProjectsHeaderProps) {
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set(["all"]));
 
@@ -45,7 +45,7 @@ export function TeamsProjectsHeader({
     if (projectTasks.length === 0) return { progress: 0, completed: 0, total: 0 };
     
     const completed = projectTasks.filter(
-      (t) => t.status === completedStatusId || t.completedAt
+      (t) => t.status === doneStatusId || t.completedAt
     ).length;
     
     return {

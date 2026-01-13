@@ -69,28 +69,8 @@ const importanceColors: Record<string, string> = {
 
 export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onToggleSort, sortField = 'dueDate', sortAscending = true, statuses }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
-  const [completingTasks, setCompletingTasks] = useState<Set<string>>(new Set());
   const getStatusById = (id: string) => statuses.find(s => s.id === id);
-  const completedStatusId = 'completed';
-  const defaultStatusId = 'not-started';
-
-  const handleCompleteTask = (taskId: string, checked: boolean) => {
-    if (checked) {
-      // Add to completing set to trigger animation
-      setCompletingTasks(prev => new Set(prev).add(taskId));
-      // After animation delay, update the task
-      setTimeout(() => {
-        onTaskUpdate(taskId, { status: completedStatusId });
-        setCompletingTasks(prev => {
-          const next = new Set(prev);
-          next.delete(taskId);
-          return next;
-        });
-      }, 500);
-    } else {
-      onTaskUpdate(taskId, { status: defaultStatusId });
-    }
-  };
+  const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
 
   const handleDeleteConfirm = () => {
     if (taskToDelete && onDeleteTask) {
@@ -106,23 +86,23 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
         {tasks.map((task) => (
           <div 
             key={task.id}
-            className={`rounded-lg border bg-card p-4 shadow-card cursor-pointer hover:bg-muted/50 transition-all duration-500 ${
-              completingTasks.has(task.id) ? 'opacity-0 scale-95 translate-x-4' : ''
-            }`}
+            className="rounded-lg border bg-card p-4 shadow-card cursor-pointer hover:bg-muted/50 transition-colors"
             onClick={() => onViewTask(task)}
           >
             <div className="flex items-start gap-3">
               <div onClick={(e) => e.stopPropagation()}>
                 <Checkbox
-                  checked={task.status === completedStatusId || completingTasks.has(task.id)}
-                  onCheckedChange={(checked) => handleCompleteTask(task.id, !!checked)}
+                  checked={task.status === doneStatusId}
+                  onCheckedChange={(checked) =>
+                    onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+                  }
                 />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                    <p className={`font-medium ${task.status === completedStatusId ? 'line-through text-muted-foreground' : ''}`}>
-                      {task.title}
-                    </p>
+                  <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
+                    {task.title}
+                  </p>
                   {task.isRecurring && (
                     <Repeat className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                   )}
@@ -220,23 +200,19 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
           </TableHeader>
           <TableBody>
             {tasks.map((task) => (
-              <TableRow 
-                key={task.id} 
-                className={`group cursor-pointer transition-all duration-500 ${
-                  completingTasks.has(task.id) ? 'opacity-0 scale-95 translate-x-4' : ''
-                }`} 
-                onClick={() => onViewTask(task)}
-              >
+              <TableRow key={task.id} className="group cursor-pointer" onClick={() => onViewTask(task)}>
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <Checkbox
-                    checked={task.status === completedStatusId || completingTasks.has(task.id)}
-                    onCheckedChange={(checked) => handleCompleteTask(task.id, !!checked)}
+                    checked={task.status === doneStatusId}
+                    onCheckedChange={(checked) =>
+                      onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+                    }
                   />
                 </TableCell>
                 <TableCell>
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5">
-                      <p className={`font-medium ${task.status === completedStatusId ? 'line-through text-muted-foreground' : ''}`}>
+                      <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
                         {task.title}
                       </p>
                       {task.isRecurring && (

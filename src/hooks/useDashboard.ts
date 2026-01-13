@@ -58,34 +58,51 @@ export function useDashboard() {
   const statsQuery = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async (): Promise<DashboardStats> => {
-      // Tasks due today (not completed)
+      // Tasks due today
       const { count: tasksDueToday } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
-        .neq('status', 'completed')
-        .is('completed_at', null)
+        .eq('status', 'todo')
         .gte('due_date', format(startOfDay(today), 'yyyy-MM-dd'))
         .lte('due_date', format(endOfDay(today), 'yyyy-MM-dd'));
 
-      // Tasks due tomorrow (not completed)
+      // Also count in-progress tasks due today
+      const { count: inProgressDueToday } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'in_progress')
+        .gte('due_date', format(startOfDay(today), 'yyyy-MM-dd'))
+        .lte('due_date', format(endOfDay(today), 'yyyy-MM-dd'));
+
+      // Tasks due tomorrow
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
       
-      const { count: tasksDueTomorrow } = await supabase
+      const { count: tasksDueTomorrowTodo } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
-        .neq('status', 'completed')
-        .is('completed_at', null)
+        .eq('status', 'todo')
+        .eq('due_date', tomorrowStr);
+
+      const { count: tasksDueTomorrowInProgress } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'in_progress')
         .eq('due_date', tomorrowStr);
 
       // Overdue tasks (due date before today and not completed)
       const todayStr = format(today, 'yyyy-MM-dd');
-      const { count: overdueTasks } = await supabase
+      const { count: overdueTodo } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
-        .neq('status', 'completed')
-        .is('completed_at', null)
+        .eq('status', 'todo')
+        .lt('due_date', todayStr);
+
+      const { count: overdueInProgress } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'in_progress')
         .lt('due_date', todayStr);
 
       // Active projects
@@ -94,16 +111,18 @@ export function useDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active');
 
-      // For pending requests, count tasks needing review
+      // For pending requests, we'll count tasks that need review (could be customized)
+      // For now, counting high priority todo tasks as "pending"
       const { count: pendingRequests } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'needs_review');
+        .eq('status', 'todo')
+        .eq('priority', 'high');
 
       return {
-        tasksDueToday: tasksDueToday || 0,
-        tasksDueTomorrow: tasksDueTomorrow || 0,
-        overdueTasks: overdueTasks || 0,
+        tasksDueToday: (tasksDueToday || 0) + (inProgressDueToday || 0),
+        tasksDueTomorrow: (tasksDueTomorrowTodo || 0) + (tasksDueTomorrowInProgress || 0),
+        overdueTasks: (overdueTodo || 0) + (overdueInProgress || 0),
         pendingRequests: pendingRequests || 0,
         activeProjects: activeProjects || 0,
       };
@@ -121,8 +140,7 @@ export function useDashboard() {
         .from('tasks')
         .select('id, title, status, effort, importance, assignee, due_date')
         .eq('due_date', todayStr)
-        .neq('status', 'completed')
-        .is('completed_at', null)
+        .neq('status', 'done')
         .order('importance', { ascending: false });
 
       if (dueTodayError) throw dueTodayError;
@@ -134,8 +152,7 @@ export function useDashboard() {
         .from('tasks')
         .select('id, title, status, effort, importance, assignee, due_date')
         .not('id', 'in', dueTodayIds.length > 0 ? `(${dueTodayIds.join(',')})` : '(00000000-0000-0000-0000-000000000000)')
-        .neq('status', 'completed')
-        .is('completed_at', null)
+        .neq('status', 'done')
         .order('due_date', { ascending: true, nullsFirst: false })
         .limit(5 - dueTodayIds.length);
 
@@ -203,7 +220,7 @@ export function useDashboard() {
             .from('tasks')
             .select('*', { count: 'exact', head: true })
             .eq('project_id', project.id)
-            .eq('status', 'completed');
+            .eq('status', 'done');
 
           const total = totalTasks || 0;
           const completed = completedTasks || 0;
@@ -243,7 +260,7 @@ export function useDashboard() {
         const { count } = await supabase
           .from('tasks')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'completed')
+          .eq('status', 'done')
           .gte('completed_at', `${dateStr}T00:00:00`)
           .lt('completed_at', `${dateStr}T23:59:59`);
         
