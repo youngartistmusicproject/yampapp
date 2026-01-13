@@ -263,7 +263,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
             {/* Due Date with Recurrence */}
             <div className="space-y-2">
-              <Label>When is the deadline for this task? <span className="text-destructive">*</span></Label>
+              <Label>What is the deadline for this task? <span className="text-destructive">*</span></Label>
               <div className="flex items-center gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
