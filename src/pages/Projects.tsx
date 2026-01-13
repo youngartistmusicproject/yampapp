@@ -36,7 +36,7 @@ import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
-import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useCreateTeam, useUpdateTeam, useDeleteTeam, useReorderTasks, useCompleteRecurringTask } from "@/hooks/useWorkManagement";
+import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useCreateTeam, useUpdateTeam, useDeleteTeam, useReorderTasks, useCompleteRecurringTask, useReorderTeams } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
@@ -58,6 +58,7 @@ export default function Projects() {
   const deleteTeamMutation = useDeleteTeam();
   const reorderTasks = useReorderTasks();
   const completeRecurringTask = useCompleteRecurringTask();
+  const reorderTeams = useReorderTeams();
   
   const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -750,6 +751,9 @@ export default function Projects() {
             onCreateTeam={handleAddTeam}
             onUpdateTeam={handleUpdateTeam}
             onDeleteTeam={handleDeleteTeam}
+            onReorderTeams={(teams) => {
+              reorderTeams.mutate(teams.map((t, i) => ({ id: t.id, sortOrder: i })));
+            }}
           />
 
           <ProjectManagementPanel

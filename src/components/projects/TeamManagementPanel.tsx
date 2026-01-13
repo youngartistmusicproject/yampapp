@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pencil, Trash2, Plus, Users, ChevronRight, UserPlus, X, GripVertical } from "lucide-react";
 import { Team, User } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -174,10 +174,10 @@ export function TeamManagementPanel({
   const [addingMember, setAddingMember] = useState(false);
   const [localTeams, setLocalTeams] = useState(teams);
 
-  // Keep local teams in sync with props
-  if (JSON.stringify(teams.map(t => t.id)) !== JSON.stringify(localTeams.map(t => t.id))) {
+  // Keep local teams in sync with props when teams change
+  useEffect(() => {
     setLocalTeams(teams);
-  }
+  }, [teams]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
