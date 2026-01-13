@@ -1,17 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Project, User, Team } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -30,6 +24,7 @@ interface ProjectDialogProps {
   availableMembers: User[];
   teams: Team[];
   selectedTeamId?: string;
+  project?: Project; // If provided, we're editing
 }
 
 const projectColors = [
@@ -43,13 +38,33 @@ const projectColors = [
   "#84cc16", // lime
 ];
 
-export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, teams, selectedTeamId }: ProjectDialogProps) {
+export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, teams, selectedTeamId, project }: ProjectDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(projectColors[0]);
   const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
-  const [teamId, setTeamId] = useState(selectedTeamId || teams[0]?.id || "");
+  const [teamId, setTeamId] = useState("");
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+
+  const isEditing = !!project;
+
+  // Populate form when editing or reset when creating
+  useEffect(() => {
+    if (project) {
+      setName(project.name);
+      setDescription(project.description || "");
+      setColor(project.color || projectColors[0]);
+      setSelectedMembers(project.members || []);
+      setTeamId(project.teamId || "");
+    } else {
+      setName("");
+      setDescription("");
+      setColor(projectColors[0]);
+      setSelectedMembers([]);
+      setTeamId(selectedTeamId || teams[0]?.id || "");
+    }
+    setHasAttemptedSubmit(false);
+  }, [project, open, selectedTeamId, teams]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +82,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
       members: selectedMembers,
       teamId,
     });
+    
     // Reset form
     setName("");
     setDescription("");
@@ -74,6 +90,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
     setSelectedMembers([]);
     setTeamId(selectedTeamId || teams[0]?.id || "");
     setHasAttemptedSubmit(false);
+    onOpenChange(false);
   };
 
   const toggleMember = (member: User) => {
@@ -208,7 +225,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Project</Button>
+            <Button type="submit">{isEditing ? 'Save Changes' : 'Create Project'}</Button>
           </div>
         </form>
       </DialogContent>
