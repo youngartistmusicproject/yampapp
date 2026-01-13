@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
-import { Repeat, Copy, Trash2 } from "lucide-react";
+import { Repeat, Copy, Trash2, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
@@ -32,13 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
-import { TaskPreviewCard } from "./TaskPreviewCard";
 
 export interface StatusItem {
   id: string;
@@ -128,93 +122,107 @@ function SortableTableRow({
 
   const overdue = isTaskOverdue(task);
   const status = getStatusById(task.status);
+  const isDone = task.status === doneStatusId;
 
   return (
-    <HoverCard openDelay={400} closeDelay={100}>
-      <HoverCardTrigger asChild>
-        <div
-          ref={setNodeRef}
-          style={style}
-          className={`group flex items-center gap-3 px-3 py-2.5 border-b border-border/50 cursor-grab active:cursor-grabbing transition-colors ${
-            overdue ? 'bg-destructive/5' : 'hover:bg-muted/30'
-          }`}
-          onClick={() => onViewTask(task)}
-          {...attributes}
-          {...listeners}
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group flex flex-col gap-1.5 px-3 py-2.5 border-b border-border/50 cursor-grab active:cursor-grabbing transition-colors ${
+        overdue ? 'bg-destructive/5' : 'hover:bg-muted/30'
+      }`}
+      onClick={() => onViewTask(task)}
+      {...attributes}
+      {...listeners}
+    >
+      {/* Main row */}
+      <div className="flex items-center gap-3">
+        <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={isDone}
+            onCheckedChange={(checked) =>
+              onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+            }
+            className="border-muted-foreground/40"
+          />
+        </div>
+        
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <span className={`text-[13px] font-medium truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+            {task.title}
+          </span>
+          {task.isRecurring && (
+            <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+          )}
+        </div>
+
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {status && (
+            <span 
+              className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+              style={{
+                backgroundColor: `${status.color}15`,
+                color: status.color,
+              }}
+            >
+              {status.name}
+            </span>
+          )}
+          
+          <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+          
+          <span className={`text-[12px] w-14 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+            {task.dueDate ? format(task.dueDate, "MMM d") : ""}
+          </span>
+        </div>
+
+        <div 
+          className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => e.stopPropagation()} 
+          onPointerDown={(e) => e.stopPropagation()}
         >
-          <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-            <Checkbox
-              checked={task.status === doneStatusId}
-              onCheckedChange={(checked) =>
-                onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
-              }
-              className="border-muted-foreground/40"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+            onClick={() => onDuplicateTask?.(task.id)}
+          >
+            <Copy className="w-3 h-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+            onClick={() => onDeleteClick(task)}
+          >
+            <Trash2 className="w-3 h-3" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Details row - always visible */}
+      <div className="flex items-center gap-4 pl-7 text-[11px] text-muted-foreground">
+        <span>
+          Effort: <span className="font-medium text-foreground capitalize">{task.effort || '—'}</span>
+        </span>
+        <span>
+          Importance: <span className="font-medium text-foreground capitalize">{task.importance || '—'}</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <Clock className="w-3 h-3" />
+          <span className="font-medium text-foreground">{task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : '—'}</span>
+        </span>
+        <div className="flex items-center gap-1.5 flex-1 max-w-[120px]">
+          <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary rounded-full transition-all"
+              style={{ width: `${task.progress}%` }}
             />
           </div>
-          
-          <div className="flex-1 min-w-0 flex items-center gap-3">
-            <span className={`text-[13px] font-medium truncate ${task.status === doneStatusId ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-              {task.title}
-            </span>
-            {task.isRecurring && (
-              <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 flex-shrink-0">
-            {status && (
-              <span 
-                className="text-[11px] font-medium px-1.5 py-0.5 rounded"
-                style={{
-                  backgroundColor: `${status.color}15`,
-                  color: status.color,
-                }}
-              >
-                {status.name}
-              </span>
-            )}
-            
-            <UserAvatarGroup users={task.assignees} max={2} size="sm" />
-            
-            <span className={`text-[12px] w-14 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-              {task.dueDate ? format(task.dueDate, "MMM d") : ""}
-            </span>
-          </div>
-
-          <div 
-            className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => e.stopPropagation()} 
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
-              onClick={() => onDuplicateTask?.(task.id)}
-            >
-              <Copy className="w-3 h-3" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-destructive"
-              onClick={() => onDeleteClick(task)}
-            >
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          </div>
+          <span className="text-[10px] font-medium w-6 text-right">{task.progress}%</span>
         </div>
-      </HoverCardTrigger>
-      <HoverCardContent 
-        side="bottom" 
-        align="start" 
-        sideOffset={8}
-        collisionPadding={16}
-        className="p-0 border-0 shadow-none bg-transparent z-[100] hidden lg:block"
-      >
-        <TaskPreviewCard task={task} />
-      </HoverCardContent>
-    </HoverCard>
+      </div>
+    </div>
   );
 }
 
