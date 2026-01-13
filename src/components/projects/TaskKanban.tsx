@@ -188,43 +188,31 @@ function SortableTaskCard({
         </div>
 
         {/* Meta info - icon + label style like TaskPreviewCard */}
-        <div className="space-y-1.5 mt-2 pt-2 border-t border-border/50">
-          {/* Effort & Importance */}
-          {(task.effort || task.importance) && (
-            <div className="flex items-center gap-3 text-xs">
-              {task.effort && (
-                <span className="text-muted-foreground">
-                  Effort: <span className="capitalize font-medium text-foreground">{task.effort}</span>
-                </span>
-              )}
-              {task.importance && (
-                <span className="text-muted-foreground">
-                  Priority: <span className="capitalize font-medium text-foreground">{task.importance}</span>
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Estimated Time */}
-          {task.estimatedTime && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="space-y-1.5 mt-2 pt-2 border-t border-border/50 min-h-[72px] flex flex-col">
+          {/* Effort, Importance & Est. Time - all on one line */}
+          <div className="flex items-center gap-3 text-xs flex-wrap">
+            <span className="text-muted-foreground">
+              Effort: <span className="capitalize font-medium text-foreground">{task.effort || '—'}</span>
+            </span>
+            <span className="text-muted-foreground">
+              Importance: <span className="capitalize font-medium text-foreground">{task.importance || '—'}</span>
+            </span>
+            <span className="text-muted-foreground flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              <span>{formatEstimatedTime(task.estimatedTime)}</span>
-            </div>
-          )}
+              <span className="font-medium text-foreground">{task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : '—'}</span>
+            </span>
+          </div>
 
-          {/* Progress */}
-          {task.progress > 0 && (
-            <div className="flex items-center gap-2 text-xs">
-              <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary rounded-full transition-all"
-                  style={{ width: `${task.progress}%` }}
-                />
-              </div>
-              <span className="text-muted-foreground text-[10px] font-medium">{task.progress}%</span>
+          {/* Progress - always visible */}
+          <div className="flex items-center gap-2 text-xs">
+            <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary rounded-full transition-all"
+                style={{ width: `${task.progress}%` }}
+              />
             </div>
-          )}
+            <span className="text-muted-foreground text-[10px] font-medium w-6 text-right">{task.progress}%</span>
+          </div>
 
           {/* Footer: Assignees + Due Date */}
           <div className="flex items-center justify-between pt-1">
