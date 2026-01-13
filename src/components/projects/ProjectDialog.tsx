@@ -167,8 +167,11 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
   };
 
   const selectAllAsMembers = () => {
-    setSelectedMembers(filteredMembers);
-    setSelectedOwners([]);
+    // Add all team members as members, EXCEPT those already assigned as leads
+    const nonLeadMembers = filteredMembers.filter(
+      (m) => !selectedOwners.find((o) => o.id === m.id)
+    );
+    setSelectedMembers(nonLeadMembers);
   };
 
   // Get available members for each role (excluding those already selected in the other role)
