@@ -83,6 +83,7 @@ export interface Project {
   name: string;
   description?: string;
   color: string;
+  tags: string[];
   tasks: Task[];
   owners: User[];
   members: User[];
