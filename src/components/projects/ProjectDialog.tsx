@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Project, User, Team } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, Users } from "lucide-react";
+import { useTeamMembers } from "@/hooks/useWorkManagement";
+import { teamMembers as allTeamMembers } from "@/data/workManagementConfig";
 
 interface ProjectDialogProps {
   open: boolean;
@@ -48,6 +50,28 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
 
   const isEditing = !!project;
 
+  // Fetch team members for the selected team
+  const { data: teamMembersData } = useTeamMembers(teamId || null);
+
+  // Convert team members to User objects
+  const filteredMembers = useMemo(() => {
+    if (!teamMembersData || teamMembersData.length === 0) return [];
+    
+    return teamMembersData.map(tm => {
+      // Find matching user from allTeamMembers config
+      const found = allTeamMembers.find(m => m.name === tm.userName || m.name.startsWith(tm.userName.split(' ')[0]));
+      if (found) return found;
+      
+      // Create a basic user object for unknown names
+      return {
+        id: tm.userName.toLowerCase().replace(/\s+/g, '-'),
+        name: tm.userName,
+        email: `${tm.userName.toLowerCase().replace(/\s+/g, '.')}@company.com`,
+        role: (tm.role === 'admin' ? 'admin' : 'staff') as User['role'],
+      };
+    });
+  }, [teamMembersData]);
+
   // Populate form when editing or reset when creating
   useEffect(() => {
     if (project) {
@@ -65,6 +89,13 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
     }
     setHasAttemptedSubmit(false);
   }, [project, open, selectedTeamId, teams]);
+
+  // Clear selected members when team changes (unless editing)
+  useEffect(() => {
+    if (!isEditing && teamId) {
+      setSelectedMembers([]);
+    }
+  }, [teamId, isEditing]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,6 +135,13 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
   const removeMember = (memberId: string) => {
     setSelectedMembers((prev) => prev.filter((m) => m.id !== memberId));
   };
+
+  const selectAllMembers = () => {
+    setSelectedMembers(filteredMembers);
+  };
+
+  const areAllMembersSelected = filteredMembers.length > 0 && 
+    filteredMembers.every(m => selectedMembers.some(sm => sm.id === m.id));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -195,26 +233,55 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                       ))}
                     </div>
                   )}
-                  <div className="border border-border/50 rounded-lg p-2 max-h-32 overflow-y-auto space-y-1">
-                    {availableMembers.map((member) => (
+                  {!teamId ? (
+                    <div className="border border-border/50 rounded-lg p-4 text-center text-sm text-muted-foreground">
+                      Select a team first to see available members
+                    </div>
+                  ) : filteredMembers.length === 0 ? (
+                    <div className="border border-border/50 rounded-lg p-4 text-center text-sm text-muted-foreground">
+                      No members in this team yet
+                    </div>
+                  ) : (
+                    <div className="border border-border/50 rounded-lg p-2 max-h-32 overflow-y-auto space-y-1">
+                      {/* All Team Members option */}
                       <button
-                        key={member.id}
                         type="button"
-                        onClick={() => toggleMember(member)}
+                        onClick={selectAllMembers}
                         className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
-                          selectedMembers.find((m) => m.id === member.id)
+                          areAllMembersSelected
                             ? "bg-primary/10 text-primary"
                             : "hover:bg-muted"
                         }`}
                       >
-                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
-                          {member.name.charAt(0)}
+                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Users className="w-3.5 h-3.5" />
                         </div>
-                        <span>{member.name}</span>
-                        <span className="text-muted-foreground text-xs ml-auto">{member.role}</span>
+                        <span className="font-medium">All Team Members</span>
+                        <span className="text-muted-foreground text-xs ml-auto">{filteredMembers.length} members</span>
                       </button>
-                    ))}
-                  </div>
+                      
+                      <div className="border-t border-border/30 my-1" />
+                      
+                      {filteredMembers.map((member) => (
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() => toggleMember(member)}
+                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
+                            selectedMembers.find((m) => m.id === member.id)
+                              ? "bg-primary/10 text-primary"
+                              : "hover:bg-muted"
+                          }`}
+                        >
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
+                            {member.name.charAt(0)}
+                          </div>
+                          <span>{member.name}</span>
+                          <span className="text-muted-foreground text-xs ml-auto">{member.role}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
