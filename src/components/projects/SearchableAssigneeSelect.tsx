@@ -23,6 +23,7 @@ interface SearchableAssigneeSelectProps {
   selectedAssignees: User[];
   onAssigneesChange: (assignees: User[]) => void;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export function SearchableAssigneeSelect({
@@ -30,6 +31,7 @@ export function SearchableAssigneeSelect({
   selectedAssignees,
   onAssigneesChange,
   placeholder = "Add...",
+  disabled = false,
 }: SearchableAssigneeSelectProps) {
   const [open, setOpen] = useState(false);
 
@@ -42,9 +44,15 @@ export function SearchableAssigneeSelect({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-1 hover:bg-muted/50 rounded px-2 py-1 -mr-2 transition-colors">
+        <button 
+          className={cn(
+            "flex items-center gap-1 hover:bg-muted/50 rounded px-2 py-1 -mr-2 transition-colors",
+            disabled && "opacity-50 cursor-not-allowed hover:bg-transparent"
+          )}
+          disabled={disabled}
+        >
           {selectedAssignees.length > 0 ? (
             <div className="flex items-center">
               <div className="flex -space-x-1.5">
