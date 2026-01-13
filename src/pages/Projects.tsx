@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, AlertTriangle, Clock, CalendarDays } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, AlertTriangle, Clock, CalendarDays, X, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -614,20 +614,37 @@ export default function Projects() {
 
       {/* Views */}
       <Tabs defaultValue="table" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="table" className="gap-2">
-            <List className="w-4 h-4" />
-            Table
-          </TabsTrigger>
-          <TabsTrigger value="kanban" className="gap-2">
-            <LayoutGrid className="w-4 h-4" />
-            Kanban
-          </TabsTrigger>
-          <TabsTrigger value="timeline" className="gap-2">
-            <CalendarIcon className="w-4 h-4" />
-            Timeline
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center gap-3">
+          <TabsList>
+            <TabsTrigger value="table" className="gap-2">
+              <List className="w-4 h-4" />
+              Table
+            </TabsTrigger>
+            <TabsTrigger value="kanban" className="gap-2">
+              <LayoutGrid className="w-4 h-4" />
+              Kanban
+            </TabsTrigger>
+            <TabsTrigger value="timeline" className="gap-2">
+              <CalendarIcon className="w-4 h-4" />
+              Timeline
+            </TabsTrigger>
+          </TabsList>
+          
+          {sortField === 'manual' && (
+            <Badge 
+              variant="secondary" 
+              className="gap-1.5 pl-2 pr-1 py-1 cursor-pointer hover:bg-secondary/80 transition-colors"
+              onClick={() => {
+                setSortField('dueDate');
+                setSortAscending(true);
+              }}
+            >
+              <GripVertical className="w-3 h-3" />
+              <span className="text-xs">Manual order</span>
+              <X className="w-3 h-3 ml-0.5 opacity-60 hover:opacity-100" />
+            </Badge>
+          )}
+        </div>
 
         <TabsContent value="table" className="mt-4">
           {isLoading ? (
