@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, AlertTriangle, Clock, CalendarDays, X, GripVertical } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, X, GripVertical } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -458,72 +459,88 @@ export default function Projects() {
         doneStatusId={doneStatusId}
       />
 
-      {/* Quick Date Filters */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        <Button
-          variant={quickFilter === 'all' ? 'default' : 'outline'}
-          size="sm"
+      {/* Quick Date Filters - Minimal inline tabs */}
+      <div className="flex items-center gap-4 text-sm overflow-x-auto pb-1 scrollbar-none">
+        <button
           onClick={() => setQuickFilter('all')}
-          className="flex-shrink-0"
+          className={cn(
+            "font-medium transition-colors whitespace-nowrap",
+            quickFilter === 'all'
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          )}
         >
-          All Tasks
-        </Button>
-        <Button
-          variant={quickFilter === 'overdue' ? 'default' : 'outline'}
-          size="sm"
+          All
+        </button>
+        <button
           onClick={() => setQuickFilter('overdue')}
-          className={`flex-shrink-0 gap-1.5 ${quickFilter !== 'overdue' && quickFilterCounts.overdue > 0 ? 'border-red-300 dark:border-red-700 text-red-600 dark:text-red-400' : ''}`}
+          className={cn(
+            "font-medium transition-colors whitespace-nowrap flex items-center gap-1",
+            quickFilter === 'overdue'
+              ? "text-foreground"
+              : quickFilterCounts.overdue > 0
+                ? "text-destructive"
+                : "text-muted-foreground hover:text-foreground"
+          )}
         >
-          <AlertTriangle className="w-3.5 h-3.5" />
           Overdue
           {quickFilterCounts.overdue > 0 && (
-            <Badge variant={quickFilter === 'overdue' ? 'secondary' : 'destructive'} className="ml-0.5 h-5 px-1.5 text-xs">
+            <span className={cn(
+              "text-xs tabular-nums",
+              quickFilter === 'overdue' ? "text-muted-foreground" : "text-destructive"
+            )}>
               {quickFilterCounts.overdue}
-            </Badge>
+            </span>
           )}
-        </Button>
-        <Button
-          variant={quickFilter === 'today' ? 'default' : 'outline'}
-          size="sm"
+        </button>
+        <button
           onClick={() => setQuickFilter('today')}
-          className="flex-shrink-0 gap-1.5"
+          className={cn(
+            "font-medium transition-colors whitespace-nowrap flex items-center gap-1",
+            quickFilter === 'today'
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          )}
         >
-          <Clock className="w-3.5 h-3.5" />
           Today
           {quickFilterCounts.today > 0 && (
-            <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-xs">
+            <span className="text-xs text-muted-foreground tabular-nums">
               {quickFilterCounts.today}
-            </Badge>
+            </span>
           )}
-        </Button>
-        <Button
-          variant={quickFilter === 'tomorrow' ? 'default' : 'outline'}
-          size="sm"
+        </button>
+        <button
           onClick={() => setQuickFilter('tomorrow')}
-          className="flex-shrink-0 gap-1.5"
+          className={cn(
+            "font-medium transition-colors whitespace-nowrap flex items-center gap-1",
+            quickFilter === 'tomorrow'
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          )}
         >
-          <CalendarDays className="w-3.5 h-3.5" />
           Tomorrow
           {quickFilterCounts.tomorrow > 0 && (
-            <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-xs">
+            <span className="text-xs text-muted-foreground tabular-nums">
               {quickFilterCounts.tomorrow}
-            </Badge>
+            </span>
           )}
-        </Button>
-        <Button
-          variant={quickFilter === 'upcoming' ? 'default' : 'outline'}
-          size="sm"
+        </button>
+        <button
           onClick={() => setQuickFilter('upcoming')}
-          className="flex-shrink-0 gap-1.5"
-        >
-          <CalendarIcon className="w-3.5 h-3.5" />
-          Next 7 Days
-          {quickFilterCounts.upcoming > 0 && (
-            <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-xs">
-              {quickFilterCounts.upcoming}
-            </Badge>
+          className={cn(
+            "font-medium transition-colors whitespace-nowrap flex items-center gap-1",
+            quickFilter === 'upcoming'
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
           )}
-        </Button>
+        >
+          7 Days
+          {quickFilterCounts.upcoming > 0 && (
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {quickFilterCounts.upcoming}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Filters */}
