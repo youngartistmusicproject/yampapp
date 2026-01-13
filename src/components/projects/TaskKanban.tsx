@@ -150,17 +150,17 @@ function SortableTaskCard({
       <div
         className={`group rounded-lg border bg-card p-3 transition-colors ${
           overdue ? "bg-destructive/5 border-destructive/30" : "hover:bg-muted/30"
-        } ${task.importance ? importanceColors[task.importance] : ""} border-l-4`}
+        }`}
         onClick={() => onViewTask(task)}
       >
         {/* Title Row */}
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <div className="flex items-start gap-1.5 flex-1 min-w-0">
             <p className="text-sm font-medium leading-snug line-clamp-2">
               {task.title}
             </p>
             {task.isRecurring && (
-              <Repeat className="w-3 h-3 text-muted-foreground/60 flex-shrink-0" />
+              <Repeat className="w-3 h-3 text-muted-foreground/60 flex-shrink-0 mt-0.5" />
             )}
           </div>
           <div 
@@ -187,64 +187,59 @@ function SortableTaskCard({
           </div>
         </div>
 
-        {/* Effort & Importance Badges */}
-        {(task.effort || task.importance) && (
-          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-            {task.effort && (
-              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${effortColors[task.effort]}`}>
-                {task.effort}
-              </span>
-            )}
-            {task.importance && (
-              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${importanceBadgeColors[task.importance]}`}>
-                {task.importance}
-              </span>
-            )}
-            {task.estimatedTime && (
-              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                <Clock className="w-3 h-3" />
-                {formatEstimatedTime(task.estimatedTime)}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Tags */}
-        {task.tags && task.tags.length > 0 && (
-          <div className="flex items-center gap-1 mt-2 flex-wrap">
-            {task.tags.slice(0, 2).map((tagId) => {
-              const tag = getTagById(tagId);
-              return tag ? (
-                <span
-                  key={tagId}
-                  className="text-[10px] px-1.5 py-0.5 rounded"
-                  style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                >
-                  {tag.name}
+        {/* Meta info - icon + label style like TaskPreviewCard */}
+        <div className="space-y-1.5 mt-2 pt-2 border-t border-border/50">
+          {/* Effort & Importance */}
+          {(task.effort || task.importance) && (
+            <div className="flex items-center gap-3 text-xs">
+              {task.effort && (
+                <span className="text-muted-foreground">
+                  Effort: <span className="capitalize font-medium text-foreground">{task.effort}</span>
                 </span>
-              ) : null;
-            })}
-            {task.tags.length > 2 && (
-              <span className="text-[10px] text-muted-foreground">
-                +{task.tags.length - 2}
+              )}
+              {task.importance && (
+                <span className="text-muted-foreground">
+                  Priority: <span className="capitalize font-medium text-foreground">{task.importance}</span>
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Estimated Time */}
+          {task.estimatedTime && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="w-3 h-3" />
+              <span>{formatEstimatedTime(task.estimatedTime)}</span>
+            </div>
+          )}
+
+          {/* Progress */}
+          {task.progress > 0 && (
+            <div className="flex items-center gap-2 text-xs">
+              <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary rounded-full transition-all"
+                  style={{ width: `${task.progress}%` }}
+                />
+              </div>
+              <span className="text-muted-foreground text-[10px] font-medium">{task.progress}%</span>
+            </div>
+          )}
+
+          {/* Footer: Assignees + Due Date */}
+          <div className="flex items-center justify-between pt-1">
+            {task.assignees && task.assignees.length > 0 ? (
+              <UserAvatarGroup users={task.assignees} max={2} size="sm" />
+            ) : (
+              <span className="text-xs text-muted-foreground">Unassigned</span>
+            )}
+            
+            {task.dueDate && (
+              <span className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                {format(task.dueDate, "MMM d")}
               </span>
             )}
           </div>
-        )}
-
-        {/* Footer: Assignees + Due Date */}
-        <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50">
-          {task.assignees && task.assignees.length > 0 ? (
-            <UserAvatarGroup users={task.assignees} max={2} size="sm" />
-          ) : (
-            <span className="text-xs text-muted-foreground">Unassigned</span>
-          )}
-          
-          {task.dueDate && (
-            <span className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-              {format(task.dueDate, "MMM d")}
-            </span>
-          )}
         </div>
       </div>
     </div>
