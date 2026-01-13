@@ -432,6 +432,7 @@ export function useTasks() {
           progress: t.progress || 0,
           estimatedTime: t.estimated_time ? parseInt(t.estimated_time) : undefined,
           completedAt: t.completed_at ? new Date(t.completed_at) : undefined,
+          completedBy: (t as any).completed_by || undefined,
           archivedAt: (t as any).archived_at ? new Date((t as any).archived_at) : undefined,
           sortOrder: t.sort_order || 0,
           howToLink: (t as any).how_to_link || undefined,
@@ -524,8 +525,10 @@ export function useUpdateTask() {
         // Handle completion
         if (updates.status === 'done') {
           updateData.completed_at = new Date().toISOString();
+          updateData.completed_by = 'You'; // Current user
         } else {
           updateData.completed_at = null;
+          updateData.completed_by = null;
         }
       }
       if (updates.effort !== undefined) updateData.effort = updates.effort;
@@ -606,6 +609,7 @@ export function useCompleteRecurringTask() {
         .update({
           status: 'done',
           completed_at: new Date().toISOString(),
+          completed_by: 'You', // Current user
         })
         .eq('id', task.id);
       
