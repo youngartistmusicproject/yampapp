@@ -140,8 +140,8 @@ export function TeamManagementPanel({
           </Button>
         </SheetTrigger>
         <SheetContent className="w-[400px] sm:w-[540px]">
-          <SheetHeader className="pr-8">
-            <SheetTitle className="flex items-center justify-between">
+          <SheetHeader>
+            <SheetTitle>
               {selectedTeamId ? (
                 <button 
                   onClick={() => setSelectedTeamId(null)}
@@ -153,18 +153,19 @@ export function TeamManagementPanel({
               ) : (
                 <span>Manage Teams</span>
               )}
-              {!selectedTeamId && (
-                <Button 
-                  size="sm" 
-                  onClick={() => setCreateDialogOpen(true)}
-                  className="h-8"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  New Team
-                </Button>
-              )}
             </SheetTitle>
           </SheetHeader>
+          
+          {/* Floating Action Button */}
+          {!selectedTeamId && (
+            <Button 
+              size="icon"
+              onClick={() => setCreateDialogOpen(true)}
+              className="absolute bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-10"
+            >
+              <Plus className="w-5 h-5" />
+            </Button>
+          )}
           
           <div className="mt-6 max-h-[calc(100vh-120px)] overflow-y-auto">
             {selectedTeamId ? (
