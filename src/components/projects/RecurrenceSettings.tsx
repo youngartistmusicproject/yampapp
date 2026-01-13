@@ -195,12 +195,21 @@ export function RecurrenceSettings({
 function getRecurrenceDescription(recurrence: RecurrenceSettingsType): string {
   const { frequency, interval, daysOfWeek, dayOfMonth, endDate } = recurrence;
 
+  const frequencyLabels: Record<string, { singular: string; plural: string }> = {
+    daily: { singular: "day", plural: "days" },
+    weekly: { singular: "week", plural: "weeks" },
+    monthly: { singular: "month", plural: "months" },
+    yearly: { singular: "year", plural: "years" },
+  };
+
+  const label = frequencyLabels[frequency] || { singular: frequency, plural: frequency };
+  
   let description = "Repeats ";
 
   if (interval === 1) {
-    description += frequency.replace("ly", "");
+    description += label.singular;
   } else {
-    description += `every ${interval} ${frequency.replace("ly", "")}s`;
+    description += `every ${interval} ${label.plural}`;
   }
 
   if (frequency === "weekly" && daysOfWeek && daysOfWeek.length > 0) {
