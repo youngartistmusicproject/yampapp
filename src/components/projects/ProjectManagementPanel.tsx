@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -81,6 +82,9 @@ export function ProjectManagementPanel({
         <SheetContent className="w-full sm:max-w-[480px]">
           <SheetHeader>
             <SheetTitle>Manage Projects</SheetTitle>
+            <SheetDescription>
+              Create, edit, or remove projects. Assign projects to teams.
+            </SheetDescription>
           </SheetHeader>
           
           {/* Floating Action Button */}

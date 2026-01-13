@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -154,6 +155,12 @@ export function TeamManagementPanel({
                 <span>Manage Teams</span>
               )}
             </SheetTitle>
+            <SheetDescription>
+              {selectedTeamId 
+                ? "Add or remove team members and assign roles."
+                : "Create, edit, or remove teams. Manage team membership."
+              }
+            </SheetDescription>
           </SheetHeader>
           
           {/* Floating Action Button */}
