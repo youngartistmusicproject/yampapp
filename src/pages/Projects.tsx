@@ -159,7 +159,21 @@ export default function Projects() {
   // Active tasks (not completed)
   const activeTasks = useMemo(() => dbTasks.filter(task => !task.completedAt), [dbTasks]);
 
-  // Count tasks for quick filter badges
+  // Tasks filtered by team/project selection (for quick filter counts)
+  const teamProjectFilteredTasks = useMemo(() => {
+    return activeTasks.filter(task => {
+      // Team filter
+      const taskProject = projects.find(p => p.id === task.projectId);
+      if (selectedTeam !== "all") {
+        if (!taskProject || taskProject.teamId !== selectedTeam) return false;
+      }
+      // Project filter
+      if (selectedProject !== "all" && task.projectId !== selectedProject) return false;
+      return true;
+    });
+  }, [activeTasks, projects, selectedTeam, selectedProject]);
+
+  // Count tasks for quick filter badges (based on team/project filtered tasks)
   const quickFilterCounts = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -169,27 +183,27 @@ export default function Projects() {
     nextWeek.setDate(nextWeek.getDate() + 7);
     
     return {
-      overdue: activeTasks.filter(t => t.dueDate && new Date(t.dueDate) < today).length,
-      today: activeTasks.filter(t => {
+      overdue: teamProjectFilteredTasks.filter(t => t.dueDate && new Date(t.dueDate) < today).length,
+      today: teamProjectFilteredTasks.filter(t => {
         if (!t.dueDate) return false;
         const due = new Date(t.dueDate);
         due.setHours(0, 0, 0, 0);
         return due.getTime() === today.getTime();
       }).length,
-      tomorrow: activeTasks.filter(t => {
+      tomorrow: teamProjectFilteredTasks.filter(t => {
         if (!t.dueDate) return false;
         const due = new Date(t.dueDate);
         due.setHours(0, 0, 0, 0);
         return due.getTime() === tomorrow.getTime();
       }).length,
-      upcoming: activeTasks.filter(t => {
+      upcoming: teamProjectFilteredTasks.filter(t => {
         if (!t.dueDate) return false;
         const due = new Date(t.dueDate);
         due.setHours(0, 0, 0, 0);
         return due > tomorrow && due <= nextWeek;
       }).length,
     };
-  }, [activeTasks]);
+  }, [teamProjectFilteredTasks]);
   
   // All completed tasks (including archived) for the panel
   const allCompletedTasks = useMemo(() => 
