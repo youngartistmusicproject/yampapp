@@ -3,6 +3,7 @@ import { Pencil, Trash2, Plus, FolderKanban, ChevronRight, GripVertical } from "
 import { Project, Team, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { UserAvatarGroup } from "@/components/ui/user-avatar";
 import {
   Sheet,
   SheetContent,
@@ -98,6 +99,9 @@ function SortableProjectRow({ project, onEdit, onDelete }: SortableProjectRowPro
           </p>
         )}
       </div>
+      {project.members && project.members.length > 0 && (
+        <UserAvatarGroup users={project.members} max={3} size="sm" />
+      )}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           variant="ghost"
@@ -426,6 +430,9 @@ function ProjectRow({
           </p>
         )}
       </div>
+      {project.members && project.members.length > 0 && (
+        <UserAvatarGroup users={project.members} max={3} size="sm" />
+      )}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           variant="ghost"
