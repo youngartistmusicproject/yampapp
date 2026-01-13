@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Task, Project, User } from '@/types';
+import { Task, Project, User, RecurrenceSettings } from '@/types';
 import { teamMembers } from '@/data/workManagementConfig';
 import { format } from 'date-fns';
+import { recurrenceToDb, dbToRecurrence, getNextRecurrenceDate } from '@/lib/recurrence';
 
 // Parse a DATE column (YYYY-MM-DD) into a local Date (avoids timezone day-shift)
 function parseDateOnly(dateStr: string): Date {
@@ -112,6 +113,9 @@ export function useTasks() {
         let normalizedStatus = t.status.replace('_', '-');
         if (normalizedStatus === 'todo') normalizedStatus = 'not-started';
         
+        // Parse recurrence settings from DB columns
+        const recurrence = dbToRecurrence(t as any);
+        
         return {
           id: t.id,
           title: t.title,
@@ -124,6 +128,8 @@ export function useTasks() {
           projectId: t.project_id || undefined,
           tags: t.tags || [],
           isRecurring: t.is_recurring,
+          recurrence,
+          parentTaskId: (t as any).parent_task_id || undefined,
           progress: t.progress || 0,
           estimatedTime: t.estimated_time ? parseInt(t.estimated_time) : undefined,
           completedAt: t.completed_at ? new Date(t.completed_at) : undefined,
@@ -143,6 +149,9 @@ export function useCreateTask() {
   
   return useMutation({
     mutationFn: async (task: Partial<Task> & { title: string }) => {
+      // Get recurrence DB fields
+      const recurrenceFields = recurrenceToDb(task.recurrence);
+      
       // Insert task
       const { data: newTask, error: taskError } = await supabase
         .from('tasks')
@@ -159,6 +168,7 @@ export function useCreateTask() {
           progress: task.progress || 0,
           estimated_time: task.estimatedTime?.toString() || null,
           how_to_link: task.howToLink || null,
+          ...recurrenceFields,
         })
         .select()
         .single();
@@ -234,6 +244,12 @@ export function useUpdateTask() {
       }
       if (updates.howToLink !== undefined) updateData.how_to_link = updates.howToLink || null;
       
+      // Handle recurrence settings
+      if (updates.recurrence !== undefined) {
+        const recurrenceFields = recurrenceToDb(updates.recurrence);
+        Object.assign(updateData, recurrenceFields);
+      }
+      
       // Update task if there are fields to update
       if (Object.keys(updateData).length > 0) {
         const { error: taskError } = await supabase
@@ -271,6 +287,113 @@ export function useUpdateTask() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-projects'] });
+    },
+  });
+}
+
+// Complete a recurring task and create next instance
+export function useCompleteRecurringTask() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ task }: { task: Task }) => {
+      // First, mark the current task as done
+      const { error: updateError } = await supabase
+        .from('tasks')
+        .update({
+          status: 'done',
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', task.id);
+      
+      if (updateError) throw updateError;
+      
+      // Check if we should create a next instance
+      if (!task.isRecurring || !task.recurrence || !task.dueDate) {
+        return { taskId: task.id, nextTask: null };
+      }
+      
+      // Calculate next due date
+      const nextDueDate = getNextRecurrenceDate(task.recurrence, task.dueDate);
+      
+      if (!nextDueDate) {
+        // Recurrence has ended
+        return { taskId: task.id, nextTask: null, seriesEnded: true };
+      }
+      
+      // Get parent task ID (either current task or the original parent)
+      const parentId = task.parentTaskId || task.id;
+      
+      // Get current recurrence index
+      const { data: siblingTasks } = await supabase
+        .from('tasks')
+        .select('recurrence_index')
+        .or(`id.eq.${parentId},parent_task_id.eq.${parentId}`)
+        .order('recurrence_index', { ascending: false })
+        .limit(1);
+      
+      const nextIndex = ((siblingTasks?.[0] as any)?.recurrence_index || 0) + 1;
+      
+      // Get assignees from current task
+      const { data: currentAssignees } = await supabase
+        .from('task_assignees')
+        .select('user_name')
+        .eq('task_id', task.id);
+      
+      // Get recurrence fields from parent
+      const recurrenceFields = recurrenceToDb(task.recurrence);
+      
+      // Create new task instance
+      const { data: newTask, error: insertError } = await supabase
+        .from('tasks')
+        .insert({
+          title: task.title,
+          description: task.description || null,
+          status: 'not_started',
+          effort: task.effort,
+          importance: task.importance,
+          due_date: formatDateForDB(nextDueDate),
+          project_id: task.projectId || null,
+          tags: task.tags || [],
+          is_recurring: true,
+          progress: 0,
+          estimated_time: task.estimatedTime?.toString() || null,
+          how_to_link: task.howToLink || null,
+          parent_task_id: parentId,
+          recurrence_index: nextIndex,
+          ...recurrenceFields,
+        })
+        .select()
+        .single();
+      
+      if (insertError) throw insertError;
+      
+      // Copy assignees to new task
+      if (currentAssignees && currentAssignees.length > 0) {
+        await supabase.from('task_assignees').insert(
+          currentAssignees.map(a => ({
+            task_id: newTask.id,
+            user_name: a.user_name,
+          }))
+        );
+      }
+      
+      // Log activity
+      await supabase.from('activity_log').insert({
+        user_name: 'You',
+        action: 'created recurring instance',
+        target_type: 'task',
+        target_title: task.title,
+        target_id: newTask.id,
+      });
+      
+      return { taskId: task.id, nextTask: newTask };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
     },
   });
 }

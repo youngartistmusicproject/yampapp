@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { useDashboard, formatRelativeTime, formatEventDate } from "@/hooks/useDashboard";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
-import { useTasks, useUpdateTask } from "@/hooks/useWorkManagement";
+import { useTasks, useUpdateTask, useCompleteRecurringTask } from "@/hooks/useWorkManagement";
 import { format } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -49,6 +49,7 @@ export default function Dashboard() {
   
   const { data: fullTasks = [] } = useTasks();
   const updateTask = useUpdateTask();
+  const completeRecurringTask = useCompleteRecurringTask();
   const { events, isLoading: eventsLoading } = useGoogleCalendar();
   
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
@@ -69,6 +70,31 @@ export default function Dashboard() {
   };
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
+    // Find the task to check if it's recurring
+    const task = fullTasks.find(t => t.id === taskId);
+    
+    // If marking a recurring task as done, use the special hook
+    if (updates.status === 'done' && task?.isRecurring && task?.recurrence) {
+      completeRecurringTask.mutate({ task }, {
+        onSuccess: (result) => {
+          refetch();
+          if (result.nextTask) {
+            toast.success('Recurring task completed! Next instance created.');
+          } else if ((result as any).seriesEnded) {
+            toast.success('Recurring task series completed!');
+          }
+        },
+        onError: () => {
+          toast.error('Failed to complete recurring task');
+        },
+      });
+      
+      if (viewingTask?.id === taskId) {
+        setViewingTask(prev => prev ? { ...prev, ...updates } : null);
+      }
+      return;
+    }
+    
     updateTask.mutate({ taskId, updates }, {
       onSuccess: () => {
         refetch();

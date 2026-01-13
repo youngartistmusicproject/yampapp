@@ -536,9 +536,16 @@ export type Database = {
           id: string
           importance: string | null
           is_recurring: boolean
+          parent_task_id: string | null
           priority: string
           progress: number
           project_id: string | null
+          recurrence_day_of_month: number | null
+          recurrence_days_of_week: number[] | null
+          recurrence_end_date: string | null
+          recurrence_frequency: string | null
+          recurrence_index: number | null
+          recurrence_interval: number | null
           sort_order: number | null
           status: string
           tags: string[] | null
@@ -557,9 +564,16 @@ export type Database = {
           id?: string
           importance?: string | null
           is_recurring?: boolean
+          parent_task_id?: string | null
           priority?: string
           progress?: number
           project_id?: string | null
+          recurrence_day_of_month?: number | null
+          recurrence_days_of_week?: number[] | null
+          recurrence_end_date?: string | null
+          recurrence_frequency?: string | null
+          recurrence_index?: number | null
+          recurrence_interval?: number | null
           sort_order?: number | null
           status?: string
           tags?: string[] | null
@@ -578,9 +592,16 @@ export type Database = {
           id?: string
           importance?: string | null
           is_recurring?: boolean
+          parent_task_id?: string | null
           priority?: string
           progress?: number
           project_id?: string | null
+          recurrence_day_of_month?: number | null
+          recurrence_days_of_week?: number[] | null
+          recurrence_end_date?: string | null
+          recurrence_frequency?: string | null
+          recurrence_index?: number | null
+          recurrence_interval?: number | null
           sort_order?: number | null
           status?: string
           tags?: string[] | null
@@ -588,6 +609,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
