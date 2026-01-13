@@ -211,48 +211,46 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="px-6 py-5 space-y-5">
-            {/* Project & Title row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Project <span className="text-destructive">*</span></Label>
-                <Select 
-                  value={selectedProjectId || "none"} 
-                  onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
-                >
-                  <SelectTrigger className="h-10 text-sm border-border/50 bg-transparent">
-                    <SelectValue placeholder="Select a project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No Project</SelectItem>
-                    {(projects || []).map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        <span className="flex items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 rounded-full"
-                            style={{ backgroundColor: p.color }}
-                          />
-                          <span>{p.name}</span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Project */}
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Project <span className="text-destructive">*</span></Label>
+              <Select 
+                value={selectedProjectId || "none"} 
+                onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
+              >
+                <SelectTrigger className="h-10 text-sm border-border/50 bg-transparent">
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Project</SelectItem>
+                  {(projects || []).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: p.color }}
+                        />
+                        <span>{p.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* Title */}
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Task <span className="text-destructive">*</span></Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="What needs to get done?"
-                  className={cn(
-                    "h-10 text-sm border-border/50 bg-transparent",
-                    hasAttemptedSubmit && validationErrors.title && "border-destructive"
-                  )}
-                />
-              </div>
+            {/* Task Title - own row */}
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Task <span className="text-destructive">*</span></Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="What needs to get done?"
+                className={cn(
+                  "h-10 text-sm border-border/50 bg-transparent",
+                  hasAttemptedSubmit && validationErrors.title && "border-destructive"
+                )}
+              />
             </div>
 
             {/* Description */}
@@ -268,57 +266,54 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
               />
             </div>
 
-            {/* Due Date & Assignees row */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Due Date with NLP */}
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Due Date <span className="text-destructive">*</span></Label>
-                <div className="flex items-center gap-2">
-                  <NaturalDateInput
-                    value={dueDate}
-                    onChange={setDueDate}
-                    placeholder="e.g. next friday, Apr 15"
-                    hasError={hasAttemptedSubmit && !!validationErrors.dueDate}
-                    className="flex-1 h-10"
-                  />
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant={isRecurring ? "default" : "ghost"}
-                        size="icon"
-                        className="h-10 w-10 shrink-0"
-                      >
-                        <Repeat className="w-4 h-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-72 z-[70]" align="end">
-                      <RecurrenceSettings
-                        isRecurring={isRecurring}
-                        onIsRecurringChange={handleToggleRecurring}
-                        recurrence={recurrence}
-                        onRecurrenceChange={setRecurrence}
-                        compact
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+            {/* Due Date - full width for natural language */}
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Due Date <span className="text-destructive">*</span></Label>
+              <div className="flex items-center gap-2">
+                <NaturalDateInput
+                  value={dueDate}
+                  onChange={setDueDate}
+                  placeholder="e.g. next friday, April 15, in 3 days"
+                  hasError={hasAttemptedSubmit && !!validationErrors.dueDate}
+                  className="flex-1 h-10"
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant={isRecurring ? "default" : "ghost"}
+                      size="icon"
+                      className="h-10 w-10 shrink-0"
+                    >
+                      <Repeat className="w-4 h-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 z-[70]" align="end">
+                    <RecurrenceSettings
+                      isRecurring={isRecurring}
+                      onIsRecurringChange={handleToggleRecurring}
+                      recurrence={recurrence}
+                      onRecurrenceChange={setRecurrence}
+                      compact
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
+            </div>
 
-              {/* Assignees */}
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Responsible <span className="text-destructive">*</span></Label>
-                <div className={cn(
-                  "rounded-md",
-                  hasAttemptedSubmit && validationErrors.assignees && "ring-1 ring-destructive"
-                )}>
-                  <SearchableAssigneeSelect
-                    members={availableMembers}
-                    selectedAssignees={selectedAssignees}
-                    onAssigneesChange={setSelectedAssignees}
-                    placeholder="Add..."
-                  />
-                </div>
+            {/* Assignees - full width */}
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Responsible <span className="text-destructive">*</span></Label>
+              <div className={cn(
+                "rounded-md",
+                hasAttemptedSubmit && validationErrors.assignees && "ring-1 ring-destructive"
+              )}>
+                <SearchableAssigneeSelect
+                  members={availableMembers}
+                  selectedAssignees={selectedAssignees}
+                  onAssigneesChange={setSelectedAssignees}
+                  placeholder="Add..."
+                />
               </div>
             </div>
 
@@ -331,8 +326,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             {/* Separator */}
             <Separator className="my-2" />
 
-            {/* Effort, Importance, Tags - 3 columns */}
-            <div className="grid grid-cols-3 gap-4">
+            {/* Effort & Importance - 2 columns */}
+            <div className="grid grid-cols-2 gap-4">
               {/* Effort */}
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
@@ -414,17 +409,17 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
-              {/* Tags */}
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Tags</Label>
-                <SearchableTagSelect
-                  tags={tagLibrary}
-                  selectedTags={selectedTags}
-                  onTagsChange={setSelectedTags}
-                  placeholder="Add tags..."
-                />
-              </div>
+            {/* Tags - own row */}
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Tags</Label>
+              <SearchableTagSelect
+                tags={tagLibrary}
+                selectedTags={selectedTags}
+                onTagsChange={setSelectedTags}
+                placeholder="Add tags..."
+              />
             </div>
 
             {/* Connect SOP */}
