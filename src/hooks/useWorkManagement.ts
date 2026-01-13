@@ -83,11 +83,11 @@ export function useTasks() {
   return useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
-      // Fetch tasks
+      // Fetch tasks - order by sort_order for manual sorting
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
-        .order('due_date', { ascending: true, nullsFirst: false });
+        .order('sort_order', { ascending: true, nullsFirst: false });
       
       if (tasksError) throw tasksError;
       
@@ -127,6 +127,7 @@ export function useTasks() {
           progress: t.progress || 0,
           estimatedTime: t.estimated_time ? parseInt(t.estimated_time) : undefined,
           completedAt: t.completed_at ? new Date(t.completed_at) : undefined,
+          sortOrder: t.sort_order || 0,
           createdAt: new Date(t.created_at),
           updatedAt: new Date(t.updated_at),
         };
@@ -225,6 +226,7 @@ export function useUpdateTask() {
       if (updates.isRecurring !== undefined) updateData.is_recurring = updates.isRecurring;
       if (updates.progress !== undefined) updateData.progress = updates.progress;
       if (updates.estimatedTime !== undefined) updateData.estimated_time = updates.estimatedTime?.toString() || null;
+      if (updates.sortOrder !== undefined) updateData.sort_order = updates.sortOrder;
       if (updates.completedAt !== undefined) {
         updateData.completed_at = updates.completedAt ? updates.completedAt.toISOString() : null;
       }
@@ -266,6 +268,32 @@ export function useUpdateTask() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-projects'] });
+    },
+  });
+}
+
+// Reorder tasks (batch update sort_order)
+export function useReorderTasks() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (updates: { taskId: string; sortOrder: number }[]) => {
+      // Update each task's sort_order
+      const promises = updates.map(({ taskId, sortOrder }) => 
+        supabase
+          .from('tasks')
+          .update({ sort_order: sortOrder })
+          .eq('id', taskId)
+      );
+      
+      const results = await Promise.all(promises);
+      const error = results.find(r => r.error)?.error;
+      if (error) throw error;
+      
+      return updates;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 }
