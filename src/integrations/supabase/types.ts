@@ -492,6 +492,7 @@ export type Database = {
           name: string
           sort_order: number | null
           status: string
+          tags: string[] | null
           updated_at: string
         }
         Insert: {
@@ -503,6 +504,7 @@ export type Database = {
           name: string
           sort_order?: number | null
           status?: string
+          tags?: string[] | null
           updated_at?: string
         }
         Update: {
@@ -514,6 +516,7 @@ export type Database = {
           name?: string
           sort_order?: number | null
           status?: string
+          tags?: string[] | null
           updated_at?: string
         }
         Relationships: []

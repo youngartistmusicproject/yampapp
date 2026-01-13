@@ -1,19 +1,17 @@
 import { User } from "@/types";
 
-// Predefined tag library - only admins can modify this list
+// Department tags - admin-configurable labels for categorizing work
 export const tagLibrary = [
-  { id: "teaching", name: "Teaching", color: "#3b82f6" },
-  { id: "planning", name: "Planning", color: "#8b5cf6" },
-  { id: "admin", name: "Admin", color: "#6b7280" },
-  { id: "reports", name: "Reports", color: "#f59e0b" },
-  { id: "communication", name: "Communication", color: "#10b981" },
-  { id: "parents", name: "Parents", color: "#ec4899" },
-  { id: "supplies", name: "Supplies", color: "#14b8a6" },
-  { id: "recital", name: "Recital", color: "#eb5c5c" },
-  { id: "design", name: "Design", color: "#a855f7" },
-  { id: "urgent", name: "Urgent", color: "#ef4444" },
-  { id: "meeting", name: "Meeting", color: "#0ea5e9" },
-  { id: "curriculum", name: "Curriculum", color: "#84cc16" },
+  { id: "operations", name: "Operations", color: "#3b82f6" },
+  { id: "finance", name: "Finance", color: "#10b981" },
+  { id: "marketing", name: "Marketing", color: "#ec4899" },
+  { id: "human-resources", name: "Human Resources", color: "#8b5cf6" },
+  { id: "sales", name: "Sales", color: "#f59e0b" },
+  { id: "engineering", name: "Engineering", color: "#0ea5e9" },
+  { id: "customer-support", name: "Customer Support", color: "#14b8a6" },
+  { id: "legal", name: "Legal", color: "#6b7280" },
+  { id: "product", name: "Product", color: "#84cc16" },
+  { id: "executive", name: "Executive", color: "#ef4444" },
 ];
 
 export type TagItem = (typeof tagLibrary)[number];

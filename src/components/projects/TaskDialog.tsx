@@ -25,7 +25,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
+import { effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { RecurrenceSettings } from "./RecurrenceSettings";
@@ -38,6 +38,12 @@ export interface StatusItem {
   color: string;
 }
 
+export interface TagItem {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface TaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -45,10 +51,11 @@ interface TaskDialogProps {
   availableMembers: User[];
   statuses: StatusItem[];
   projects: Project[];
+  tags: TagItem[];
   task?: Task; // For editing
 }
 
-export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, statuses, projects, task }: TaskDialogProps) {
+export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, statuses, projects, tags, task }: TaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<string>("not-started");
@@ -439,7 +446,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 <Label className="text-sm text-muted-foreground w-28 shrink-0">Tags</Label>
                 <div className="flex-1">
                   <SearchableTagSelect
-                    tags={tagLibrary}
+                    tags={tags}
                     selectedTags={selectedTags}
                     onTagsChange={setSelectedTags}
                     placeholder="Add tags..."
