@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { TaskKanban } from "@/components/projects/TaskKanban";
 import { TaskDialog } from "@/components/projects/TaskDialog";
 import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
+import { TeamDialog } from "@/components/projects/TeamDialog";
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
 import { CompletedTasksPanel } from "@/components/projects/CompletedTasksPanel";
@@ -33,7 +34,7 @@ import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
-import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useReorderTasks, useCompleteRecurringTask } from "@/hooks/useWorkManagement";
+import { useTasks, useProjects, useTeams, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useCreateTeam, useReorderTasks, useCompleteRecurringTask } from "@/hooks/useWorkManagement";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
@@ -48,12 +49,14 @@ export default function Projects() {
   const deleteTask = useDeleteTask();
   const duplicateTask = useDuplicateTask();
   const createProject = useCreateProject();
+  const createTeam = useCreateTeam();
   const reorderTasks = useReorderTasks();
   const completeRecurringTask = useCompleteRecurringTask();
   
   const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [teamDialogOpen, setTeamDialogOpen] = useState(false);
   const [statusManagerOpen, setStatusManagerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
@@ -565,6 +568,20 @@ export default function Projects() {
     });
   };
 
+  const handleAddTeam = (newTeam: { name: string; description?: string; color: string }) => {
+    createTeam.mutate({
+      name: newTeam.name,
+      description: newTeam.description,
+      color: newTeam.color,
+    }, {
+      onSuccess: () => {
+        toast.success('Team created');
+        setTeamDialogOpen(false);
+      },
+      onError: () => toast.error('Failed to create team'),
+    });
+  };
+
   const isLoading = tasksLoading || projectsLoading;
 
   // Get current team/project names for display
@@ -674,6 +691,15 @@ export default function Projects() {
             onClick={() => setStatusManagerOpen(true)}
           >
             <Settings2 className="w-3.5 h-3.5" />
+          </Button>
+
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground" 
+            onClick={() => setTeamDialogOpen(true)}
+          >
+            <Users className="w-3.5 h-3.5" />
           </Button>
 
           <Button 
@@ -1030,6 +1056,13 @@ export default function Projects() {
         onOpenChange={setStatusManagerOpen}
         statuses={statuses}
         onStatusesChange={setStatuses}
+      />
+
+      {/* Team Dialog */}
+      <TeamDialog
+        open={teamDialogOpen}
+        onOpenChange={setTeamDialogOpen}
+        onSubmit={handleAddTeam}
       />
     </div>
   );

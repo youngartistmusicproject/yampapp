@@ -44,9 +44,45 @@ export function useTeams() {
       return data.map(team => ({
         id: team.id,
         name: team.name,
-        color: '#6366f1', // Default color since DB doesn't have it
+        color: team.color || '#6366f1',
         description: team.description,
       }));
+    },
+  });
+}
+
+// Create a new team
+export function useCreateTeam() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (team: { name: string; description?: string; color?: string }) => {
+      const { data, error } = await supabase
+        .from('teams')
+        .insert({
+          name: team.name,
+          description: team.description || null,
+          color: team.color || '#6366f1',
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Log activity
+      await supabase.from('activity_log').insert({
+        user_name: 'You',
+        action: 'created team',
+        target_type: 'team',
+        target_title: team.name,
+        target_id: data.id,
+      });
+      
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
     },
   });
 }
