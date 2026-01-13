@@ -133,6 +133,7 @@ export function useTasks() {
           progress: t.progress || 0,
           estimatedTime: t.estimated_time ? parseInt(t.estimated_time) : undefined,
           completedAt: t.completed_at ? new Date(t.completed_at) : undefined,
+          archivedAt: (t as any).archived_at ? new Date((t as any).archived_at) : undefined,
           sortOrder: t.sort_order || 0,
           howToLink: (t as any).how_to_link || undefined,
           createdAt: new Date(t.created_at),
@@ -241,6 +242,9 @@ export function useUpdateTask() {
       if (updates.sortOrder !== undefined) updateData.sort_order = updates.sortOrder;
       if (updates.completedAt !== undefined) {
         updateData.completed_at = updates.completedAt ? updates.completedAt.toISOString() : null;
+      }
+      if ((updates as any).archivedAt !== undefined) {
+        (updateData as any).archived_at = (updates as any).archivedAt ? (updates as any).archivedAt.toISOString() : null;
       }
       if (updates.howToLink !== undefined) updateData.how_to_link = updates.howToLink || null;
       
