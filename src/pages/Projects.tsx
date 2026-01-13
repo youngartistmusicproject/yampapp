@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, X, GripVertical } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, CheckCircle2, RotateCcw, Settings2, ListTodo, X, GripVertical, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
-import { TeamsProjectsHeader } from "@/components/projects/TeamsProjectsHeader";
 import { Task, Project, User, TaskComment } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +21,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -108,6 +114,12 @@ export default function Projects() {
       createdAt: p.createdAt,
     }));
   }, [dbProjects]);
+
+  // Get filtered projects for selected team
+  const filteredProjects = useMemo(() => {
+    if (selectedTeam === "all") return projects;
+    return projects.filter((p) => p.teamId === selectedTeam);
+  }, [projects, selectedTeam]);
 
   // Get all available tags from tasks and tag library
   const availableTags = useMemo(() => {
@@ -420,26 +432,39 @@ export default function Projects() {
 
   const isLoading = tasksLoading || projectsLoading;
 
+  // Get current team/project names for display
+  const currentTeamName = selectedTeam === "all" 
+    ? "All Teams" 
+    : dbTeams.find(t => t.id === selectedTeam)?.name || "Team";
+  
+  const currentProjectName = selectedProject === "all"
+    ? "All Projects"
+    : projects.find(p => p.id === selectedProject)?.name || "Project";
+
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in">
-      {/* Page Header */}
-      <div className="flex items-start sm:items-center justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Work Management</h1>
-          <p className="text-sm text-muted-foreground mt-1 hidden sm:block">Manage all your projects and tasks in one place</p>
+    <div className="space-y-8 animate-fade-in">
+      {/* Page Header - Spacious */}
+      <div className="flex items-start justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight">
+            Work Management
+          </h1>
+          <p className="text-muted-foreground">
+            Manage your projects and tasks
+          </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="icon" className="rounded-full h-10 w-10 flex-shrink-0">
+            <Button size="icon" className="rounded-full h-11 w-11 flex-shrink-0 shadow-md">
               <Plus className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTaskDialogOpen(true)} className="gap-2">
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={() => setTaskDialogOpen(true)} className="gap-2.5 py-2.5">
               <ListTodo className="w-4 h-4" />
               New Task
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setProjectDialogOpen(true)} className="gap-2">
+            <DropdownMenuItem onClick={() => setProjectDialogOpen(true)} className="gap-2.5 py-2.5">
               <FolderPlus className="w-4 h-4" />
               New Project
             </DropdownMenuItem>
@@ -447,114 +472,148 @@ export default function Projects() {
         </DropdownMenu>
       </div>
 
-      {/* Teams & Projects Header */}
-      <TeamsProjectsHeader
-        teams={dbTeams}
-        projects={projects}
-        tasks={dbTasks}
-        selectedTeam={selectedTeam}
-        selectedProject={selectedProject}
-        onTeamSelect={setSelectedTeam}
-        onProjectSelect={setSelectedProject}
-        doneStatusId={doneStatusId}
-      />
+      {/* Filters Bar - Spacious with dropdowns */}
+      <div className="space-y-6">
+        {/* Team & Project Dropdowns + Search */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex gap-3">
+            {/* Team Dropdown */}
+            <Select 
+              value={selectedTeam} 
+              onValueChange={(val) => {
+                setSelectedTeam(val);
+                setSelectedProject("all");
+              }}
+            >
+              <SelectTrigger className="w-[160px] bg-background">
+                <SelectValue placeholder="Select team" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Teams</SelectItem>
+                {dbTeams.map((team) => (
+                  <SelectItem key={team.id} value={team.id}>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: team.color }}
+                      />
+                      {team.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-      {/* Quick Date Filters - Minimal inline tabs */}
-      <div className="flex items-center gap-4 text-sm overflow-x-auto pb-1 scrollbar-none">
-        <button
-          onClick={() => setQuickFilter('all')}
-          className={cn(
-            "font-medium transition-colors whitespace-nowrap",
-            quickFilter === 'all'
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          All
-        </button>
-        <button
-          onClick={() => setQuickFilter('overdue')}
-          className={cn(
-            "font-medium transition-colors whitespace-nowrap flex items-center gap-1",
-            quickFilter === 'overdue'
-              ? "text-foreground"
-              : quickFilterCounts.overdue > 0
-                ? "text-destructive"
-                : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Overdue
-          {quickFilterCounts.overdue > 0 && (
-            <span className={cn(
-              "text-xs tabular-nums",
-              quickFilter === 'overdue' ? "text-muted-foreground" : "text-destructive"
-            )}>
-              {quickFilterCounts.overdue}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setQuickFilter('today')}
-          className={cn(
-            "font-medium transition-colors whitespace-nowrap flex items-center gap-1",
-            quickFilter === 'today'
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Today
-          {quickFilterCounts.today > 0 && (
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {quickFilterCounts.today}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setQuickFilter('tomorrow')}
-          className={cn(
-            "font-medium transition-colors whitespace-nowrap flex items-center gap-1",
-            quickFilter === 'tomorrow'
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Tomorrow
-          {quickFilterCounts.tomorrow > 0 && (
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {quickFilterCounts.tomorrow}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setQuickFilter('upcoming')}
-          className={cn(
-            "font-medium transition-colors whitespace-nowrap flex items-center gap-1",
-            quickFilter === 'upcoming'
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          7 Days
-          {quickFilterCounts.upcoming > 0 && (
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {quickFilterCounts.upcoming}
-            </span>
-          )}
-        </button>
-      </div>
+            {/* Project Dropdown */}
+            <Select value={selectedProject} onValueChange={setSelectedProject}>
+              <SelectTrigger className="w-[180px] bg-background">
+                <SelectValue placeholder="Select project" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Projects</SelectItem>
+                {filteredProjects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: project.color }}
+                      />
+                      {project.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search tasks..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          {/* Search */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search tasks..."
+              className="pl-9 bg-background"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+
+        {/* Quick Filter Chips */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setQuickFilter('all')}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+              quickFilter === 'all'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            All Tasks
+          </button>
+          <button
+            onClick={() => setQuickFilter('overdue')}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5",
+              quickFilter === 'overdue'
+                ? "bg-destructive text-destructive-foreground shadow-sm"
+                : quickFilterCounts.overdue > 0
+                  ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            Overdue
+            {quickFilterCounts.overdue > 0 && (
+              <span className="text-xs tabular-nums">{quickFilterCounts.overdue}</span>
+            )}
+          </button>
+          <button
+            onClick={() => setQuickFilter('today')}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5",
+              quickFilter === 'today'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            Today
+            {quickFilterCounts.today > 0 && (
+              <span className="text-xs tabular-nums opacity-70">{quickFilterCounts.today}</span>
+            )}
+          </button>
+          <button
+            onClick={() => setQuickFilter('tomorrow')}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5",
+              quickFilter === 'tomorrow'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            Tomorrow
+            {quickFilterCounts.tomorrow > 0 && (
+              <span className="text-xs tabular-nums opacity-70">{quickFilterCounts.tomorrow}</span>
+            )}
+          </button>
+          <button
+            onClick={() => setQuickFilter('upcoming')}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5",
+              quickFilter === 'upcoming'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            Next 7 Days
+            {quickFilterCounts.upcoming > 0 && (
+              <span className="text-xs tabular-nums opacity-70">{quickFilterCounts.upcoming}</span>
+            )}
+          </button>
+
+          {/* Divider */}
+          <div className="h-5 w-px bg-border mx-1" />
+
+          {/* Advanced Filters & Actions */}
           <TaskFilterPanel
             filters={filters}
             onFiltersChange={setFilters}
@@ -563,17 +622,23 @@ export default function Projects() {
             availableTags={availableTags}
           />
           
-          <Button variant="outline" size="sm" className="gap-2 flex-shrink-0" onClick={() => setStatusManagerOpen(true)}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-1.5 text-muted-foreground hover:text-foreground" 
+            onClick={() => setStatusManagerOpen(true)}
+          >
             <Settings2 className="w-4 h-4" />
             <span className="hidden sm:inline">Stages</span>
           </Button>
+
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 flex-shrink-0">
+              <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground">
                 <CheckCircle2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Completed</span>
                 {completedTasks.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                  <Badge variant="secondary" className="h-5 px-1.5 text-xs">
                     {completedTasks.length}
                   </Badge>
                 )}
@@ -630,9 +695,9 @@ export default function Projects() {
       </div>
 
       {/* Views */}
-      <Tabs defaultValue="table" className="space-y-4">
+      <Tabs defaultValue="table" className="space-y-6">
         <div className="flex items-center gap-3">
-          <TabsList>
+          <TabsList className="bg-muted/50">
             <TabsTrigger value="table" className="gap-2">
               <List className="w-4 h-4" />
               Table
@@ -663,7 +728,7 @@ export default function Projects() {
           )}
         </div>
 
-        <TabsContent value="table" className="mt-4">
+        <TabsContent value="table" className="mt-0">
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map(i => (
@@ -694,7 +759,7 @@ export default function Projects() {
           )}
         </TabsContent>
 
-        <TabsContent value="kanban" className="mt-4">
+        <TabsContent value="kanban" className="mt-0">
           {isLoading ? (
             <div className="flex gap-4">
               {[1, 2, 3, 4].map(i => (
@@ -715,7 +780,7 @@ export default function Projects() {
           )}
         </TabsContent>
 
-        <TabsContent value="timeline" className="mt-4">
+        <TabsContent value="timeline" className="mt-0">
           <div className="flex items-center justify-center h-64 text-muted-foreground">
             <p>Timeline view coming soon</p>
           </div>
