@@ -63,6 +63,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
   const [recurrence, setRecurrence] = useState<RecurrenceSettingsType | undefined>();
   const [howToLink, setHowToLink] = useState("");
   const [howToLinkError, setHowToLinkError] = useState("");
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   const isEditing = !!task;
 
@@ -111,6 +113,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     setRecurrence(undefined);
     setHowToLink("");
     setHowToLinkError("");
+    setValidationErrors({});
+    setHasAttemptedSubmit(false);
   };
 
   const isValidUrl = (url: string): boolean => {
@@ -132,20 +136,39 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateForm = (): Record<string, string> => {
+    const errors: Record<string, string> = {};
     
-    // Validate required fields
+    if (!title.trim()) {
+      errors.title = "Task title is required";
+    }
     if (!dueDate) {
-      return;
+      errors.dueDate = "Due date is required";
     }
     if (selectedAssignees.length === 0) {
-      return;
+      errors.assignees = "At least one assignee is required";
+    }
+    if (!effort) {
+      errors.effort = "Effort is required";
+    }
+    if (!importance) {
+      errors.importance = "Importance is required";
+    }
+    if (howToLink.trim() && !isValidUrl(howToLink)) {
+      errors.howToLink = "Please enter a valid URL (e.g., https://example.com)";
     }
     
-    // Validate URL before submitting
-    if (howToLink.trim() && !isValidUrl(howToLink)) {
-      setHowToLinkError("Please enter a valid URL (e.g., https://example.com)");
+    return errors;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setHasAttemptedSubmit(true);
+    
+    const errors = validateForm();
+    setValidationErrors(errors);
+    
+    if (Object.keys(errors).length > 0) {
       return;
     }
     
@@ -223,8 +246,11 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                required
+                className={hasAttemptedSubmit && validationErrors.title ? "border-destructive focus-visible:ring-destructive" : ""}
               />
+              {hasAttemptedSubmit && validationErrors.title && (
+                <p className="text-xs text-destructive">{validationErrors.title}</p>
+              )}
             </div>
 
             {/* Description */}
@@ -249,7 +275,8 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                       variant="outline"
                       className={cn(
                         "w-[200px] justify-start text-left font-normal",
-                        !dueDate && "text-muted-foreground"
+                        !dueDate && "text-muted-foreground",
+                        hasAttemptedSubmit && validationErrors.dueDate && "border-destructive focus-visible:ring-destructive"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -293,17 +320,25 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   {getRecurrenceDescription(recurrence)}
                 </p>
               )}
+              {hasAttemptedSubmit && validationErrors.dueDate && (
+                <p className="text-xs text-destructive">{validationErrors.dueDate}</p>
+              )}
             </div>
 
             {/* Assignees */}
             <div className="space-y-2">
               <Label>Who is responsible for this task? <span className="text-destructive">*</span></Label>
-              <SearchableAssigneeSelect
-                members={availableMembers}
-                selectedAssignees={selectedAssignees}
-                onAssigneesChange={setSelectedAssignees}
-                placeholder="Search and select assignees..."
-              />
+              <div className={hasAttemptedSubmit && validationErrors.assignees ? "rounded-md ring-1 ring-destructive" : ""}>
+                <SearchableAssigneeSelect
+                  members={availableMembers}
+                  selectedAssignees={selectedAssignees}
+                  onAssigneesChange={setSelectedAssignees}
+                  placeholder="Search and select assignees..."
+                />
+              </div>
+              {hasAttemptedSubmit && validationErrors.assignees && (
+                <p className="text-xs text-destructive">{validationErrors.assignees}</p>
+              )}
             </div>
 
             {/* Separator */}
@@ -339,7 +374,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   </Popover>
                 </div>
                 <Select value={effort || ""} onValueChange={(v) => setEffort(v as Task["effort"])}>
-                  <SelectTrigger>
+                  <SelectTrigger className={hasAttemptedSubmit && validationErrors.effort ? "border-destructive focus-visible:ring-destructive" : ""}>
                     <SelectValue placeholder="Select effort" />
                   </SelectTrigger>
                   <SelectContent>
@@ -348,6 +383,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                     ))}
                   </SelectContent>
                 </Select>
+                {hasAttemptedSubmit && validationErrors.effort && (
+                  <p className="text-xs text-destructive">{validationErrors.effort}</p>
+                )}
               </div>
 
               {/* Importance */}
@@ -378,7 +416,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   </Popover>
                 </div>
                 <Select value={importance || ""} onValueChange={(v) => setImportance(v as Task["importance"])}>
-                  <SelectTrigger>
+                  <SelectTrigger className={hasAttemptedSubmit && validationErrors.importance ? "border-destructive focus-visible:ring-destructive" : ""}>
                     <SelectValue placeholder="Select importance" />
                   </SelectTrigger>
                   <SelectContent>
@@ -387,6 +425,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                     ))}
                   </SelectContent>
                 </Select>
+                {hasAttemptedSubmit && validationErrors.importance && (
+                  <p className="text-xs text-destructive">{validationErrors.importance}</p>
+                )}
               </div>
             </div>
 
