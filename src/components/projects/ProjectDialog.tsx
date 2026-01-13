@@ -276,13 +276,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                       } />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__all__">
-                        <span className="flex items-center gap-2">
-                          <Crown className="w-3 h-3 text-amber-600" />
-                          All Team Members
-                        </span>
-                      </SelectItem>
-                      {availableForOwner.map((member) => (
+                      {availableForOwner.filter(m => !selectedOwners.find(o => o.id === m.id)).map((member) => (
                         <SelectItem key={member.id} value={member.id}>
                           {member.name}
                         </SelectItem>
