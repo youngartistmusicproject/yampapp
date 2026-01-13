@@ -80,123 +80,123 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
-          <DialogDescription>
-            Create a new project and assign team members.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[640px] max-h-[90vh] overflow-y-auto p-0">
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="team">Team</Label>
-              <Select value={teamId} onValueChange={setTeamId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: team.color }}
-                        />
-                        {team.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Header area - matches TaskDialog */}
+          <div className="px-6 pt-6 pb-4 border-b border-border/50">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Project name"
+              className="w-full text-xl font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/60"
+              required
+            />
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add a description..."
+              rows={2}
+              className="w-full mt-2 text-sm text-muted-foreground bg-transparent border-none outline-none resize-none placeholder:text-muted-foreground/50"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="name">Project Name</Label>
-              <Input
-                id="name"
-                placeholder="Enter project name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe the project..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Project Color</Label>
-              <div className="flex gap-2 flex-wrap">
-                {projectColors.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setColor(c)}
-                    className={`w-8 h-8 rounded-full transition-all ${
-                      color === c ? "ring-2 ring-offset-2 ring-primary" : ""
-                    }`}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
+          {/* Form fields */}
+          <div className="px-6 py-5 space-y-4">
+            <div className="space-y-3">
+              {/* Team */}
+              <div className="flex items-center gap-3">
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">Team</Label>
+                <Select value={teamId} onValueChange={setTeamId}>
+                  <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent flex-1">
+                    <SelectValue placeholder="Select a team" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teams.map((team) => (
+                      <SelectItem key={team.id} value={team.id}>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: team.color }}
+                          />
+                          {team.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label>Assign Members</Label>
-              {selectedMembers.length > 0 && (
-                <div className="flex gap-2 flex-wrap mb-2">
-                  {selectedMembers.map((member) => (
-                    <Badge key={member.id} variant="secondary" className="gap-1 pr-1">
-                      {member.name}
-                      <button
-                        type="button"
-                        onClick={() => removeMember(member.id)}
-                        className="ml-1 hover:bg-muted rounded-full p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
+              {/* Project Color */}
+              <div className="flex items-center gap-3">
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">Color</Label>
+                <div className="flex gap-2 flex-wrap flex-1">
+                  {projectColors.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setColor(c)}
+                      className={`w-7 h-7 rounded-full transition-all ${
+                        color === c ? "ring-2 ring-offset-2 ring-primary" : ""
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
                   ))}
                 </div>
-              )}
-              <div className="border rounded-lg p-2 max-h-32 overflow-y-auto space-y-1">
-                {availableMembers.map((member) => (
-                  <button
-                    key={member.id}
-                    type="button"
-                    onClick={() => toggleMember(member)}
-                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
-                      selectedMembers.find((m) => m.id === member.id)
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-muted"
-                    }`}
-                  >
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
-                      {member.name.charAt(0)}
+              </div>
+
+              {/* Members */}
+              <div className="flex items-start gap-3">
+                <Label className="text-sm text-muted-foreground w-28 shrink-0 pt-2">Members</Label>
+                <div className="flex-1 space-y-2">
+                  {selectedMembers.length > 0 && (
+                    <div className="flex gap-2 flex-wrap">
+                      {selectedMembers.map((member) => (
+                        <Badge key={member.id} variant="secondary" className="gap-1 pr-1">
+                          {member.name}
+                          <button
+                            type="button"
+                            onClick={() => removeMember(member.id)}
+                            className="ml-1 hover:bg-muted rounded-full p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
                     </div>
-                    <span>{member.name}</span>
-                    <span className="text-muted-foreground text-xs ml-auto">{member.role}</span>
-                  </button>
-                ))}
+                  )}
+                  <div className="border border-border/50 rounded-lg p-2 max-h-32 overflow-y-auto space-y-1">
+                    {availableMembers.map((member) => (
+                      <button
+                        key={member.id}
+                        type="button"
+                        onClick={() => toggleMember(member)}
+                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors ${
+                          selectedMembers.find((m) => m.id === member.id)
+                            ? "bg-primary/10 text-primary"
+                            : "hover:bg-muted"
+                        }`}
+                      >
+                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
+                          {member.name.charAt(0)}
+                        </div>
+                        <span>{member.name}</span>
+                        <span className="text-muted-foreground text-xs ml-auto">{member.role}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <DialogFooter>
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-border/50 flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit">Create Project</Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
