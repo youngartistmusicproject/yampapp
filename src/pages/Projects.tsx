@@ -12,6 +12,7 @@ import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
 import { ProjectManagementPanel } from "@/components/projects/ProjectManagementPanel";
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
+import { TagManager, TagItem } from "@/components/projects/TagManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
 import { CompletedTasksPanel } from "@/components/projects/CompletedTasksPanel";
 import { Task, Project, User, TaskComment } from "@/types";
@@ -55,8 +56,10 @@ export default function Projects() {
   const reorderProjects = useReorderProjects();
   
   const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
+  const [tags, setTags] = useState<TagItem[]>(tagLibrary);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [statusManagerOpen, setStatusManagerOpen] = useState(false);
+  const [tagManagerOpen, setTagManagerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -140,13 +143,13 @@ export default function Projects() {
     localStorage.setItem('workManagement_selectedMember', selectedMember);
   }, [selectedMember]);
 
-  // Get all available tags from tasks and tag library
+  // Get all available tags from current tags state and tasks
   const availableTags = useMemo(() => {
     return Array.from(new Set([
-      ...tagLibrary.map(t => t.name.toLowerCase()),
+      ...tags.map(t => t.id),
       ...dbTasks.flatMap(t => t.tags || [])
     ]));
-  }, [dbTasks]);
+  }, [dbTasks, tags]);
 
   // Active tasks (not completed)
   const activeTasks = useMemo(() => dbTasks.filter(task => !task.completedAt), [dbTasks]);
@@ -631,17 +634,28 @@ export default function Projects() {
             onFiltersChange={setFilters}
             statuses={statuses}
             availableMembers={teamMembers}
-            availableTags={availableTags}
+            availableTags={tags.map(t => t.id)}
           />
           
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground" 
-            onClick={() => setStatusManagerOpen(true)}
-          >
-            <Settings2 className="w-3.5 h-3.5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground" 
+              >
+                <Settings2 className="w-3.5 h-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setStatusManagerOpen(true)}>
+                Manage Stages
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTagManagerOpen(true)}>
+                Manage Departments
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <ProjectManagementPanel
             projects={projects}
@@ -968,6 +982,7 @@ export default function Projects() {
         availableMembers={teamMembers}
         statuses={statuses}
         projects={projects}
+        tags={tags}
       />
 
       {/* Task Detail Dialog */}
@@ -992,6 +1007,14 @@ export default function Projects() {
         onOpenChange={setStatusManagerOpen}
         statuses={statuses}
         onStatusesChange={setStatuses}
+      />
+
+      {/* Tag Manager */}
+      <TagManager
+        open={tagManagerOpen}
+        onOpenChange={setTagManagerOpen}
+        tags={tags}
+        onTagsChange={setTags}
       />
     </div>
   );
