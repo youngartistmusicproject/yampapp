@@ -39,7 +39,7 @@ export interface StatusItem {
   color: string;
 }
 
-export type SortField = 'dueDate' | 'effort' | 'importance';
+export type SortField = 'dueDate' | 'effort' | 'importance' | 'stage' | 'estimatedTime';
 
 interface TaskTableProps {
   tasks: Task[];
@@ -195,10 +195,10 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-12"></TableHead>
               <TableHead>Task</TableHead>
-              <TableHead>Stage</TableHead>
-              <TableHead>
-                <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('effort')}>
-                  Effort <ArrowUpDown className={`w-3 h-3 ${sortField === 'effort' ? 'text-primary' : ''}`} />
+              <TableHead className="w-14">
+                <Button variant="ghost" size="sm" className="gap-1 -ml-3 p-1" onClick={() => onToggleSort?.('estimatedTime')}>
+                  <Clock className={`w-4 h-4 ${sortField === 'estimatedTime' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <ArrowUpDown className={`w-3 h-3 ${sortField === 'estimatedTime' ? 'text-primary' : ''}`} />
                 </Button>
               </TableHead>
               <TableHead>
@@ -206,8 +206,15 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                   Importance <ArrowUpDown className={`w-3 h-3 ${sortField === 'importance' ? 'text-primary' : ''}`} />
                 </Button>
               </TableHead>
-              <TableHead className="w-10">
-                <Clock className="w-4 h-4 text-muted-foreground" />
+              <TableHead>
+                <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('stage')}>
+                  Stage <ArrowUpDown className={`w-3 h-3 ${sortField === 'stage' ? 'text-primary' : ''}`} />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button variant="ghost" size="sm" className="gap-1 -ml-3" onClick={() => onToggleSort?.('effort')}>
+                  Effort <ArrowUpDown className={`w-3 h-3 ${sortField === 'effort' ? 'text-primary' : ''}`} />
+                </Button>
               </TableHead>
               <TableHead>Responsible</TableHead>
               <TableHead>
@@ -250,6 +257,14 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                     )}
                   </div>
                 </TableCell>
+                <TableCell className="text-muted-foreground text-sm">
+                  {task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : "-"}
+                </TableCell>
+                <TableCell>
+                  <Badge className={importanceColors[task.importance]} variant="secondary">
+                    {task.importance}
+                  </Badge>
+                </TableCell>
                 <TableCell>
                   {(() => {
                     const status = getStatusById(task.status);
@@ -270,14 +285,6 @@ export function TaskTable({ tasks, onTaskUpdate, onEditTask, onViewTask, onDelet
                   <Badge className={effortColors[task.effort]} variant="secondary">
                     {task.effort}
                   </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={importanceColors[task.importance]} variant="secondary">
-                    {task.importance}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
-                  {task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : "-"}
                 </TableCell>
                 <TableCell>
                   <UserAvatarGroup users={task.assignees} max={3} size="md" />
