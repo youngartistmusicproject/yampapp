@@ -166,10 +166,10 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
               onOpenChange={() => toggleColumnCollapse(column.id)}
             >
               <div
-                className={`bg-secondary/30 rounded-lg p-3 flex-shrink-0 transition-all duration-200 ${
+                className={`bg-secondary/30 rounded-lg p-3 flex-shrink-0 transition-all duration-200 h-full flex flex-col ${
                   isCollapsed ? "w-12" : "w-[320px]"
                 } ${
-                  dragOverColumn === column.id && !isCollapsed
+                  dragOverColumn === column.id
                     ? "bg-primary/10 ring-2 ring-primary/50 ring-dashed"
                     : ""
                 }`}
@@ -214,8 +214,8 @@ export function TaskKanban({ tasks, onTaskUpdate, onEditTask, onViewTask, onDele
                   </div>
                 </CollapsibleTrigger>
 
-                <CollapsibleContent>
-                  <div className="space-y-2">
+                <CollapsibleContent className="h-full flex-1">
+                  <div className="space-y-2 min-h-[100px] h-full">
                     {columnTasks.map((task) => {
                       const overdue = isTaskOverdue(task);
                       return (
