@@ -834,15 +834,15 @@ export function TaskDetailDialog({
                 </Popover>
               </div>
 
-              {/* Tags Row */}
+              {/* Areas Row */}
               <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground w-28 shrink-0">Tags</span>
+                <span className="text-sm text-muted-foreground w-28 shrink-0">Areas</span>
                 <div className="flex-1">
                   <SearchableTagSelect
                     tags={tagLibrary}
                     selectedTags={task.tags || []}
                     onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
-                    placeholder="Add tags..."
+                    placeholder="Add areas..."
                   />
                 </div>
               </div>
