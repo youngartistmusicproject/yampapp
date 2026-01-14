@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Filter, X, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
+import { Filter, X, Calendar as CalendarIcon, ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -66,6 +66,20 @@ export function TaskFilterPanel({
   onProjectsChange,
 }: TaskFilterPanelProps) {
   const [open, setOpen] = useState(false);
+  const [areasSearch, setAreasSearch] = useState("");
+  const [projectsSearch, setProjectsSearch] = useState("");
+  const [responsibleSearch, setResponsibleSearch] = useState("");
+
+  // Filtered lists based on search
+  const filteredAreas = areas.filter(area =>
+    area.name.toLowerCase().includes(areasSearch.toLowerCase())
+  );
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(projectsSearch.toLowerCase())
+  );
+  const filteredMembers = availableMembers.filter(member =>
+    member.name.toLowerCase().includes(responsibleSearch.toLowerCase())
+  );
 
   const activeFilterCount = 
     selectedAreaIds.length +
@@ -208,11 +222,22 @@ export function TaskFilterPanel({
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Areas
               </Label>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                <Input
+                  placeholder="Search areas..."
+                  value={areasSearch}
+                  onChange={(e) => setAreasSearch(e.target.value)}
+                  className="h-7 text-xs pl-7"
+                />
+              </div>
               <div className="flex flex-wrap gap-1.5">
                 {areas.length === 0 ? (
                   <span className="text-xs text-muted-foreground">No areas configured</span>
+                ) : filteredAreas.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">No matching areas</span>
                 ) : (
-                  areas.map((area) => {
+                  filteredAreas.map((area) => {
                     const isSelected = selectedAreaIds.includes(area.id);
                     return (
                       <Badge
@@ -241,11 +266,22 @@ export function TaskFilterPanel({
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Projects
               </Label>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                <Input
+                  placeholder="Search projects..."
+                  value={projectsSearch}
+                  onChange={(e) => setProjectsSearch(e.target.value)}
+                  className="h-7 text-xs pl-7"
+                />
+              </div>
               <div className="flex flex-wrap gap-1.5">
                 {projects.length === 0 ? (
                   <span className="text-xs text-muted-foreground">No projects configured</span>
+                ) : filteredProjects.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">No matching projects</span>
                 ) : (
-                  projects.map((project) => {
+                  filteredProjects.map((project) => {
                     const isSelected = selectedProjectIds.includes(project.id);
                     const color = project.color || '#6b7280';
                     return (
@@ -359,24 +395,36 @@ export function TaskFilterPanel({
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Responsible
               </Label>
-              <div className="space-y-1.5">
-                {availableMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    className={cn(
-                      "flex items-center gap-2 p-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors",
-                      filters.assignees.includes(member.id) && "bg-muted"
-                    )}
-                    onClick={() => handleAssigneeToggle(member.id)}
-                  >
-                    <Checkbox
-                      checked={filters.assignees.includes(member.id)}
-                      className="pointer-events-none"
-                    />
-                    <UserAvatar user={member} size="sm" />
-                    <span className="text-sm">{member.name}</span>
-                  </div>
-                ))}
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                <Input
+                  placeholder="Search people..."
+                  value={responsibleSearch}
+                  onChange={(e) => setResponsibleSearch(e.target.value)}
+                  className="h-7 text-xs pl-7"
+                />
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {availableMembers.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">No team members</span>
+                ) : filteredMembers.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">No matching people</span>
+                ) : (
+                  filteredMembers.map((member) => {
+                    const isSelected = filters.assignees.includes(member.id);
+                    return (
+                      <Badge
+                        key={member.id}
+                        variant={isSelected ? "default" : "outline"}
+                        className="cursor-pointer gap-1.5 pl-1 transition-colors"
+                        onClick={() => handleAssigneeToggle(member.id)}
+                      >
+                        <UserAvatar user={member} size="xs" showTooltip={false} />
+                        {member.name}
+                      </Badge>
+                    );
+                  })
+                )}
               </div>
             </div>
 
