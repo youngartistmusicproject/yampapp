@@ -638,6 +638,19 @@ export function TaskDetailDialog({
                 </Select>
               </div>
 
+              {/* Areas Row */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground w-28 shrink-0">Areas</span>
+                <div className="flex-1">
+                  <SearchableTagSelect
+                    tags={tagLibrary}
+                    selectedTags={task.tags || []}
+                    onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
+                    placeholder="Add areas..."
+                  />
+                </div>
+              </div>
+
               {/* Stage Row */}
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground w-28 shrink-0">Stage</span>
@@ -834,18 +847,6 @@ export function TaskDetailDialog({
                 </Popover>
               </div>
 
-              {/* Areas Row */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground w-28 shrink-0">Areas</span>
-                <div className="flex-1">
-                  <SearchableTagSelect
-                    tags={tagLibrary}
-                    selectedTags={task.tags || []}
-                    onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
-                    placeholder="Add areas..."
-                  />
-                </div>
-              </div>
 
               {/* SOP Link Row */}
               <div className="flex items-center gap-3">
