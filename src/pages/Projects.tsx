@@ -72,7 +72,7 @@ export default function Projects() {
   const [sortField, setSortField] = useState<SortField>('dueDate');
   const [sortAscending, setSortAscending] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [quickFilter, setQuickFilter] = useState<'all' | 'overdue' | 'today' | 'tomorrow' | 'upcoming'>('all');
+  const [quickFilter, setQuickFilter] = useState<'all' | 'overdue' | 'today' | 'tomorrow' | 'upcoming' | 'later'>('all');
   const [filters, setFilters] = useState<TaskFilters>({
     statuses: [],
     efforts: [],
@@ -185,6 +185,12 @@ export default function Projects() {
         due.setHours(0, 0, 0, 0);
         return due > tomorrow && due <= nextWeek;
       }).length,
+      later: projectFilteredTasks.filter(t => {
+        if (!t.dueDate) return false;
+        const due = new Date(t.dueDate);
+        due.setHours(0, 0, 0, 0);
+        return due > nextWeek;
+      }).length,
     };
   }, [projectFilteredTasks]);
   
@@ -225,6 +231,8 @@ export default function Projects() {
           matchesQuickFilter = dueDate.getTime() === tomorrow.getTime();
         } else if (quickFilter === 'upcoming') {
           matchesQuickFilter = dueDate > tomorrow && dueDate <= nextWeek;
+        } else if (quickFilter === 'later') {
+          matchesQuickFilter = dueDate > nextWeek;
         }
       } else if (quickFilter !== 'all' && !task.dueDate) {
         matchesQuickFilter = false;
@@ -747,11 +755,28 @@ export default function Projects() {
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          Upcoming
+          Next 7 Days
           {quickFilterCounts.upcoming > 0 && (
             <span className="text-xs tabular-nums opacity-60">{quickFilterCounts.upcoming}</span>
           )}
           {quickFilter === 'upcoming' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setQuickFilter('later')}
+          className={cn(
+            "px-3 py-2 text-[13px] font-medium transition-colors relative flex items-center gap-1.5",
+            quickFilter === 'later'
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Later
+          {quickFilterCounts.later > 0 && (
+            <span className="text-xs tabular-nums opacity-60">{quickFilterCounts.later}</span>
+          )}
+          {quickFilter === 'later' && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
           )}
         </button>
