@@ -169,6 +169,15 @@ export default function Projects() {
     }));
   }, [dbProjects]);
 
+  // Map project IDs to their lead (owner) names for displaying lead badges on task avatars
+  const projectLeadMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    projects.forEach(p => {
+      map[p.id] = (p.owners || []).map(o => o.name);
+    });
+    return map;
+  }, [projects]);
+
   useEffect(() => {
     localStorage.setItem('workManagement_selectedProjects', JSON.stringify(selectedProjects));
   }, [selectedProjects]);
@@ -1193,6 +1202,7 @@ export default function Projects() {
               showDetails={showTaskDetails}
               isCompletedView={viewMode === 'completed'}
               onRestoreTask={handleRestoreTask}
+              projectLeadMap={projectLeadMap}
             />
           )}
         </TabsContent>
@@ -1235,6 +1245,7 @@ export default function Projects() {
               showDetails={showTaskDetails}
               sortField={sortField}
               sortAscending={sortAscending}
+              projectLeadMap={projectLeadMap}
             />
           )}
         </TabsContent>

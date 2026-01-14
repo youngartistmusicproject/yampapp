@@ -13,24 +13,24 @@ interface UserAvatarProps {
 }
 
 const sizeClasses = {
-  xs: "h-4 w-4 text-[8px]",
-  sm: "h-5 w-5 text-[10px]",
-  md: "h-7 w-7 text-xs",
-  lg: "h-9 w-9 text-sm",
+  xs: "h-5 w-5 text-[9px]",
+  sm: "h-6 w-6 text-[10px]",
+  md: "h-8 w-8 text-xs",
+  lg: "h-10 w-10 text-sm",
 };
 
 const leaderBadgeSizes = {
-  xs: "w-2.5 h-2.5 -top-0.5 -right-0.5",
-  sm: "w-3 h-3 -top-0.5 -right-0.5",
-  md: "w-3.5 h-3.5 -top-0.5 -right-0.5",
-  lg: "w-4 h-4 -top-1 -right-1",
+  xs: "w-3 h-3 -top-0.5 -right-0.5",
+  sm: "w-3.5 h-3.5 -top-0.5 -right-0.5",
+  md: "w-4 h-4 -top-0.5 -right-0.5",
+  lg: "w-5 h-5 -top-1 -right-1",
 };
 
 const leaderIconSizes = {
-  xs: "w-1.5 h-1.5",
-  sm: "w-1.5 h-1.5",
-  md: "w-2 h-2",
-  lg: "w-2.5 h-2.5",
+  xs: "w-2 h-2",
+  sm: "w-2 h-2",
+  md: "w-2.5 h-2.5",
+  lg: "w-3 h-3",
 };
 
 export function UserAvatar({ user, size = "md", showTooltip = true, className, isTeamLeader }: UserAvatarProps) {
@@ -70,7 +70,7 @@ export function UserAvatar({ user, size = "md", showTooltip = true, className, i
       <TooltipContent>
         <p className="font-medium">{user.name}</p>
         {isTeamLeader && (
-          <p className="text-xs text-amber-500">Team Leader</p>
+          <p className="text-xs text-amber-500">Project Lead</p>
         )}
         <p className="text-xs text-muted-foreground capitalize">{user.role.replace('-', ' ')}</p>
       </TooltipContent>
