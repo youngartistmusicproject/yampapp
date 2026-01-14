@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Filter, X, Calendar as CalendarIcon, ChevronDown, Check } from "lucide-react";
+import { Filter, X, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,14 +12,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { User, Project } from "@/types";
@@ -211,59 +203,35 @@ export function TaskFilterPanel({
         
         <ScrollArea className="h-[450px]">
           <div className="p-3 space-y-4">
-            {/* Areas Filter - at top */}
+            {/* Areas Filter */}
             <div className="space-y-2">
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Areas
               </Label>
-              <Command className="border rounded-md">
-                <CommandInput placeholder="Search areas..." className="h-8" />
-                <CommandList className="max-h-32">
-                  <CommandEmpty>No areas found.</CommandEmpty>
-                  <CommandGroup>
-                    {areas.map((area) => (
-                      <CommandItem
+              <div className="flex flex-wrap gap-1.5">
+                {areas.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">No areas configured</span>
+                ) : (
+                  areas.map((area) => {
+                    const isSelected = selectedAreaIds.includes(area.id);
+                    return (
+                      <Badge
                         key={area.id}
-                        value={area.name}
-                        onSelect={() => toggleArea(area.id)}
-                        className="cursor-pointer"
+                        variant={isSelected ? "default" : "outline"}
+                        className="cursor-pointer gap-1.5 transition-colors"
+                        onClick={() => toggleArea(area.id)}
+                        style={isSelected ? { backgroundColor: area.color } : {}}
                       >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedAreaIds.includes(area.id) ? "opacity-100" : "opacity-0"
-                          )}
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: isSelected ? "white" : area.color }}
                         />
-                        <div
-                          className="w-3 h-3 rounded-full mr-2 shrink-0"
-                          style={{ backgroundColor: area.color }}
-                        />
-                        <span className="truncate">{area.name}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-              {selectedAreaIds.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {areas.filter(a => selectedAreaIds.includes(a.id)).map((area) => (
-                    <Badge
-                      key={area.id}
-                      variant="outline"
-                      className="h-5 px-1.5 text-[11px] font-medium gap-1 cursor-pointer"
-                      style={{ 
-                        backgroundColor: `${area.color}20`,
-                        borderColor: `${area.color}40`,
-                        color: area.color
-                      }}
-                      onClick={() => toggleArea(area.id)}
-                    >
-                      {area.name}
-                      <X className="w-3 h-3" />
-                    </Badge>
-                  ))}
-                </div>
-              )}
+                        {area.name}
+                      </Badge>
+                    );
+                  })
+                )}
+              </div>
             </div>
 
             <Separator />
@@ -273,53 +241,31 @@ export function TaskFilterPanel({
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Projects
               </Label>
-              <Command className="border rounded-md">
-                <CommandInput placeholder="Search projects..." className="h-8" />
-                <CommandList className="max-h-32">
-                  <CommandEmpty>No projects found.</CommandEmpty>
-                  <CommandGroup>
-                    {projects.map((project) => (
-                      <CommandItem
+              <div className="flex flex-wrap gap-1.5">
+                {projects.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">No projects configured</span>
+                ) : (
+                  projects.map((project) => {
+                    const isSelected = selectedProjectIds.includes(project.id);
+                    const color = project.color || '#6b7280';
+                    return (
+                      <Badge
                         key={project.id}
-                        value={project.name}
-                        onSelect={() => toggleProject(project.id)}
-                        className="cursor-pointer"
+                        variant={isSelected ? "default" : "outline"}
+                        className="cursor-pointer gap-1.5 transition-colors"
+                        onClick={() => toggleProject(project.id)}
+                        style={isSelected ? { backgroundColor: color } : {}}
                       >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedProjectIds.includes(project.id) ? "opacity-100" : "opacity-0"
-                          )}
-                        />
                         <span
-                          className="w-3 h-3 rounded-full mr-2 shrink-0"
-                          style={{ backgroundColor: project.color }}
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: isSelected ? "white" : color }}
                         />
-                        <span className="truncate">{project.name}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-              {selectedProjectIds.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {projects.filter(p => selectedProjectIds.includes(p.id)).map((project) => (
-                    <Badge
-                      key={project.id}
-                      variant="outline"
-                      className="h-5 px-1.5 text-[11px] font-medium gap-1 cursor-pointer"
-                      onClick={() => toggleProject(project.id)}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: project.color }}
-                      />
-                      {project.name}
-                      <X className="w-3 h-3" />
-                    </Badge>
-                  ))}
-                </div>
-              )}
+                        {project.name}
+                      </Badge>
+                    );
+                  })
+                )}
+              </div>
             </div>
 
             <Separator />
