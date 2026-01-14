@@ -411,31 +411,6 @@ export function TaskFilterPanel({
                 Responsible
               </Label>
               
-              {/* Most Frequent Section */}
-              {frequentMembers.length > 0 && (
-                <div className="space-y-1.5">
-                  <span className="text-[11px] text-muted-foreground">
-                    Most Frequent
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {frequentMembers.map((member) => {
-                      const isSelected = filters.assignees.includes(member.id);
-                      return (
-                        <Badge
-                          key={member.id}
-                          variant={isSelected ? "default" : "outline"}
-                          className="cursor-pointer gap-1.5 pl-1 transition-colors"
-                          onClick={() => handleAssigneeToggle(member.id)}
-                        >
-                          <UserAvatar user={member} size="xs" showTooltip={false} />
-                          {member.name}
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              
               {/* Search All Section */}
               <div className="space-y-1.5">
                 <div className="relative">
@@ -471,31 +446,52 @@ export function TaskFilterPanel({
                     )}
                   </div>
                 )}
-                
-                {/* Fallback when no frequent and no search */}
-                {frequentMembers.length === 0 && !responsibleSearch.trim() && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {availableMembers.length === 0 ? (
-                      <span className="text-xs text-muted-foreground">No team members</span>
-                    ) : (
-                      availableMembers.slice(0, 8).map((member) => {
-                        const isSelected = filters.assignees.includes(member.id);
-                        return (
-                          <Badge
-                            key={member.id}
-                            variant={isSelected ? "default" : "outline"}
-                            className="cursor-pointer gap-1.5 pl-1 transition-colors"
-                            onClick={() => handleAssigneeToggle(member.id)}
-                          >
-                            <UserAvatar user={member} size="xs" showTooltip={false} />
-                            {member.name}
-                          </Badge>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
               </div>
+
+              {/* Most Frequent Section */}
+              {frequentMembers.length > 0 && !responsibleSearch.trim() && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] text-muted-foreground">
+                    Most Frequent
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {frequentMembers.map((member) => {
+                      const isSelected = filters.assignees.includes(member.id);
+                      return (
+                        <Badge
+                          key={member.id}
+                          variant={isSelected ? "default" : "outline"}
+                          className="cursor-pointer gap-1.5 pl-1 transition-colors"
+                          onClick={() => handleAssigneeToggle(member.id)}
+                        >
+                          <UserAvatar user={member} size="xs" showTooltip={false} />
+                          {member.name}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              {/* Show first 8 members if no frequent and no search */}
+              {!responsibleSearch.trim() && frequentMembers.length === 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {availableMembers.slice(0, 8).map((member) => {
+                    const isSelected = filters.assignees.includes(member.id);
+                    return (
+                      <Badge
+                        key={member.id}
+                        variant={isSelected ? "default" : "outline"}
+                        className="cursor-pointer gap-1.5 pl-1 transition-colors"
+                        onClick={() => handleAssigneeToggle(member.id)}
+                      >
+                        <UserAvatar user={member} size="xs" showTooltip={false} />
+                        {member.name}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <Separator />
