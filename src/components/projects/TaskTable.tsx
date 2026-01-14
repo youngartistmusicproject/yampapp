@@ -60,6 +60,8 @@ interface TaskTableProps {
   statuses: StatusItem[];
   showDetails?: boolean;
   teamLeaderNames?: string[];
+  isCompletedView?: boolean;
+  onRestoreTask?: (taskId: string) => void;
 }
 
 const effortColors: Record<string, string> = {
@@ -446,6 +448,8 @@ export function TaskTable({
   statuses,
   showDetails = true,
   teamLeaderNames = [],
+  isCompletedView = false,
+  onRestoreTask,
 }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
