@@ -6,25 +6,28 @@ import { Star } from "lucide-react";
 
 interface UserAvatarProps {
   user: User;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   showTooltip?: boolean;
   className?: string;
   isTeamLeader?: boolean;
 }
 
 const sizeClasses = {
+  xs: "h-4 w-4 text-[8px]",
   sm: "h-5 w-5 text-[10px]",
   md: "h-7 w-7 text-xs",
   lg: "h-9 w-9 text-sm",
 };
 
 const leaderBadgeSizes = {
+  xs: "w-2.5 h-2.5 -top-0.5 -right-0.5",
   sm: "w-3 h-3 -top-0.5 -right-0.5",
   md: "w-3.5 h-3.5 -top-0.5 -right-0.5",
   lg: "w-4 h-4 -top-1 -right-1",
 };
 
 const leaderIconSizes = {
+  xs: "w-1.5 h-1.5",
   sm: "w-1.5 h-1.5",
   md: "w-2 h-2",
   lg: "w-2.5 h-2.5",
@@ -78,7 +81,7 @@ export function UserAvatar({ user, size = "md", showTooltip = true, className, i
 interface UserAvatarGroupProps {
   users: User[];
   max?: number;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
   teamLeaderIds?: string[];
 }
