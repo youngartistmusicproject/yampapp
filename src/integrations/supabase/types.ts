@@ -44,6 +44,33 @@ export type Database = {
         }
         Relationships: []
       }
+      areas: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       community_comment_likes: {
         Row: {
           comment_id: string

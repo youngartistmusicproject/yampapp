@@ -22,12 +22,13 @@ import { Link } from "react-router-dom";
 import { useDashboard, formatRelativeTime, formatEventDate } from "@/hooks/useDashboard";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { useTasks, useUpdateTask, useCompleteRecurringTask } from "@/hooks/useWorkManagement";
+import { useAreas } from "@/hooks/useAreas";
 import { format } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { Task, TaskComment } from "@/types";
-import { teamMembers, statusLibrary, effortLibrary, importanceLibrary, tagLibrary } from "@/data/workManagementConfig";
+import { teamMembers, statusLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { toast } from "sonner";
 
 const currentUser = teamMembers[0];
@@ -46,6 +47,9 @@ export default function Dashboard() {
     weeklyCompletionLoading,
     refetch
   } = useDashboard();
+  
+  const { data: areas = [] } = useAreas();
+  const tags = areas.map(a => ({ id: a.id, name: a.name, color: a.color }));
   
   const { data: fullTasks = [] } = useTasks();
   const updateTask = useUpdateTask();
@@ -472,7 +476,7 @@ export default function Dashboard() {
         currentUser={currentUser}
         availableMembers={teamMembers}
         statuses={statusLibrary}
-        tags={tagLibrary}
+        tags={tags}
         onTaskUpdate={handleTaskUpdate}
         onAddComment={handleAddComment}
         onDeleteComment={handleDeleteComment}
