@@ -294,20 +294,6 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
                 </Command>
               </PopoverContent>
             </Popover>
-            {(searchQuery || selectedAreaIds.length > 0) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  setSearchQuery("");
-                  setSelectedAreaIds([]);
-                }}
-              >
-                <X className="w-3 h-3 mr-1" />
-                Clear all
-              </Button>
-            )}
           </div>
           <Button size="icon" onClick={() => setCreateDialogOpen(true)} className="absolute bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-10 transition-transform duration-200 hover:scale-110">
             <Plus className="w-5 h-5" />
