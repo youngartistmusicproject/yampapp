@@ -36,6 +36,7 @@ import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { useTasks, useProjects, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useReorderTasks, useCompleteRecurringTask, useReorderProjects } from "@/hooks/useWorkManagement";
+import { useAssigneeFrequency } from "@/hooks/useAssigneeFrequency";
 import { useAreas } from "@/hooks/useAreas";
 
 // Current user for demo purposes
@@ -69,6 +70,7 @@ export default function Projects() {
   const reorderTasks = useReorderTasks();
   const completeRecurringTask = useCompleteRecurringTask();
   const reorderProjects = useReorderProjects();
+  const { data: frequentAssigneeNames = [] } = useAssigneeFrequency(6);
   
   const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
   const { data: areas = [] } = useAreas();
@@ -966,6 +968,7 @@ export default function Projects() {
               onFiltersChange={setFilters}
               statuses={statuses}
               availableMembers={teamMembers}
+              frequentAssigneeNames={frequentAssigneeNames}
               areas={tags}
               selectedAreaIds={selectedAreas}
               onAreasChange={setSelectedAreas}
