@@ -14,8 +14,6 @@ import { ProjectManagementPanel } from "@/components/projects/ProjectManagementP
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { TagManager, TagItem } from "@/components/projects/TagManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
-import { AreaFilterSelect } from "@/components/projects/AreaFilterSelect";
-import { ProjectFilterSelect } from "@/components/projects/ProjectFilterSelect";
 import { Task, Project, User, TaskComment } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -730,7 +728,7 @@ export default function Projects() {
   const isLoading = tasksLoading || projectsLoading;
 
   return (
-    <div className="space-y-5 animate-fade-in pb-24">
+    <div className="space-y-5 animate-fade-in">
       {/* Enhanced Page Header */}
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-foreground">
@@ -961,24 +959,53 @@ export default function Projects() {
             </div>
           </div>
 
-          {/* Right: Area, Project, Additional Filters */}
+          {/* Right: Filter + Add Task + Manage */}
           <div className="flex items-center gap-2 shrink-0">
-            <AreaFilterSelect
-              areas={tags}
-              selectedAreaIds={selectedAreas}
-              onAreasChange={setSelectedAreas}
-            />
-            <ProjectFilterSelect
-              projects={projects}
-              selectedProjectIds={selectedProjects}
-              onProjectsChange={setSelectedProjects}
-            />
             <TaskFilterPanel
               filters={filters}
               onFiltersChange={setFilters}
               statuses={statuses}
               availableMembers={teamMembers}
+              areas={tags}
+              selectedAreaIds={selectedAreas}
+              onAreasChange={setSelectedAreas}
+              projects={projects}
+              selectedProjectIds={selectedProjects}
+              onProjectsChange={setSelectedProjects}
             />
+            
+            <Button
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={() => setTaskDialogOpen(true)}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Task
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5">
+                  <Settings2 className="w-3.5 h-3.5" />
+                  Manage
+                  <ChevronDown className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={() => setProjectManagementOpen(true)} className="gap-2">
+                  <Folders className="h-4 w-4" />
+                  Projects
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTagManagerOpen(true)} className="gap-2">
+                  <Tags className="h-4 w-4" />
+                  Areas
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusManagerOpen(true)} className="gap-2">
+                  <Layers className="h-4 w-4" />
+                  Stages
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -1216,36 +1243,6 @@ export default function Projects() {
         </TabsContent>
       </Tabs>
 
-      {/* Floating Action Button (FAB) */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            size="icon"
-            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
-          >
-            <Plus className="h-6 w-6" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="top" className="w-48 mb-2">
-          <DropdownMenuItem onClick={() => setTaskDialogOpen(true)} className="gap-2">
-            <ListTodo className="h-4 w-4" />
-            Add Task
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setProjectManagementOpen(true)} className="gap-2">
-            <Folders className="h-4 w-4" />
-            Manage Projects
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setStatusManagerOpen(true)} className="gap-2">
-            <Layers className="h-4 w-4" />
-            Manage Stages
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTagManagerOpen(true)} className="gap-2">
-            <Tags className="h-4 w-4" />
-            Manage Areas
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
 
       {/* Project Management Panel (Sheet) */}
       <ProjectManagementPanel
