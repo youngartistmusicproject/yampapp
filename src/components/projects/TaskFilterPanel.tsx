@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Filter, X, Calendar as CalendarIcon, ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,7 @@ interface TaskFilterPanelProps {
   onFiltersChange: (filters: TaskFilters) => void;
   statuses: StatusItem[];
   availableMembers: User[];
+  frequentAssigneeNames?: string[];
   // New props for areas and projects
   areas: Area[];
   selectedAreaIds: string[];
@@ -58,6 +59,7 @@ export function TaskFilterPanel({
   onFiltersChange,
   statuses,
   availableMembers,
+  frequentAssigneeNames = [],
   areas,
   selectedAreaIds,
   onAreasChange,
@@ -77,9 +79,22 @@ export function TaskFilterPanel({
   const filteredProjects = projects.filter(project =>
     project.name.toLowerCase().includes(projectsSearch.toLowerCase())
   );
-  const filteredMembers = availableMembers.filter(member =>
-    member.name.toLowerCase().includes(responsibleSearch.toLowerCase())
-  );
+
+  // Get frequent member objects from names
+  const frequentMembers = useMemo(() => {
+    return frequentAssigneeNames
+      .map(name => availableMembers.find(m => m.name === name))
+      .filter((m): m is User => m !== undefined)
+      .slice(0, 6);
+  }, [frequentAssigneeNames, availableMembers]);
+
+  // When searching, search ALL members
+  const searchResults = useMemo(() => {
+    if (!responsibleSearch.trim()) return [];
+    return availableMembers.filter(member =>
+      member.name.toLowerCase().includes(responsibleSearch.toLowerCase())
+    );
+  }, [responsibleSearch, availableMembers]);
 
   const activeFilterCount = 
     selectedAreaIds.length +
@@ -391,39 +406,94 @@ export function TaskFilterPanel({
             <Separator />
 
             {/* Responsible Filter */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Responsible
               </Label>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-                <Input
-                  placeholder="Search people..."
-                  value={responsibleSearch}
-                  onChange={(e) => setResponsibleSearch(e.target.value)}
-                  className="h-7 text-xs pl-7"
-                />
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {availableMembers.length === 0 ? (
-                  <span className="text-xs text-muted-foreground">No team members</span>
-                ) : filteredMembers.length === 0 ? (
-                  <span className="text-xs text-muted-foreground">No matching people</span>
-                ) : (
-                  filteredMembers.map((member) => {
-                    const isSelected = filters.assignees.includes(member.id);
-                    return (
-                      <Badge
-                        key={member.id}
-                        variant={isSelected ? "default" : "outline"}
-                        className="cursor-pointer gap-1.5 pl-1 transition-colors"
-                        onClick={() => handleAssigneeToggle(member.id)}
-                      >
-                        <UserAvatar user={member} size="xs" showTooltip={false} />
-                        {member.name}
-                      </Badge>
-                    );
-                  })
+              
+              {/* Most Frequent Section */}
+              {frequentMembers.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] text-muted-foreground">
+                    Most Frequent
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {frequentMembers.map((member) => {
+                      const isSelected = filters.assignees.includes(member.id);
+                      return (
+                        <Badge
+                          key={member.id}
+                          variant={isSelected ? "default" : "outline"}
+                          className="cursor-pointer gap-1.5 pl-1 transition-colors"
+                          onClick={() => handleAssigneeToggle(member.id)}
+                        >
+                          <UserAvatar user={member} size="xs" showTooltip={false} />
+                          {member.name}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              {/* Search All Section */}
+              <div className="space-y-1.5">
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                  <Input
+                    placeholder="Search all people..."
+                    value={responsibleSearch}
+                    onChange={(e) => setResponsibleSearch(e.target.value)}
+                    className="h-7 text-xs pl-7"
+                  />
+                </div>
+                
+                {/* Show results only when searching */}
+                {responsibleSearch.trim() && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {searchResults.length === 0 ? (
+                      <span className="text-xs text-muted-foreground">No matching people</span>
+                    ) : (
+                      searchResults.map((member) => {
+                        const isSelected = filters.assignees.includes(member.id);
+                        return (
+                          <Badge
+                            key={member.id}
+                            variant={isSelected ? "default" : "outline"}
+                            className="cursor-pointer gap-1.5 pl-1 transition-colors"
+                            onClick={() => handleAssigneeToggle(member.id)}
+                          >
+                            <UserAvatar user={member} size="xs" showTooltip={false} />
+                            {member.name}
+                          </Badge>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+                
+                {/* Fallback when no frequent and no search */}
+                {frequentMembers.length === 0 && !responsibleSearch.trim() && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableMembers.length === 0 ? (
+                      <span className="text-xs text-muted-foreground">No team members</span>
+                    ) : (
+                      availableMembers.slice(0, 8).map((member) => {
+                        const isSelected = filters.assignees.includes(member.id);
+                        return (
+                          <Badge
+                            key={member.id}
+                            variant={isSelected ? "default" : "outline"}
+                            className="cursor-pointer gap-1.5 pl-1 transition-colors"
+                            onClick={() => handleAssigneeToggle(member.id)}
+                          >
+                            <UserAvatar user={member} size="xs" showTooltip={false} />
+                            {member.name}
+                          </Badge>
+                        );
+                      })
+                    )}
+                  </div>
                 )}
               </div>
             </div>
