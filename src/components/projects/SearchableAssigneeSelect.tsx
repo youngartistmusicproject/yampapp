@@ -24,6 +24,7 @@ interface SearchableAssigneeSelectProps {
   onAssigneesChange: (assignees: User[]) => void;
   placeholder?: string;
   disabled?: boolean;
+  projectLeadNames?: string[];
 }
 
 export function SearchableAssigneeSelect({
@@ -32,6 +33,7 @@ export function SearchableAssigneeSelect({
   onAssigneesChange,
   placeholder = "Add...",
   disabled = false,
+  projectLeadNames = [],
 }: SearchableAssigneeSelectProps) {
   const [open, setOpen] = useState(false);
 
@@ -60,7 +62,9 @@ export function SearchableAssigneeSelect({
                   <UserAvatar 
                     key={member.id} 
                     user={member} 
-                    className="w-6 h-6 text-[10px] ring-2 ring-background" 
+                    size="sm"
+                    className="ring-2 ring-background" 
+                    isTeamLeader={projectLeadNames.includes(member.name)}
                   />
                 ))}
               </div>
