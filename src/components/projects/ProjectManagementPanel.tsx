@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { Pencil, Trash2, Plus, FolderKanban, GripVertical, Crown } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Pencil, Trash2, Plus, FolderKanban, GripVertical, Crown, Search } from "lucide-react";
 import { Project, User } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { UserAvatar, UserAvatarGroup } from "@/components/ui/user-avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -97,8 +98,18 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
   const [localProjects, setLocalProjects] = useState(projects);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => { setLocalProjects(projects); }, [projects]);
+
+  const filteredProjects = useMemo(() => {
+    if (!searchQuery.trim()) return localProjects;
+    const query = searchQuery.toLowerCase();
+    return localProjects.filter(p => 
+      p.name.toLowerCase().includes(query) || 
+      p.description?.toLowerCase().includes(query)
+    );
+  }, [localProjects, searchQuery]);
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
@@ -128,22 +139,33 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
             <SheetTitle>Manage Projects</SheetTitle>
             <SheetDescription>Create, edit, or remove projects. Drag to reorder.</SheetDescription>
           </SheetHeader>
+          <div className="px-6 py-3 border-b">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 bg-muted/50 border-border/50"
+              />
+            </div>
+          </div>
           <Button size="icon" onClick={() => setCreateDialogOpen(true)} className="absolute bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-10 transition-transform duration-200 hover:scale-110">
             <Plus className="w-5 h-5" />
           </Button>
           <ScrollArea className="flex-1">
             <div className="px-6 py-5 space-y-2">
-              {localProjects.length === 0 ? (
+              {filteredProjects.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <FolderKanban className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">No projects yet</p>
-                  <p className="text-xs mt-1">Click the + button to create one</p>
+                  <p className="text-sm">{searchQuery ? "No projects found" : "No projects yet"}</p>
+                  <p className="text-xs mt-1">{searchQuery ? "Try a different search term" : "Click the + button to create one"}</p>
                 </div>
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={localProjects.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext items={filteredProjects.map(p => p.id)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-2">
-                      {localProjects.map((project) => (
+                      {filteredProjects.map((project) => (
                         <SortableProjectRow key={project.id} project={project} onEdit={setEditingProject} onDelete={setDeletingProject} />
                       ))}
                     </div>
