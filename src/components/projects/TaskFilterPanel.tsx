@@ -214,7 +214,7 @@ export function TaskFilterPanel({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 bg-popover" align="start">
+      <PopoverContent className="w-80 p-0 bg-popover z-[70]" align="end" sideOffset={8}>
         <div className="flex items-center justify-between p-3 border-b">
           <h4 className="font-medium text-sm">Filters</h4>
           {activeFilterCount > 0 && (
@@ -230,7 +230,7 @@ export function TaskFilterPanel({
           )}
         </div>
         
-        <ScrollArea className="h-[450px]">
+        <ScrollArea className="max-h-[min(450px,calc(100vh-200px))]">
           <div className="p-3 space-y-4">
             {/* Areas Filter */}
             <div className="space-y-2">
