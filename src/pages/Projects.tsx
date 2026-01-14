@@ -14,6 +14,8 @@ import { ProjectManagementPanel } from "@/components/projects/ProjectManagementP
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { TagManager, TagItem } from "@/components/projects/TagManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
+import { AreaFilterSelect } from "@/components/projects/AreaFilterSelect";
+import { ProjectFilterSelect } from "@/components/projects/ProjectFilterSelect";
 import { CompletedTasksPanel } from "@/components/projects/CompletedTasksPanel";
 import { Task, Project, User, TaskComment } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -24,13 +26,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
@@ -65,8 +60,13 @@ export default function Projects() {
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProject, setSelectedProject] = useState<string>(() => {
-    return localStorage.getItem('workManagement_selectedProject') || 'all';
+  const [selectedProjects, setSelectedProjects] = useState<string[]>(() => {
+    const saved = localStorage.getItem('workManagement_selectedProjects');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [selectedAreas, setSelectedAreas] = useState<string[]>(() => {
+    const saved = localStorage.getItem('workManagement_selectedAreas');
+    return saved ? JSON.parse(saved) : [];
   });
   const [selectedMember, setSelectedMember] = useState<string>(() => {
     return localStorage.getItem('workManagement_selectedMember') || 'all';
@@ -138,8 +138,12 @@ export default function Projects() {
   }, [dbProjects]);
 
   useEffect(() => {
-    localStorage.setItem('workManagement_selectedProject', selectedProject);
-  }, [selectedProject]);
+    localStorage.setItem('workManagement_selectedProjects', JSON.stringify(selectedProjects));
+  }, [selectedProjects]);
+
+  useEffect(() => {
+    localStorage.setItem('workManagement_selectedAreas', JSON.stringify(selectedAreas));
+  }, [selectedAreas]);
 
   useEffect(() => {
     localStorage.setItem('workManagement_selectedMember', selectedMember);
@@ -149,14 +153,21 @@ export default function Projects() {
   // Active tasks (not completed)
   const activeTasks = useMemo(() => dbTasks.filter(task => !task.completedAt), [dbTasks]);
 
-  // Tasks filtered by project selection (for quick filter counts)
+  // Tasks filtered by project and area selection (for quick filter counts)
   const projectFilteredTasks = useMemo(() => {
     return activeTasks.filter(task => {
-      // Project filter
-      if (selectedProject !== "all" && task.projectId !== selectedProject) return false;
+      // Project filter - matches if no projects selected or task's project is in selection
+      if (selectedProjects.length > 0 && !selectedProjects.includes(task.projectId || '')) return false;
+      
+      // Area filter - matches if no areas selected or task inherits any of the selected areas
+      if (selectedAreas.length > 0) {
+        const taskAreas = task.inheritedAreas?.map(a => a.id) || task.tags || [];
+        if (!selectedAreas.some(areaId => taskAreas.includes(areaId))) return false;
+      }
+      
       return true;
     });
-  }, [activeTasks, selectedProject]);
+  }, [activeTasks, selectedProjects, selectedAreas]);
 
   // Count tasks for quick filter badges (based on project filtered tasks)
   const quickFilterCounts = useMemo(() => {
@@ -216,8 +227,12 @@ export default function Projects() {
     return activeTasks.filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
       
-      // Project filter - only applies when a specific project is selected
-      const matchesProject = selectedProject === "all" || task.projectId === selectedProject;
+      // Project filter - matches if no projects selected or task's project is in selection
+      const matchesProject = selectedProjects.length === 0 || selectedProjects.includes(task.projectId || '');
+      
+      // Area filter - matches if no areas selected or task has any of the selected areas
+      const taskAreas = task.inheritedAreas?.map(a => a.id) || task.tags || [];
+      const matchesAreas = selectedAreas.length === 0 || selectedAreas.some(areaId => taskAreas.includes(areaId));
       
       // Quick filter
       let matchesQuickFilter = true;
@@ -276,7 +291,7 @@ export default function Projects() {
       const matchesOverdue = !filters.showOverdueOnly || 
         (task.dueDate && new Date(task.dueDate) < today && task.status !== 'done');
       
-      return matchesSearch && matchesProject && matchesQuickFilter && matchesStatus && matchesEffort && matchesImportance &&
+      return matchesSearch && matchesProject && matchesAreas && matchesQuickFilter && matchesStatus && matchesEffort && matchesImportance &&
              matchesAssignee && matchesMember && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
       // Define sort order for effort, importance, and stage
@@ -330,7 +345,7 @@ export default function Projects() {
       const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       return sortAscending ? comparison : -comparison;
     });
-  }, [activeTasks, searchQuery, selectedProject, selectedMember, filters, quickFilter, sortField, sortAscending, statuses]);
+  }, [activeTasks, searchQuery, selectedProjects, selectedAreas, selectedMember, filters, quickFilter, sortField, sortAscending, statuses]);
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
     // Find the task to check if it's recurring
@@ -517,10 +532,11 @@ export default function Projects() {
         onError: () => toast.error('Failed to update task'),
       });
     } else {
-      // Create new task
+      // Create new task - auto-assign to first selected project if only one is selected
+      const autoProjectId = selectedProjects.length === 1 ? selectedProjects[0] : taskData.projectId;
       createTask.mutate({
         ...taskData,
-        projectId: selectedProject !== "all" ? selectedProject : taskData.projectId,
+        projectId: autoProjectId,
       }, {
         onSuccess: () => {
           toast.success('Task created');
@@ -566,8 +582,9 @@ export default function Projects() {
     deleteProjectMutation.mutate(projectId, {
       onSuccess: () => {
         toast.success('Project deleted');
-        if (selectedProject === projectId) {
-          setSelectedProject('all');
+        // Remove from selection if it was selected
+        if (selectedProjects.includes(projectId)) {
+          setSelectedProjects(selectedProjects.filter(id => id !== projectId));
         }
       },
       onError: () => toast.error('Failed to delete project'),
@@ -575,10 +592,6 @@ export default function Projects() {
   };
 
   const isLoading = tasksLoading || projectsLoading;
-
-  const currentProjectName = selectedProject === "all"
-    ? "All Projects"
-    : projects.find(p => p.id === selectedProject)?.name || "Project";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -599,27 +612,18 @@ export default function Projects() {
 
       {/* Filters Row - Clean and minimal */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        {/* Left: Dropdowns */}
+        {/* Left: Filter Dropdowns */}
         <div className="flex items-center gap-2">
-          <Select value={selectedProject} onValueChange={setSelectedProject}>
-            <SelectTrigger className="w-[200px] h-8 text-[13px] bg-transparent border-border/50">
-              <SelectValue placeholder="Project" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
-              {projects.map((project) => (
-                <SelectItem key={project.id} value={project.id}>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: project.color }}
-                    />
-                    {project.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <AreaFilterSelect
+            areas={tags}
+            selectedAreaIds={selectedAreas}
+            onAreasChange={setSelectedAreas}
+          />
+          <ProjectFilterSelect
+            projects={projects}
+            selectedProjectIds={selectedProjects}
+            onProjectsChange={setSelectedProjects}
+          />
         </div>
 
         {/* Right: Search */}
