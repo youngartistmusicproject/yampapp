@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Pencil, Trash2, Plus, FolderKanban, GripVertical, Crown, Search, Tag, Filter } from "lucide-react";
+import { Pencil, Trash2, Plus, FolderKanban, GripVertical, Crown, Search, Check, ChevronDown, X } from "lucide-react";
 import { Project, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,15 +25,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProjectDialog } from "./ProjectDialog";
 import { useAreas } from "@/hooks/useAreas";
+import { cn } from "@/lib/utils";
 import {
   DndContext,
   closestCenter,
@@ -126,8 +133,8 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
   const [localProjects, setLocalProjects] = useState(projects);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedAreaId, setSelectedAreaId] = useState<string>("all");
-
+  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
+  const [areaFilterOpen, setAreaFilterOpen] = useState(false);
   const { data: areas = [] } = useAreas();
 
   useEffect(() => { setLocalProjects(projects); }, [projects]);
@@ -144,13 +151,15 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
       );
     }
     
-    // Filter by area
-    if (selectedAreaId !== "all") {
-      result = result.filter(p => p.areas?.some(a => a.id === selectedAreaId));
+    // Filter by areas (multi-select)
+    if (selectedAreaIds.length > 0) {
+      result = result.filter(p => 
+        p.areas?.some(a => selectedAreaIds.includes(a.id))
+      );
     }
     
     return result;
-  }, [localProjects, searchQuery, selectedAreaId]);
+  }, [localProjects, searchQuery, selectedAreaIds]);
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
@@ -167,7 +176,15 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
     }
   };
 
-  const activeFilterCount = (selectedAreaId !== "all" ? 1 : 0);
+  const toggleArea = (areaId: string) => {
+    if (selectedAreaIds.includes(areaId)) {
+      setSelectedAreaIds(selectedAreaIds.filter(id => id !== areaId));
+    } else {
+      setSelectedAreaIds([...selectedAreaIds, areaId]);
+    }
+  };
+
+  const selectedAreas = areas.filter(a => selectedAreaIds.includes(a.id));
 
   return (
     <>
@@ -192,38 +209,83 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
                 className="pl-9 h-9 bg-muted/50 border-border/50"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Tag className="w-4 h-4 text-muted-foreground" />
-              <Select value={selectedAreaId} onValueChange={setSelectedAreaId}>
-                <SelectTrigger className="h-8 text-sm border-border/50 bg-transparent flex-1">
-                  <SelectValue placeholder="Filter by area" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Areas</SelectItem>
-                  {areas.map((area) => (
-                    <SelectItem key={area.id} value={area.id}>
-                      <span className="flex items-center gap-2">
-                        <span
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: area.color }}
-                        />
-                        <span>{area.name}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {activeFilterCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2 text-xs"
-                  onClick={() => setSelectedAreaId("all")}
+            <Popover open={areaFilterOpen} onOpenChange={setAreaFilterOpen}>
+              <PopoverTrigger asChild>
+                <button 
+                  className={cn(
+                    "flex items-center gap-1.5 h-8 px-3 text-[13px] rounded-md border border-border/50 bg-transparent hover:bg-muted/50 transition-colors w-full justify-between",
+                    selectedAreaIds.length > 0 && "border-primary/50"
+                  )}
                 >
-                  Clear
-                </Button>
-              )}
-            </div>
+                  {selectedAreas.length > 0 ? (
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {selectedAreas.slice(0, 2).map((area) => (
+                          <Badge
+                            key={area.id}
+                            variant="outline"
+                            className="h-5 px-1.5 text-[11px] font-medium"
+                            style={{ 
+                              backgroundColor: `${area.color}20`,
+                              borderColor: `${area.color}40`,
+                              color: area.color
+                            }}
+                          >
+                            {area.name}
+                          </Badge>
+                        ))}
+                        {selectedAreas.length > 2 && (
+                          <span className="text-xs text-muted-foreground">
+                            +{selectedAreas.length - 2}
+                          </span>
+                        )}
+                      </div>
+                      <X 
+                        className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground ml-auto shrink-0" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedAreaIds([]);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-muted-foreground">Filter by areas</span>
+                      <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                    </>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-0 z-[70]" align="start">
+                <Command>
+                  <CommandInput placeholder="Search areas..." />
+                  <CommandList>
+                    <CommandEmpty>No areas found.</CommandEmpty>
+                    <CommandGroup>
+                      {areas.map((area) => (
+                        <CommandItem
+                          key={area.id}
+                          value={area.name}
+                          onSelect={() => toggleArea(area.id)}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedAreaIds.includes(area.id) ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <div
+                            className="w-3 h-3 rounded-full mr-2 shrink-0"
+                            style={{ backgroundColor: area.color }}
+                          />
+                          <span className="truncate">{area.name}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <Button size="icon" onClick={() => setCreateDialogOpen(true)} className="absolute bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-10 transition-transform duration-200 hover:scale-110">
             <Plus className="w-5 h-5" />
@@ -233,8 +295,8 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
               {filteredProjects.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <FolderKanban className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">{searchQuery || selectedAreaId !== "all" ? "No projects found" : "No projects yet"}</p>
-                  <p className="text-xs mt-1">{searchQuery || selectedAreaId !== "all" ? "Try different filters" : "Click the + button to create one"}</p>
+                  <p className="text-sm">{searchQuery || selectedAreaIds.length > 0 ? "No projects found" : "No projects yet"}</p>
+                  <p className="text-xs mt-1">{searchQuery || selectedAreaIds.length > 0 ? "Try different filters" : "Click the + button to create one"}</p>
                 </div>
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
