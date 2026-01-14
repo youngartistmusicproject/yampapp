@@ -968,10 +968,8 @@ export default function Projects() {
                 </>
               )}
             </div>
-          </div>
 
-          {/* Right: Filter + Add Task + Manage */}
-          <div className="flex items-center gap-2 shrink-0">
+            {/* Advanced Filter */}
             <TaskFilterPanel
               filters={filters}
               onFiltersChange={setFilters}
@@ -985,7 +983,10 @@ export default function Projects() {
               selectedProjectIds={selectedProjects}
               onProjectsChange={setSelectedProjects}
             />
-            
+          </div>
+
+          {/* Right: Add Task + Manage */}
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               size="sm"
               className="h-8 gap-1.5"
