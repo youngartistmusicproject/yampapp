@@ -97,6 +97,7 @@ interface TaskDetailDialogProps {
   onAddComment: (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>, parentCommentId?: string) => void;
   onDeleteComment: (taskId: string, commentId: string) => void;
   onToggleReaction: (taskId: string, commentId: string, emoji: string) => void;
+  projectLeadMap?: Record<string, string[]>;
 }
 
 const getFileIcon = (type: string) => {
@@ -303,6 +304,7 @@ export function TaskDetailDialog({
   onAddComment,
   onDeleteComment,
   onToggleReaction,
+  projectLeadMap = {},
 }: TaskDetailDialogProps) {
   const [newComment, setNewComment] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
@@ -776,6 +778,7 @@ export function TaskDetailDialog({
                     selectedAssignees={task.assignees || []}
                     onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })}
                     placeholder="Add..."
+                    projectLeadNames={task.projectId ? (projectLeadMap[task.projectId] || []) : []}
                   />
                 </div>
               </div>
