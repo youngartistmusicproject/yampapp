@@ -39,7 +39,6 @@ interface TaskFilterPanelProps {
   onFiltersChange: (filters: TaskFilters) => void;
   statuses: StatusItem[];
   availableMembers: User[];
-  availableTags: TagItem[];
 }
 
 export function TaskFilterPanel({
@@ -47,7 +46,6 @@ export function TaskFilterPanel({
   onFiltersChange,
   statuses,
   availableMembers,
-  availableTags,
 }: TaskFilterPanelProps) {
   const [open, setOpen] = useState(false);
 
@@ -56,7 +54,6 @@ export function TaskFilterPanel({
     filters.efforts.length +
     filters.importances.length +
     filters.assignees.length +
-    filters.tags.length +
     (filters.showRecurring !== null ? 1 : 0) +
     (filters.dueDateFrom ? 1 : 0) +
     (filters.dueDateTo ? 1 : 0) +
@@ -120,7 +117,7 @@ export function TaskFilterPanel({
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Filter className="w-4 h-4" />
-          Filter
+          Additional Filters
           {activeFilterCount > 0 && (
             <Badge variant="secondary" className="ml-1 h-5 px-1.5">
               {activeFilterCount}
@@ -252,34 +249,6 @@ export function TaskFilterPanel({
                     <UserAvatar user={member} size="sm" />
                     <span className="text-sm">{member.name}</span>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Areas Filter */}
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Areas
-              </Label>
-              <div className="flex flex-wrap gap-1.5">
-                {availableTags.map((tag) => (
-                  <Badge
-                    key={tag.id}
-                    variant={filters.tags.includes(tag.id) ? "default" : "outline"}
-                    className="cursor-pointer gap-1.5"
-                    onClick={() => handleTagToggle(tag.id)}
-                    style={filters.tags.includes(tag.id) ? { backgroundColor: tag.color } : {}}
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ 
-                        backgroundColor: filters.tags.includes(tag.id) ? "white" : tag.color 
-                      }}
-                    />
-                    {tag.name}
-                  </Badge>
                 ))}
               </div>
             </div>
