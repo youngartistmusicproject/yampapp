@@ -146,7 +146,7 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
     
     // Filter by area
     if (selectedAreaId !== "all") {
-      result = result.filter(p => (p as any).areaId === selectedAreaId);
+      result = result.filter(p => p.areas?.some(a => a.id === selectedAreaId));
     }
     
     return result;
