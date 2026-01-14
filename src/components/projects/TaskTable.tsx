@@ -255,8 +255,11 @@ function SortableTableRow({
                 return (
                   <span
                     key={tag.id}
-                    className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
-                    style={{ backgroundColor: tag.color }}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    style={{ 
+                      backgroundColor: `${tag.color}15`,
+                      color: tag.color,
+                    }}
                   >
                     {tag.name}
                   </span>
