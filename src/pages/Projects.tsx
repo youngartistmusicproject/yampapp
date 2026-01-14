@@ -34,8 +34,9 @@ import {
 import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
-import { teamMembers, statusLibrary as defaultStatuses, tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
+import { teamMembers, statusLibrary as defaultStatuses, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { useTasks, useProjects, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useReorderTasks, useCompleteRecurringTask, useReorderProjects } from "@/hooks/useWorkManagement";
+import { useAreas } from "@/hooks/useAreas";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
@@ -56,7 +57,8 @@ export default function Projects() {
   const reorderProjects = useReorderProjects();
   
   const [statuses, setStatuses] = useState<StatusItem[]>(defaultStatuses);
-  const [tags, setTags] = useState<TagItem[]>(tagLibrary);
+  const { data: areas = [] } = useAreas();
+  const tags: TagItem[] = areas.map(a => ({ id: a.id, name: a.name, color: a.color }));
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [statusManagerOpen, setStatusManagerOpen] = useState(false);
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
@@ -1034,8 +1036,6 @@ export default function Projects() {
       <TagManager
         open={tagManagerOpen}
         onOpenChange={setTagManagerOpen}
-        tags={tags}
-        onTagsChange={setTags}
       />
     </div>
   );

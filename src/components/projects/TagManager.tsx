@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, GripVertical, Pencil, Trash2, X, Check } from "lucide-react";
+import { Plus, GripVertical, Pencil, Trash2, X, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,6 +32,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useAreas, useCreateArea, useUpdateArea, useDeleteArea, useReorderAreas } from "@/hooks/useAreas";
 
 export interface TagItem {
   id: string;
@@ -42,8 +43,6 @@ export interface TagItem {
 interface TagManagerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  tags: TagItem[];
-  onTagsChange: (tags: TagItem[]) => void;
 }
 
 const colorPresets = [
@@ -167,12 +166,21 @@ function SortableTagItem({
   );
 }
 
-export function TagManager({ open, onOpenChange, tags, onTagsChange }: TagManagerProps) {
+export function TagManager({ open, onOpenChange }: TagManagerProps) {
+  const { data: areas = [], isLoading } = useAreas();
+  const createArea = useCreateArea();
+  const updateArea = useUpdateArea();
+  const deleteArea = useDeleteArea();
+  const reorderAreas = useReorderAreas();
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
   const [newTag, setNewTag] = useState({ name: "", color: "#6b7280" });
   const [showNewForm, setShowNewForm] = useState(false);
+
+  // Convert areas to TagItem format
+  const tags: TagItem[] = areas.map(a => ({ id: a.id, name: a.name, color: a.color }));
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -189,13 +197,7 @@ export function TagManager({ open, onOpenChange, tags, onTagsChange }: TagManage
 
   const saveEdit = () => {
     if (!editingId || !editName.trim()) return;
-    onTagsChange(
-      tags.map(t => 
-        t.id === editingId 
-          ? { ...t, name: editName.trim(), color: editColor }
-          : t
-      )
-    );
+    updateArea.mutate({ id: editingId, updates: { name: editName.trim(), color: editColor } });
     setEditingId(null);
   };
 
@@ -205,15 +207,14 @@ export function TagManager({ open, onOpenChange, tags, onTagsChange }: TagManage
     setEditColor("");
   };
 
-  const deleteTag = (id: string) => {
+  const handleDeleteTag = (id: string) => {
     if (tags.length <= 1) return;
-    onTagsChange(tags.filter(t => t.id !== id));
+    deleteArea.mutate(id);
   };
 
   const addTag = () => {
     if (!newTag.name.trim()) return;
-    const id = newTag.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
-    onTagsChange([...tags, { id, name: newTag.name.trim(), color: newTag.color }]);
+    createArea.mutate({ name: newTag.name.trim(), color: newTag.color });
     setNewTag({ name: "", color: "#6b7280" });
     setShowNewForm(false);
   };
@@ -224,7 +225,8 @@ export function TagManager({ open, onOpenChange, tags, onTagsChange }: TagManage
     if (over && active.id !== over.id) {
       const oldIndex = tags.findIndex((t) => t.id === active.id);
       const newIndex = tags.findIndex((t) => t.id === over.id);
-      onTagsChange(arrayMove(tags, oldIndex, newIndex));
+      const reordered = arrayMove(tags, oldIndex, newIndex);
+      reorderAreas.mutate(reordered);
     }
   };
 
@@ -261,7 +263,7 @@ export function TagManager({ open, onOpenChange, tags, onTagsChange }: TagManage
                     onStartEdit={startEdit}
                     onSaveEdit={saveEdit}
                     onCancelEdit={cancelEdit}
-                    onDelete={deleteTag}
+                    onDelete={handleDeleteTag}
                     canDelete={tags.length > 1}
                   />
                 ))}
