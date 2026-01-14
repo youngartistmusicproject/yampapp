@@ -86,6 +86,8 @@ export interface Project {
   tasks: Task[];
   owners: User[];
   members: User[];
+  areaId?: string;
+  area?: { id: string; name: string; color: string };
   createdAt: Date;
 }
 

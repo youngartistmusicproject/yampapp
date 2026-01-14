@@ -30,7 +30,7 @@ function getUserByName(name: string): User {
   };
 }
 
-// Fetch all projects with owners and members
+// Fetch all projects with owners, members, and areas
 export function useProjects() {
   return useQuery({
     queryKey: ['projects'],
@@ -48,6 +48,16 @@ export function useProjects() {
         .select('*');
       
       if (membersError) throw membersError;
+
+      // Fetch all areas for mapping
+      const { data: areasData, error: areasError } = await supabase
+        .from('areas')
+        .select('*');
+      
+      if (areasError) throw areasError;
+      
+      // Create areas map for quick lookup
+      const areasMap = new Map(areasData?.map(a => [a.id, { id: a.id, name: a.name, color: a.color }]) || []);
       
       // Group owners and members by project_id
       const ownersByProject = new Map<string, string[]>();
@@ -75,6 +85,8 @@ export function useProjects() {
         tasks: [] as Task[],
         owners: (ownersByProject.get(p.id) || []).map(getUserByName),
         members: (membersByProject.get(p.id) || []).map(getUserByName),
+        areaId: (p as any).area_id || undefined,
+        area: (p as any).area_id ? areasMap.get((p as any).area_id) : undefined,
         createdAt: new Date(p.created_at),
         sortOrder: (p as any).sort_order || 0,
       }));
@@ -566,13 +578,14 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (project: { name: string; description?: string; color?: string; owners?: User[]; members?: User[] }) => {
+    mutationFn: async (project: { name: string; description?: string; color?: string; areaId?: string; owners?: User[]; members?: User[] }) => {
       const { data, error } = await supabase
         .from('projects')
         .insert({
           name: project.name,
           description: project.description || null,
           color: project.color || '#3b82f6',
+          area_id: project.areaId || null,
           status: 'active',
         })
         .select()
@@ -626,14 +639,16 @@ export function useUpdateProject() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; color?: string; owners?: User[]; members?: User[] } }) => {
+    mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; color?: string; areaId?: string; owners?: User[]; members?: User[] } }) => {
+      const updateData: Record<string, unknown> = {};
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.color !== undefined) updateData.color = updates.color;
+      if (updates.areaId !== undefined) updateData.area_id = updates.areaId || null;
+
       const { data, error } = await supabase
         .from('projects')
-        .update({
-          name: updates.name,
-          description: updates.description,
-          color: updates.color,
-        })
+        .update(updateData)
         .eq('id', projectId)
         .select()
         .single();
