@@ -741,13 +741,51 @@ export default function Projects() {
   return (
     <div className="space-y-5 animate-fade-in">
       {/* Enhanced Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-foreground">
-          Work Management
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your tasks, projects, and workflows
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold text-foreground">
+            Work Management
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your tasks, projects, and workflows
+          </p>
+        </div>
+        
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="sm"
+            className="h-8 gap-1.5 px-2 sm:px-3"
+            onClick={() => setTaskDialogOpen(true)}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Add Task</span>
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 px-2 sm:px-3">
+                <Settings2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Manage</span>
+                <ChevronDown className="w-3 h-3 hidden sm:block" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => setProjectManagementOpen(true)} className="gap-2">
+                <Folders className="h-4 w-4" />
+                Projects
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTagManagerOpen(true)} className="gap-2">
+                <Tags className="h-4 w-4" />
+                Areas
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusManagerOpen(true)} className="gap-2">
+                <Layers className="h-4 w-4" />
+                Stages
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* More Prominent Search Bar */}
@@ -969,7 +1007,10 @@ export default function Projects() {
               )}
             </div>
 
-            {/* Advanced Filter */}
+          </div>
+
+          {/* Right: Filter Panel */}
+          <div className="shrink-0">
             <TaskFilterPanel
               filters={filters}
               onFiltersChange={setFilters}
@@ -983,42 +1024,6 @@ export default function Projects() {
               selectedProjectIds={selectedProjects}
               onProjectsChange={setSelectedProjects}
             />
-          </div>
-
-          {/* Right: Add Task + Manage */}
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              size="sm"
-              className="h-8 gap-1.5 px-2 sm:px-3"
-              onClick={() => setTaskDialogOpen(true)}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Add Task</span>
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 px-2 sm:px-3">
-                  <Settings2 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Manage</span>
-                  <ChevronDown className="w-3 h-3 hidden sm:block" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem onClick={() => setProjectManagementOpen(true)} className="gap-2">
-                  <Folders className="h-4 w-4" />
-                  Projects
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTagManagerOpen(true)} className="gap-2">
-                  <Tags className="h-4 w-4" />
-                  Areas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusManagerOpen(true)} className="gap-2">
-                  <Layers className="h-4 w-4" />
-                  Stages
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </div>
