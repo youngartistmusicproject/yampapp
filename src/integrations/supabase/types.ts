@@ -511,6 +511,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          area_id: string | null
           color: string | null
           created_at: string
           description: string | null
@@ -523,6 +524,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          area_id?: string | null
           color?: string | null
           created_at?: string
           description?: string | null
@@ -535,6 +537,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          area_id?: string | null
           color?: string | null
           created_at?: string
           description?: string | null
@@ -546,7 +549,15 @@ export type Database = {
           tags?: string[] | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_assignees: {
         Row: {

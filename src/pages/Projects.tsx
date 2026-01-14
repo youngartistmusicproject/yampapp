@@ -544,6 +544,9 @@ export default function Projects() {
       name: newProject.name,
       description: newProject.description,
       color: newProject.color,
+      areaId: newProject.areaId,
+      owners: newProject.owners,
+      members: newProject.members,
     }, {
       onSuccess: () => {
         toast.success('Project created');
@@ -552,7 +555,7 @@ export default function Projects() {
     });
   };
 
-  const handleUpdateProject = (projectId: string, updates: Partial<{ name: string; description?: string; color: string }>) => {
+  const handleUpdateProject = (projectId: string, updates: Partial<{ name: string; description?: string; color: string; areaId?: string; owners?: User[]; members?: User[] }>) => {
     updateProject.mutate({ projectId, updates }, {
       onSuccess: () => toast.success('Project updated'),
       onError: () => toast.error('Failed to update project'),

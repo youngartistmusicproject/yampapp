@@ -4,6 +4,7 @@ import { Task, User, Project, RecurrenceSettings as RecurrenceSettingsType } fro
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -295,15 +296,39 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 </Select>
               </div>
 
-              {/* Areas */}
+              {/* Areas - inherited from project or editable if no project */}
               <div className="flex items-center gap-3">
                 <Label className="text-sm text-muted-foreground w-28 shrink-0">Areas</Label>
                 <div className="flex-1">
-                  <SearchableTagSelect
-                    tags={tags}
-                    selectedTags={selectedTags}
-                    onTagsChange={setSelectedTags}
-                  />
+                  {selectedProjectId ? (
+                    // Project selected - show inherited area as read-only badge
+                    (() => {
+                      const project = projects.find(p => p.id === selectedProjectId);
+                      const projectArea = project?.area;
+                      return projectArea ? (
+                        <Badge
+                          variant="secondary"
+                          className="text-xs"
+                          style={{
+                            backgroundColor: `${projectArea.color}20`,
+                            color: projectArea.color,
+                            borderColor: `${projectArea.color}40`,
+                          }}
+                        >
+                          {projectArea.name}
+                        </Badge>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">No area assigned to project</span>
+                      );
+                    })()
+                  ) : (
+                    // No project - allow area selection
+                    <SearchableTagSelect
+                      tags={tags}
+                      selectedTags={selectedTags}
+                      onTagsChange={setSelectedTags}
+                    />
+                  )}
                 </div>
               </div>
 

@@ -646,16 +646,40 @@ export function TaskDetailDialog({
                 </Select>
               </div>
 
-              {/* Areas Row */}
+              {/* Areas Row - inherited from project or editable if no project */}
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground w-28 shrink-0">Areas</span>
                 <div className="flex-1">
-                  <SearchableTagSelect
-                    tags={tags}
-                    selectedTags={task.tags || []}
-                    onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
-                    placeholder="Add areas..."
-                  />
+                  {task.projectId ? (
+                    // Project assigned - show inherited area as read-only badge
+                    (() => {
+                      const project = projects.find(p => p.id === task.projectId);
+                      const projectArea = (project as any)?.area;
+                      return projectArea ? (
+                        <Badge
+                          variant="secondary"
+                          className="text-xs"
+                          style={{
+                            backgroundColor: `${projectArea.color}20`,
+                            color: projectArea.color,
+                            borderColor: `${projectArea.color}40`,
+                          }}
+                        >
+                          {projectArea.name}
+                        </Badge>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">No area assigned to project</span>
+                      );
+                    })()
+                  ) : (
+                    // No project - allow area selection
+                    <SearchableTagSelect
+                      tags={tags}
+                      selectedTags={task.tags || []}
+                      onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
+                      placeholder="Add areas..."
+                    />
+                  )}
                 </div>
               </div>
 

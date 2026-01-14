@@ -7,10 +7,18 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, Users, Crown } from "lucide-react";
+import { X, Users, Crown, Tag } from "lucide-react";
 import { SearchableUserMultiSelect } from "@/components/projects/SearchableUserMultiSelect";
 import { teamMembers as allTeamMembers } from "@/data/workManagementConfig";
+import { useAreas } from "@/hooks/useAreas";
 
 interface ProjectDialogProps {
   open: boolean;
@@ -35,10 +43,12 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(projectColors[0]);
+  const [selectedAreaId, setSelectedAreaId] = useState<string>("");
   const [selectedOwners, setSelectedOwners] = useState<User[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
+  const { data: areas = [] } = useAreas();
   const isEditing = !!project;
 
   // Populate form when editing or reset when creating
@@ -47,12 +57,14 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
       setName(project.name);
       setDescription(project.description || "");
       setColor(project.color || projectColors[0]);
+      setSelectedAreaId(project.areaId || "");
       setSelectedOwners(project.owners || []);
       setSelectedMembers(project.members || []);
     } else {
       setName("");
       setDescription("");
       setColor(projectColors[0]);
+      setSelectedAreaId("");
       setSelectedOwners([]);
       setSelectedMembers([]);
     }
@@ -63,10 +75,12 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
     e.preventDefault();
     setHasAttemptedSubmit(true);
     
-    // Validate required fields - at least one owner required
-    if (selectedOwners.length === 0) {
+    // Validate required fields - at least one owner and area required
+    if (selectedOwners.length === 0 || !selectedAreaId) {
       return;
     }
+    
+    const selectedArea = areas.find(a => a.id === selectedAreaId);
     
     onSubmit({
       name,
@@ -74,12 +88,15 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
       color,
       owners: selectedOwners,
       members: selectedMembers,
+      areaId: selectedAreaId,
+      area: selectedArea ? { id: selectedArea.id, name: selectedArea.name, color: selectedArea.color } : undefined,
     });
     
     // Reset form
     setName("");
     setDescription("");
     setColor(projectColors[0]);
+    setSelectedAreaId("");
     setSelectedOwners([]);
     setSelectedMembers([]);
     setHasAttemptedSubmit(false);
@@ -169,6 +186,42 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                       style={{ backgroundColor: c }}
                     />
                   ))}
+                </div>
+              </div>
+
+              {/* Area (required) */}
+              <div className="flex items-center gap-3">
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">
+                  <span className="flex items-center gap-1">
+                    <Tag className="w-3 h-3" />
+                    Area <span className="text-destructive">*</span>
+                  </span>
+                </Label>
+                <div className="flex-1">
+                  <Select value={selectedAreaId} onValueChange={setSelectedAreaId}>
+                    <SelectTrigger className={cn(
+                      "h-9 text-sm border-border/50 bg-transparent",
+                      hasAttemptedSubmit && !selectedAreaId && "border-destructive"
+                    )}>
+                      <SelectValue placeholder="Select an area" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {areas.map((area) => (
+                        <SelectItem key={area.id} value={area.id}>
+                          <span className="flex items-center gap-2">
+                            <span
+                              className="h-2.5 w-2.5 rounded-full"
+                              style={{ backgroundColor: area.color }}
+                            />
+                            <span>{area.name}</span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {hasAttemptedSubmit && !selectedAreaId && (
+                    <p className="mt-1 text-xs text-destructive">Area is required.</p>
+                  )}
                 </div>
               </div>
 
