@@ -776,21 +776,26 @@ export default function Projects() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-border/50 pb-3">
           {/* Left: View Toggle + Quick Filters */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            {/* View Mode Selector */}
-            <Select value={viewMode} onValueChange={(v) => {
-              setViewMode(v as ViewMode);
-              // Reset quick filter when switching view
-              if (v === 'active') setActiveQuickFilter('all');
-              else setCompletedQuickFilter('all');
-            }}>
-              <SelectTrigger className="h-8 w-full sm:w-[150px] text-[13px] font-medium shrink-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="z-[60]">
-                <SelectItem value="active">Active Tasks</SelectItem>
-                <SelectItem value="completed">Completed Tasks</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* View Mode Toggle */}
+            <Button
+              variant={viewMode === 'completed' ? 'default' : 'outline'}
+              size="sm"
+              className="h-8 gap-1.5 px-3 shrink-0"
+              onClick={() => {
+                const newMode = viewMode === 'active' ? 'completed' : 'active';
+                setViewMode(newMode);
+                if (newMode === 'active') setActiveQuickFilter('all');
+                else setCompletedQuickFilter('all');
+              }}
+            >
+              <CheckCircle2 className={cn(
+                "w-4 h-4",
+                viewMode === 'completed' ? "fill-current" : ""
+              )} />
+              <span className="hidden sm:inline">
+                {viewMode === 'completed' ? 'Completed' : 'Active'}
+              </span>
+            </Button>
 
             <div className="h-4 w-px bg-border hidden sm:block shrink-0" />
 
