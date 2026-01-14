@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Filter, X, Calendar as CalendarIcon } from "lucide-react";
+import { Filter, X, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -115,15 +115,37 @@ export function TaskFilterPanel({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Filter className="w-4 h-4" />
-          Additional Filters
-          {activeFilterCount > 0 && (
-            <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-              {activeFilterCount}
-            </Badge>
+        <button
+          className={cn(
+            "flex items-center gap-1.5 h-8 px-3 text-[13px] rounded-md border border-border/50 bg-transparent hover:bg-muted/50 transition-colors",
+            activeFilterCount > 0 && "border-primary/50"
           )}
-        </Button>
+        >
+          <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className={activeFilterCount > 0 ? "text-foreground" : "text-muted-foreground"}>
+            Additional Filters
+          </span>
+          {activeFilterCount > 0 && (
+            <>
+              <Badge 
+                variant="secondary" 
+                className="h-5 px-1.5 text-[11px] font-medium bg-primary/15 text-primary border-primary/30"
+              >
+                {activeFilterCount}
+              </Badge>
+              <X
+                className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClearFilters();
+                }}
+              />
+            </>
+          )}
+          {activeFilterCount === 0 && (
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+          )}
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0 bg-popover" align="start">
         <div className="flex items-center justify-between p-3 border-b">
