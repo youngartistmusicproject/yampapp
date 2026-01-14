@@ -23,8 +23,6 @@ import {
 import { cn } from "@/lib/utils";
 
 interface CompletedTasksPanelProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   tasks: Task[];
   projects: Project[];
   onRestoreTask: (taskId: string) => void;
@@ -114,8 +112,6 @@ function TaskRow({
 }
 
 export function CompletedTasksPanel({
-  open,
-  onOpenChange,
   tasks,
   projects,
   onRestoreTask,
@@ -178,7 +174,17 @@ export function CompletedTasksPanel({
   }, [completedTasks]);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground gap-1.5"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Completed</span>
+        </Button>
+      </SheetTrigger>
 
       <SheetContent className="w-full sm:max-w-[480px] p-0 flex flex-col">
         <SheetHeader className="px-6 py-5 border-b border-border/50 shrink-0">
