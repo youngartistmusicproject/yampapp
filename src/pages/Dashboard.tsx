@@ -27,7 +27,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recha
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { Task, TaskComment } from "@/types";
-import { teamMembers, statusLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
+import { teamMembers, statusLibrary, effortLibrary, importanceLibrary, tagLibrary } from "@/data/workManagementConfig";
 import { toast } from "sonner";
 
 const currentUser = teamMembers[0];
@@ -472,6 +472,7 @@ export default function Dashboard() {
         currentUser={currentUser}
         availableMembers={teamMembers}
         statuses={statusLibrary}
+        tags={tagLibrary}
         onTaskUpdate={handleTaskUpdate}
         onAddComment={handleAddComment}
         onDeleteComment={handleDeleteComment}
