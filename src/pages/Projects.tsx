@@ -610,6 +610,17 @@ export default function Projects() {
         </Button>
       </div>
 
+      {/* Search Bar - Below title */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+        <Input
+          placeholder="Search tasks..."
+          className="pl-8 h-8 text-[13px] bg-transparent border-border/50"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       {/* Filters Row - Clean and minimal */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         {/* Left: Filter Dropdowns */}
@@ -624,29 +635,16 @@ export default function Projects() {
             selectedProjectIds={selectedProjects}
             onProjectsChange={setSelectedProjects}
           />
-        </div>
-
-        {/* Right: Search */}
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input
-            placeholder="Search..."
-            className="pl-8 h-8 text-[13px] bg-transparent border-border/50"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1 ml-auto">
           <TaskFilterPanel
             filters={filters}
             onFiltersChange={setFilters}
             statuses={statuses}
             availableMembers={teamMembers}
-            availableTags={tags}
           />
-          
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 ml-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
