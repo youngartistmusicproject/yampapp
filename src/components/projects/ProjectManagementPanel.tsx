@@ -12,7 +12,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import {
   AlertDialog,
@@ -201,11 +200,6 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
   return (
     <>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground">
-            <FolderKanban className="w-3.5 h-3.5" />
-          </Button>
-        </SheetTrigger>
         <SheetContent className="w-full sm:max-w-[480px] p-0 flex flex-col">
           <SheetHeader className="px-6 py-4 border-b">
             <SheetTitle>Manage Projects</SheetTitle>
