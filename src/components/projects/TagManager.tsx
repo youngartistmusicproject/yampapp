@@ -240,6 +240,56 @@ export function TagManager({ open, onOpenChange }: TagManagerProps) {
           </SheetDescription>
         </SheetHeader>
         
+        {/* Fixed Action Bar */}
+        <div className="px-6 py-3 border-b">
+          {showNewForm ? (
+            <div className="flex items-center gap-2 p-2 rounded-lg border border-dashed bg-muted/30">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0"
+                    style={{ backgroundColor: newTag.color }}
+                  />
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2 z-[100]" align="start">
+                  <div className="grid grid-cols-5 gap-1">
+                    {colorPresets.map((color) => (
+                      <button
+                        key={color}
+                        className={`w-6 h-6 rounded-full border-2 ${newTag.color === color ? 'border-foreground' : 'border-transparent'}`}
+                        style={{ backgroundColor: color }}
+                        onClick={() => setNewTag({ ...newTag, color })}
+                      />
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Input
+                value={newTag.name}
+                onChange={(e) => setNewTag({ ...newTag, name: e.target.value })}
+                placeholder="Area name..."
+                className="h-8 flex-1"
+                autoFocus
+              />
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={addTag}>
+                <Check className="w-4 h-4 text-green-600" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowNewForm(false)}>
+                <X className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              variant="outline" 
+              className="w-full gap-2 border-dashed" 
+              onClick={() => setShowNewForm(true)}
+            >
+              <Plus className="w-4 h-4" />
+              Add Area
+            </Button>
+          )}
+        </div>
+
         <ScrollArea className="flex-1">
           <div className="px-6 py-5 space-y-2">
             <DndContext
@@ -269,53 +319,6 @@ export function TagManager({ open, onOpenChange }: TagManagerProps) {
                 ))}
               </SortableContext>
             </DndContext>
-
-            {showNewForm ? (
-              <div className="flex items-center gap-2 p-2 rounded-lg border border-dashed bg-muted/30">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className="w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0"
-                      style={{ backgroundColor: newTag.color }}
-                    />
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-2 z-[100]" align="start">
-                    <div className="grid grid-cols-5 gap-1">
-                      {colorPresets.map((color) => (
-                        <button
-                          key={color}
-                          className={`w-6 h-6 rounded-full border-2 ${newTag.color === color ? 'border-foreground' : 'border-transparent'}`}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setNewTag({ ...newTag, color })}
-                        />
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <Input
-                  value={newTag.name}
-                  onChange={(e) => setNewTag({ ...newTag, name: e.target.value })}
-                  placeholder="Area name..."
-                  className="h-8 flex-1"
-                  autoFocus
-                />
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={addTag}>
-                  <Check className="w-4 h-4 text-green-600" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowNewForm(false)}>
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </Button>
-              </div>
-            ) : (
-              <Button 
-                variant="outline" 
-                className="w-full gap-2 border-dashed" 
-                onClick={() => setShowNewForm(true)}
-              >
-                <Plus className="w-4 h-4" />
-                Add Area
-              </Button>
-            )}
           </div>
         </ScrollArea>
 
