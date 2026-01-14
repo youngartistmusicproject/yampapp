@@ -133,8 +133,16 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
   const [localProjects, setLocalProjects] = useState(projects);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
+  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('projectManagement_selectedAreas');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [areaFilterOpen, setAreaFilterOpen] = useState(false);
+
+  // Persist area filter selection
+  useEffect(() => {
+    localStorage.setItem('projectManagement_selectedAreas', JSON.stringify(selectedAreaIds));
+  }, [selectedAreaIds]);
   const { data: areas = [] } = useAreas();
 
   useEffect(() => { setLocalProjects(projects); }, [projects]);

@@ -133,6 +133,8 @@ export default function Projects() {
       tasks: [],
       owners: p.owners || [],
       members: p.members || [],
+      areaIds: p.areaIds || [],
+      areas: p.areas || [],
       createdAt: p.createdAt,
     }));
   }, [dbProjects]);
