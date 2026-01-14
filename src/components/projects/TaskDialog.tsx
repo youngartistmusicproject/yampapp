@@ -295,6 +295,18 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 </Select>
               </div>
 
+              {/* Areas */}
+              <div className="flex items-center gap-3">
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">Areas</Label>
+                <div className="flex-1">
+                  <SearchableTagSelect
+                    tags={tags}
+                    selectedTags={selectedTags}
+                    onTagsChange={setSelectedTags}
+                  />
+                </div>
+              </div>
+
               {/* Due Date */}
               <div className="flex items-center gap-3">
                 <Label className="text-sm text-muted-foreground w-28 shrink-0">Due Date <span className="text-destructive">*</span></Label>
@@ -441,18 +453,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                 </Select>
               </div>
 
-              {/* Areas */}
-              <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0">Areas</Label>
-                <div className="flex-1">
-                  <SearchableTagSelect
-                    tags={tags}
-                    selectedTags={selectedTags}
-                    onTagsChange={setSelectedTags}
-                    placeholder="Add areas..."
-                  />
-                </div>
-              </div>
 
               {/* SOP Link */}
               <div className="flex items-center gap-3">
