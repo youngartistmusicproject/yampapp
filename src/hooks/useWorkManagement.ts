@@ -123,7 +123,7 @@ export function useReorderProjects() {
   });
 }
 
-// Fetch all tasks with assignees
+// Fetch all tasks with assignees and inherited project areas
 export function useTasks() {
   return useQuery({
     queryKey: ['tasks'],
@@ -143,6 +143,31 @@ export function useTasks() {
       
       if (assigneesError) throw assigneesError;
       
+      // Fetch all projects with area_ids
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('id, area_ids');
+      
+      if (projectsError) throw projectsError;
+      
+      // Fetch all areas for mapping
+      const { data: areasData, error: areasError } = await supabase
+        .from('areas')
+        .select('*');
+      
+      if (areasError) throw areasError;
+      
+      // Create areas map for quick lookup
+      const areasMap = new Map(areasData?.map(a => [a.id, { id: a.id, name: a.name, color: a.color }]) || []);
+      
+      // Create project areas map
+      const projectAreasMap = new Map<string, { id: string; name: string; color: string }[]>();
+      projectsData?.forEach(p => {
+        const areaIds = (p as any).area_ids || [];
+        const areas = areaIds.map((id: string) => areasMap.get(id)).filter(Boolean);
+        projectAreasMap.set(p.id, areas);
+      });
+      
       // Group assignees by task_id
       const assigneesByTask = new Map<string, string[]>();
       assigneesData?.forEach(a => {
@@ -160,6 +185,9 @@ export function useTasks() {
         // Parse recurrence settings from DB columns
         const recurrence = dbToRecurrence(t as any);
         
+        // Get inherited areas from project
+        const inheritedAreas = t.project_id ? projectAreasMap.get(t.project_id) || [] : [];
+        
         return {
           id: t.id,
           title: t.title,
@@ -171,6 +199,7 @@ export function useTasks() {
           assignees: (assigneesByTask.get(t.id) || []).map(getUserByName),
           projectId: t.project_id || undefined,
           tags: t.tags || [],
+          inheritedAreas: inheritedAreas.length > 0 ? inheritedAreas : undefined,
           isRecurring: t.is_recurring,
           recurrence,
           parentTaskId: (t as any).parent_task_id || undefined,

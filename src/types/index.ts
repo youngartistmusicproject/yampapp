@@ -60,6 +60,7 @@ export interface Task {
   assignees: User[];
   projectId?: string;
   tags: string[];
+  inheritedAreas?: { id: string; name: string; color: string }[]; // Areas inherited from project
   isRecurring?: boolean;
   recurrence?: RecurrenceSettings;
   parentTaskId?: string; // for recurring task instances

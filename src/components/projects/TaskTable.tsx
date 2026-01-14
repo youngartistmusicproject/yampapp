@@ -246,30 +246,32 @@ function SortableTableRow({
             </div>
           )}
 
-          {/* Area tags */}
-          {task.tags && task.tags.length > 0 && (
-            <div className="flex items-center gap-1">
-              {task.tags.slice(0, 2).map(tagId => {
-                const tag = tags.find(t => t.id === tagId);
-                if (!tag) return null;
-                return (
+          {/* Area tags - show inherited areas if task has project, otherwise show manual tags */}
+          {(() => {
+            const areas = task.inheritedAreas || (task.tags && task.tags.length > 0 
+              ? task.tags.map(tagId => tags.find(t => t.id === tagId)).filter(Boolean)
+              : []);
+            if (!areas.length) return null;
+            return (
+              <div className="flex items-center gap-1">
+                {areas.slice(0, 2).map((area: any) => (
                   <span
-                    key={tag.id}
+                    key={area.id}
                     className="px-1.5 py-0.5 rounded text-[10px] font-medium"
                     style={{ 
-                      backgroundColor: `${tag.color}15`,
-                      color: tag.color,
+                      backgroundColor: `${area.color}15`,
+                      color: area.color,
                     }}
                   >
-                    {tag.name}
+                    {area.name}
                   </span>
-                );
-              })}
-              {task.tags.length > 2 && (
-                <span className="text-[10px] text-muted-foreground">+{task.tags.length - 2}</span>
-              )}
-            </div>
-          )}
+                ))}
+                {areas.length > 2 && (
+                  <span className="text-[10px] text-muted-foreground">+{areas.length - 2}</span>
+                )}
+              </div>
+            );
+          })()}
           
           {/* Spacer to push rest to right */}
           <div className="flex-1" />

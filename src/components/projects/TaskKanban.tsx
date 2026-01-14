@@ -208,30 +208,32 @@ function SortableTaskCard({
           </div>
         )}
 
-        {/* Area tags */}
-        {task.tags && task.tags.length > 0 && (
-          <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-            {task.tags.slice(0, 2).map(tagId => {
-              const tag = tags.find(t => t.id === tagId);
-              if (!tag) return null;
-              return (
+        {/* Area tags - show inherited areas if task has project, otherwise show manual tags */}
+        {(() => {
+          const areas = task.inheritedAreas || (task.tags && task.tags.length > 0 
+            ? task.tags.map(tagId => tags.find(t => t.id === tagId)).filter(Boolean)
+            : []);
+          if (!areas.length) return null;
+          return (
+            <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+              {areas.slice(0, 2).map((area: any) => (
                 <span
-                  key={tag.id}
+                  key={area.id}
                   className="px-1.5 py-0.5 rounded text-[10px] font-medium"
                   style={{ 
-                    backgroundColor: `${tag.color}15`,
-                    color: tag.color,
+                    backgroundColor: `${area.color}15`,
+                    color: area.color,
                   }}
                 >
-                  {tag.name}
+                  {area.name}
                 </span>
-              );
-            })}
-            {task.tags.length > 2 && (
-              <span className="text-[10px] text-muted-foreground">+{task.tags.length - 2}</span>
-            )}
-          </div>
-        )}
+              ))}
+              {areas.length > 2 && (
+                <span className="text-[10px] text-muted-foreground">+{areas.length - 2}</span>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Meta info */}
         <div className="mt-2 pt-2 border-t border-border/50 flex flex-col gap-1.5">
