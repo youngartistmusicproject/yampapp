@@ -60,6 +60,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 interface ProjectManagementPanelProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   projects: Project[];
   availableMembers: User[];
   onCreateProject: (project: Omit<Project, 'id' | 'createdAt' | 'tasks'>) => void;
@@ -126,8 +128,7 @@ function SortableProjectRow({ project, onEdit, onDelete }: { project: Project; o
   );
 }
 
-export function ProjectManagementPanel({ projects, availableMembers, onCreateProject, onUpdateProject, onDeleteProject, onReorderProjects }: ProjectManagementPanelProps) {
-  const [open, setOpen] = useState(false);
+export function ProjectManagementPanel({ open, onOpenChange, projects, availableMembers, onCreateProject, onUpdateProject, onDeleteProject, onReorderProjects }: ProjectManagementPanelProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
@@ -196,12 +197,7 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
 
   return (
     <>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground">
-            <FolderKanban className="w-3.5 h-3.5" />
-          </Button>
-        </SheetTrigger>
+      <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="w-full sm:max-w-[480px] p-0 flex flex-col">
           <SheetHeader className="px-6 py-4 border-b">
             <SheetTitle>Manage Projects</SheetTitle>

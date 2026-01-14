@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, FolderKanban, Layers, Tag, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { format, differenceInDays } from "date-fns";
@@ -57,6 +58,8 @@ export default function Projects() {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [statusManagerOpen, setStatusManagerOpen] = useState(false);
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
+  const [projectManagementOpen, setProjectManagementOpen] = useState(false);
+  const [completedTasksOpen, setCompletedTasksOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -646,43 +649,37 @@ export default function Projects() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 ml-auto">
+        <div className="flex items-center gap-2 ml-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground" 
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground" 
               >
-                <Settings2 className="w-3.5 h-3.5" />
+                <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setProjectManagementOpen(true)}>
+                <FolderKanban className="w-4 h-4 mr-2" />
+                Manage Projects
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setStatusManagerOpen(true)}>
+                <Layers className="w-4 h-4 mr-2" />
                 Manage Stages
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTagManagerOpen(true)}>
+                <Tag className="w-4 h-4 mr-2" />
                 Manage Areas
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setCompletedTasksOpen(true)}>
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                View Completed
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <ProjectManagementPanel
-            projects={projects}
-            availableMembers={teamMembers}
-            onCreateProject={handleAddProject}
-            onUpdateProject={handleUpdateProject}
-            onDeleteProject={handleDeleteProject}
-            onReorderProjects={(reorderedProjects) => {
-              reorderProjects.mutate(reorderedProjects.map((p, i) => ({ id: p.id, sortOrder: i })));
-            }}
-          />
-
-          <CompletedTasksPanel
-            tasks={allCompletedTasks}
-            projects={projects}
-            onRestoreTask={handleRestoreTask}
-          />
         </div>
       </div>
 
@@ -1043,6 +1040,29 @@ export default function Projects() {
       <TagManager
         open={tagManagerOpen}
         onOpenChange={setTagManagerOpen}
+      />
+
+      {/* Project Management Panel */}
+      <ProjectManagementPanel
+        open={projectManagementOpen}
+        onOpenChange={setProjectManagementOpen}
+        projects={projects}
+        availableMembers={teamMembers}
+        onCreateProject={handleAddProject}
+        onUpdateProject={handleUpdateProject}
+        onDeleteProject={handleDeleteProject}
+        onReorderProjects={(reorderedProjects) => {
+          reorderProjects.mutate(reorderedProjects.map((p, i) => ({ id: p.id, sortOrder: i })));
+        }}
+      />
+
+      {/* Completed Tasks Panel */}
+      <CompletedTasksPanel
+        open={completedTasksOpen}
+        onOpenChange={setCompletedTasksOpen}
+        tasks={allCompletedTasks}
+        projects={projects}
+        onRestoreTask={handleRestoreTask}
       />
     </div>
   );
