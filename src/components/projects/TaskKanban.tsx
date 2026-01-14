@@ -70,6 +70,7 @@ interface TaskKanbanProps {
   sortField?: SortField;
   sortAscending?: boolean;
   teamLeaderNames?: string[];
+  projectLeadMap?: Record<string, string[]>;
 }
 
 const importanceColors: Record<string, string> = {
@@ -119,7 +120,7 @@ interface SortableTaskCardProps {
   onCompleteTask?: (taskId: string) => void;
   dropIndicatorPosition?: "before" | "after";
   showDetails?: boolean;
-  teamLeaderNames?: string[];
+  projectLeadNames?: string[];
 }
 
 function SortableTaskCard({
@@ -132,7 +133,7 @@ function SortableTaskCard({
   onCompleteTask,
   dropIndicatorPosition,
   showDetails = true,
-  teamLeaderNames = [],
+  projectLeadNames = [],
 }: SortableTaskCardProps) {
   const {
     attributes,
@@ -271,7 +272,7 @@ function SortableTaskCard({
           {/* Footer: Assignees + Due Date */}
           <div className="flex items-center justify-between">
             {task.assignees && task.assignees.length > 0 ? (
-              <UserAvatarGroup users={task.assignees} max={2} size="sm" teamLeaderIds={teamLeaderNames} />
+              <UserAvatarGroup users={task.assignees} max={2} size="sm" teamLeaderIds={projectLeadNames} />
             ) : (
               <span className="text-xs text-muted-foreground">Unassigned</span>
             )}
@@ -360,7 +361,7 @@ const TaskCardOverlay = React.forwardRef<HTMLDivElement, { task: Task }>(functio
   );
 });
 
-export function TaskKanban({ tasks, projects = [], tags = [], onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onReorderTasks, statuses, showDetails = true, sortField = 'manual', sortAscending = true, teamLeaderNames = [] }: TaskKanbanProps) {
+export function TaskKanban({ tasks, projects = [], tags = [], onTaskUpdate, onEditTask, onViewTask, onDeleteTask, onDuplicateTask, onReorderTasks, statuses, showDetails = true, sortField = 'manual', sortAscending = true, teamLeaderNames = [], projectLeadMap = {} }: TaskKanbanProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -744,7 +745,7 @@ export function TaskKanban({ tasks, projects = [], tags = [], onTaskUpdate, onEd
                                 onCompleteTask={(taskId) => onTaskUpdate(taskId, { status: 'done', progress: 100 })}
                                 dropIndicatorPosition={dropPos}
                                 showDetails={showDetails}
-                                teamLeaderNames={teamLeaderNames}
+                                projectLeadNames={task.projectId ? (projectLeadMap[task.projectId] || []) : []}
                               />
                             </div>
                           );

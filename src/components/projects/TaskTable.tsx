@@ -62,6 +62,7 @@ interface TaskTableProps {
   teamLeaderNames?: string[];
   isCompletedView?: boolean;
   onRestoreTask?: (taskId: string) => void;
+  projectLeadMap?: Record<string, string[]>;
 }
 
 const effortColors: Record<string, string> = {
@@ -105,7 +106,7 @@ interface SortableTableRowProps {
   getStatusById: (id: string) => StatusItem | undefined;
   doneStatusId: string;
   showDetails: boolean;
-  teamLeaderNames?: string[];
+  projectLeadNames?: string[];
 }
 
 function SortableTableRow({
@@ -119,7 +120,7 @@ function SortableTableRow({
   getStatusById,
   doneStatusId,
   showDetails,
-  teamLeaderNames = [],
+  projectLeadNames = [],
 }: SortableTableRowProps) {
   const {
     attributes,
@@ -201,8 +202,8 @@ function SortableTableRow({
             </span>
           )}
           
-          <div className="w-14">
-            <UserAvatarGroup users={task.assignees} max={2} size="sm" teamLeaderIds={teamLeaderNames} />
+          <div className="w-16">
+            <UserAvatarGroup users={task.assignees} max={2} size="sm" teamLeaderIds={projectLeadNames} />
           </div>
           
           <span className={`text-[12px] w-14 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
@@ -323,7 +324,7 @@ interface SortableMobileCardProps {
   onDeleteClick: (task: Task) => void;
   getStatusById: (id: string) => StatusItem | undefined;
   doneStatusId: string;
-  teamLeaderNames?: string[];
+  projectLeadNames?: string[];
 }
 
 function SortableMobileCard({
@@ -334,7 +335,7 @@ function SortableMobileCard({
   onDeleteClick,
   getStatusById,
   doneStatusId,
-  teamLeaderNames = [],
+  projectLeadNames = [],
 }: SortableMobileCardProps) {
   const {
     attributes,
@@ -402,7 +403,7 @@ function SortableMobileCard({
           </div>
           
           <div className="flex items-center justify-between mt-3">
-            <UserAvatarGroup users={task.assignees} max={2} size="sm" teamLeaderIds={teamLeaderNames} />
+            <UserAvatarGroup users={task.assignees} max={2} size="sm" teamLeaderIds={projectLeadNames} />
             <div 
               className="flex items-center gap-1" 
               onClick={(e) => e.stopPropagation()}
@@ -450,6 +451,7 @@ export function TaskTable({
   teamLeaderNames = [],
   isCompletedView = false,
   onRestoreTask,
+  projectLeadMap = {},
 }: TaskTableProps) {
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -539,7 +541,7 @@ export function TaskTable({
                     onDeleteClick={setTaskToDelete}
                     getStatusById={getStatusById}
                     doneStatusId={doneStatusId}
-                    teamLeaderNames={teamLeaderNames}
+                    projectLeadNames={task.projectId ? (projectLeadMap[task.projectId] || []) : []}
                   />
                 </motion.div>
               ))}
@@ -574,7 +576,7 @@ export function TaskTable({
                     getStatusById={getStatusById}
                     doneStatusId={doneStatusId}
                     showDetails={showDetails}
-                    teamLeaderNames={teamLeaderNames}
+                    projectLeadNames={task.projectId ? (projectLeadMap[task.projectId] || []) : []}
                   />
                 </motion.div>
               ))}
