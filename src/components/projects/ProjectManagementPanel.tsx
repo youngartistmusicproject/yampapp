@@ -206,14 +206,24 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
             <SheetDescription>Create, edit, or remove projects. Drag to reorder.</SheetDescription>
           </SheetHeader>
           <div className="px-6 py-3 border-b space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 bg-muted/50 border-border/50"
-              />
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9 bg-muted/50 border-border/50"
+                />
+              </div>
+              <Button 
+                variant="outline" 
+                className="gap-2 h-9 shrink-0" 
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+                Add Project
+              </Button>
             </div>
             <Popover open={areaFilterOpen} onOpenChange={setAreaFilterOpen}>
               <PopoverTrigger asChild>
@@ -293,16 +303,13 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
               </PopoverContent>
             </Popover>
           </div>
-          <Button size="icon" onClick={() => setCreateDialogOpen(true)} className="absolute bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-10 transition-transform duration-200 hover:scale-110">
-            <Plus className="w-5 h-5" />
-          </Button>
           <ScrollArea className="flex-1">
             <div className="px-6 py-5 space-y-2">
               {filteredProjects.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <FolderKanban className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p className="text-sm">{searchQuery || selectedAreaIds.length > 0 ? "No projects found" : "No projects yet"}</p>
-                  <p className="text-xs mt-1">{searchQuery || selectedAreaIds.length > 0 ? "Try different filters" : "Click the + button to create one"}</p>
+                  <p className="text-xs mt-1">{searchQuery || selectedAreaIds.length > 0 ? "Try different filters" : "Click 'Add Project' to create one"}</p>
                 </div>
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -317,6 +324,9 @@ export function ProjectManagementPanel({ projects, availableMembers, onCreatePro
               )}
             </div>
           </ScrollArea>
+          <div className="px-6 py-4 border-t flex justify-end">
+            <Button onClick={() => setOpen(false)}>Done</Button>
+          </div>
         </SheetContent>
       </Sheet>
       <ProjectDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} onSubmit={(p) => { onCreateProject(p); setCreateDialogOpen(false); }} availableMembers={availableMembers} />
