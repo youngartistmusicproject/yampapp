@@ -61,39 +61,22 @@ export function AreaFilterSelect({
             selectedAreaIds.length > 0 && "border-primary/50"
           )}
         >
+          <span className={cn(
+            "text-muted-foreground",
+            selectedAreas.length > 0 && "text-foreground"
+          )}>{placeholder}</span>
           {selectedAreas.length > 0 ? (
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-1">
-                {selectedAreas.slice(0, 2).map((area) => (
-                  <Badge
-                    key={area.id}
-                    variant="outline"
-                    className="h-5 px-1.5 text-[11px] font-medium"
-                    style={{ 
-                      backgroundColor: `${area.color}20`,
-                      borderColor: `${area.color}40`,
-                      color: area.color
-                    }}
-                  >
-                    {area.name}
-                  </Badge>
-                ))}
-                {selectedAreas.length > 2 && (
-                  <span className="text-xs text-muted-foreground">
-                    +{selectedAreas.length - 2}
-                  </span>
-                )}
-              </div>
+            <>
+              <span className="flex items-center justify-center min-w-5 h-5 px-1.5 text-[11px] font-medium rounded-full bg-primary text-primary-foreground">
+                {selectedAreas.length}
+              </span>
               <X 
                 className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" 
                 onClick={clearAll}
               />
-            </div>
-          ) : (
-            <>
-              <span className="text-muted-foreground">{placeholder}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
             </>
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
           )}
         </button>
       </PopoverTrigger>
