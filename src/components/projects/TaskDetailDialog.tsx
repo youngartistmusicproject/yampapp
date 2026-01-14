@@ -653,11 +653,10 @@ export function TaskDetailDialog({
                   {task.projectId ? (
                     // Project assigned - show inherited areas as read-only badges
                     (() => {
-                      const project = projects.find(p => p.id === task.projectId);
-                      const projectAreas = (project as any)?.areas || [];
-                      return projectAreas.length > 0 ? (
+                      const inheritedAreas = task.inheritedAreas || [];
+                      return inheritedAreas.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
-                          {projectAreas.map((area: any) => (
+                          {inheritedAreas.map((area) => (
                             <Badge
                               key={area.id}
                               variant="secondary"
