@@ -61,22 +61,38 @@ export function ProjectFilterSelect({
             selectedProjectIds.length > 0 && "border-primary/50"
           )}
         >
-          <span className={cn(
-            "text-muted-foreground",
-            selectedProjects.length > 0 && "text-foreground"
-          )}>{placeholder}</span>
           {selectedProjects.length > 0 ? (
-            <>
-              <span className="flex items-center justify-center min-w-5 h-5 px-1.5 text-[11px] font-medium rounded-full bg-primary text-primary-foreground">
-                {selectedProjects.length}
-              </span>
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
+                {selectedProjects.slice(0, 2).map((project) => (
+                  <Badge
+                    key={project.id}
+                    variant="outline"
+                    className="h-5 px-1.5 text-[11px] font-medium gap-1"
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: project.color }}
+                    />
+                    {project.name}
+                  </Badge>
+                ))}
+                {selectedProjects.length > 2 && (
+                  <span className="text-xs text-muted-foreground">
+                    +{selectedProjects.length - 2}
+                  </span>
+                )}
+              </div>
               <X 
                 className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" 
                 onClick={clearAll}
               />
-            </>
+            </div>
           ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+            <>
+              <span className="text-muted-foreground">{placeholder}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+            </>
           )}
         </button>
       </PopoverTrigger>
