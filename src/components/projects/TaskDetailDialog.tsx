@@ -61,7 +61,7 @@ import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { NaturalDateInput } from "./NaturalDateInput";
 import { RecurrenceSettings } from "./RecurrenceSettings";
-import { tagLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
+import { effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { RecurrenceSettings as RecurrenceSettingsType } from "@/types";
 
 interface StatusItem {
@@ -78,6 +78,12 @@ interface ProjectOption {
   color: string;
 }
 
+interface TagItem {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface TaskDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -86,6 +92,7 @@ interface TaskDetailDialogProps {
   currentUser: User;
   availableMembers: User[];
   statuses: StatusItem[];
+  tags: TagItem[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onAddComment: (taskId: string, comment: Omit<TaskComment, 'id' | 'createdAt'>, parentCommentId?: string) => void;
   onDeleteComment: (taskId: string, commentId: string) => void;
@@ -291,6 +298,7 @@ export function TaskDetailDialog({
   currentUser,
   availableMembers,
   statuses,
+  tags,
   onTaskUpdate,
   onAddComment,
   onDeleteComment,
@@ -643,7 +651,7 @@ export function TaskDetailDialog({
                 <span className="text-sm text-muted-foreground w-28 shrink-0">Areas</span>
                 <div className="flex-1">
                   <SearchableTagSelect
-                    tags={tagLibrary}
+                    tags={tags}
                     selectedTags={task.tags || []}
                     onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
                     placeholder="Add areas..."

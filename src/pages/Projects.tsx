@@ -1018,6 +1018,7 @@ export default function Projects() {
         currentUser={currentUser}
         availableMembers={teamMembers}
         statuses={statuses}
+        tags={tags}
       />
 
 
