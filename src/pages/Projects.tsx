@@ -1298,7 +1298,6 @@ export default function Projects() {
         availableMembers={teamMembers}
         statuses={statuses}
         tags={tags}
-        projectLeadMap={projectLeadMap}
       />
 
 
