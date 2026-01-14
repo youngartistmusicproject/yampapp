@@ -65,7 +65,7 @@ function SortableProjectRow({ project, onEdit, onDelete }: { project: Project; o
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: project.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
 
-  const projectArea = (project as any).area;
+  const projectAreas = project.areas || [];
 
   return (
     <div ref={setNodeRef} style={style} className="flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:border-border transition-colors group">
@@ -75,21 +75,22 @@ function SortableProjectRow({ project, onEdit, onDelete }: { project: Project; o
       <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color || '#3b82f6' }} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{project.name}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          {project.description && <p className="text-xs text-muted-foreground truncate">{project.description}</p>}
-          {projectArea && (
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          {project.description && <p className="text-xs text-muted-foreground truncate mr-1">{project.description}</p>}
+          {projectAreas.map((area) => (
             <Badge
+              key={area.id}
               variant="secondary"
               className="text-[10px] h-4 px-1.5"
               style={{
-                backgroundColor: `${projectArea.color}20`,
-                color: projectArea.color,
-                borderColor: `${projectArea.color}40`,
+                backgroundColor: `${area.color}20`,
+                color: area.color,
+                borderColor: `${area.color}40`,
               }}
             >
-              {projectArea.name}
+              {area.name}
             </Badge>
-          )}
+          ))}
         </div>
       </div>
       {project.owners && project.owners.length > 0 && (

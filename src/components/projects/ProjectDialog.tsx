@@ -7,16 +7,10 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X, Users, Crown, Tag } from "lucide-react";
 import { SearchableUserMultiSelect } from "@/components/projects/SearchableUserMultiSelect";
+import { SearchableTagSelect } from "@/components/projects/SearchableTagSelect";
 import { teamMembers as allTeamMembers } from "@/data/workManagementConfig";
 import { useAreas } from "@/hooks/useAreas";
 
@@ -43,7 +37,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(projectColors[0]);
-  const [selectedAreaId, setSelectedAreaId] = useState<string>("");
+  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
   const [selectedOwners, setSelectedOwners] = useState<User[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
@@ -51,20 +45,26 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
   const { data: areas = [] } = useAreas();
   const isEditing = !!project;
 
+  // Transform areas for SearchableTagSelect
+  const areaTags = useMemo(() => 
+    areas.map(a => ({ id: a.id, name: a.name, color: a.color })),
+    [areas]
+  );
+
   // Populate form when editing or reset when creating
   useEffect(() => {
     if (project) {
       setName(project.name);
       setDescription(project.description || "");
       setColor(project.color || projectColors[0]);
-      setSelectedAreaId(project.areaId || "");
+      setSelectedAreaIds(project.areaIds || []);
       setSelectedOwners(project.owners || []);
       setSelectedMembers(project.members || []);
     } else {
       setName("");
       setDescription("");
       setColor(projectColors[0]);
-      setSelectedAreaId("");
+      setSelectedAreaIds([]);
       setSelectedOwners([]);
       setSelectedMembers([]);
     }
@@ -75,12 +75,14 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
     e.preventDefault();
     setHasAttemptedSubmit(true);
     
-    // Validate required fields - at least one owner and area required
-    if (selectedOwners.length === 0 || !selectedAreaId) {
+    // Validate required fields - at least one owner required
+    if (selectedOwners.length === 0) {
       return;
     }
     
-    const selectedArea = areas.find(a => a.id === selectedAreaId);
+    const selectedAreas = areas
+      .filter(a => selectedAreaIds.includes(a.id))
+      .map(a => ({ id: a.id, name: a.name, color: a.color }));
     
     onSubmit({
       name,
@@ -88,15 +90,15 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
       color,
       owners: selectedOwners,
       members: selectedMembers,
-      areaId: selectedAreaId,
-      area: selectedArea ? { id: selectedArea.id, name: selectedArea.name, color: selectedArea.color } : undefined,
+      areaIds: selectedAreaIds,
+      areas: selectedAreas,
     });
     
     // Reset form
     setName("");
     setDescription("");
     setColor(projectColors[0]);
-    setSelectedAreaId("");
+    setSelectedAreaIds([]);
     setSelectedOwners([]);
     setSelectedMembers([]);
     setHasAttemptedSubmit(false);
@@ -104,22 +106,18 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
   };
 
   const toggleOwner = (member: User) => {
-    // If already an owner, remove from owners
     if (selectedOwners.find(m => m.id === member.id)) {
       setSelectedOwners(prev => prev.filter(m => m.id !== member.id));
     } else {
-      // Add as owner, remove from members if present
       setSelectedOwners(prev => [...prev, member]);
       setSelectedMembers(prev => prev.filter(m => m.id !== member.id));
     }
   };
 
   const toggleMember = (member: User) => {
-    // If already a member, remove from members
     if (selectedMembers.find(m => m.id === member.id)) {
       setSelectedMembers(prev => prev.filter(m => m.id !== member.id));
     } else {
-      // Add as member, remove from owners if present
       setSelectedMembers(prev => [...prev, member]);
       setSelectedOwners(prev => prev.filter(m => m.id !== member.id));
     }
@@ -134,14 +132,12 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
   };
 
   const selectAllAsMembers = () => {
-    // Add all available members as members, EXCEPT those already assigned as leads
     const nonLeadMembers = availableMembers.filter(
       (m) => !selectedOwners.find((o) => o.id === m.id)
     );
     setSelectedMembers(nonLeadMembers);
   };
 
-  // Get available members for each role (excluding those already selected in the other role)
   const availableForOwner = availableMembers.filter(m => !selectedMembers.find(sm => sm.id === m.id));
   const availableForMember = availableMembers.filter(m => !selectedOwners.find(so => so.id === m.id));
 
@@ -189,39 +185,21 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
                 </div>
               </div>
 
-              {/* Area (required) */}
+              {/* Areas (multi-select) */}
               <div className="flex items-center gap-3">
                 <Label className="text-sm text-muted-foreground w-28 shrink-0">
                   <span className="flex items-center gap-1">
                     <Tag className="w-3 h-3" />
-                    Area <span className="text-destructive">*</span>
+                    Areas
                   </span>
                 </Label>
                 <div className="flex-1">
-                  <Select value={selectedAreaId} onValueChange={setSelectedAreaId}>
-                    <SelectTrigger className={cn(
-                      "h-9 text-sm border-border/50 bg-transparent",
-                      hasAttemptedSubmit && !selectedAreaId && "border-destructive"
-                    )}>
-                      <SelectValue placeholder="Select an area" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {areas.map((area) => (
-                        <SelectItem key={area.id} value={area.id}>
-                          <span className="flex items-center gap-2">
-                            <span
-                              className="h-2.5 w-2.5 rounded-full"
-                              style={{ backgroundColor: area.color }}
-                            />
-                            <span>{area.name}</span>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {hasAttemptedSubmit && !selectedAreaId && (
-                    <p className="mt-1 text-xs text-destructive">Area is required.</p>
-                  )}
+                  <SearchableTagSelect
+                    tags={areaTags}
+                    selectedTags={selectedAreaIds}
+                    onTagsChange={setSelectedAreaIds}
+                    placeholder="Add areas..."
+                  />
                 </div>
               </div>
 

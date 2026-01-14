@@ -75,21 +75,28 @@ export function useProjects() {
         }
       });
       
-      return data.map(p => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        color: p.color || '#3b82f6',
-        status: p.status,
-        dueDate: p.due_date ? parseDateOnly(p.due_date) : undefined,
-        tasks: [] as Task[],
-        owners: (ownersByProject.get(p.id) || []).map(getUserByName),
-        members: (membersByProject.get(p.id) || []).map(getUserByName),
-        areaId: (p as any).area_id || undefined,
-        area: (p as any).area_id ? areasMap.get((p as any).area_id) : undefined,
-        createdAt: new Date(p.created_at),
-        sortOrder: (p as any).sort_order || 0,
-      }));
+      return data.map(p => {
+        const projectAreaIds = (p as any).area_ids || [];
+        const projectAreas = projectAreaIds
+          .map((id: string) => areasMap.get(id))
+          .filter(Boolean);
+        
+        return {
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          color: p.color || '#3b82f6',
+          status: p.status,
+          dueDate: p.due_date ? parseDateOnly(p.due_date) : undefined,
+          tasks: [] as Task[],
+          owners: (ownersByProject.get(p.id) || []).map(getUserByName),
+          members: (membersByProject.get(p.id) || []).map(getUserByName),
+          areaIds: projectAreaIds,
+          areas: projectAreas,
+          createdAt: new Date(p.created_at),
+          sortOrder: (p as any).sort_order || 0,
+        };
+      });
     },
   });
 }
@@ -578,14 +585,14 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (project: { name: string; description?: string; color?: string; areaId?: string; owners?: User[]; members?: User[] }) => {
+    mutationFn: async (project: { name: string; description?: string; color?: string; areaIds?: string[]; owners?: User[]; members?: User[] }) => {
       const { data, error } = await supabase
         .from('projects')
         .insert({
           name: project.name,
           description: project.description || null,
           color: project.color || '#3b82f6',
-          area_id: project.areaId || null,
+          area_ids: project.areaIds || [],
           status: 'active',
         })
         .select()
@@ -639,12 +646,12 @@ export function useUpdateProject() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; color?: string; areaId?: string; owners?: User[]; members?: User[] } }) => {
+    mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; color?: string; areaIds?: string[]; owners?: User[]; members?: User[] } }) => {
       const updateData: Record<string, unknown> = {};
       if (updates.name !== undefined) updateData.name = updates.name;
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.color !== undefined) updateData.color = updates.color;
-      if (updates.areaId !== undefined) updateData.area_id = updates.areaId || null;
+      if (updates.areaIds !== undefined) updateData.area_ids = updates.areaIds || [];
 
       const { data, error } = await supabase
         .from('projects')

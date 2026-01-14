@@ -651,24 +651,29 @@ export function TaskDetailDialog({
                 <span className="text-sm text-muted-foreground w-28 shrink-0">Areas</span>
                 <div className="flex-1">
                   {task.projectId ? (
-                    // Project assigned - show inherited area as read-only badge
+                    // Project assigned - show inherited areas as read-only badges
                     (() => {
                       const project = projects.find(p => p.id === task.projectId);
-                      const projectArea = (project as any)?.area;
-                      return projectArea ? (
-                        <Badge
-                          variant="secondary"
-                          className="text-xs"
-                          style={{
-                            backgroundColor: `${projectArea.color}20`,
-                            color: projectArea.color,
-                            borderColor: `${projectArea.color}40`,
-                          }}
-                        >
-                          {projectArea.name}
-                        </Badge>
+                      const projectAreas = (project as any)?.areas || [];
+                      return projectAreas.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {projectAreas.map((area: any) => (
+                            <Badge
+                              key={area.id}
+                              variant="secondary"
+                              className="text-xs"
+                              style={{
+                                backgroundColor: `${area.color}20`,
+                                color: area.color,
+                                borderColor: `${area.color}40`,
+                              }}
+                            >
+                              {area.name}
+                            </Badge>
+                          ))}
+                        </div>
                       ) : (
-                        <span className="text-sm text-muted-foreground">No area assigned to project</span>
+                        <span className="text-sm text-muted-foreground">No areas assigned to project</span>
                       );
                     })()
                   ) : (
