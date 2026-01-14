@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, CheckCircle2, Folders, Tags, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,6 @@ import { TagManager, TagItem } from "@/components/projects/TagManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
 import { AreaFilterSelect } from "@/components/projects/AreaFilterSelect";
 import { ProjectFilterSelect } from "@/components/projects/ProjectFilterSelect";
-import { CompletedTasksPanel } from "@/components/projects/CompletedTasksPanel";
 import { Task, Project, User, TaskComment } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,8 +24,16 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { format, differenceInDays } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { format, differenceInDays, isToday, isYesterday, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
 import { teamMembers, statusLibrary as defaultStatuses, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
@@ -35,6 +42,20 @@ import { useAreas } from "@/hooks/useAreas";
 
 // Current user for demo purposes
 const currentUser = teamMembers[0];
+
+// Types for view modes and quick filters
+type ViewMode = 'active' | 'completed';
+type ActiveQuickFilter = 'all' | 'overdue' | 'today' | 'tomorrow' | 'upcoming' | 'later';
+type CompletedQuickFilter = 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'older';
+
+// Helper function for completed task time display
+function formatCompletedTime(date: Date): string {
+  if (isToday(date)) return formatDistanceToNow(date, { addSuffix: true });
+  if (isYesterday(date)) return "Yesterday";
+  const days = differenceInDays(new Date(), date);
+  if (days < 7) return format(date, "EEEE");
+  return format(date, "MMM d");
+}
 
 export default function Projects() {
   const { data: dbTasks = [], isLoading: tasksLoading } = useTasks();
@@ -57,6 +78,7 @@ export default function Projects() {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [statusManagerOpen, setStatusManagerOpen] = useState(false);
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
+  const [projectManagementOpen, setProjectManagementOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +96,12 @@ export default function Projects() {
   const [sortField, setSortField] = useState<SortField>('dueDate');
   const [sortAscending, setSortAscending] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [quickFilter, setQuickFilter] = useState<'all' | 'overdue' | 'today' | 'tomorrow' | 'upcoming' | 'later'>('all');
+  
+  // View mode state (active vs completed)
+  const [viewMode, setViewMode] = useState<ViewMode>('active');
+  const [activeQuickFilter, setActiveQuickFilter] = useState<ActiveQuickFilter>('all');
+  const [completedQuickFilter, setCompletedQuickFilter] = useState<CompletedQuickFilter>('all');
+  
   const [filters, setFilters] = useState<TaskFilters>({
     statuses: [],
     efforts: [],
@@ -110,11 +137,14 @@ export default function Projects() {
     const filterParam = searchParams.get('filter');
     if (filterParam) {
       if (filterParam === 'overdue') {
-        setQuickFilter('overdue');
+        setViewMode('active');
+        setActiveQuickFilter('overdue');
       } else if (filterParam === 'today') {
-        setQuickFilter('today');
+        setViewMode('active');
+        setActiveQuickFilter('today');
       } else if (filterParam === 'tomorrow') {
-        setQuickFilter('tomorrow');
+        setViewMode('active');
+        setActiveQuickFilter('tomorrow');
       }
       
       // Clear the param so it doesn't persist on refresh
@@ -154,10 +184,19 @@ export default function Projects() {
 
   // Active tasks (not completed)
   const activeTasks = useMemo(() => dbTasks.filter(task => !task.completedAt), [dbTasks]);
+  
+  // All completed tasks
+  const allCompletedTasks = useMemo(() => 
+    dbTasks.filter(task => task.completedAt).sort((a, b) => 
+      (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0)
+    ),
+    [dbTasks]
+  );
 
   // Tasks filtered by project and area selection (for quick filter counts)
   const projectFilteredTasks = useMemo(() => {
-    return activeTasks.filter(task => {
+    const baseTasks = viewMode === 'active' ? activeTasks : allCompletedTasks;
+    return baseTasks.filter(task => {
       // Project filter - matches if no projects selected or task's project is in selection
       if (selectedProjects.length > 0 && !selectedProjects.includes(task.projectId || '')) return false;
       
@@ -169,10 +208,10 @@ export default function Projects() {
       
       return true;
     });
-  }, [activeTasks, selectedProjects, selectedAreas]);
+  }, [activeTasks, allCompletedTasks, viewMode, selectedProjects, selectedAreas]);
 
-  // Count tasks for quick filter badges (based on project filtered tasks)
-  const quickFilterCounts = useMemo(() => {
+  // Count tasks for active quick filter badges
+  const activeQuickFilterCounts = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -180,45 +219,76 @@ export default function Projects() {
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
     
+    const tasks = viewMode === 'active' ? projectFilteredTasks : [];
+    
     return {
-      overdue: projectFilteredTasks.filter(t => t.dueDate && new Date(t.dueDate) < today).length,
-      today: projectFilteredTasks.filter(t => {
+      overdue: tasks.filter(t => t.dueDate && new Date(t.dueDate) < today).length,
+      today: tasks.filter(t => {
         if (!t.dueDate) return false;
         const due = new Date(t.dueDate);
         due.setHours(0, 0, 0, 0);
         return due.getTime() === today.getTime();
       }).length,
-      tomorrow: projectFilteredTasks.filter(t => {
+      tomorrow: tasks.filter(t => {
         if (!t.dueDate) return false;
         const due = new Date(t.dueDate);
         due.setHours(0, 0, 0, 0);
         return due.getTime() === tomorrow.getTime();
       }).length,
-      upcoming: projectFilteredTasks.filter(t => {
+      upcoming: tasks.filter(t => {
         if (!t.dueDate) return false;
         const due = new Date(t.dueDate);
         due.setHours(0, 0, 0, 0);
         return due > tomorrow && due <= nextWeek;
       }).length,
-      later: projectFilteredTasks.filter(t => {
+      later: tasks.filter(t => {
         if (!t.dueDate) return false;
         const due = new Date(t.dueDate);
         due.setHours(0, 0, 0, 0);
         return due > nextWeek;
       }).length,
     };
-  }, [projectFilteredTasks]);
-  
-  // All completed tasks (including archived) for the panel
-  const allCompletedTasks = useMemo(() => 
-    dbTasks.filter(task => task.completedAt),
-    [dbTasks]
-  );
+  }, [projectFilteredTasks, viewMode]);
+
+  // Count tasks for completed quick filter badges
+  const completedQuickFilterCounts = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const lastWeek = new Date(today);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const lastMonth = new Date(today);
+    lastMonth.setDate(lastMonth.getDate() - 30);
+    
+    const tasks = viewMode === 'completed' ? projectFilteredTasks : [];
+    
+    return {
+      today: tasks.filter(t => t.completedAt && isToday(t.completedAt)).length,
+      yesterday: tasks.filter(t => t.completedAt && isYesterday(t.completedAt)).length,
+      week: tasks.filter(t => {
+        if (!t.completedAt) return false;
+        const days = differenceInDays(today, t.completedAt);
+        return days >= 2 && days < 7;
+      }).length,
+      month: tasks.filter(t => {
+        if (!t.completedAt) return false;
+        const days = differenceInDays(today, t.completedAt);
+        return days >= 7 && days < 30;
+      }).length,
+      older: tasks.filter(t => {
+        if (!t.completedAt) return false;
+        const days = differenceInDays(today, t.completedAt);
+        return days >= 30;
+      }).length,
+    };
+  }, [projectFilteredTasks, viewMode]);
 
   // Find the "done" status ID dynamically
   const doneStatusId = statuses.find(s => s.name.toLowerCase() === 'done')?.id || 'done';
 
-  const filteredTasks = useMemo(() => {
+  // Filtered tasks for active view
+  const filteredActiveTasks = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -238,22 +308,22 @@ export default function Projects() {
       
       // Quick filter
       let matchesQuickFilter = true;
-      if (quickFilter !== 'all' && task.dueDate) {
+      if (activeQuickFilter !== 'all' && task.dueDate) {
         const dueDate = new Date(task.dueDate);
         dueDate.setHours(0, 0, 0, 0);
         
-        if (quickFilter === 'overdue') {
+        if (activeQuickFilter === 'overdue') {
           matchesQuickFilter = dueDate < today;
-        } else if (quickFilter === 'today') {
+        } else if (activeQuickFilter === 'today') {
           matchesQuickFilter = dueDate.getTime() === today.getTime();
-        } else if (quickFilter === 'tomorrow') {
+        } else if (activeQuickFilter === 'tomorrow') {
           matchesQuickFilter = dueDate.getTime() === tomorrow.getTime();
-        } else if (quickFilter === 'upcoming') {
+        } else if (activeQuickFilter === 'upcoming') {
           matchesQuickFilter = dueDate > tomorrow && dueDate <= nextWeek;
-        } else if (quickFilter === 'later') {
+        } else if (activeQuickFilter === 'later') {
           matchesQuickFilter = dueDate > nextWeek;
         }
-      } else if (quickFilter !== 'all' && !task.dueDate) {
+      } else if (activeQuickFilter !== 'all' && !task.dueDate) {
         matchesQuickFilter = false;
       }
       
@@ -347,7 +417,71 @@ export default function Projects() {
       const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       return sortAscending ? comparison : -comparison;
     });
-  }, [activeTasks, searchQuery, selectedProjects, selectedAreas, selectedMember, filters, quickFilter, sortField, sortAscending, statuses]);
+  }, [activeTasks, searchQuery, selectedProjects, selectedAreas, selectedMember, filters, activeQuickFilter, sortField, sortAscending, statuses]);
+
+  // Filtered tasks for completed view
+  const filteredCompletedTasks = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const lastWeek = new Date(today);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const lastMonth = new Date(today);
+    lastMonth.setDate(lastMonth.getDate() - 30);
+    
+    return allCompletedTasks.filter(task => {
+      const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Project filter
+      const matchesProject = selectedProjects.length === 0 || selectedProjects.includes(task.projectId || '');
+      
+      // Area filter
+      const taskAreas = task.inheritedAreas?.map(a => a.id) || task.tags || [];
+      const matchesAreas = selectedAreas.length === 0 || selectedAreas.some(areaId => taskAreas.includes(areaId));
+      
+      // Quick filter based on completedAt
+      let matchesQuickFilter = true;
+      if (completedQuickFilter !== 'all' && task.completedAt) {
+        if (completedQuickFilter === 'today') {
+          matchesQuickFilter = isToday(task.completedAt);
+        } else if (completedQuickFilter === 'yesterday') {
+          matchesQuickFilter = isYesterday(task.completedAt);
+        } else if (completedQuickFilter === 'week') {
+          const days = differenceInDays(today, task.completedAt);
+          matchesQuickFilter = days >= 2 && days < 7;
+        } else if (completedQuickFilter === 'month') {
+          const days = differenceInDays(today, task.completedAt);
+          matchesQuickFilter = days >= 7 && days < 30;
+        } else if (completedQuickFilter === 'older') {
+          const days = differenceInDays(today, task.completedAt);
+          matchesQuickFilter = days >= 30;
+        }
+      } else if (completedQuickFilter !== 'all' && !task.completedAt) {
+        matchesQuickFilter = false;
+      }
+      
+      // Effort filter
+      const matchesEffort = filters.efforts.length === 0 || filters.efforts.includes(task.effort);
+      
+      // Importance filter
+      const matchesImportance = filters.importances.length === 0 || filters.importances.includes(task.importance);
+      
+      // Assignee filter from panel
+      const matchesAssignee = filters.assignees.length === 0 || 
+        task.assignees?.some(a => filters.assignees.includes(a.id));
+      
+      // Tags filter
+      const matchesTags = filters.tags.length === 0 || 
+        task.tags?.some(t => filters.tags.includes(t));
+      
+      return matchesSearch && matchesProject && matchesAreas && matchesQuickFilter && 
+             matchesEffort && matchesImportance && matchesAssignee && matchesTags;
+    });
+  }, [allCompletedTasks, searchQuery, selectedProjects, selectedAreas, filters, completedQuickFilter]);
+
+  // The tasks to display based on view mode
+  const displayTasks = viewMode === 'active' ? filteredActiveTasks : filteredCompletedTasks;
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
     // Find the task to check if it's recurring
@@ -596,199 +730,257 @@ export default function Projects() {
   const isLoading = tasksLoading || projectsLoading;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Page Header - Todoist style: simple and clean */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">
+    <div className="space-y-5 animate-fade-in pb-24">
+      {/* Enhanced Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold text-foreground">
           Work Management
         </h1>
-        <Button 
-          onClick={() => setTaskDialogOpen(true)}
-          size="sm"
-          className="gap-1.5 h-8 rounded-md"
-        >
-          <Plus className="w-4 h-4" />
-          Add task
-        </Button>
+        <p className="text-sm text-muted-foreground">
+          Manage your tasks, projects, and workflows
+        </p>
       </div>
 
-      {/* Search Bar - Below title */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+      {/* More Prominent Search Bar */}
+      <div className="relative max-w-xl">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Search tasks..."
-          className="pl-8 h-8 text-[13px] bg-transparent border-border/50"
+          className="pl-10 h-9 text-sm bg-muted/30 border-border/60"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
-      {/* Filters Row - Clean and minimal */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        {/* Left: Filter Dropdowns */}
-        <div className="flex items-center gap-2">
-          <AreaFilterSelect
-            areas={tags}
-            selectedAreaIds={selectedAreas}
-            onAreasChange={setSelectedAreas}
-          />
-          <ProjectFilterSelect
-            projects={projects}
-            selectedProjectIds={selectedProjects}
-            onProjectsChange={setSelectedProjects}
-          />
-          <TaskFilterPanel
-            filters={filters}
-            onFiltersChange={setFilters}
-            statuses={statuses}
-            availableMembers={teamMembers}
-          />
+      {/* Unified Filter Row */}
+      <div className="flex flex-col gap-3">
+        {/* View Toggle + Quick Filters Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-border/50 pb-3">
+          {/* Left: View Toggle + Quick Filters */}
+          <div className="flex items-center gap-2 flex-wrap flex-1">
+            {/* View Mode Selector */}
+            <Select value={viewMode} onValueChange={(v) => {
+              setViewMode(v as ViewMode);
+              // Reset quick filter when switching view
+              if (v === 'active') setActiveQuickFilter('all');
+              else setCompletedQuickFilter('all');
+            }}>
+              <SelectTrigger className="h-8 w-[150px] text-[13px] font-medium">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="z-[60]">
+                <SelectItem value="active">Active Tasks</SelectItem>
+                <SelectItem value="completed">Completed Tasks</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="h-4 w-px bg-border hidden sm:block" />
+
+            {/* Quick Filters - Context-aware based on view mode */}
+            <div className="flex items-center gap-1 flex-wrap">
+              {viewMode === 'active' ? (
+                <>
+                  <button
+                    onClick={() => setActiveQuickFilter('all')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors",
+                      activeQuickFilter === 'all'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setActiveQuickFilter('overdue')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      activeQuickFilter === 'overdue'
+                        ? "bg-destructive text-destructive-foreground"
+                        : activeQuickFilterCounts.overdue > 0
+                          ? "text-destructive/80 hover:text-destructive hover:bg-destructive/10"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    Overdue
+                    {activeQuickFilterCounts.overdue > 0 && (
+                      <span className="text-xs tabular-nums">{activeQuickFilterCounts.overdue}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveQuickFilter('today')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      activeQuickFilter === 'today'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    Today
+                    {activeQuickFilterCounts.today > 0 && (
+                      <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.today}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveQuickFilter('tomorrow')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      activeQuickFilter === 'tomorrow'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    Tomorrow
+                    {activeQuickFilterCounts.tomorrow > 0 && (
+                      <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.tomorrow}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveQuickFilter('upcoming')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      activeQuickFilter === 'upcoming'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    Next 7 Days
+                    {activeQuickFilterCounts.upcoming > 0 && (
+                      <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.upcoming}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveQuickFilter('later')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      activeQuickFilter === 'later'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    Later
+                    {activeQuickFilterCounts.later > 0 && (
+                      <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.later}</span>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setCompletedQuickFilter('all')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors",
+                      completedQuickFilter === 'all'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setCompletedQuickFilter('today')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      completedQuickFilter === 'today'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    Today
+                    {completedQuickFilterCounts.today > 0 && (
+                      <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.today}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setCompletedQuickFilter('yesterday')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      completedQuickFilter === 'yesterday'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    Yesterday
+                    {completedQuickFilterCounts.yesterday > 0 && (
+                      <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.yesterday}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setCompletedQuickFilter('week')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      completedQuickFilter === 'week'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    Last 7 Days
+                    {completedQuickFilterCounts.week > 0 && (
+                      <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.week}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setCompletedQuickFilter('month')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      completedQuickFilter === 'month'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    Last 30 Days
+                    {completedQuickFilterCounts.month > 0 && (
+                      <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.month}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setCompletedQuickFilter('older')}
+                    className={cn(
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      completedQuickFilter === 'older'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    Older
+                    {completedQuickFilterCounts.older > 0 && (
+                      <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.older}</span>
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Area, Project, Additional Filters */}
+          <div className="flex items-center gap-2 shrink-0">
+            <AreaFilterSelect
+              areas={tags}
+              selectedAreaIds={selectedAreas}
+              onAreasChange={setSelectedAreas}
+            />
+            <ProjectFilterSelect
+              projects={projects}
+              selectedProjectIds={selectedProjects}
+              onProjectsChange={setSelectedProjects}
+            />
+            <TaskFilterPanel
+              filters={filters}
+              onFiltersChange={setFilters}
+              statuses={statuses}
+              availableMembers={teamMembers}
+            />
+          </div>
         </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1 ml-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground" 
-              >
-                <Settings2 className="w-3.5 h-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setStatusManagerOpen(true)}>
-                Manage Stages
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTagManagerOpen(true)}>
-                Manage Areas
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <ProjectManagementPanel
-            projects={projects}
-            availableMembers={teamMembers}
-            onCreateProject={handleAddProject}
-            onUpdateProject={handleUpdateProject}
-            onDeleteProject={handleDeleteProject}
-            onReorderProjects={(reorderedProjects) => {
-              reorderProjects.mutate(reorderedProjects.map((p, i) => ({ id: p.id, sortOrder: i })));
-            }}
-          />
-
-          <CompletedTasksPanel
-            tasks={allCompletedTasks}
-            projects={projects}
-            onRestoreTask={handleRestoreTask}
-          />
-        </div>
-      </div>
-
-      {/* Quick Filters - Todoist style tabs */}
-      <div className="flex items-center gap-1 border-b border-border/50 -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6">
-        <button
-          onClick={() => setQuickFilter('all')}
-          className={cn(
-            "px-3 py-2 text-[13px] font-medium transition-colors relative",
-            quickFilter === 'all'
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          All
-          {quickFilter === 'all' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setQuickFilter('overdue')}
-          className={cn(
-            "px-3 py-2 text-[13px] font-medium transition-colors relative flex items-center gap-1.5",
-            quickFilter === 'overdue'
-              ? "text-destructive"
-              : quickFilterCounts.overdue > 0
-                ? "text-destructive/80 hover:text-destructive"
-                : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Overdue
-          {quickFilterCounts.overdue > 0 && (
-            <span className="text-xs tabular-nums">{quickFilterCounts.overdue}</span>
-          )}
-          {quickFilter === 'overdue' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-destructive rounded-t-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setQuickFilter('today')}
-          className={cn(
-            "px-3 py-2 text-[13px] font-medium transition-colors relative flex items-center gap-1.5",
-            quickFilter === 'today'
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Today
-          {quickFilterCounts.today > 0 && (
-            <span className="text-xs tabular-nums opacity-60">{quickFilterCounts.today}</span>
-          )}
-          {quickFilter === 'today' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setQuickFilter('tomorrow')}
-          className={cn(
-            "px-3 py-2 text-[13px] font-medium transition-colors relative flex items-center gap-1.5",
-            quickFilter === 'tomorrow'
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Tomorrow
-          {quickFilterCounts.tomorrow > 0 && (
-            <span className="text-xs tabular-nums opacity-60">{quickFilterCounts.tomorrow}</span>
-          )}
-          {quickFilter === 'tomorrow' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setQuickFilter('upcoming')}
-          className={cn(
-            "px-3 py-2 text-[13px] font-medium transition-colors relative flex items-center gap-1.5",
-            quickFilter === 'upcoming'
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Next 7 Days
-          {quickFilterCounts.upcoming > 0 && (
-            <span className="text-xs tabular-nums opacity-60">{quickFilterCounts.upcoming}</span>
-          )}
-          {quickFilter === 'upcoming' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setQuickFilter('later')}
-          className={cn(
-            "px-3 py-2 text-[13px] font-medium transition-colors relative flex items-center gap-1.5",
-            quickFilter === 'later'
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Later
-          {quickFilterCounts.later > 0 && (
-            <span className="text-xs tabular-nums opacity-60">{quickFilterCounts.later}</span>
-          )}
-          {quickFilter === 'later' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
-          )}
-        </button>
       </div>
 
       {/* Views */}
@@ -807,7 +999,7 @@ export default function Projects() {
             </TabsList>
             
             <span className="text-[13px] text-muted-foreground tabular-nums ml-2">
-              {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
+              {displayTasks.length} {displayTasks.length === 1 ? 'task' : 'tasks'}
             </span>
           </div>
           
@@ -930,15 +1122,25 @@ export default function Projects() {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
-          ) : filteredTasks.length === 0 ? (
+          ) : displayTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <ListTodo className="h-10 w-10 opacity-30 mb-3" />
-              <p className="text-sm font-medium">No tasks</p>
-              <p className="text-xs mt-1">Create a task to get started</p>
+              {viewMode === 'completed' ? (
+                <>
+                  <CheckCircle2 className="h-10 w-10 opacity-30 mb-3" />
+                  <p className="text-sm font-medium">No completed tasks</p>
+                  <p className="text-xs mt-1">Complete tasks to see them here</p>
+                </>
+              ) : (
+                <>
+                  <ListTodo className="h-10 w-10 opacity-30 mb-3" />
+                  <p className="text-sm font-medium">No tasks</p>
+                  <p className="text-xs mt-1">Create a task to get started</p>
+                </>
+              )}
             </div>
           ) : (
             <TaskTable 
-              tasks={filteredTasks} 
+              tasks={displayTasks} 
               projects={projects}
               tags={tags}
               onTaskUpdate={handleTaskUpdate} 
@@ -959,6 +1161,8 @@ export default function Projects() {
               sortAscending={sortAscending}
               statuses={statuses}
               showDetails={showTaskDetails}
+              isCompletedView={viewMode === 'completed'}
+              onRestoreTask={handleRestoreTask}
             />
           )}
         </TabsContent>
@@ -970,15 +1174,25 @@ export default function Projects() {
                 <Skeleton key={i} className="h-96 w-80 flex-shrink-0" />
               ))}
             </div>
-          ) : filteredTasks.length === 0 ? (
+          ) : displayTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <ListTodo className="h-10 w-10 opacity-30 mb-3" />
-              <p className="text-sm font-medium">No tasks</p>
-              <p className="text-xs mt-1">Create a task to get started</p>
+              {viewMode === 'completed' ? (
+                <>
+                  <CheckCircle2 className="h-10 w-10 opacity-30 mb-3" />
+                  <p className="text-sm font-medium">No completed tasks</p>
+                  <p className="text-xs mt-1">Complete tasks to see them here</p>
+                </>
+              ) : (
+                <>
+                  <ListTodo className="h-10 w-10 opacity-30 mb-3" />
+                  <p className="text-sm font-medium">No tasks</p>
+                  <p className="text-xs mt-1">Create a task to get started</p>
+                </>
+              )}
             </div>
           ) : (
             <TaskKanban 
-              tasks={filteredTasks} 
+              tasks={displayTasks} 
               projects={projects}
               tags={tags}
               onTaskUpdate={handleTaskUpdate} 
@@ -1001,6 +1215,51 @@ export default function Projects() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Floating Action Button (FAB) */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size="icon"
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" side="top" className="w-48 mb-2">
+          <DropdownMenuItem onClick={() => setTaskDialogOpen(true)} className="gap-2">
+            <ListTodo className="h-4 w-4" />
+            Add Task
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setProjectManagementOpen(true)} className="gap-2">
+            <Folders className="h-4 w-4" />
+            Manage Projects
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setStatusManagerOpen(true)} className="gap-2">
+            <Layers className="h-4 w-4" />
+            Manage Stages
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTagManagerOpen(true)} className="gap-2">
+            <Tags className="h-4 w-4" />
+            Manage Areas
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Project Management Panel (Sheet) */}
+      <ProjectManagementPanel
+        projects={projects}
+        availableMembers={teamMembers}
+        onCreateProject={handleAddProject}
+        onUpdateProject={handleUpdateProject}
+        onDeleteProject={handleDeleteProject}
+        onReorderProjects={(reorderedProjects) => {
+          reorderProjects.mutate(reorderedProjects.map((p, i) => ({ id: p.id, sortOrder: i })));
+        }}
+        open={projectManagementOpen}
+        onOpenChange={setProjectManagementOpen}
+      />
 
       {/* Task Dialog */}
       <TaskDialog

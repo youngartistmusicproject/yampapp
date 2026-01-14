@@ -66,6 +66,8 @@ interface ProjectManagementPanelProps {
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void;
   onDeleteProject: (projectId: string) => void;
   onReorderProjects?: (projects: Project[]) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 function SortableProjectRow({ project, onEdit, onDelete }: { project: Project; onEdit: (project: Project) => void; onDelete: (project: Project) => void }) {
@@ -126,8 +128,10 @@ function SortableProjectRow({ project, onEdit, onDelete }: { project: Project; o
   );
 }
 
-export function ProjectManagementPanel({ projects, availableMembers, onCreateProject, onUpdateProject, onDeleteProject, onReorderProjects }: ProjectManagementPanelProps) {
-  const [open, setOpen] = useState(false);
+export function ProjectManagementPanel({ projects, availableMembers, onCreateProject, onUpdateProject, onDeleteProject, onReorderProjects, open: controlledOpen, onOpenChange }: ProjectManagementPanelProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
