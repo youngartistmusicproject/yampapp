@@ -743,7 +743,7 @@ export default function Projects() {
       {/* Enhanced Page Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-foreground">
+          <h1 className="text-2xl font-semibold text-foreground leading-none">
             Work Management
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -752,7 +752,7 @@ export default function Projects() {
         </div>
         
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 -mt-0.5">
           <Button
             size="sm"
             className="h-8 gap-1.5 px-2 sm:px-3"
