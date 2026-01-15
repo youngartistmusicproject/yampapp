@@ -756,6 +756,45 @@ export type Database = {
           },
         ]
       }
+      user_notification_preferences: {
+        Row: {
+          calendar_alerts: boolean
+          chat_messages: boolean
+          created_at: string
+          email_notifications: boolean
+          id: string
+          push_notifications: boolean
+          request_updates: boolean
+          task_reminders: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calendar_alerts?: boolean
+          chat_messages?: boolean
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          push_notifications?: boolean
+          request_updates?: boolean
+          task_reminders?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calendar_alerts?: boolean
+          chat_messages?: boolean
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          push_notifications?: boolean
+          request_updates?: boolean
+          task_reminders?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_presence: {
         Row: {
           id: string
