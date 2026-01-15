@@ -14,6 +14,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -196,38 +203,33 @@ const IMPORTANCE_OPTIONS = importanceLibrary.map(i => ({
   description: i.description,
 }));
 
-const TIME_OPTIONS = [
-  { value: 2, label: '2 min' },
-  { value: 5, label: '5 min' },
-  { value: 10, label: '10 min' },
-  { value: 15, label: '15 min' },
-  { value: 20, label: '20 min' },
-  { value: 30, label: '30 min' },
-  { value: 45, label: '45 min' },
-  { value: 60, label: '1 hr' },
-  { value: 75, label: '1h 15m' },
-  { value: 90, label: '1h 30m' },
-  { value: 120, label: '2 hr' },
-  { value: 180, label: '3 hr' },
-  { value: 240, label: '4 hr' },
-  { value: 480, label: '1 day' },
-  { value: 960, label: '2 days' },
-  { value: 2400, label: '1 week' },
+const TIME_UNITS = [
+  { value: 'min', label: 'min', multiplier: 1 },
+  { value: 'hour', label: 'hour', multiplier: 60 },
+  { value: 'day', label: 'day', multiplier: 480 },
+  { value: 'week', label: 'week', multiplier: 2400 },
 ];
 
 const PROGRESS_OPTIONS = [0, 10, 25, 50, 75, 90, 100];
 
+const parseEstimatedTime = (minutes: number | undefined): { value: number; unit: string } => {
+  if (!minutes) return { value: 0, unit: 'min' };
+  if (minutes >= 2400 && minutes % 2400 === 0) return { value: minutes / 2400, unit: 'week' };
+  if (minutes >= 480 && minutes % 480 === 0) return { value: minutes / 480, unit: 'day' };
+  if (minutes >= 60 && minutes % 60 === 0) return { value: minutes / 60, unit: 'hour' };
+  return { value: minutes, unit: 'min' };
+};
+
 const formatEstimatedTime = (minutes: number) => {
-  if (minutes < 60) return `${minutes}m`;
-  if (minutes === 60) return '1h';
-  if (minutes < 120) return `1h ${minutes - 60}m`;
-  if (minutes < 480) {
+  if (!minutes) return '';
+  if (minutes >= 2400 && minutes % 2400 === 0) return `${minutes / 2400}w`;
+  if (minutes >= 480 && minutes % 480 === 0) return `${minutes / 480}d`;
+  if (minutes >= 60) {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   }
-  if (minutes < 2400) return `${minutes / 480}d`;
-  return `${minutes / 2400}w`;
+  return `${minutes}m`;
 };
 
 export function TaskDetailDialog({
@@ -706,10 +708,47 @@ export function TaskDetailDialog({
                           <span className="text-sm">{task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : <span className="text-muted-foreground">Not set</span>}</span>
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-40 p-2" align="start">
-                        <div className="grid grid-cols-2 gap-1">
-                          {TIME_OPTIONS.map((time) => (<button key={time.value} onClick={() => onTaskUpdate(task.id, { estimatedTime: time.value })} className={cn("px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.estimatedTime === time.value && "bg-muted")}>{time.label}</button>))}
+                      <PopoverContent className="w-48 p-3" align="start">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder="0"
+                            defaultValue={parseEstimatedTime(task.estimatedTime).value || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 0;
+                              const unit = parseEstimatedTime(task.estimatedTime).unit;
+                              const multiplier = TIME_UNITS.find(u => u.value === unit)?.multiplier || 1;
+                              onTaskUpdate(task.id, { estimatedTime: val * multiplier });
+                            }}
+                            className="w-16 h-8 text-sm"
+                          />
+                          <Select
+                            defaultValue={parseEstimatedTime(task.estimatedTime).unit}
+                            onValueChange={(unit) => {
+                              const val = parseEstimatedTime(task.estimatedTime).value || 1;
+                              const multiplier = TIME_UNITS.find(u => u.value === unit)?.multiplier || 1;
+                              onTaskUpdate(task.id, { estimatedTime: val * multiplier });
+                            }}
+                          >
+                            <SelectTrigger className="flex-1 h-8 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="z-[100]">
+                              {TIME_UNITS.map((unit) => (
+                                <SelectItem key={unit.value} value={unit.value}>{unit.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
+                        {task.estimatedTime ? (
+                          <button
+                            onClick={() => onTaskUpdate(task.id, { estimatedTime: undefined })}
+                            className="text-xs text-muted-foreground hover:text-destructive mt-2"
+                          >
+                            Clear
+                          </button>
+                        ) : null}
                       </PopoverContent>
                     </Popover>
 
