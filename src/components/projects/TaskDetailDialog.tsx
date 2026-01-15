@@ -683,70 +683,75 @@ export function TaskDetailDialog({
         {/* Properties section */}
         <div className="px-5 pb-4 space-y-2.5 shrink-0">
           {/* Row 1: Project + Status + Assignees */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             {/* Project */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className={cn(
-                  "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium transition-colors",
-                  taskProject 
-                    ? "bg-muted/60 hover:bg-muted text-foreground" 
-                    : "border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50 hover:bg-muted/30"
-                )}>
-                  {taskProject ? (
-                    <>
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: taskProject.color }} />
-                      <span className="max-w-[100px] truncate">{taskProject.name}</span>
-                    </>
-                  ) : (
-                    <>
-                      <FolderOpen className="w-3.5 h-3.5" />
-                      <span>Project</span>
-                    </>
-                  )}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-52 p-1.5 z-[70] bg-popover" align="start">
-                <div className="space-y-0.5">
-                  <button
-                    onClick={() => onTaskUpdate(task.id, { projectId: null })}
-                    className={cn(
-                      "w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-sm hover:bg-muted transition-colors",
-                      !task.projectId && "bg-muted"
+            <div className="inline-flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground font-medium">Project:</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className={cn(
+                    "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium transition-colors",
+                    taskProject 
+                      ? "bg-muted/60 hover:bg-muted text-foreground" 
+                      : "border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50 hover:bg-muted/30"
+                  )}>
+                    {taskProject ? (
+                      <>
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: taskProject.color }} />
+                        <span className="max-w-[120px] truncate">{taskProject.name}</span>
+                      </>
+                    ) : (
+                      <>
+                        <FolderOpen className="w-3.5 h-3.5" />
+                        <span>None</span>
+                      </>
                     )}
-                  >
-                    <span className="text-muted-foreground">No Project</span>
                   </button>
-                  {projects.map((project) => (
+                </PopoverTrigger>
+                <PopoverContent className="w-52 p-1.5 z-[70] bg-popover" align="start">
+                  <div className="space-y-0.5">
                     <button
-                      key={project.id}
-                      onClick={() => onTaskUpdate(task.id, { projectId: project.id })}
+                      onClick={() => onTaskUpdate(task.id, { projectId: null })}
                       className={cn(
                         "w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-sm hover:bg-muted transition-colors",
-                        task.projectId === project.id && "bg-muted"
+                        !task.projectId && "bg-muted"
                       )}
                     >
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: project.color }} />
-                      {project.name}
+                      <span className="text-muted-foreground">No Project</span>
                     </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+                    {projects.map((project) => (
+                      <button
+                        key={project.id}
+                        onClick={() => onTaskUpdate(task.id, { projectId: project.id })}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-sm hover:bg-muted transition-colors",
+                          task.projectId === project.id && "bg-muted"
+                        )}
+                      >
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: project.color }} />
+                        {project.name}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
 
             {/* Status */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  className="inline-flex items-center h-7 px-2.5 rounded-md text-xs font-medium transition-colors"
-                  style={{
-                    backgroundColor: taskStatus ? `${taskStatus.color}18` : undefined,
-                    color: taskStatus?.color,
-                  }}
-                >
-                  {taskStatus?.name || task.status}
-                </button>
-              </PopoverTrigger>
+            <div className="inline-flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground font-medium">Stage:</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="inline-flex items-center h-7 px-2.5 rounded-md text-xs font-medium transition-colors"
+                    style={{
+                      backgroundColor: taskStatus ? `${taskStatus.color}18` : undefined,
+                      color: taskStatus?.color,
+                    }}
+                  >
+                    {taskStatus?.name || task.status}
+                  </button>
+                </PopoverTrigger>
               <PopoverContent className="w-44 p-1.5 z-[70] bg-popover" align="start">
                 <div className="space-y-0.5">
                   {statuses.map((s) => (
@@ -763,20 +768,23 @@ export function TaskDetailDialog({
                     </button>
                   ))}
                 </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
 
             {/* Assignees */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md hover:bg-muted/50 transition-colors">
-                  {task.assignees && task.assignees.length > 0 ? (
-                    <UserAvatarGroup users={task.assignees} max={3} size="sm" />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">+ Assign</span>
-                  )}
-                </button>
-              </PopoverTrigger>
+            <div className="inline-flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground font-medium">Responsible:</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="inline-flex items-center gap-1.5 h-7 px-2 rounded-md hover:bg-muted/50 transition-colors">
+                    {task.assignees && task.assignees.length > 0 ? (
+                      <UserAvatarGroup users={task.assignees} max={3} size="sm" />
+                    ) : (
+                      <span className="text-xs text-muted-foreground border border-dashed border-muted-foreground/30 px-2 py-0.5 rounded">None</span>
+                    )}
+                  </button>
+                </PopoverTrigger>
               <PopoverContent className="w-64 p-3 z-[70] bg-popover" align="start">
                 <div className="space-y-2">
                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Responsible</span>
@@ -787,24 +795,27 @@ export function TaskDetailDialog({
                     placeholder="Search people..."
                   />
                 </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
 
             {/* Due Date */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className={cn(
-                  "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium transition-colors",
-                  task.dueDate 
-                    ? new Date(task.dueDate) < new Date() && task.status !== 'done'
-                      ? "bg-destructive/10 text-destructive"
-                      : "bg-muted/60 hover:bg-muted text-foreground"
-                    : "border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50 hover:bg-muted/30"
-                )}>
-                  <Calendar className="w-3.5 h-3.5" />
-                  {task.dueDate ? format(new Date(task.dueDate), "MMM d") : "Due date"}
-                </button>
-              </PopoverTrigger>
+            <div className="inline-flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground font-medium">Due:</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className={cn(
+                    "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium transition-colors",
+                    task.dueDate 
+                      ? new Date(task.dueDate) < new Date() && task.status !== 'done'
+                        ? "bg-destructive/10 text-destructive"
+                        : "bg-muted/60 hover:bg-muted text-foreground"
+                      : "border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50 hover:bg-muted/30"
+                  )}>
+                    <Calendar className="w-3.5 h-3.5" />
+                    {task.dueDate ? format(new Date(task.dueDate), "MMM d") : "None"}
+                  </button>
+                </PopoverTrigger>
               <PopoverContent className="w-auto p-3 z-[70] bg-popover" align="start">
                 <div className="space-y-3">
                   <NaturalDateInput
@@ -832,22 +843,25 @@ export function TaskDetailDialog({
                     </Button>
                   </div>
                 </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
 
             {/* SOP */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className={cn(
-                  "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium transition-colors",
-                  task.howToLink 
-                    ? "bg-primary/10 text-primary hover:bg-primary/15" 
-                    : "border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50 hover:bg-muted/30"
-                )}>
-                  <BookOpen className="w-3.5 h-3.5" />
-                  {task.howToLink ? 'SOP' : 'Add SOP'}
-                </button>
-              </PopoverTrigger>
+            <div className="inline-flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground font-medium">SOP:</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className={cn(
+                    "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium transition-colors",
+                    task.howToLink 
+                      ? "bg-primary/10 text-primary hover:bg-primary/15" 
+                      : "border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50 hover:bg-muted/30"
+                  )}>
+                    <BookOpen className="w-3.5 h-3.5" />
+                    {task.howToLink ? 'Linked' : 'None'}
+                  </button>
+                </PopoverTrigger>
               <PopoverContent className="w-72 p-3 z-[70] bg-popover" align="start">
                 <div className="space-y-3">
                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Standard Operating Procedure</span>
@@ -896,13 +910,15 @@ export function TaskDetailDialog({
                     />
                   )}
                 </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
 
           {/* Row 2: Areas */}
           {(inheritedAreas.length > 0 || (!task.projectId && (task.tags?.length || 0) > 0) || !task.projectId) && (
-            <div className="flex items-center gap-2 flex-wrap pl-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground font-medium">Areas:</span>
               {task.projectId ? (
                 // Show inherited areas
                 inheritedAreas.map((area) => (
@@ -1027,7 +1043,7 @@ export function TaskDetailDialog({
             <Popover>
               <PopoverTrigger asChild>
                 <button className="inline-flex items-center gap-1.5 py-1 hover:bg-muted/50 rounded px-1.5 -mx-1.5 transition-colors">
-                  <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-muted-foreground">Est. Time:</span>
                   <span className="font-medium">
                     {task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : '—'}
                   </span>
@@ -1055,14 +1071,15 @@ export function TaskDetailDialog({
             {/* Progress */}
             <Popover>
               <PopoverTrigger asChild>
-                <button className="inline-flex items-center gap-2 py-1 hover:bg-muted/50 rounded px-1.5 -mx-1.5 transition-colors min-w-[90px]">
-                  <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden w-12">
+                <button className="inline-flex items-center gap-2 py-1 hover:bg-muted/50 rounded px-1.5 -mx-1.5 transition-colors">
+                  <span className="text-muted-foreground">Progress:</span>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden w-12">
                     <div 
                       className={cn("h-full rounded-full transition-all", getProgressColor(progressPercent))}
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
-                  <span className="text-[11px] font-medium text-muted-foreground">{progressPercent}%</span>
+                  <span className="text-[11px] font-medium">{progressPercent}%</span>
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-2 z-[70] bg-popover" align="start">
