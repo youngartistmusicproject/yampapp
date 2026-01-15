@@ -72,6 +72,7 @@ import { effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { format, parseISO, isValid } from "date-fns";
 import type { Task, Project, User, RecurrenceSettings as RecurrenceSettingsType } from "@/types";
 import { cn } from "@/lib/utils";
+import { triggerConfetti } from "@/lib/confetti";
 
 interface Subtask {
   id: string;
@@ -353,6 +354,7 @@ export function TaskDetailDialog({
 
   const completeTask = (bypassWarning = false) => {
     if (!task) return;
+    triggerConfetti();
     if (onTaskComplete) {
       onTaskComplete(task.id);
     } else {
