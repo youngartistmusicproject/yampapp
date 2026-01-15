@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Area {
   id: string;
@@ -9,6 +10,7 @@ export interface Area {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  organization_id?: string;
 }
 
 export interface AreaItem {
@@ -18,29 +20,45 @@ export interface AreaItem {
 }
 
 export function useAreas() {
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
+
   return useQuery({
-    queryKey: ['areas'],
+    queryKey: ['areas', orgId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('areas')
         .select('*')
         .order('sort_order', { ascending: true });
       
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+      
+      const { data, error } = await query;
+      
       if (error) throw error;
       return data as Area[];
     },
+    enabled: !!orgId,
   });
 }
 
 export function useCreateArea() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
   
   return useMutation({
     mutationFn: async (area: { name: string; color: string }) => {
+      if (!currentOrganization?.id) {
+        throw new Error('No organization selected');
+      }
+      
       // Get max sort_order
       const { data: existing } = await supabase
         .from('areas')
         .select('sort_order')
+        .eq('organization_id', currentOrganization.id)
         .order('sort_order', { ascending: false })
         .limit(1);
       
@@ -48,7 +66,12 @@ export function useCreateArea() {
       
       const { data, error } = await supabase
         .from('areas')
-        .insert({ name: area.name, color: area.color, sort_order: newSortOrder })
+        .insert({ 
+          name: area.name, 
+          color: area.color, 
+          sort_order: newSortOrder,
+          organization_id: currentOrganization.id,
+        })
         .select()
         .single();
       

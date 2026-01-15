@@ -128,6 +128,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          organization_id: string | null
           parent_comment_id: string | null
           post_id: string
         }
@@ -136,6 +137,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          organization_id?: string | null
           parent_comment_id?: string | null
           post_id: string
         }
@@ -144,10 +146,18 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          organization_id?: string | null
           parent_comment_id?: string | null
           post_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "community_comments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "community_comments_parent_comment_id_fkey"
             columns: ["parent_comment_id"]
@@ -272,6 +282,7 @@ export type Database = {
           group_id: string
           id: string
           image_url: string | null
+          organization_id: string | null
           updated_at: string
         }
         Insert: {
@@ -282,6 +293,7 @@ export type Database = {
           group_id: string
           id?: string
           image_url?: string | null
+          organization_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -292,6 +304,7 @@ export type Database = {
           group_id?: string
           id?: string
           image_url?: string | null
+          organization_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -300,6 +313,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_posts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -802,6 +822,7 @@ export type Database = {
           id: string
           importance: string | null
           is_recurring: boolean
+          organization_id: string | null
           parent_task_id: string | null
           priority: string
           progress: number
@@ -833,6 +854,7 @@ export type Database = {
           id?: string
           importance?: string | null
           is_recurring?: boolean
+          organization_id?: string | null
           parent_task_id?: string | null
           priority?: string
           progress?: number
@@ -864,6 +886,7 @@ export type Database = {
           id?: string
           importance?: string | null
           is_recurring?: boolean
+          organization_id?: string | null
           parent_task_id?: string | null
           priority?: string
           progress?: number
@@ -882,6 +905,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_parent_task_id_fkey"
             columns: ["parent_task_id"]

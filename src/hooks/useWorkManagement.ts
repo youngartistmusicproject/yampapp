@@ -4,6 +4,7 @@ import { Task, Project, User, RecurrenceSettings } from '@/types';
 import { teamMembers } from '@/data/workManagementConfig';
 import { format } from 'date-fns';
 import { recurrenceToDb, dbToRecurrence, getNextRecurrenceDate } from '@/lib/recurrence';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Parse a DATE column (YYYY-MM-DD) into a local Date (avoids timezone day-shift)
 function parseDateOnly(dateStr: string): Date {
@@ -32,13 +33,22 @@ function getUserByName(name: string): User {
 
 // Fetch all projects with owners, members, and areas
 export function useProjects() {
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
+
   return useQuery({
-    queryKey: ['projects'],
+    queryKey: ['projects', orgId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('projects')
         .select('*')
         .order('sort_order', { ascending: true });
+      
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       
@@ -125,14 +135,23 @@ export function useReorderProjects() {
 
 // Fetch all tasks with assignees and inherited project areas
 export function useTasks() {
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
+
   return useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['tasks', orgId],
     queryFn: async () => {
       // Fetch tasks - order by sort_order for manual sorting
-      const { data: tasksData, error: tasksError } = await supabase
+      let query = supabase
         .from('tasks')
         .select('*')
         .order('sort_order', { ascending: true, nullsFirst: false });
+      
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+      
+      const { data: tasksData, error: tasksError } = await query;
       
       if (tasksError) throw tasksError;
       
@@ -222,9 +241,14 @@ export function useTasks() {
 // Create a new task
 export function useCreateTask() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
   
   return useMutation({
     mutationFn: async (task: Partial<Task> & { title: string }) => {
+      if (!currentOrganization?.id) {
+        throw new Error('No organization selected');
+      }
+      
       // Get recurrence DB fields
       const recurrenceFields = recurrenceToDb(task.recurrence);
       
@@ -244,6 +268,7 @@ export function useCreateTask() {
           progress: task.progress || 0,
           estimated_time: task.estimatedTime?.toString() || null,
           how_to_link: task.howToLink || null,
+          organization_id: currentOrganization.id,
           ...recurrenceFields,
         })
         .select()
@@ -657,9 +682,14 @@ export function useDuplicateTask() {
 // Create a new project
 export function useCreateProject() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
   
   return useMutation({
     mutationFn: async (project: { name: string; description?: string; color?: string; areaIds?: string[]; owners?: User[]; members?: User[] }) => {
+      if (!currentOrganization?.id) {
+        throw new Error('No organization selected');
+      }
+      
       const { data, error } = await supabase
         .from('projects')
         .insert({
@@ -668,6 +698,7 @@ export function useCreateProject() {
           color: project.color || '#3b82f6',
           area_ids: project.areaIds || [],
           status: 'active',
+          organization_id: currentOrganization.id,
         })
         .select()
         .single();
