@@ -196,37 +196,35 @@ function SortableTableRow({
         </div>
 
         {/* Right side - Status & Priority info (Order: Importance → Due Date → Stage → Progress) */}
-        <div className="flex items-center gap-4 flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0">
           {/* 1. Importance - first for triage */}
           {showDetails && (
             <span 
-              className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize w-16 text-center ${importanceColors[task.importance || 'routine'] || importanceColors.routine}`}
+              className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize w-[70px] text-center ${importanceColors[task.importance || 'routine'] || importanceColors.routine}`}
             >
               {task.importance || 'routine'}
             </span>
           )}
           
           {/* 2. Due Date */}
-          <span className={`text-[12px] w-16 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-            {task.dueDate ? format(task.dueDate, "MMM d") : ""}
+          <span className={`text-[11px] w-[52px] text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+            {task.dueDate ? format(task.dueDate, "MMM d") : "—"}
           </span>
 
           {/* 3. Stage */}
-          {status && (
-            <span 
-              className="text-[11px] font-medium px-1.5 py-0.5 rounded w-20 text-center truncate"
-              style={{
-                backgroundColor: `${status.color}15`,
-                color: status.color,
-              }}
-            >
-              {status.name}
-            </span>
-          )}
+          <span 
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded w-[76px] text-center truncate"
+            style={{
+              backgroundColor: status ? `${status.color}15` : 'transparent',
+              color: status?.color || 'var(--muted-foreground)',
+            }}
+          >
+            {status?.name || '—'}
+          </span>
           
           {/* 4. Progress - last as completion indicator */}
           {showDetails && (
-            <div className="flex items-center gap-1.5 w-24">
+            <div className="flex items-center gap-1.5 w-[72px]">
               <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                 <div 
                   className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
