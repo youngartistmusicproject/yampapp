@@ -214,7 +214,13 @@ export function TaskFilterPanel({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 bg-popover z-[70]" align="end" sideOffset={8}>
+      <PopoverContent 
+        className="w-80 p-0 bg-popover z-[70]" 
+        align="end" 
+        side="top"
+        sideOffset={8}
+        collisionPadding={16}
+      >
         <div className="flex items-center justify-between p-3 border-b">
           <h4 className="font-medium text-sm">Filters</h4>
           {activeFilterCount > 0 && (
