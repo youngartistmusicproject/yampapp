@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
-import { Repeat, Copy, Trash2, Clock, MessageSquare, Paperclip } from "lucide-react";
+import { Repeat, Copy, Trash2, Clock, MessageSquare, Paperclip, BookOpen } from "lucide-react";
 import { getProgressColor } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -184,6 +184,11 @@ function SortableTableRow({
             <span className="flex items-center gap-0.5 text-muted-foreground/60">
               <Paperclip className="w-3 h-3" />
               <span className="text-[10px]">{attachmentCount}</span>
+            </span>
+          )}
+          {task.howToLink && (
+            <span className="text-primary/70" title="Has SOP">
+              <BookOpen className="w-3 h-3" />
             </span>
           )}
         </div>

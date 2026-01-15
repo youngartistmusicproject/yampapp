@@ -25,7 +25,7 @@ import { Task, Project } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, MessageSquare, Paperclip, Check } from "lucide-react";
+import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, MessageSquare, Paperclip, Check, BookOpen } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getTagById, TagItem } from "@/data/workManagementConfig";
 import { Progress, getProgressColor } from "@/components/ui/progress";
@@ -194,6 +194,11 @@ function SortableTaskCard({
             <span className="flex items-center gap-0.5 text-muted-foreground/60 flex-shrink-0 mt-0.5">
               <Paperclip className="w-3 h-3" />
               <span className="text-[10px]">{attachmentCount}</span>
+            </span>
+          )}
+          {task.howToLink && (
+            <span className="text-primary/70 flex-shrink-0 mt-0.5" title="Has SOP">
+              <BookOpen className="w-3 h-3" />
             </span>
           )}
         </div>
