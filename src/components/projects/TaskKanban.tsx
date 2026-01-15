@@ -53,7 +53,7 @@ export interface StatusItem {
   color: string;
 }
 
-export type SortField = 'dueDate' | 'effort' | 'importance' | 'stage' | 'estimatedTime' | 'manual';
+export type SortField = 'dueDate' | 'effort' | 'importance' | 'stage' | 'estimatedTime' | 'area' | 'manual';
 
 interface TaskKanbanProps {
   tasks: Task[];
@@ -414,6 +414,13 @@ export function TaskKanban({ tasks, projects = [], tags = [], onTaskUpdate, onEd
       } else if (sortField === 'stage') {
         // Stage sorting doesn't apply within columns (already grouped by stage)
         comparison = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+      } else if (sortField === 'area') {
+        const aArea = a.inheritedAreas?.[0]?.name || '';
+        const bArea = b.inheritedAreas?.[0]?.name || '';
+        if (!aArea && !bArea) comparison = 0;
+        else if (!aArea) comparison = 1;
+        else if (!bArea) comparison = -1;
+        else comparison = aArea.localeCompare(bArea);
       }
 
       return sortAscending ? comparison : -comparison;

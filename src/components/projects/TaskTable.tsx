@@ -42,7 +42,7 @@ export interface StatusItem {
   color: string;
 }
 
-export type SortField = 'dueDate' | 'effort' | 'importance' | 'stage' | 'estimatedTime' | 'manual';
+export type SortField = 'dueDate' | 'effort' | 'importance' | 'stage' | 'estimatedTime' | 'area' | 'manual';
 
 interface TaskTableProps {
   tasks: Task[];

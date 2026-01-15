@@ -412,6 +412,18 @@ export default function Projects() {
         return sortAscending ? comparison : -comparison;
       }
 
+      if (sortField === 'area') {
+        // Get primary area name (first inherited area, or empty)
+        const aArea = a.inheritedAreas?.[0]?.name || '';
+        const bArea = b.inheritedAreas?.[0]?.name || '';
+        // Tasks without areas go last
+        if (!aArea && !bArea) return 0;
+        if (!aArea) return 1;
+        if (!bArea) return -1;
+        const comparison = aArea.localeCompare(bArea);
+        return sortAscending ? comparison : -comparison;
+      }
+
       if (sortField === 'manual') {
         const aOrder = a.sortOrder ?? 0;
         const bOrder = b.sortOrder ?? 0;
@@ -1040,7 +1052,7 @@ export default function Projects() {
                 <button className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors">
                   <ArrowUpDown className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">
-                    {sortField === 'manual' ? 'Manual' : sortField === 'dueDate' ? 'Date' : sortField === 'effort' ? 'Effort' : sortField === 'importance' ? 'Importance' : sortField === 'stage' ? 'Stage' : 'Est. Time'}
+                    {sortField === 'manual' ? 'Manual' : sortField === 'dueDate' ? 'Date' : sortField === 'effort' ? 'Effort' : sortField === 'importance' ? 'Importance' : sortField === 'stage' ? 'Stage' : sortField === 'area' ? 'Area' : 'Est. Time'}
                   </span>
                   {sortField !== 'manual' && (
                     sortAscending ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
@@ -1119,6 +1131,20 @@ export default function Projects() {
                 >
                   Est. Time
                   {sortField === 'estimatedTime' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => { 
+                    if (sortField === 'area') {
+                      setSortAscending(!sortAscending);
+                    } else {
+                      setSortField('area'); 
+                      setSortAscending(true);
+                    }
+                  }}
+                  className={cn(sortField === 'area' && 'bg-muted')}
+                >
+                  Area
+                  {sortField === 'area' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
                 </DropdownMenuItem>
                 {sortField === 'manual' && (
                   <DropdownMenuItem 
