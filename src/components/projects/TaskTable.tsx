@@ -195,8 +195,23 @@ function SortableTableRow({
           )}
         </div>
 
-        {/* Right side - Status & Priority info */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        {/* Right side - Status & Priority info (Order: Importance → Due Date → Stage → Progress) */}
+        <div className="flex items-center gap-4 flex-shrink-0">
+          {/* 1. Importance - first for triage */}
+          {showDetails && (
+            <span 
+              className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize w-16 text-center ${importanceColors[task.importance || 'routine'] || importanceColors.routine}`}
+            >
+              {task.importance || 'routine'}
+            </span>
+          )}
+          
+          {/* 2. Due Date */}
+          <span className={`text-[12px] w-16 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+            {task.dueDate ? format(task.dueDate, "MMM d") : ""}
+          </span>
+
+          {/* 3. Stage */}
           {status && (
             <span 
               className="text-[11px] font-medium px-1.5 py-0.5 rounded w-20 text-center truncate"
@@ -209,28 +224,17 @@ function SortableTableRow({
             </span>
           )}
           
-          <span className={`text-[12px] w-14 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-            {task.dueDate ? format(task.dueDate, "MMM d") : ""}
-          </span>
-
+          {/* 4. Progress - last as completion indicator */}
           {showDetails && (
-            <>
-              <span 
-                className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${importanceColors[task.importance || 'routine'] || importanceColors.routine}`}
-              >
-                {task.importance || 'routine'}
-              </span>
-              
-              <div className="flex items-center gap-1.5 w-20">
-                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
-                    style={{ width: `${task.progress || 0}%` }}
-                  />
-                </div>
-                <span className="text-[10px] font-medium text-muted-foreground w-6 text-right">{task.progress || 0}%</span>
+            <div className="flex items-center gap-1.5 w-24">
+              <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
+                  style={{ width: `${task.progress || 0}%` }}
+                />
               </div>
-            </>
+              <span className="text-[10px] font-medium text-muted-foreground w-7 text-right">{task.progress || 0}%</span>
+            </div>
           )}
         </div>
 
