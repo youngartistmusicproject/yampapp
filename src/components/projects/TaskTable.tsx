@@ -227,8 +227,8 @@ function SortableTableRow({
           </div>
           
           {/* 4. Progress - last as completion indicator */}
-          <div className="flex items-center justify-center">
-            <div className={`flex items-center gap-1.5 w-full ${showDetails ? '' : 'opacity-0 pointer-events-none'}`}>
+          <div className="flex items-center justify-end pl-2">
+            <div className={`flex items-center gap-1.5 w-[80px] ${showDetails ? '' : 'opacity-0 pointer-events-none'}`}>
               <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                 <div 
                   className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
