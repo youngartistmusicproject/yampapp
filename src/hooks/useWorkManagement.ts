@@ -324,7 +324,7 @@ export function useUpdateTask() {
         (updateData as any).archived_at = (updates as any).archivedAt ? (updates as any).archivedAt.toISOString() : null;
       }
       if (updates.howToLink !== undefined) updateData.how_to_link = updates.howToLink || null;
-      if (updates.subtasks !== undefined) updateData.subtasks = JSON.stringify(updates.subtasks);
+      if (updates.subtasks !== undefined) updateData.subtasks = updates.subtasks;
       
       // Handle recurrence settings
       if (updates.recurrence !== undefined) {
