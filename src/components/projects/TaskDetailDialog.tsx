@@ -49,7 +49,11 @@ import {
   Flag,
   BarChart3,
   Tag,
+  MessageSquare,
+  File,
+  Info,
 } from "lucide-react";
+import { effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { format, parseISO, isValid } from "date-fns";
 import type { Task, Project, User, RecurrenceSettings as RecurrenceSettingsType } from "@/types";
 import { cn } from "@/lib/utils";
@@ -171,19 +175,26 @@ const EditableText = ({
   );
 };
 
-const EFFORT_OPTIONS = [
-  { id: 'easy', label: 'Easy', color: 'text-emerald-600 bg-emerald-500/10', description: 'Quick, just do it' },
-  { id: 'light', label: 'Light', color: 'text-blue-600 bg-blue-500/10', description: 'Can multitask' },
-  { id: 'focused', label: 'Focused', color: 'text-amber-600 bg-amber-500/10', description: 'Needs focus' },
-  { id: 'deep', label: 'Deep', color: 'text-red-600 bg-red-500/10', description: 'Deep work required' },
-];
+// Use the shared effort/importance libraries from config
+const EFFORT_OPTIONS = effortLibrary.map(e => ({
+  id: e.id,
+  label: e.name,
+  color: e.id === 'easy' ? 'text-emerald-600 bg-emerald-500/10' 
+       : e.id === 'light' ? 'text-blue-600 bg-blue-500/10'
+       : e.id === 'focused' ? 'text-amber-600 bg-amber-500/10'
+       : 'text-red-600 bg-red-500/10',
+  description: e.description,
+}));
 
-const IMPORTANCE_OPTIONS = [
-  { id: 'low', label: 'Low', color: 'text-slate-600 bg-slate-500/10', description: 'Nice to have' },
-  { id: 'routine', label: 'Routine', color: 'text-blue-600 bg-blue-500/10', description: 'Baseline work' },
-  { id: 'important', label: 'Important', color: 'text-amber-600 bg-amber-500/10', description: 'Must be done' },
-  { id: 'critical', label: 'Critical', color: 'text-red-600 bg-red-500/10', description: 'Top priority' },
-];
+const IMPORTANCE_OPTIONS = importanceLibrary.map(i => ({
+  id: i.id,
+  label: i.name,
+  color: i.id === 'low' ? 'text-slate-600 bg-slate-500/10'
+       : i.id === 'routine' ? 'text-blue-600 bg-blue-500/10'
+       : i.id === 'important' ? 'text-amber-600 bg-amber-500/10'
+       : 'text-red-600 bg-red-500/10',
+  description: i.description,
+}));
 
 const TIME_OPTIONS = [
   { value: 15, label: '15 min' },
@@ -221,6 +232,7 @@ export function TaskDetailDialog({
   const [newComment, setNewComment] = useState("");
   const [sopPopoverOpen, setSopPopoverOpen] = useState(false);
   const [sopUrl, setSopUrl] = useState("");
+  const [activeTab, setActiveTab] = useState<'comments' | 'files'>('comments');
 
   const subtasks: Subtask[] = (() => {
     if (!task?.subtasks) return [];
@@ -340,8 +352,8 @@ export function TaskDetailDialog({
                       <EditableText
                         value={task.title}
                         onSave={(value) => onTaskUpdate(task.id, { title: value })}
-                        placeholder="Task title..."
-                        className="text-lg font-semibold leading-tight"
+                        placeholder="What needs to get done?"
+                        className="text-xl font-semibold leading-tight"
                       />
                       {task.isRecurring && (
                         <Repeat className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -351,7 +363,7 @@ export function TaskDetailDialog({
                       <EditableText
                         value={task.description || ""}
                         onSave={(value) => onTaskUpdate(task.id, { description: value })}
-                        placeholder="Add a description..."
+                        placeholder="Add helpful details..."
                         multiline
                         className="text-sm text-muted-foreground"
                       />
@@ -392,36 +404,148 @@ export function TaskDetailDialog({
 
               <div className="border-t border-border/40" />
 
-              <div className="flex-1 px-6 py-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Comments</span>
+              {/* Comments & Files Tabs */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="flex items-center gap-1 px-6 pt-3 border-b border-border/40">
+                  <button
+                    onClick={() => setActiveTab('comments')}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 transition-colors -mb-px",
+                      activeTab === 'comments' 
+                        ? "border-primary text-foreground" 
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Comments
+                    {task.comments && task.comments.length > 0 && (
+                      <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{task.comments.length}</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('files')}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 transition-colors -mb-px",
+                      activeTab === 'files' 
+                        ? "border-primary text-foreground" 
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <File className="w-4 h-4" />
+                    Files
+                    {task.attachments && task.attachments.length > 0 && (
+                      <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{task.attachments.length}</span>
+                    )}
+                  </button>
                 </div>
-                <div className="space-y-3 mb-4">
-                  <p className="text-sm text-muted-foreground/60 italic">No comments yet</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <UserAvatar user={dummyUser} size="sm" showTooltip={false} />
-                  <div className="flex-1 relative">
-                    <Textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Write a comment..." className="min-h-[80px] pr-20 resize-none text-sm" />
-                    <div className="absolute bottom-2 right-2 flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7"><Paperclip className="w-4 h-4" /></Button>
-                      <Button size="icon" className="h-7 w-7" disabled={!newComment.trim()}><Send className="w-3.5 h-3.5" /></Button>
+
+                <div className="flex-1 px-6 py-4 overflow-y-auto">
+                  {activeTab === 'comments' ? (
+                    <>
+                      {/* Comments list */}
+                      <div className="space-y-3 mb-4">
+                        {(!task.comments || task.comments.length === 0) ? (
+                          <p className="text-sm text-muted-foreground/60 italic">No comments yet</p>
+                        ) : (
+                          task.comments.map((comment) => (
+                            <div key={comment.id} className="flex items-start gap-3">
+                              <UserAvatar user={comment.author} size="sm" showTooltip={false} />
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium">{comment.author.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {format(new Date(comment.createdAt), 'MMM d, h:mm a')}
+                                  </span>
+                                </div>
+                                <p className="text-sm mt-0.5">{comment.content}</p>
+                                {comment.attachments && comment.attachments.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    {comment.attachments.map((file) => (
+                                      <a 
+                                        key={file.id} 
+                                        href={file.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded text-xs hover:bg-muted/80"
+                                      >
+                                        <Paperclip className="w-3 h-3" />
+                                        {file.name}
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Comment input */}
+                      <div className="flex items-start gap-3">
+                        <UserAvatar user={dummyUser} size="sm" showTooltip={false} />
+                        <div className="flex-1 relative">
+                          <Textarea 
+                            value={newComment} 
+                            onChange={(e) => setNewComment(e.target.value)} 
+                            placeholder="Write a comment..." 
+                            className="min-h-[80px] pr-20 resize-none text-sm" 
+                          />
+                          <div className="absolute bottom-2 right-2 flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <Paperclip className="w-4 h-4" />
+                            </Button>
+                            <Button size="icon" className="h-7 w-7" disabled={!newComment.trim()}>
+                              <Send className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    /* Files tab - shows all attachments from comments */
+                    <div>
+                      {(() => {
+                        // Collect all files from comments
+                        const allFiles = (task.comments || []).flatMap(c => c.attachments || []);
+                        const taskFiles = task.attachments || [];
+                        const combinedFiles = [...taskFiles, ...allFiles];
+                        
+                        if (combinedFiles.length === 0) {
+                          return (
+                            <div className="flex flex-col items-center justify-center py-8 text-center">
+                              <File className="w-8 h-8 text-muted-foreground/40 mb-2" />
+                              <p className="text-sm text-muted-foreground/60">No files yet</p>
+                              <p className="text-xs text-muted-foreground/40 mt-1">
+                                Attach files through comments
+                              </p>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div className="grid grid-cols-2 gap-2">
+                            {combinedFiles.map((file) => (
+                              <a
+                                key={file.id}
+                                href={file.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                              >
+                                <Paperclip className="w-4 h-4 text-muted-foreground shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{file.name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {(file.size / 1024).toFixed(1)} KB
+                                  </p>
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-border/40" />
-
-              <div className="px-6 py-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Files</span>
-                </div>
-                <div className="flex items-center justify-center py-6 border-2 border-dashed border-border/50 rounded-lg">
-                  <div className="text-center">
-                    <Paperclip className="w-5 h-5 text-muted-foreground/40 mx-auto mb-1" />
-                    <p className="text-xs text-muted-foreground/60">Drop files here or click to upload</p>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
