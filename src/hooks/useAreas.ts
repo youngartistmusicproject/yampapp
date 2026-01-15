@@ -47,10 +47,11 @@ export function useAreas() {
 export function useCreateArea() {
   const queryClient = useQueryClient();
   const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async (area: { name: string; color: string }) => {
-      if (!currentOrganization?.id) {
+      if (!orgId) {
         throw new Error('No organization selected');
       }
       
@@ -58,7 +59,7 @@ export function useCreateArea() {
       const { data: existing } = await supabase
         .from('areas')
         .select('sort_order')
-        .eq('organization_id', currentOrganization.id)
+        .eq('organization_id', orgId)
         .order('sort_order', { ascending: false })
         .limit(1);
       
@@ -70,7 +71,7 @@ export function useCreateArea() {
           name: area.name, 
           color: area.color, 
           sort_order: newSortOrder,
-          organization_id: currentOrganization.id,
+          organization_id: orgId,
         })
         .select()
         .single();
@@ -79,7 +80,7 @@ export function useCreateArea() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['areas'] });
+      queryClient.invalidateQueries({ queryKey: ['areas', orgId] });
     },
     onError: (error) => {
       toast.error(`Failed to create area: ${error.message}`);
@@ -89,6 +90,8 @@ export function useCreateArea() {
 
 export function useUpdateArea() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Pick<Area, 'name' | 'color'>> }) => {
@@ -103,7 +106,7 @@ export function useUpdateArea() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['areas'] });
+      queryClient.invalidateQueries({ queryKey: ['areas', orgId] });
     },
     onError: (error) => {
       toast.error(`Failed to update area: ${error.message}`);
@@ -113,6 +116,8 @@ export function useUpdateArea() {
 
 export function useDeleteArea() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async (id: string) => {
@@ -124,7 +129,7 @@ export function useDeleteArea() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['areas'] });
+      queryClient.invalidateQueries({ queryKey: ['areas', orgId] });
     },
     onError: (error) => {
       toast.error(`Failed to delete area: ${error.message}`);
@@ -134,6 +139,8 @@ export function useDeleteArea() {
 
 export function useReorderAreas() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async (areas: AreaItem[]) => {
@@ -148,7 +155,7 @@ export function useReorderAreas() {
       await Promise.all(updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['areas'] });
+      queryClient.invalidateQueries({ queryKey: ['areas', orgId] });
     },
     onError: (error) => {
       toast.error(`Failed to reorder areas: ${error.message}`);
