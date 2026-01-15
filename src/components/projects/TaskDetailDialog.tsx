@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { UserAvatar } from "@/components/ui/user-avatar";
+import { UserAvatar, UserAvatarGroup } from "@/components/ui/user-avatar";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
 import { SearchableTagSelect } from "./SearchableTagSelect";
 import { RecurrenceSettings } from "./RecurrenceSettings";
@@ -51,7 +51,7 @@ import {
   Tag,
 } from "lucide-react";
 import { format, parseISO, isValid } from "date-fns";
-import type { Task, Project, Status } from "@/types";
+import type { Task, Project, User, RecurrenceSettings as RecurrenceSettingsType } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface Subtask {
@@ -60,17 +60,38 @@ interface Subtask {
   completed: boolean;
 }
 
+interface StatusOption {
+  id: string;
+  name: string;
+  color: string;
+}
+
+// Simple project type for the dialog (subset of full Project)
+interface ProjectOption {
+  id: string;
+  name: string;
+  color: string;
+  areaIds?: string[];
+}
+
 interface TaskDetailDialogProps {
   task: Task | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
-  onTaskComplete: (taskId: string) => void;
-  projects: Project[];
-  statuses: Status[];
-  availableTags: string[];
-  projectMembers?: { user_name: string; role: string }[];
+  onTaskComplete?: (taskId: string) => void;
+  projects: ProjectOption[];
+  statuses: StatusOption[];
+  availableTags?: string[];
+  projectMembers?: User[];
   areas?: { id: string; name: string; color: string }[];
+  // Additional props that pages may pass (kept for compatibility)
+  currentUser?: User;
+  availableMembers?: User[];
+  onAddComment?: (taskId: string, content: any, parentCommentId?: string) => void;
+  onDeleteComment?: (taskId: string, commentId: string) => void;
+  onToggleReaction?: (taskId: string, commentId: string, emoji: string) => void;
+  tags?: any[];
 }
 
 const EditableText = ({ 
@@ -165,24 +186,22 @@ const IMPORTANCE_OPTIONS = [
 ];
 
 const TIME_OPTIONS = [
-  { value: '15m', label: '15 min' },
-  { value: '30m', label: '30 min' },
-  { value: '1h', label: '1 hour' },
-  { value: '2h', label: '2 hours' },
-  { value: '4h', label: '4 hours' },
-  { value: '1d', label: '1 day' },
-  { value: '2d', label: '2 days' },
-  { value: '1w', label: '1 week' },
+  { value: 15, label: '15 min' },
+  { value: 30, label: '30 min' },
+  { value: 60, label: '1 hour' },
+  { value: 120, label: '2 hours' },
+  { value: 240, label: '4 hours' },
+  { value: 480, label: '1 day' },
+  { value: 960, label: '2 days' },
+  { value: 2400, label: '1 week' },
 ];
 
 const PROGRESS_OPTIONS = [0, 10, 25, 50, 75, 90, 100];
 
-const formatEstimatedTime = (time: string) => {
-  const map: Record<string, string> = {
-    '15m': '15m', '30m': '30m', '1h': '1h', '2h': '2h',
-    '4h': '4h', '1d': '1d', '2d': '2d', '1w': '1w'
-  };
-  return map[time] || time;
+const formatEstimatedTime = (minutes: number) => {
+  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 480) return `${minutes / 60}h`;
+  return `${minutes / 480}d`;
 };
 
 export function TaskDetailDialog({
@@ -206,12 +225,6 @@ export function TaskDetailDialog({
   const subtasks: Subtask[] = (() => {
     if (!task?.subtasks) return [];
     if (Array.isArray(task.subtasks)) return task.subtasks as Subtask[];
-    if (typeof task.subtasks === 'string') {
-      try {
-        const parsed = JSON.parse(task.subtasks);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch { return []; }
-    }
     return [];
   })();
 
@@ -222,8 +235,6 @@ export function TaskDetailDialog({
   const projectAreas = selectedProject?.areaIds
     ?.map(areaId => areas.find(a => a.id === areaId))
     .filter(Boolean) || [];
-
-  const availableAssignees = projectMembers.map(m => m.user_name);
 
   const handleComplete = () => {
     if (!task) return;
@@ -269,13 +280,13 @@ export function TaskDetailDialog({
 
   const handleSopSave = () => {
     if (!task) return;
-    onTaskUpdate(task.id, { howToLink: sopUrl || null });
+    onTaskUpdate(task.id, { howToLink: sopUrl || undefined });
     setSopPopoverOpen(false);
   };
 
   const handleSopRemove = () => {
     if (!task) return;
-    onTaskUpdate(task.id, { howToLink: null });
+    onTaskUpdate(task.id, { howToLink: undefined });
     setSopUrl("");
     setSopPopoverOpen(false);
   };
@@ -288,10 +299,9 @@ export function TaskDetailDialog({
     }
   }, [task?.howToLink]);
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return null;
+  const formatDate = (date: Date | undefined) => {
+    if (!date) return null;
     try {
-      const date = parseISO(dateStr);
       return isValid(date) ? format(date, 'MMM d, yyyy') : null;
     } catch { return null; }
   };
@@ -307,6 +317,9 @@ export function TaskDetailDialog({
   };
 
   if (!task) return null;
+
+  // Create a dummy user for comment avatar
+  const dummyUser: User = { id: 'current', name: 'You', email: '', role: 'staff' };
 
   return (
     <>
@@ -387,7 +400,7 @@ export function TaskDetailDialog({
                   <p className="text-sm text-muted-foreground/60 italic">No comments yet</p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <UserAvatar name="You" size="sm" />
+                  <UserAvatar user={dummyUser} size="sm" showTooltip={false} />
                   <div className="flex-1 relative">
                     <Textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Write a comment..." className="min-h-[80px] pr-20 resize-none text-sm" />
                     <div className="absolute bottom-2 right-2 flex items-center gap-1">
@@ -434,7 +447,7 @@ export function TaskDetailDialog({
                   </PopoverTrigger>
                   <PopoverContent className="w-56 p-2" align="start">
                     <div className="space-y-1">
-                      <button onClick={() => onTaskUpdate(task.id, { projectId: null })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", !task.projectId && "bg-muted")}>No Project</button>
+                      <button onClick={() => onTaskUpdate(task.id, { projectId: undefined })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", !task.projectId && "bg-muted")}>No Project</button>
                       {projects.map((project) => (
                         <button key={project.id} onClick={() => onTaskUpdate(task.id, { projectId: project.id })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.projectId === project.id && "bg-muted")}>
                           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color || '#6b7280' }} />
@@ -474,10 +487,7 @@ export function TaskDetailDialog({
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Responsible</p>
                         {task.assignees && task.assignees.length > 0 ? (
-                          <div className="flex items-center gap-1">
-                            {task.assignees.slice(0, 3).map((name, i) => (<UserAvatar key={i} name={name} size="xs" />))}
-                            {task.assignees.length > 3 && (<span className="text-xs text-muted-foreground">+{task.assignees.length - 3}</span>)}
-                          </div>
+                          <UserAvatarGroup users={task.assignees} max={3} size="xs" />
                         ) : (
                           <span className="text-sm text-muted-foreground">Unassigned</span>
                         )}
@@ -485,7 +495,11 @@ export function TaskDetailDialog({
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-3" align="start">
-                    <SearchableAssigneeSelect value={task.assignees || []} onChange={(assignees) => onTaskUpdate(task.id, { assignees })} availableAssignees={availableAssignees} projectMembers={projectMembers} />
+                    <SearchableAssigneeSelect 
+                      members={projectMembers} 
+                      selectedAssignees={task.assignees || []} 
+                      onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })} 
+                    />
                   </PopoverContent>
                 </Popover>
 
@@ -500,9 +514,32 @@ export function TaskDetailDialog({
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <div className="p-3 border-b"><NaturalDateInput value={task.dueDate} onChange={(date) => onTaskUpdate(task.id, { dueDate: date })} /></div>
-                    <Calendar mode="single" selected={task.dueDate ? parseISO(task.dueDate) : undefined} onSelect={(date) => { if (date) { onTaskUpdate(task.id, { dueDate: format(date, 'yyyy-MM-dd') }); }}} />
-                    {task.dueDate && (<div className="p-3 border-t"><RecurrenceSettings isRecurring={task.isRecurring} frequency={task.recurrenceFrequency} interval={task.recurrenceInterval} daysOfWeek={task.recurrenceDaysOfWeek} dayOfMonth={task.recurrenceDayOfMonth} endDate={task.recurrenceEndDate} onChange={(settings) => onTaskUpdate(task.id, settings)} /></div>)}
+                    <div className="p-3 border-b">
+                      <NaturalDateInput 
+                        value={task.dueDate} 
+                        onChange={(date) => onTaskUpdate(task.id, { dueDate: date })} 
+                        onRecurrenceChange={(recurrence) => onTaskUpdate(task.id, { 
+                          isRecurring: !!recurrence, 
+                          recurrence 
+                        })}
+                      />
+                    </div>
+                    <Calendar 
+                      mode="single" 
+                      selected={task.dueDate} 
+                      onSelect={(date) => onTaskUpdate(task.id, { dueDate: date })} 
+                    />
+                    {task.dueDate && (
+                      <div className="p-3 border-t">
+                        <RecurrenceSettings 
+                          isRecurring={task.isRecurring || false} 
+                          onIsRecurringChange={(value) => onTaskUpdate(task.id, { isRecurring: value })}
+                          recurrence={task.recurrence}
+                          onRecurrenceChange={(recurrence) => onTaskUpdate(task.id, { recurrence })}
+                          compact
+                        />
+                      </div>
+                    )}
                   </PopoverContent>
                 </Popover>
 
@@ -630,7 +667,11 @@ export function TaskDetailDialog({
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-3" align="start">
-                    <SearchableTagSelect value={task.tags || []} onChange={(tags) => onTaskUpdate(task.id, { tags })} availableTags={availableTags} />
+                    <SearchableTagSelect 
+                      tags={areas.map(a => ({ id: a.id, name: a.name, color: a.color }))} 
+                      selectedTags={task.tags || []} 
+                      onTagsChange={(tags) => onTaskUpdate(task.id, { tags })} 
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
