@@ -13,6 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  Shield,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +22,8 @@ import {
   Sheet,
   SheetContent,
 } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -35,6 +39,8 @@ const navigation = [
 // Desktop Sidebar - Todoist style
 function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
   const location = useLocation();
+  const { signOut, profile } = useAuth();
+  const { isSuperAdmin } = useUserRole();
 
   return (
     <aside
@@ -78,7 +84,22 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
       </nav>
 
       {/* Bottom section */}
-      <div className="px-2 py-3 border-t border-border/50">
+      <div className="px-2 py-3 border-t border-border/50 space-y-0.5">
+        {isSuperAdmin && (
+          <NavLink
+            to="/users"
+            className={cn(
+              "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors",
+              location.pathname === "/users"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <Shield className="w-[18px] h-[18px] flex-shrink-0" />
+            {!collapsed && <span>User Management</span>}
+          </NavLink>
+        )}
+
         <NavLink
           to="/settings"
           className={cn(
@@ -91,6 +112,14 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
           <Settings className="w-[18px] h-[18px] flex-shrink-0" />
           {!collapsed && <span>Settings</span>}
         </NavLink>
+
+        <button
+          onClick={() => signOut()}
+          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
+          {!collapsed && <span>Sign Out</span>}
+        </button>
 
         <Button
           variant="ghost"
@@ -112,6 +141,8 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
 // Mobile Sheet Navigation
 function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const location = useLocation();
+  const { signOut } = useAuth();
+  const { isSuperAdmin } = useUserRole();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -150,7 +181,23 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         </nav>
 
         {/* Bottom section */}
-        <div className="px-2 py-3 border-t border-border/50">
+        <div className="px-2 py-3 border-t border-border/50 space-y-0.5">
+          {isSuperAdmin && (
+            <NavLink
+              to="/users"
+              onClick={() => onOpenChange(false)}
+              className={cn(
+                "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors",
+                location.pathname === "/users"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <Shield className="w-[18px] h-[18px] flex-shrink-0" />
+              <span>User Management</span>
+            </NavLink>
+          )}
+
           <NavLink
             to="/settings"
             onClick={() => onOpenChange(false)}
@@ -164,6 +211,17 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
             <Settings className="w-[18px] h-[18px] flex-shrink-0" />
             <span>Settings</span>
           </NavLink>
+
+          <button
+            onClick={() => {
+              signOut();
+              onOpenChange(false);
+            }}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </SheetContent>
     </Sheet>
