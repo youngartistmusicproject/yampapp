@@ -12,6 +12,16 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -315,6 +325,8 @@ export function TaskDetailDialog({
   const [subtasksOpen, setSubtasksOpen] = useState(true);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [activityTab, setActivityTab] = useState<'comments' | 'files'>('comments');
+  const [showSubtaskWarning, setShowSubtaskWarning] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
@@ -392,6 +404,30 @@ export function TaskDetailDialog({
     } else if (e.key === 'Escape') {
       setNewSubtaskTitle("");
     }
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    const incompleteSubtasks = subtasks.filter(s => !s.completed).length;
+    // Check if changing to a "done" status and has incomplete subtasks
+    const doneStatus = statuses.find(s => s.id === newStatus);
+    const isDoneStatus = doneStatus?.name.toLowerCase().includes('done') || 
+                         doneStatus?.name.toLowerCase().includes('complete') ||
+                         newStatus === 'done';
+    
+    if (isDoneStatus && incompleteSubtasks > 0) {
+      setPendingStatus(newStatus);
+      setShowSubtaskWarning(true);
+    } else {
+      onTaskUpdate(task.id, { status: newStatus });
+    }
+  };
+
+  const confirmStatusChange = () => {
+    if (pendingStatus) {
+      onTaskUpdate(task.id, { status: pendingStatus });
+      setPendingStatus(null);
+    }
+    setShowSubtaskWarning(false);
   };
 
   const handleSubmitComment = () => {
@@ -587,6 +623,7 @@ export function TaskDetailDialog({
   const progressPercent = task.progress || 0;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-[95vw] md:max-w-[900px] max-h-[90vh] p-0 gap-0 overflow-hidden rounded-xl flex flex-col">
         {/* Header - matches TaskDialog */}
@@ -788,7 +825,7 @@ export function TaskDetailDialog({
               {/* Stage Row */}
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground w-28 shrink-0">Stage</span>
-                <Select value={task.status} onValueChange={(value) => onTaskUpdate(task.id, { status: value })}>
+                <Select value={task.status} onValueChange={handleStatusChange}>
                   <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent flex-1">
                     {taskStatus && (
                       <div className="flex items-center gap-2">
@@ -1445,6 +1482,24 @@ export function TaskDetailDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Warning dialog for completing task with unfinished subtasks */}
+    <AlertDialog open={showSubtaskWarning} onOpenChange={setShowSubtaskWarning}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Incomplete Subtasks</AlertDialogTitle>
+          <AlertDialogDescription>
+            This task has {subtasks.filter(s => !s.completed).length} unfinished subtask{subtasks.filter(s => !s.completed).length !== 1 ? 's' : ''}. 
+            Are you sure you want to mark this task as complete?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setPendingStatus(null)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmStatusChange}>Complete Anyway</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
