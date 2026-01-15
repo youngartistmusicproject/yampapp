@@ -222,7 +222,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       recurrence,
       howToLink: howToLink.trim() || undefined,
     });
-    resetForm();
   };
 
   const handleToggleRecurring = (value: boolean) => {
