@@ -68,11 +68,11 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-52" align="end">
+          <DropdownMenuContent className="w-64" align="end">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-0.5">
                 <p className="text-sm font-medium">{fullName}</p>
-                <p className="text-xs text-muted-foreground">{profile?.email}</p>
+                <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
