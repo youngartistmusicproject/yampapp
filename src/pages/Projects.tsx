@@ -43,7 +43,8 @@ import {
 } from "@/components/ui/select";
 import { format, differenceInDays, isToday, isYesterday, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import { triggerConfetti } from "@/lib/confetti";
+import { triggerConfetti, triggerDayCompleteConfetti, triggerOverdueClearedConfetti } from "@/lib/confetti";
+import { isToday as isDateToday, isBefore, startOfDay } from "date-fns";
 
 import { teamMembers, statusLibrary as defaultStatuses, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { useTasks, useProjects, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useReorderTasks, useCompleteRecurringTask, useReorderProjects } from "@/hooks/useWorkManagement";
@@ -531,9 +532,57 @@ export default function Projects() {
       }
     }
     
+    // Helper to check for achievements after completion
+    const checkAchievements = (completedTaskId: string) => {
+      const today = startOfDay(new Date());
+      
+      // Get remaining tasks after this one is completed
+      const remainingTasks = activeTasks.filter(t => t.id !== completedTaskId);
+      
+      // Check if this completes all tasks due today
+      const tasksDueToday = remainingTasks.filter(t => {
+        if (!t.dueDate) return false;
+        const dueDate = new Date(t.dueDate);
+        return isDateToday(dueDate);
+      });
+      
+      // Check if the completed task was due today
+      const completedTaskDueToday = task?.dueDate && isDateToday(new Date(task.dueDate));
+      
+      // Check for overdue tasks (before today)
+      const overdueTasks = remainingTasks.filter(t => {
+        if (!t.dueDate) return false;
+        const dueDate = startOfDay(new Date(t.dueDate));
+        return isBefore(dueDate, today);
+      });
+      
+      // Check if the completed task was overdue
+      const completedTaskOverdue = task?.dueDate && isBefore(startOfDay(new Date(task.dueDate)), today);
+      
+      // Trigger special effects based on achievements
+      if (completedTaskDueToday && tasksDueToday.length === 0) {
+        // All tasks for today are done!
+        triggerDayCompleteConfetti();
+        toast.success('🎉 All tasks for today completed!', { duration: 4000 });
+        return true;
+      }
+      
+      if (completedTaskOverdue && overdueTasks.length === 0) {
+        // All overdue tasks cleared!
+        triggerOverdueClearedConfetti();
+        toast.success('🔥 All overdue tasks cleared!', { duration: 4000 });
+        return true;
+      }
+      
+      return false;
+    };
+
     // If marking a recurring task as done, use the special hook
     if (updates.status === 'done' && task?.isRecurring && task?.recurrence) {
-      triggerConfetti();
+      const isSpecialAchievement = checkAchievements(taskId);
+      if (!isSpecialAchievement) {
+        triggerConfetti();
+      }
       completeRecurringTask.mutate({ task }, {
         onSuccess: (result) => {
           if (result.nextTask) {
@@ -557,7 +606,10 @@ export default function Projects() {
     
     // Trigger confetti for non-recurring task completion
     if (updates.status === 'done') {
-      triggerConfetti();
+      const isSpecialAchievement = checkAchievements(taskId);
+      if (!isSpecialAchievement) {
+        triggerConfetti();
+      }
     }
     
     updateTask.mutate({ taskId, updates }, {
