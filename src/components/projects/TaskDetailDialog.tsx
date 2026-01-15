@@ -97,7 +97,7 @@ interface TaskDetailDialogProps {
   task: Task | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
+  onTaskUpdate: (taskId: string, updates: Partial<Task>, bypassSubtaskWarning?: boolean) => void;
   onTaskComplete?: (taskId: string) => void;
   projects: ProjectOption[];
   statuses: StatusOption[];
@@ -351,16 +351,16 @@ export function TaskDetailDialog({
     }
   };
 
-  const completeTask = () => {
+  const completeTask = (bypassWarning = false) => {
     if (!task) return;
     if (onTaskComplete) {
       onTaskComplete(task.id);
     } else {
-      // Fallback: use onTaskUpdate to mark as complete
+      // Use onTaskUpdate with bypass flag to prevent parent warning from triggering
       onTaskUpdate(task.id, { 
         status: 'done', 
         completedAt: new Date() 
-      });
+      }, bypassWarning);
     }
     onOpenChange(false);
   };
@@ -368,10 +368,7 @@ export function TaskDetailDialog({
   const handleConfirmComplete = () => {
     if (!task) return;
     setShowIncompleteWarning(false);
-    // Use setTimeout to ensure warning dialog closes first
-    setTimeout(() => {
-      completeTask();
-    }, 0);
+    completeTask(true); // Pass true to bypass parent's subtask warning
   };
 
   const handleSubtaskToggle = (subtaskId: string) => {
