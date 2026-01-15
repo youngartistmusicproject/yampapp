@@ -8,7 +8,8 @@ const corsHeaders = {
 interface BootstrapRequest {
   email: string;
   password: string;
-  display_name: string;
+  first_name: string;
+  last_name?: string;
 }
 
 Deno.serve(async (req) => {
@@ -48,11 +49,11 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { email, password, display_name }: BootstrapRequest = await req.json();
+    const { email, password, first_name, last_name }: BootstrapRequest = await req.json();
 
-    if (!email || !password || !display_name) {
+    if (!email || !password || !first_name) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: email, password, display_name' }),
+        JSON.stringify({ error: 'Missing required fields: email, password, first_name' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { display_name },
+      user_metadata: { first_name, last_name },
     });
 
     if (createError) {
@@ -106,7 +107,8 @@ Deno.serve(async (req) => {
         user: {
           id: newUser.user.id,
           email: newUser.user.email,
-          display_name,
+          first_name,
+          last_name,
         },
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

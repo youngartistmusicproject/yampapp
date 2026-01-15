@@ -11,12 +11,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChatPopover } from "@/components/chat/ChatPopover";
+import { useAuth } from "@/contexts/AuthContext";
+import { getFullName, getInitials } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface AppHeaderProps {
   onMobileMenuToggle?: () => void;
 }
 
 export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
+  const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
+  
+  const fullName = profile ? getFullName(profile.first_name, profile.last_name) : "User";
+  const initials = profile ? getInitials(profile.first_name, profile.last_name) : "?";
+
   return (
     <header className="flex items-center justify-between h-12 px-3 sm:px-4 border-b border-border/50 bg-background gap-3">
       {/* Mobile menu trigger */}
@@ -50,9 +59,11 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
               <Avatar className="h-7 w-7">
-                <AvatarImage src="/placeholder.svg" alt="User" />
+                {profile?.avatar_url && (
+                  <AvatarImage src={profile.avatar_url} alt={fullName} />
+                )}
                 <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                  JD
+                  {initials}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -60,15 +71,21 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
           <DropdownMenuContent className="w-52" align="end">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-0.5">
-                <p className="text-sm font-medium">John Doe</p>
-                <p className="text-xs text-muted-foreground">john@example.com</p>
+                <p className="text-sm font-medium">{fullName}</p>
+                <p className="text-xs text-muted-foreground">{profile?.email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-[13px]">Profile</DropdownMenuItem>
-            <DropdownMenuItem className="text-[13px]">Settings</DropdownMenuItem>
+            <DropdownMenuItem className="text-[13px]" onClick={() => navigate("/settings")}>
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-[13px]" onClick={() => navigate("/settings")}>
+              Settings
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-[13px]">Log out</DropdownMenuItem>
+            <DropdownMenuItem className="text-[13px]" onClick={() => signOut()}>
+              Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

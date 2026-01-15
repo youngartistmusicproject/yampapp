@@ -14,7 +14,7 @@ export function useProfiles() {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
-        .order('display_name');
+        .order('first_name');
 
       if (profilesError) throw profilesError;
 
@@ -47,16 +47,18 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: async ({
       id,
-      display_name,
+      first_name,
+      last_name,
       avatar_url,
     }: {
       id: string;
-      display_name?: string;
+      first_name?: string;
+      last_name?: string | null;
       avatar_url?: string | null;
     }) => {
       const { error } = await supabase
         .from('profiles')
-        .update({ display_name, avatar_url })
+        .update({ first_name, last_name, avatar_url })
         .eq('id', id);
 
       if (error) throw error;

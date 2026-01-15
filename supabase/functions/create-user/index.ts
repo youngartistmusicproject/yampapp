@@ -8,7 +8,8 @@ const corsHeaders = {
 interface CreateUserRequest {
   email: string;
   password: string;
-  display_name: string;
+  first_name: string;
+  last_name?: string;
   role: 'super-admin' | 'admin' | 'staff' | 'faculty';
 }
 
@@ -68,11 +69,11 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { email, password, display_name, role }: CreateUserRequest = await req.json();
+    const { email, password, first_name, last_name, role }: CreateUserRequest = await req.json();
 
-    if (!email || !password || !display_name || !role) {
+    if (!email || !password || !first_name || !role) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: email, password, display_name, role' }),
+        JSON.stringify({ error: 'Missing required fields: email, password, first_name, role' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -87,7 +88,7 @@ Deno.serve(async (req) => {
       email,
       password,
       email_confirm: true, // Auto-confirm since admin is creating
-      user_metadata: { display_name },
+      user_metadata: { first_name, last_name },
     });
 
     if (createError) {
@@ -120,7 +121,8 @@ Deno.serve(async (req) => {
         user: {
           id: newUser.user.id,
           email: newUser.user.email,
-          display_name,
+          first_name,
+          last_name,
           role,
         },
       }),
