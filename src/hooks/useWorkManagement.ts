@@ -114,6 +114,8 @@ export function useProjects() {
 // Reorder projects
 export function useReorderProjects() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async (projects: { id: string; sortOrder: number }[]) => {
@@ -128,7 +130,7 @@ export function useReorderProjects() {
       return projects;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['projects', orgId] });
     },
   });
 }
@@ -297,6 +299,7 @@ export function useCreateTask() {
         target_type: 'task',
         target_title: task.title,
         target_id: newTask.id,
+        organization_id: currentOrganization.id,
       });
       
       return newTask;
@@ -529,13 +532,20 @@ export function useCompleteRecurringTask() {
         );
       }
       
-      // Log activity
+      // Log activity - use task's organization_id since we're completing an existing task
+      const { data: taskData } = await supabase
+        .from('tasks')
+        .select('organization_id')
+        .eq('id', task.id)
+        .single();
+      
       await supabase.from('activity_log').insert({
         user_name: 'You',
         action: 'created recurring instance',
         target_type: 'task',
         target_title: task.title,
         target_id: newTask.id,
+        organization_id: taskData?.organization_id,
       });
       
       return { taskId: task.id, nextTask: newTask };
@@ -734,6 +744,7 @@ export function useCreateProject() {
         target_type: 'project',
         target_title: project.name,
         target_id: data.id,
+        organization_id: currentOrganization.id,
       });
       
       return data;
@@ -794,13 +805,14 @@ export function useUpdateProject() {
         }
       }
       
-      // Log activity
+      // Log activity - use project's organization_id
       await supabase.from('activity_log').insert({
         user_name: 'You',
         action: 'updated project',
         target_type: 'project',
         target_title: data.name,
         target_id: data.id,
+        organization_id: data.organization_id,
       });
       
       return data;
@@ -818,10 +830,10 @@ export function useDeleteProject() {
   
   return useMutation({
     mutationFn: async (projectId: string) => {
-      // First get the project name for activity log
+      // First get the project name and org for activity log
       const { data: project } = await supabase
         .from('projects')
-        .select('name')
+        .select('name, organization_id')
         .eq('id', projectId)
         .single();
       
@@ -840,6 +852,7 @@ export function useDeleteProject() {
           target_type: 'project',
           target_title: project.name,
           target_id: projectId,
+          organization_id: project.organization_id,
         });
       }
       

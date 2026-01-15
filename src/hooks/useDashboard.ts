@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, format, isToday, isTomorrow } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface DashboardStats {
   tasksDueToday: number;
@@ -51,18 +52,32 @@ export interface WeeklyCompletionData {
 }
 
 export function useDashboard() {
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
+  
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
 
   // Fetch stats
   const statsQuery = useQuery({
-    queryKey: ['dashboard-stats'],
+    queryKey: ['dashboard-stats', orgId],
     queryFn: async (): Promise<DashboardStats> => {
+      if (!orgId) {
+        return {
+          tasksDueToday: 0,
+          tasksDueTomorrow: 0,
+          overdueTasks: 0,
+          pendingRequests: 0,
+          activeProjects: 0,
+        };
+      }
+
       // Tasks due today
       const { count: tasksDueToday } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId)
         .eq('status', 'todo')
         .gte('due_date', format(startOfDay(today), 'yyyy-MM-dd'))
         .lte('due_date', format(endOfDay(today), 'yyyy-MM-dd'));
@@ -71,6 +86,7 @@ export function useDashboard() {
       const { count: inProgressDueToday } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId)
         .eq('status', 'in_progress')
         .gte('due_date', format(startOfDay(today), 'yyyy-MM-dd'))
         .lte('due_date', format(endOfDay(today), 'yyyy-MM-dd'));
@@ -83,12 +99,14 @@ export function useDashboard() {
       const { count: tasksDueTomorrowTodo } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId)
         .eq('status', 'todo')
         .eq('due_date', tomorrowStr);
 
       const { count: tasksDueTomorrowInProgress } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId)
         .eq('status', 'in_progress')
         .eq('due_date', tomorrowStr);
 
@@ -97,12 +115,14 @@ export function useDashboard() {
       const { count: overdueTodo } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId)
         .eq('status', 'todo')
         .lt('due_date', todayStr);
 
       const { count: overdueInProgress } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId)
         .eq('status', 'in_progress')
         .lt('due_date', todayStr);
 
@@ -110,6 +130,7 @@ export function useDashboard() {
       const { count: activeProjects } = await supabase
         .from('projects')
         .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId)
         .eq('status', 'active');
 
       // For pending requests, we'll count tasks that need review (could be customized)
@@ -117,6 +138,7 @@ export function useDashboard() {
       const { count: pendingRequests } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId)
         .eq('status', 'todo')
         .eq('priority', 'high');
 
@@ -128,18 +150,22 @@ export function useDashboard() {
         activeProjects: activeProjects || 0,
       };
     },
+    enabled: !!orgId,
   });
 
   // Fetch tasks due today first, then recent tasks
   const tasksQuery = useQuery({
-    queryKey: ['dashboard-tasks'],
+    queryKey: ['dashboard-tasks', orgId],
     queryFn: async (): Promise<DashboardTask[]> => {
+      if (!orgId) return [];
+
       const todayStr = format(today, 'yyyy-MM-dd');
       
       // First, get tasks due today (not completed)
       const { data: dueTodayData, error: dueTodayError } = await supabase
         .from('tasks')
         .select('id, title, status, effort, importance, assignee, due_date')
+        .eq('organization_id', orgId)
         .eq('due_date', todayStr)
         .neq('status', 'done')
         .order('importance', { ascending: false });
@@ -149,13 +175,19 @@ export function useDashboard() {
       // Then get recent tasks (excluding ones already fetched)
       const dueTodayIds = (dueTodayData || []).map(t => t.id);
       
-      const { data: recentData, error: recentError } = await supabase
+      let recentQuery = supabase
         .from('tasks')
         .select('id, title, status, effort, importance, assignee, due_date')
-        .not('id', 'in', dueTodayIds.length > 0 ? `(${dueTodayIds.join(',')})` : '(00000000-0000-0000-0000-000000000000)')
+        .eq('organization_id', orgId)
         .neq('status', 'done')
         .order('due_date', { ascending: true, nullsFirst: false })
         .limit(5 - dueTodayIds.length);
+
+      if (dueTodayIds.length > 0) {
+        recentQuery = recentQuery.not('id', 'in', `(${dueTodayIds.join(',')})`);
+      }
+
+      const { data: recentData, error: recentError } = await recentQuery;
 
       if (recentError) throw recentError;
 
@@ -179,30 +211,38 @@ export function useDashboard() {
         dueDate: parseDateOnly(t.due_date),
       }));
     },
+    enabled: !!orgId,
   });
 
   // Fetch recent activity
   const activityQuery = useQuery({
-    queryKey: ['dashboard-activity'],
+    queryKey: ['dashboard-activity', orgId],
     queryFn: async (): Promise<DashboardActivity[]> => {
+      if (!orgId) return [];
+
       const { data, error } = await supabase
         .from('activity_log')
         .select('id, user_name, action, target_title, created_at')
+        .eq('organization_id', orgId)
         .order('created_at', { ascending: false })
         .limit(5);
 
       if (error) throw error;
       return data || [];
     },
+    enabled: !!orgId,
   });
 
   // Fetch project progress
   const projectsQuery = useQuery({
-    queryKey: ['dashboard-projects'],
+    queryKey: ['dashboard-projects', orgId],
     queryFn: async (): Promise<ProjectProgress[]> => {
+      if (!orgId) return [];
+
       const { data: projects, error } = await supabase
         .from('projects')
         .select('id, name, color')
+        .eq('organization_id', orgId)
         .eq('status', 'active')
         .limit(3);
 
@@ -240,12 +280,15 @@ export function useDashboard() {
 
       return projectProgress;
     },
+    enabled: !!orgId,
   });
 
   // Fetch weekly completion data
   const weeklyCompletionQuery = useQuery({
-    queryKey: ['dashboard-weekly-completion'],
+    queryKey: ['dashboard-weekly-completion', orgId],
     queryFn: async (): Promise<WeeklyCompletionData[]> => {
+      if (!orgId) return [];
+
       const days: WeeklyCompletionData[] = [];
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       
@@ -262,6 +305,7 @@ export function useDashboard() {
         const { count } = await supabase
           .from('tasks')
           .select('*', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
           .eq('status', 'done')
           .gte('completed_at', `${dateStr}T00:00:00`)
           .lt('completed_at', `${dateStr}T23:59:59`);
@@ -275,6 +319,7 @@ export function useDashboard() {
       
       return days;
     },
+    enabled: !!orgId,
   });
 
   return {
