@@ -6,6 +6,7 @@ import { useEffect } from "react";
 export interface Notification {
   id: string;
   user_id: string;
+  organization_id: string | null;
   type: "task_assignment" | "due_reminder" | "chat_message";
   title: string;
   message: string | null;
@@ -16,21 +17,29 @@ export interface Notification {
 }
 
 export function useNotifications() {
-  const { user } = useAuth();
+  const { user, currentOrganization } = useAuth();
   const queryClient = useQueryClient();
+  const orgId = currentOrganization?.id;
 
   // Fetch notifications
   const query = useQuery({
-    queryKey: ["notifications", user?.id],
+    queryKey: ["notifications", user?.id, orgId],
     queryFn: async (): Promise<Notification[]> => {
       if (!user) return [];
 
-      const { data, error } = await supabase
+      let queryBuilder = supabase
         .from("notifications")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50);
+
+      // Filter by organization if available
+      if (orgId) {
+        queryBuilder = queryBuilder.or(`organization_id.eq.${orgId},organization_id.is.null`);
+      }
+
+      const { data, error } = await queryBuilder;
 
       if (error) {
         console.error("Error fetching notifications:", error);
@@ -46,6 +55,9 @@ export function useNotifications() {
   useEffect(() => {
     if (!user) return;
 
+    // Build filter for realtime subscription
+    let filter = `user_id=eq.${user.id}`;
+    
     const channel = supabase
       .channel("notifications-realtime")
       .on(
@@ -54,17 +66,20 @@ export function useNotifications() {
           event: "INSERT",
           schema: "public",
           table: "notifications",
-          filter: `user_id=eq.${user.id}`,
+          filter,
         },
         (payload) => {
-          // Add new notification to the cache
-          queryClient.setQueryData<Notification[]>(
-            ["notifications", user.id],
-            (old) => {
-              const newNotification = payload.new as Notification;
-              return old ? [newNotification, ...old] : [newNotification];
-            }
-          );
+          const newNotification = payload.new as Notification;
+          
+          // Only add if it matches current org or has no org
+          if (!orgId || !newNotification.organization_id || newNotification.organization_id === orgId) {
+            queryClient.setQueryData<Notification[]>(
+              ["notifications", user.id, orgId],
+              (old) => {
+                return old ? [newNotification, ...old] : [newNotification];
+              }
+            );
+          }
         }
       )
       .subscribe();
@@ -72,7 +87,7 @@ export function useNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, queryClient]);
+  }, [user, orgId, queryClient]);
 
   // Mark as read mutation
   const markAsReadMutation = useMutation({
@@ -85,7 +100,7 @@ export function useNotifications() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id, orgId] });
     },
   });
 
@@ -94,16 +109,23 @@ export function useNotifications() {
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase
+      let queryBuilder = supabase
         .from("notifications")
         .update({ is_read: true })
         .eq("user_id", user.id)
         .eq("is_read", false);
 
+      // Filter by organization if available
+      if (orgId) {
+        queryBuilder = queryBuilder.or(`organization_id.eq.${orgId},organization_id.is.null`);
+      }
+
+      const { error } = await queryBuilder;
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id, orgId] });
     },
   });
 
@@ -118,7 +140,7 @@ export function useNotifications() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id, orgId] });
     },
   });
 
@@ -127,15 +149,22 @@ export function useNotifications() {
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase
+      let queryBuilder = supabase
         .from("notifications")
         .delete()
         .eq("user_id", user.id);
 
+      // Filter by organization if available
+      if (orgId) {
+        queryBuilder = queryBuilder.or(`organization_id.eq.${orgId},organization_id.is.null`);
+      }
+
+      const { error } = await queryBuilder;
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id, orgId] });
     },
   });
 

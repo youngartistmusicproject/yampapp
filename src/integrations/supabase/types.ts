@@ -558,6 +558,7 @@ export type Database = {
           is_read: boolean
           link: string | null
           message: string | null
+          organization_id: string | null
           reference_id: string | null
           title: string
           type: string
@@ -569,6 +570,7 @@ export type Database = {
           is_read?: boolean
           link?: string | null
           message?: string | null
+          organization_id?: string | null
           reference_id?: string | null
           title: string
           type: string
@@ -580,12 +582,21 @@ export type Database = {
           is_read?: boolean
           link?: string | null
           message?: string | null
+          organization_id?: string | null
           reference_id?: string | null
           title?: string
           type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       organization_members: {
         Row: {
