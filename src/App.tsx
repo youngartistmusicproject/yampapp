@@ -18,6 +18,7 @@ import CRM from "./pages/CRM";
 import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
 import Login from "./pages/Login";
+import SetupAdmin from "./pages/SetupAdmin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,8 +31,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Public route */}
+            {/* Public routes */}
             <Route path="/login" element={<Login />} />
+            <Route path="/setup" element={<SetupAdmin />} />
             
             {/* Protected routes */}
             <Route
