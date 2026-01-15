@@ -354,7 +354,7 @@ export function TaskDetailDialog({
     return [...mainAttachments, ...replyAttachments];
   });
   const allAttachments = [...legacyAttachments.map(a => ({ ...a, commentAuthor: undefined, commentDate: a.uploadedAt })), ...commentAttachments];
-  const subtasks = task.subtasks || [];
+  const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
   const completedSubtasks = subtasks.filter(s => s.completed).length;
 
   const scrollToBottom = () => {

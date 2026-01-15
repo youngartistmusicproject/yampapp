@@ -210,7 +210,7 @@ export function useTasks() {
           archivedAt: (t as any).archived_at ? new Date((t as any).archived_at) : undefined,
           sortOrder: t.sort_order || 0,
           howToLink: (t as any).how_to_link || undefined,
-          subtasks: (t as any).subtasks || [],
+          subtasks: Array.isArray((t as any).subtasks) ? (t as any).subtasks : [],
           createdAt: new Date(t.created_at),
           updatedAt: new Date(t.updated_at),
         };
