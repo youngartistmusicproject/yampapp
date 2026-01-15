@@ -1,14 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useAssigneeFrequency(limit = 6) {
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
+
   return useQuery({
-    queryKey: ['assignee-frequency', limit],
+    queryKey: ['assignee-frequency', orgId, limit],
     queryFn: async () => {
-      // Fetch all task assignees and count in JS since Supabase doesn't support GROUP BY directly
+      if (!orgId) return [];
+
+      // Fetch task assignees filtered by organization through the tasks table
       const { data, error } = await supabase
         .from('task_assignees')
-        .select('user_name');
+        .select(`
+          user_name,
+          tasks!inner(organization_id)
+        `)
+        .eq('tasks.organization_id', orgId);
 
       if (error) throw error;
       if (!data || data.length === 0) return [];
@@ -27,6 +37,7 @@ export function useAssigneeFrequency(limit = 6) {
 
       return sorted;
     },
+    enabled: !!orgId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
