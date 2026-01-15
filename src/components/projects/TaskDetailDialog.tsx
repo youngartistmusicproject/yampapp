@@ -6,7 +6,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CircularCheckbox } from "@/components/ui/circular-checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -447,12 +447,12 @@ export function TaskDetailDialog({
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
                 <div className="p-6 pb-4">
                 <div className="flex items-start gap-3">
-                  <button
-                    onClick={handleComplete}
-                    className="mt-1 w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary hover:bg-primary/10 transition-colors flex items-center justify-center shrink-0"
-                  >
-                    {task.completedAt && <Check className="w-3 h-3 text-primary" />}
-                  </button>
+                  <div className="mt-1">
+                    <CircularCheckbox 
+                      checked={!!task.completedAt}
+                      onCheckedChange={handleComplete}
+                    />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <EditableText
@@ -521,7 +521,7 @@ export function TaskDetailDialog({
                 <div className="space-y-1">
                   {subtasks.map((subtask) => (
                     <div key={subtask.id} className="group flex items-center gap-2 py-1.5 px-2 -mx-2 rounded-md hover:bg-muted/40">
-                      <Checkbox checked={subtask.completed} onCheckedChange={() => handleSubtaskToggle(subtask.id)} className="h-4 w-4" />
+                      <CircularCheckbox checked={subtask.completed} onCheckedChange={() => handleSubtaskToggle(subtask.id)} size="sm" />
                       <span className={cn("flex-1 text-sm", subtask.completed && "line-through text-muted-foreground")}>{subtask.title}</span>
                       <button onClick={() => handleDeleteSubtask(subtask.id)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-opacity">
                         <Trash2 className="w-3 h-3 text-destructive" />
