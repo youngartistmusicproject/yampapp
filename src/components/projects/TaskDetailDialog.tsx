@@ -367,8 +367,11 @@ export function TaskDetailDialog({
 
   const handleConfirmComplete = () => {
     if (!task) return;
-    completeTask();
     setShowIncompleteWarning(false);
+    // Use setTimeout to ensure warning dialog closes first
+    setTimeout(() => {
+      completeTask();
+    }, 0);
   };
 
   const handleSubtaskToggle = (subtaskId: string) => {
