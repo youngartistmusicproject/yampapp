@@ -1353,7 +1353,12 @@ export default function Projects() {
         open={!!viewingTask}
         onOpenChange={(open) => !open && setViewingTask(null)}
         task={viewingTask}
-        projects={projects.map(p => ({ id: p.id, name: p.name, color: p.color }))}
+        projects={projects.map(p => ({ id: p.id, name: p.name, color: p.color, areaIds: p.areaIds }))}
+        areas={tags}
+        projectMembers={(() => {
+          const proj = projects.find(p => p.id === viewingTask?.projectId);
+          return proj ? [...(proj.owners || []), ...(proj.members || [])] : teamMembers;
+        })()}
         onTaskUpdate={handleTaskUpdate}
         onAddComment={handleAddComment}
         onToggleReaction={handleToggleReaction}
