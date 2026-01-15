@@ -238,32 +238,56 @@ function SortableTableRow({
         </div>
       </div>
 
-      {/* Details row - organized by logical groups */}
+      {/* Details row */}
       {showDetails && (
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground pl-7 pr-14">
-          {/* STATUS & PRIORITY group */}
-          <div className="flex items-center gap-2">
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${importanceColors[task.importance || 'routine']}`}>
-              {task.importance || 'routine'}
-            </span>
-            <div className="flex items-center gap-1.5 w-20">
-              <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
-                  style={{ width: `${task.progress || 0}%` }}
-                />
-              </div>
-              <span className="text-[10px] font-medium w-6 text-right">{task.progress || 0}%</span>
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground pl-7 pr-14">
+          {/* Project indicator on left */}
+          {project && (
+            <div className="flex items-center gap-1.5 min-w-0 max-w-[120px]">
+              <span
+                className="h-2 w-2 rounded-full shrink-0"
+                style={{ backgroundColor: project.color }}
+              />
+              <span className="truncate">{project.name}</span>
             </div>
-          </div>
+          )}
 
-          {/* Divider */}
-          <span className="text-border/50">|</span>
-
-          {/* WORKLOAD group */}
-          <div className="flex items-center gap-2">
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${effortColors[task.effort || 'easy']}`}>
-              {task.effort || 'easy'}
+          {/* Area tags - show inherited areas if task has project, otherwise show manual tags */}
+          {(() => {
+            const areas = task.inheritedAreas || (task.tags && task.tags.length > 0 
+              ? task.tags.map(tagId => tags.find(t => t.id === tagId)).filter(Boolean)
+              : []);
+            if (!areas.length) return null;
+            return (
+              <div className="flex items-center gap-1">
+                {areas.slice(0, 2).map((area: any) => (
+                  <span
+                    key={area.id}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    style={{ 
+                      backgroundColor: `${area.color}15`,
+                      color: area.color,
+                    }}
+                  >
+                    {area.name}
+                  </span>
+                ))}
+                {areas.length > 2 && (
+                  <span className="text-[10px] text-muted-foreground">+{areas.length - 2}</span>
+                )}
+              </div>
+            );
+          })()}
+          
+          {/* Spacer to push rest to right */}
+          <div className="flex-1" />
+          
+          <div className="flex items-center gap-3">
+            <span>
+              Effort: <span className="font-medium text-foreground capitalize">{task.effort || '—'}</span>
+            </span>
+            <span>
+              Importance: <span className="font-medium text-foreground capitalize">{task.importance || '—'}</span>
             </span>
             {task.estimatedTime && (
               <span className="flex items-center gap-1">
@@ -272,47 +296,14 @@ function SortableTableRow({
               </span>
             )}
           </div>
-
-          {/* Divider */}
-          <span className="text-border/50">|</span>
-
-          {/* CONTEXT group */}
-          <div className="flex items-center gap-2">
-            {project && (
-              <div className="flex items-center gap-1.5 min-w-0 max-w-[100px]">
-                <span
-                  className="h-2 w-2 rounded-full shrink-0"
-                  style={{ backgroundColor: project.color }}
-                />
-                <span className="truncate text-foreground">{project.name}</span>
-              </div>
-            )}
-            {/* Area tags */}
-            {(() => {
-              const areas = task.inheritedAreas || (task.tags && task.tags.length > 0 
-                ? task.tags.map(tagId => tags.find(t => t.id === tagId)).filter(Boolean)
-                : []);
-              if (!areas.length) return null;
-              return (
-                <div className="flex items-center gap-1">
-                  {areas.slice(0, 2).map((area: any) => (
-                    <span
-                      key={area.id}
-                      className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                      style={{ 
-                        backgroundColor: `${area.color}15`,
-                        color: area.color,
-                      }}
-                    >
-                      {area.name}
-                    </span>
-                  ))}
-                  {areas.length > 2 && (
-                    <span className="text-[10px] text-muted-foreground">+{areas.length - 2}</span>
-                  )}
-                </div>
-              );
-            })()}
+          <div className="flex items-center gap-1.5 w-28">
+            <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
+                style={{ width: `${task.progress || 0}%` }}
+              />
+            </div>
+            <span className="text-[10px] font-medium w-6 text-right">{task.progress || 0}%</span>
           </div>
         </div>
       )}

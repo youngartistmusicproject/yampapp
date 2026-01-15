@@ -240,37 +240,35 @@ function SortableTaskCard({
           );
         })()}
 
-        {/* Meta info - organized by logical groups */}
-        <div className="mt-2 pt-2 border-t border-border/50 flex flex-col gap-2">
+        {/* Meta info */}
+        <div className="mt-2 pt-2 border-t border-border/50 flex flex-col gap-1.5">
           {showDetails && (
             <>
-              {/* STATUS & PRIORITY: Importance + Progress */}
-              <div className="flex items-center gap-2 text-xs">
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${importanceBadgeColors[task.importance || 'routine']}`}>
-                  {task.importance || 'routine'}
+              {/* Effort & Importance */}
+              <div className="flex items-center gap-3 text-xs">
+                <span className="text-muted-foreground">
+                  Effort: <span className="capitalize font-medium text-foreground">{task.effort || '—'}</span>
                 </span>
-                <div className="flex-1 flex items-center gap-1.5">
-                  <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full transition-all ${getProgressColor(task.progress)}`}
-                      style={{ width: `${task.progress}%` }}
-                    />
-                  </div>
-                  <span className="text-muted-foreground text-[10px] font-medium w-6 text-right">{task.progress}%</span>
-                </div>
+                <span className="text-muted-foreground">
+                  Importance: <span className="capitalize font-medium text-foreground">{task.importance || '—'}</span>
+                </span>
               </div>
 
-              {/* WORKLOAD: Effort + Est. Time */}
+              {/* Est. Time + Progress on same line */}
               <div className="flex items-center gap-2 text-xs">
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${effortColors[task.effort || 'easy']}`}>
-                  {task.effort || 'easy'}
-                </span>
                 {task.estimatedTime && (
-                  <span className="text-muted-foreground flex items-center gap-1">
+                  <span className="text-muted-foreground flex items-center gap-1 flex-shrink-0">
                     <Clock className="w-3 h-3" />
                     <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
                   </span>
                 )}
+                <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all ${getProgressColor(task.progress)}`}
+                    style={{ width: `${task.progress}%` }}
+                  />
+                </div>
+                <span className="text-muted-foreground text-[10px] font-medium w-6 text-right">{task.progress}%</span>
               </div>
             </>
           )}
