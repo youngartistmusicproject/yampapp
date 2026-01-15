@@ -866,16 +866,8 @@ export function TaskDetailDialog({
                               <Badge 
                                 key={area.id} 
                                 variant="secondary" 
-                                className="text-xs transition-colors cursor-default" 
+                                className="text-xs cursor-default" 
                                 style={{ backgroundColor: `${area.color}15`, color: area.color }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.backgroundColor = area.color;
-                                  e.currentTarget.style.color = 'white';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor = `${area.color}15`;
-                                  e.currentTarget.style.color = area.color;
-                                }}
                               >
                                 {area.name}
                               </Badge>
