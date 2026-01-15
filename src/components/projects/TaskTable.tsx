@@ -22,7 +22,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Task, Project } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CircularCheckbox } from "@/components/ui/circular-checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -156,15 +156,13 @@ function SortableTableRow({
     >
       {/* Main row */}
       <div className="flex items-center gap-3">
-        <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={isDone}
-            onCheckedChange={(checked) =>
-              onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
-            }
-            className="border-muted-foreground/40"
-          />
-        </div>
+        <CircularCheckbox
+          checked={isDone}
+          onCheckedChange={(checked) =>
+            onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+          }
+          size="sm"
+        />
         
         <div className="flex-1 min-w-0 flex items-center gap-2">
           <span className={`text-[13px] font-medium truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
@@ -372,14 +370,13 @@ function SortableMobileCard({
       {...listeners}
     >
       <div className="flex items-start gap-3">
-        <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={task.status === doneStatusId}
-            onCheckedChange={(checked) =>
-              onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
-            }
-          />
-        </div>
+        <CircularCheckbox
+          checked={task.status === doneStatusId}
+          onCheckedChange={(checked) =>
+            onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+          }
+          size="sm"
+        />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>

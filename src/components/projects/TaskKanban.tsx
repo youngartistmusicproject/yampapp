@@ -25,8 +25,8 @@ import { Task, Project } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, MessageSquare, Paperclip, Check, BookOpen } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, MessageSquare, Paperclip, BookOpen } from "lucide-react";
+import { CircularCheckbox } from "@/components/ui/circular-checkbox";
 import { getTagById, TagItem } from "@/data/workManagementConfig";
 import { Progress, getProgressColor } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -298,15 +298,11 @@ function SortableTaskCard({
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
             >
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6 text-muted-foreground hover:text-green-600"
-                onClick={() => onCompleteTask?.(task.id)}
-                title="Mark complete"
-              >
-                <Check className="w-3.5 h-3.5" />
-              </Button>
+              <CircularCheckbox
+                checked={false}
+                onCheckedChange={() => onCompleteTask?.(task.id)}
+                size="sm"
+              />
               <Button 
                 variant="ghost" 
                 size="icon" 
