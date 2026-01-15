@@ -14,6 +14,7 @@ import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
 import { usePasswordChange } from "@/hooks/usePasswordChange";
 import { TwoFactorSetup } from "@/components/settings/TwoFactorSetup";
+import { ImageCropDialog } from "@/components/settings/ImageCropDialog";
 import { getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +31,10 @@ export default function Settings() {
   const [lastName, setLastName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Image crop state
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
 
   // Password form state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -92,12 +97,38 @@ export default function Settings() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      await uploadAvatar(file);
+      // Create object URL for the cropper
+      const imageUrl = URL.createObjectURL(file);
+      setSelectedImageSrc(imageUrl);
+      setCropDialogOpen(true);
     }
     // Reset input so same file can be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    // Convert blob to file
+    const file = new File([croppedBlob], "avatar.jpg", { type: "image/jpeg" });
+    const success = await uploadAvatar(file);
+    
+    if (success) {
+      setCropDialogOpen(false);
+      // Clean up the object URL
+      if (selectedImageSrc) {
+        URL.revokeObjectURL(selectedImageSrc);
+        setSelectedImageSrc(null);
+      }
+    }
+  };
+
+  const handleCropDialogClose = (open: boolean) => {
+    if (!open && selectedImageSrc) {
+      URL.revokeObjectURL(selectedImageSrc);
+      setSelectedImageSrc(null);
+    }
+    setCropDialogOpen(open);
   };
 
   const handlePasswordUpdate = async () => {
@@ -405,6 +436,17 @@ export default function Settings() {
         onOpenChange={setShow2FADialog}
         onEnrollmentComplete={() => setIs2FAEnabled(true)}
       />
+
+      {/* Image Crop Dialog */}
+      {selectedImageSrc && (
+        <ImageCropDialog
+          open={cropDialogOpen}
+          onOpenChange={handleCropDialogClose}
+          imageSrc={selectedImageSrc}
+          onCropComplete={handleCropComplete}
+          isProcessing={isUploading}
+        />
+      )}
     </div>
   );
 }
