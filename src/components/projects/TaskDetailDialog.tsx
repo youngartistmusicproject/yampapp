@@ -645,7 +645,7 @@ export function TaskDetailDialog({
                   onTaskUpdate(task.id, { status: 'not-started' });
                 }
               }}
-              className="mt-1.5 h-5 w-5 shrink-0 rounded-full border-2 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+              className="mt-1.5 shrink-0 border-muted-foreground/40"
             />
             <div className="flex-1 min-w-0">
               <EditableText
