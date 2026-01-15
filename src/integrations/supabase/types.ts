@@ -607,6 +607,7 @@ export type Database = {
           recurrence_interval: number | null
           sort_order: number | null
           status: string
+          subtasks: Json | null
           tags: string[] | null
           title: string
           updated_at: string
@@ -637,6 +638,7 @@ export type Database = {
           recurrence_interval?: number | null
           sort_order?: number | null
           status?: string
+          subtasks?: Json | null
           tags?: string[] | null
           title: string
           updated_at?: string
@@ -667,6 +669,7 @@ export type Database = {
           recurrence_interval?: number | null
           sort_order?: number | null
           status?: string
+          subtasks?: Json | null
           tags?: string[] | null
           title?: string
           updated_at?: string
