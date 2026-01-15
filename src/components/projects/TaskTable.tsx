@@ -143,6 +143,11 @@ function SortableTableRow({
   const commentCount = task.comments?.length || 0;
   const attachmentCount = task.attachments?.length || 0;
 
+  // Get areas for display
+  const areas = task.inheritedAreas || (task.tags && task.tags.length > 0 
+    ? task.tags.map(tagId => tags.find(t => t.id === tagId)).filter(Boolean)
+    : []);
+
   return (
     <div
       ref={setNodeRef}
@@ -154,7 +159,7 @@ function SortableTableRow({
       {...attributes}
       {...listeners}
     >
-      {/* Main row */}
+      {/* Main row - Task title */}
       <div className="flex items-center gap-3">
         <CircularCheckbox
           checked={isDone}
@@ -171,7 +176,6 @@ function SortableTableRow({
           {task.isRecurring && (
             <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
           )}
-          {/* Comment & Attachment indicators */}
           {commentCount > 0 && (
             <span className="flex items-center gap-0.5 text-muted-foreground/60">
               <MessageSquare className="w-3 h-3" />
@@ -191,7 +195,7 @@ function SortableTableRow({
           )}
         </div>
 
-        {/* Right side info - fixed widths for alignment */}
+        {/* Right side - Status & Priority info */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {status && (
             <span 
@@ -205,13 +209,29 @@ function SortableTableRow({
             </span>
           )}
           
-          <div className="w-16">
-            <UserAvatarGroup users={task.assignees} max={2} size="sm" teamLeaderIds={projectLeadNames} />
-          </div>
-          
           <span className={`text-[12px] w-14 text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
             {task.dueDate ? format(task.dueDate, "MMM d") : ""}
           </span>
+
+          {showDetails && (
+            <>
+              <span 
+                className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${importanceColors[task.importance || 'routine'] || importanceColors.routine}`}
+              >
+                {task.importance || 'routine'}
+              </span>
+              
+              <div className="flex items-center gap-1.5 w-20">
+                <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
+                    style={{ width: `${task.progress || 0}%` }}
+                  />
+                </div>
+                <span className="text-[10px] font-medium text-muted-foreground w-6 text-right">{task.progress || 0}%</span>
+              </div>
+            </>
+          )}
         </div>
 
         <div 
@@ -238,10 +258,10 @@ function SortableTableRow({
         </div>
       </div>
 
-      {/* Details row */}
+      {/* Context row - Project, Areas, Responsible */}
       {showDetails && (
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground pl-7 pr-14">
-          {/* Project indicator on left */}
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground pl-7">
+          {/* Project indicator */}
           {project && (
             <div className="flex items-center gap-1.5 min-w-0 max-w-[120px]">
               <span
@@ -252,59 +272,51 @@ function SortableTableRow({
             </div>
           )}
 
-          {/* Area tags - show inherited areas if task has project, otherwise show manual tags */}
-          {(() => {
-            const areas = task.inheritedAreas || (task.tags && task.tags.length > 0 
-              ? task.tags.map(tagId => tags.find(t => t.id === tagId)).filter(Boolean)
-              : []);
-            if (!areas.length) return null;
-            return (
-              <div className="flex items-center gap-1">
-                {areas.slice(0, 2).map((area: any) => (
-                  <span
-                    key={area.id}
-                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                    style={{ 
-                      backgroundColor: `${area.color}15`,
-                      color: area.color,
-                    }}
-                  >
-                    {area.name}
-                  </span>
-                ))}
-                {areas.length > 2 && (
-                  <span className="text-[10px] text-muted-foreground">+{areas.length - 2}</span>
-                )}
-              </div>
-            );
-          })()}
-          
-          {/* Spacer to push rest to right */}
-          <div className="flex-1" />
-          
-          <div className="flex items-center gap-3">
-            <span>
-              Effort: <span className="font-medium text-foreground capitalize">{task.effort || '—'}</span>
-            </span>
-            <span>
-              Importance: <span className="font-medium text-foreground capitalize">{task.importance || '—'}</span>
-            </span>
-            {task.estimatedTime && (
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 w-28">
-            <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
-                style={{ width: `${task.progress || 0}%` }}
-              />
+          {/* Area tags */}
+          {areas.length > 0 && (
+            <div className="flex items-center gap-1">
+              {areas.slice(0, 2).map((area: any) => (
+                <span
+                  key={area.id}
+                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                  style={{ 
+                    backgroundColor: `${area.color}15`,
+                    color: area.color,
+                  }}
+                >
+                  {area.name}
+                </span>
+              ))}
+              {areas.length > 2 && (
+                <span className="text-[10px] text-muted-foreground">+{areas.length - 2}</span>
+              )}
             </div>
-            <span className="text-[10px] font-medium w-6 text-right">{task.progress || 0}%</span>
-          </div>
+          )}
+
+          {/* Responsible assignees */}
+          {task.assignees && task.assignees.length > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground/70">·</span>
+              <UserAvatarGroup users={task.assignees} max={3} size="xs" teamLeaderIds={projectLeadNames} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Workload row - Effort, Estimated Time */}
+      {showDetails && (task.effort || task.estimatedTime) && (
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground pl-7">
+          {task.effort && (
+            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${effortColors[task.effort] || effortColors.light}`}>
+              {task.effort}
+            </span>
+          )}
+          {task.estimatedTime && (
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
+            </span>
+          )}
         </div>
       )}
     </div>
