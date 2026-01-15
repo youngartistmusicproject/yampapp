@@ -609,41 +609,40 @@ export function TaskDetailDialog({
                       </PopoverContent>
                     </Popover>
 
-                    {/* Due Date - inline NaturalDateInput matching TaskDialog */}
-                    <div className="flex items-center gap-2 px-3 py-2">
-                      <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <NaturalDateInput
-                        value={task.dueDate}
-                        onChange={(date) => onTaskUpdate(task.id, { dueDate: date })}
-                        onRecurrenceChange={(rec) => {
-                          if (rec) {
-                            onTaskUpdate(task.id, { isRecurring: true, recurrence: rec });
-                          }
-                        }}
-                        placeholder="e.g. next friday"
-                        className="flex-1 h-8 text-sm"
-                      />
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant={task.isRecurring ? "default" : "ghost"}
-                            size="icon"
-                            className="h-8 w-8 shrink-0"
-                          >
-                            <Repeat className="w-4 h-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80 z-[70] max-h-[400px] overflow-y-auto" align="end">
-                          <RecurrenceSettings
-                            isRecurring={task.isRecurring || false}
-                            onIsRecurringChange={(value) => onTaskUpdate(task.id, { isRecurring: value })}
-                            recurrence={task.recurrence}
-                            onRecurrenceChange={(recurrence) => onTaskUpdate(task.id, { recurrence })}
-                            compact
+                    {/* Due Date - click to reveal NLP input */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+                          <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm flex-1">{formatDate(task.dueDate) || <span className="text-muted-foreground">No date</span>}</span>
+                          {task.isRecurring && <Repeat className="w-3.5 h-3.5 text-muted-foreground" />}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 p-3" align="start">
+                        <div className="space-y-3">
+                          <NaturalDateInput
+                            value={task.dueDate}
+                            onChange={(date) => onTaskUpdate(task.id, { dueDate: date })}
+                            onRecurrenceChange={(rec) => {
+                              if (rec) {
+                                onTaskUpdate(task.id, { isRecurring: true, recurrence: rec });
+                              }
+                            }}
+                            placeholder="e.g. next friday, every Monday"
+                            className="w-full"
                           />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                          <div className="border-t pt-3">
+                            <RecurrenceSettings
+                              isRecurring={task.isRecurring || false}
+                              onIsRecurringChange={(value) => onTaskUpdate(task.id, { isRecurring: value })}
+                              recurrence={task.recurrence}
+                              onRecurrenceChange={(recurrence) => onTaskUpdate(task.id, { recurrence })}
+                              compact
+                            />
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
 
                     {/* Importance */}
                     <Popover>
