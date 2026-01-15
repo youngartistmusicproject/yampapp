@@ -25,6 +25,16 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -81,6 +91,7 @@ export default function Projects() {
   const [projectManagementOpen, setProjectManagementOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
+  const [subtaskWarning, setSubtaskWarning] = useState<{ taskId: string; updates: Partial<Task>; incompleteCount: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProjects, setSelectedProjects] = useState<string[]>(() => {
     const saved = localStorage.getItem('workManagement_selectedProjects');
@@ -504,9 +515,20 @@ export default function Projects() {
   // The tasks to display based on view mode
   const displayTasks = viewMode === 'active' ? filteredActiveTasks : filteredCompletedTasks;
 
-  const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
+  const handleTaskUpdate = (taskId: string, updates: Partial<Task>, bypassSubtaskWarning = false) => {
     // Find the task to check if it's recurring
     const task = dbTasks.find(t => t.id === taskId);
+    
+    // Check for incomplete subtasks when completing a task
+    if (updates.status === 'done' && !bypassSubtaskWarning && task) {
+      const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
+      const incompleteSubtasks = subtasks.filter((s: any) => !s.completed);
+      
+      if (incompleteSubtasks.length > 0) {
+        setSubtaskWarning({ taskId, updates, incompleteCount: incompleteSubtasks.length });
+        return;
+      }
+    }
     
     // If marking a recurring task as done, use the special hook
     if (updates.status === 'done' && task?.isRecurring && task?.recurrence) {
@@ -541,6 +563,13 @@ export default function Projects() {
     // Update viewing task optimistically
     if (viewingTask?.id === taskId) {
       setViewingTask(prev => prev ? { ...prev, ...updates } : null);
+    }
+  };
+
+  const confirmSubtaskWarning = () => {
+    if (subtaskWarning) {
+      handleTaskUpdate(subtaskWarning.taskId, subtaskWarning.updates, true);
+      setSubtaskWarning(null);
     }
   };
 
@@ -1349,6 +1378,23 @@ export default function Projects() {
         open={tagManagerOpen}
         onOpenChange={setTagManagerOpen}
       />
+
+      {/* Subtask Warning Dialog */}
+      <AlertDialog open={!!subtaskWarning} onOpenChange={(open) => !open && setSubtaskWarning(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Incomplete Subtasks</AlertDialogTitle>
+            <AlertDialogDescription>
+              This task has {subtaskWarning?.incompleteCount} unfinished subtask{subtaskWarning?.incompleteCount !== 1 ? 's' : ''}. 
+              Are you sure you want to mark this task as complete?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSubtaskWarning}>Complete Anyway</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
