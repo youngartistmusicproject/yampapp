@@ -347,16 +347,28 @@ export function TaskDetailDialog({
     if (hasIncompleteSubtasks) {
       setShowIncompleteWarning(true);
     } else {
-      onTaskComplete(task.id);
-      onOpenChange(false);
+      completeTask();
     }
+  };
+
+  const completeTask = () => {
+    if (!task) return;
+    if (onTaskComplete) {
+      onTaskComplete(task.id);
+    } else {
+      // Fallback: use onTaskUpdate to mark as complete
+      onTaskUpdate(task.id, { 
+        status: 'done', 
+        completedAt: new Date() 
+      });
+    }
+    onOpenChange(false);
   };
 
   const handleConfirmComplete = () => {
     if (!task) return;
-    onTaskComplete(task.id);
+    completeTask();
     setShowIncompleteWarning(false);
-    onOpenChange(false);
   };
 
   const handleSubtaskToggle = (subtaskId: string) => {
