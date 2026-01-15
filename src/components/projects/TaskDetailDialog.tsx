@@ -21,6 +21,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -230,6 +238,73 @@ const formatEstimatedTime = (minutes: number) => {
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   }
   return `${minutes}m`;
+};
+
+// Searchable project select component with auto-close
+const ProjectSearchSelect = ({
+  projects,
+  selectedProjectId,
+  onSelect,
+}: {
+  projects: { id: string; name: string; color: string }[];
+  selectedProjectId?: string;
+  onSelect: (projectId: string | undefined) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const selectedProject = projects.find(p => p.id === selectedProjectId);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+          <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+          {selectedProject ? (
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedProject.color || '#6b7280' }} />
+              <span className="text-sm truncate">{selectedProject.name}</span>
+            </div>
+          ) : (
+            <span className="text-sm text-muted-foreground">None</span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search projects..." />
+          <CommandList>
+            <CommandEmpty>No projects found.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                onSelect={() => {
+                  onSelect(undefined);
+                  setOpen(false);
+                }}
+                className="cursor-pointer"
+              >
+                <span className={cn(!selectedProjectId && "font-medium")}>No Project</span>
+                {!selectedProjectId && <Check className="ml-auto h-4 w-4" />}
+              </CommandItem>
+              {projects.map((project) => (
+                <CommandItem
+                  key={project.id}
+                  value={project.name}
+                  onSelect={() => {
+                    onSelect(project.id);
+                    setOpen(false);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <div className="w-2 h-2 rounded-full mr-2 shrink-0" style={{ backgroundColor: project.color || '#6b7280' }} />
+                  <span className={cn(selectedProjectId === project.id && "font-medium")}>{project.name}</span>
+                  {selectedProjectId === project.id && <Check className="ml-auto h-4 w-4" />}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
 };
 
 export function TaskDetailDialog({
@@ -774,63 +849,51 @@ export function TaskDetailDialog({
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium mb-2 px-3">Context</p>
                   <div className="space-y-0.5">
                     {/* Project */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                          <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
-                          {selectedProject ? (
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedProject.color || '#6b7280' }} />
-                              <span className="text-sm truncate">{selectedProject.name}</span>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">None</span>
-                          )}
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-56 p-2" align="start">
-                        <div className="space-y-1">
-                          <button onClick={() => onTaskUpdate(task.id, { projectId: undefined })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", !task.projectId && "bg-muted")}>No Project</button>
-                          {projects.map((project) => (
-                            <button key={project.id} onClick={() => onTaskUpdate(task.id, { projectId: project.id })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.projectId === project.id && "bg-muted")}>
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color || '#6b7280' }} />
-                              {project.name}
-                            </button>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                    <ProjectSearchSelect
+                      projects={projects}
+                      selectedProjectId={task.projectId}
+                      onSelect={(projectId) => onTaskUpdate(task.id, { projectId })}
+                    />
 
                     {/* Areas */}
                     <div className="flex items-center gap-3 px-3 py-2">
                       <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
                       {projectAreas.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {projectAreas.map((area) => area && (<Badge key={area.id} variant="secondary" className="text-xs" style={{ backgroundColor: `${area.color}15`, color: area.color }}>{area.name}</Badge>))}
+                          {projectAreas.map((area) => area && (
+                            <Badge 
+                              key={area.id} 
+                              variant="secondary" 
+                              className="text-xs transition-colors cursor-default" 
+                              style={{ backgroundColor: `${area.color}15`, color: area.color }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = area.color;
+                                e.currentTarget.style.color = 'white';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = `${area.color}15`;
+                                e.currentTarget.style.color = area.color;
+                              }}
+                            >
+                              {area.name}
+                            </Badge>
+                          ))}
                         </div>
                       ) : (<span className="text-sm text-muted-foreground">No areas</span>)}
                     </div>
 
                     {/* Responsible */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                          <Users className="w-4 h-4 text-muted-foreground shrink-0" />
-                          {task.assignees && task.assignees.length > 0 ? (
-                            <UserAvatarGroup users={task.assignees} max={3} size="xs" />
-                          ) : (
-                            <span className="text-sm text-muted-foreground">Unassigned</span>
-                          )}
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 p-3" align="start">
+                    <div className="flex items-center gap-3 px-3 py-2">
+                      <Users className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
                         <SearchableAssigneeSelect 
                           members={projectMembers} 
                           selectedAssignees={task.assignees || []} 
                           onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })} 
+                          placeholder="Unassigned"
                         />
-                      </PopoverContent>
-                    </Popover>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
