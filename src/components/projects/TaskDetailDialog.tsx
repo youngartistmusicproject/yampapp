@@ -594,10 +594,7 @@ export function TaskDetailDialog({
                       <PopoverTrigger asChild>
                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
                           <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Stage</p>
-                            <Badge variant="secondary" className="text-xs" style={{ backgroundColor: `${getStatusColor(task.status)}20`, color: getStatusColor(task.status) }}>{getStatusLabel(task.status)}</Badge>
-                          </div>
+                          <Badge variant="secondary" className="text-xs" style={{ backgroundColor: `${getStatusColor(task.status)}20`, color: getStatusColor(task.status) }}>{getStatusLabel(task.status)}</Badge>
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-48 p-2" align="start">
@@ -617,10 +614,7 @@ export function TaskDetailDialog({
                       <PopoverTrigger asChild>
                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
                           <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Due Date</p>
-                            <span className="text-sm">{formatDate(task.dueDate) || <span className="text-muted-foreground">No date</span>}</span>
-                          </div>
+                          <span className="text-sm">{formatDate(task.dueDate) || <span className="text-muted-foreground">No date</span>}</span>
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -658,10 +652,7 @@ export function TaskDetailDialog({
                       <PopoverTrigger asChild>
                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
                           <Flag className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Importance</p>
-                            {task.importance ? (<Badge className={cn("text-xs", IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.color)}>{IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
-                          </div>
+                          {task.importance ? (<Badge className={cn("text-xs", IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.color)}>{IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-56 p-2" align="start">
@@ -676,12 +667,9 @@ export function TaskDetailDialog({
                       <PopoverTrigger asChild>
                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
                           <BarChart3 className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Progress</p>
-                            <div className="flex items-center gap-2">
-                              <Progress value={task.progress || 0} className="h-1.5 flex-1" />
-                              <span className="text-xs text-muted-foreground w-8">{task.progress || 0}%</span>
-                            </div>
+                          <div className="flex items-center gap-2 flex-1">
+                            <Progress value={task.progress || 0} className="h-1.5 flex-1" />
+                            <span className="text-xs text-muted-foreground w-8">{task.progress || 0}%</span>
                           </div>
                         </button>
                       </PopoverTrigger>
@@ -699,16 +687,13 @@ export function TaskDetailDialog({
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium mb-2 px-3">Context</p>
                   <div className="space-y-0.5">
                     {/* Areas */}
-                    <div className="px-3 py-2">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Areas</p>
-                      </div>
+                    <div className="flex items-center gap-3 px-3 py-2">
+                      <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
                       {projectAreas.length > 0 ? (
-                        <div className="flex flex-wrap gap-1 pl-6">
+                        <div className="flex flex-wrap gap-1">
                           {projectAreas.map((area) => area && (<Badge key={area.id} variant="secondary" className="text-xs" style={{ backgroundColor: `${area.color}15`, color: area.color }}>{area.name}</Badge>))}
                         </div>
-                      ) : (<p className="text-sm text-muted-foreground pl-6">No areas</p>)}
+                      ) : (<span className="text-sm text-muted-foreground">No areas</span>)}
                     </div>
 
                     {/* Project */}
@@ -716,17 +701,14 @@ export function TaskDetailDialog({
                       <PopoverTrigger asChild>
                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
                           <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Project</p>
-                            {selectedProject ? (
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedProject.color || '#6b7280' }} />
-                                <span className="text-sm truncate">{selectedProject.name}</span>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">None</span>
-                            )}
-                          </div>
+                          {selectedProject ? (
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedProject.color || '#6b7280' }} />
+                              <span className="text-sm truncate">{selectedProject.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">None</span>
+                          )}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-56 p-2" align="start">
@@ -747,14 +729,11 @@ export function TaskDetailDialog({
                       <PopoverTrigger asChild>
                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
                           <Users className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Responsible</p>
-                            {task.assignees && task.assignees.length > 0 ? (
-                              <UserAvatarGroup users={task.assignees} max={3} size="xs" />
-                            ) : (
-                              <span className="text-sm text-muted-foreground">Unassigned</span>
-                            )}
-                          </div>
+                          {task.assignees && task.assignees.length > 0 ? (
+                            <UserAvatarGroup users={task.assignees} max={3} size="xs" />
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Unassigned</span>
+                          )}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-64 p-3" align="start">
@@ -777,10 +756,7 @@ export function TaskDetailDialog({
                       <PopoverTrigger asChild>
                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
                           <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Est. Time</p>
-                            <span className="text-sm">{task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : <span className="text-muted-foreground">Not set</span>}</span>
-                          </div>
+                          <span className="text-sm">{task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : <span className="text-muted-foreground">Not set</span>}</span>
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-40 p-2" align="start">
@@ -795,10 +771,7 @@ export function TaskDetailDialog({
                       <PopoverTrigger asChild>
                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
                           <Gauge className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Effort</p>
-                            {task.effort ? (<Badge className={cn("text-xs", EFFORT_OPTIONS.find(e => e.id === task.effort)?.color)}>{EFFORT_OPTIONS.find(e => e.id === task.effort)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
-                          </div>
+                          {task.effort ? (<Badge className={cn("text-xs", EFFORT_OPTIONS.find(e => e.id === task.effort)?.color)}>{EFFORT_OPTIONS.find(e => e.id === task.effort)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-56 p-2" align="start">
