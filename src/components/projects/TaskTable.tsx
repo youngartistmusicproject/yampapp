@@ -196,44 +196,48 @@ function SortableTableRow({
         </div>
 
         {/* Right side - Status & Priority info (Order: Importance → Due Date → Stage → Progress) */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="grid grid-cols-4 items-center gap-2 w-[300px] flex-shrink-0">
           {/* 1. Importance - first for triage */}
-          {showDetails && (
+          <div className="flex items-center justify-center">
             <span 
-              className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize w-[70px] text-center ${importanceColors[task.importance || 'routine'] || importanceColors.routine}`}
+              className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize h-5 inline-flex items-center justify-center w-full ${showDetails ? (importanceColors[task.importance || 'routine'] || importanceColors.routine) : 'opacity-0 pointer-events-none'}`}
             >
               {task.importance || 'routine'}
             </span>
-          )}
+          </div>
           
           {/* 2. Due Date */}
-          <span className={`text-[11px] w-[52px] text-right ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-            {task.dueDate ? format(task.dueDate, "MMM d") : "—"}
-          </span>
+          <div className="flex items-center justify-center">
+            <span className={`text-[11px] leading-none ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+              {task.dueDate ? format(task.dueDate, "MMM d") : "—"}
+            </span>
+          </div>
 
           {/* 3. Stage */}
-          <span 
-            className="text-[10px] font-medium px-1.5 py-0.5 rounded w-[76px] text-center truncate"
-            style={{
-              backgroundColor: status ? `${status.color}15` : 'transparent',
-              color: status?.color || 'var(--muted-foreground)',
-            }}
-          >
-            {status?.name || '—'}
-          </span>
+          <div className="flex items-center justify-center">
+            <span 
+              className="text-[10px] font-medium px-1.5 py-0.5 rounded h-5 inline-flex items-center justify-center w-full truncate"
+              style={{
+                backgroundColor: status ? `${status.color}15` : 'transparent',
+                color: status?.color || 'var(--muted-foreground)',
+              }}
+            >
+              {status?.name || '—'}
+            </span>
+          </div>
           
           {/* 4. Progress - last as completion indicator */}
-          {showDetails && (
-            <div className="flex items-center gap-1.5 w-[72px]">
+          <div className="flex items-center justify-center">
+            <div className={`flex items-center gap-1.5 w-full ${showDetails ? '' : 'opacity-0 pointer-events-none'}`}>
               <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                 <div 
                   className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
                   style={{ width: `${task.progress || 0}%` }}
                 />
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground w-7 text-right">{task.progress || 0}%</span>
+              <span className="text-[10px] font-medium text-muted-foreground w-7 text-right tabular-nums">{task.progress || 0}%</span>
             </div>
-          )}
+          </div>
         </div>
 
         <div 
