@@ -66,6 +66,8 @@ import {
   Users,
   Tag,
   ExternalLink,
+  CheckCircle2,
+  Circle,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { SearchableAssigneeSelect } from "./SearchableAssigneeSelect";
@@ -645,7 +647,28 @@ export function TaskDetailDialog({
               />
             </div>
             
-            {/* SOP Button */}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Complete Button */}
+              <Button
+                variant={task.status === 'done' ? "default" : "outline"}
+                size="sm"
+                className={cn(
+                  "h-9 gap-2",
+                  task.status === 'done' 
+                    ? "bg-green-600 text-white hover:bg-green-700" 
+                    : "text-muted-foreground hover:text-green-600 hover:border-green-600"
+                )}
+                onClick={() => handleStatusChange(task.status === 'done' ? 'not-started' : 'done')}
+              >
+                {task.status === 'done' ? (
+                  <CheckCircle2 className="w-4 h-4" />
+                ) : (
+                  <Circle className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">{task.status === 'done' ? 'Completed' : 'Complete'}</span>
+              </Button>
+
+              {/* SOP Button */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -737,6 +760,7 @@ export function TaskDetailDialog({
                 </div>
               </PopoverContent>
             </Popover>
+            </div>
           </div>
         </div>
 
