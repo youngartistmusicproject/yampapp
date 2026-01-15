@@ -17,6 +17,7 @@ import CalendarPage from "./pages/CalendarPage";
 import CRM from "./pages/CRM";
 import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
+import OrganizationManagement from "./pages/OrganizationManagement";
 import Login from "./pages/Login";
 import SetupAdmin from "./pages/SetupAdmin";
 import NotFound from "./pages/NotFound";
@@ -55,8 +56,16 @@ const App = () => (
                       <Route
                         path="/users"
                         element={
-                          <ProtectedRoute requiredRoles={['super-admin']}>
+                          <ProtectedRoute requiredRoles={['super-admin', 'admin']}>
                             <UserManagement />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/organizations"
+                        element={
+                          <ProtectedRoute requiredRoles={['super-admin', 'admin']}>
+                            <OrganizationManagement />
                           </ProtectedRoute>
                         }
                       />
