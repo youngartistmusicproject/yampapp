@@ -103,6 +103,7 @@ interface TaskDetailDialogProps {
   statuses: StatusOption[];
   availableTags?: string[];
   projectMembers?: User[];
+  projectLeads?: User[];
   areas?: { id: string; name: string; color: string }[];
   // Additional props that pages may pass (kept for compatibility)
   currentUser?: User;
@@ -317,6 +318,7 @@ export function TaskDetailDialog({
   statuses,
   availableTags,
   projectMembers = [],
+  projectLeads = [],
   areas = [],
 }: TaskDetailDialogProps) {
   const [showIncompleteWarning, setShowIncompleteWarning] = useState(false);
@@ -896,6 +898,7 @@ export function TaskDetailDialog({
                           selectedAssignees={task.assignees || []} 
                           onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })} 
                           placeholder="Unassigned"
+                          projectLeads={projectLeads}
                         />
                       </div>
                     </div>

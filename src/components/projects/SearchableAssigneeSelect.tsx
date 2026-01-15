@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Plus } from "lucide-react";
+import { Check, Plus, Crown } from "lucide-react";
 import { User } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ interface SearchableAssigneeSelectProps {
   onAssigneesChange: (assignees: User[]) => void;
   placeholder?: string;
   disabled?: boolean;
+  projectLeads?: User[];
 }
 
 export function SearchableAssigneeSelect({
@@ -32,6 +33,7 @@ export function SearchableAssigneeSelect({
   onAssigneesChange,
   placeholder = "Add...",
   disabled = false,
+  projectLeads = [],
 }: SearchableAssigneeSelectProps) {
   const [open, setOpen] = useState(false);
 
@@ -42,6 +44,9 @@ export function SearchableAssigneeSelect({
       onAssigneesChange([...selectedAssignees, member]);
     }
   };
+
+  const isProjectLead = (userId: string) => 
+    projectLeads.some((lead) => lead.id === userId);
 
   return (
     <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
@@ -54,18 +59,24 @@ export function SearchableAssigneeSelect({
           disabled={disabled}
         >
           {selectedAssignees.length > 0 ? (
-            <div className="flex items-center">
+            <div className="flex items-center gap-1.5">
               <div className="flex -space-x-1.5">
                 {selectedAssignees.slice(0, 3).map((member) => (
-                  <UserAvatar 
-                    key={member.id} 
-                    user={member} 
-                    className="w-6 h-6 text-[10px] ring-2 ring-background" 
-                  />
+                  <div key={member.id} className="relative">
+                    <UserAvatar 
+                      user={member} 
+                      className="w-6 h-6 text-[10px] ring-2 ring-background" 
+                    />
+                    {isProjectLead(member.id) && (
+                      <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 rounded-full flex items-center justify-center ring-1 ring-background">
+                        <Crown className="w-2 h-2 text-white" />
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
               {selectedAssignees.length > 3 && (
-                <span className="text-xs text-muted-foreground ml-1.5">
+                <span className="text-xs text-muted-foreground">
                   +{selectedAssignees.length - 3}
                 </span>
               )}
@@ -98,11 +109,22 @@ export function SearchableAssigneeSelect({
                         : "opacity-0"
                     )}
                    />
-                  <UserAvatar user={member} size="sm" showTooltip={false} />
+                  <div className="relative">
+                    <UserAvatar user={member} size="sm" showTooltip={false} />
+                    {isProjectLead(member.id) && (
+                      <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-amber-500 rounded-full flex items-center justify-center">
+                        <Crown className="w-1.5 h-1.5 text-white" />
+                      </div>
+                    )}
+                  </div>
                   <span className="ml-2">{member.name}</span>
-                  <span className="ml-auto text-xs text-muted-foreground capitalize">
-                    {member.role.replace('-', ' ')}
-                  </span>
+                  {isProjectLead(member.id) ? (
+                    <span className="ml-auto text-xs text-amber-600 font-medium">Lead</span>
+                  ) : (
+                    <span className="ml-auto text-xs text-muted-foreground capitalize">
+                      {member.role.replace('-', ' ')}
+                    </span>
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
