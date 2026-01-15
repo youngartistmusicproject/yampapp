@@ -196,11 +196,11 @@ function SortableTableRow({
         </div>
 
         {/* Right side - Status & Priority info (Order: Importance → Due Date → Stage → Progress) */}
-        <div className="grid items-center w-[294px] flex-shrink-0 grid-cols-[70px_52px_72px_1fr]">
+        <div className="grid items-center gap-3 w-[316px] flex-shrink-0 grid-cols-[70px_52px_68px_90px]">
           {/* 1. Importance - first for triage */}
           <div className="flex items-center justify-center">
             <span 
-              className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize h-5 inline-flex items-center justify-center w-full ${showDetails ? (importanceColors[task.importance || 'routine'] || importanceColors.routine) : 'opacity-0 pointer-events-none'}`}
+              className={`text-[10px] font-medium px-2 py-0.5 rounded capitalize h-5 inline-flex items-center justify-center min-w-[52px] ${showDetails ? (importanceColors[task.importance || 'routine'] || importanceColors.routine) : 'opacity-0 pointer-events-none'}`}
             >
               {task.importance || 'routine'}
             </span>
@@ -214,9 +214,9 @@ function SortableTableRow({
           </div>
 
           {/* 3. Stage */}
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-start">
             <span 
-              className="text-[10px] font-medium px-1.5 py-0.5 rounded h-5 inline-flex items-center justify-center w-full truncate"
+              className="text-[10px] font-medium px-2 py-0.5 rounded h-5 inline-flex items-center justify-center max-w-full truncate"
               style={{
                 backgroundColor: status ? `${status.color}15` : 'transparent',
                 color: status?.color || 'var(--muted-foreground)',
@@ -228,7 +228,7 @@ function SortableTableRow({
           
           {/* 4. Progress - last as completion indicator */}
           <div className="flex items-center justify-end">
-            <div className={`flex items-center justify-end gap-1.5 ${showDetails ? '' : 'opacity-0 pointer-events-none'}`}>
+            <div className={`flex items-center justify-end gap-1.5 w-full ${showDetails ? '' : 'opacity-0 pointer-events-none'}`}>
               <div className="w-[38px] h-1.5 bg-muted rounded-full overflow-hidden">
                 <div 
                   className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
@@ -314,7 +314,7 @@ function SortableTableRow({
           <div className="flex-1" />
 
           {/* Right side - Workload: Effort, Estimated Time */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center justify-end gap-2 w-[316px] flex-shrink-0">
             {task.effort && (
               <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${effortColors[task.effort] || effortColors.light}`}>
                 {task.effort}
