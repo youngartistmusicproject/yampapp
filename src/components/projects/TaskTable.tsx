@@ -196,7 +196,7 @@ function SortableTableRow({
         </div>
 
         {/* Right side - Status & Priority info */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0">
           {status && (
             <span 
               className="text-[11px] font-medium px-1.5 py-0.5 rounded w-20 text-center truncate"
@@ -222,7 +222,7 @@ function SortableTableRow({
               </span>
               
               <div className="flex items-center gap-1.5 w-20">
-                <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                   <div 
                     className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
                     style={{ width: `${task.progress || 0}%` }}
@@ -258,65 +258,69 @@ function SortableTableRow({
         </div>
       </div>
 
-      {/* Context row - Project, Areas, Responsible */}
+      {/* Context + Workload row */}
       {showDetails && (
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground pl-7">
-          {/* Project indicator */}
-          {project && (
-            <div className="flex items-center gap-1.5 min-w-0 max-w-[120px]">
-              <span
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: project.color }}
-              />
-              <span className="truncate">{project.name}</span>
-            </div>
-          )}
-
-          {/* Area tags */}
-          {areas.length > 0 && (
-            <div className="flex items-center gap-1">
-              {areas.slice(0, 2).map((area: any) => (
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground pl-7 pr-14">
+          {/* Left side - Context: Project, Areas, Responsible */}
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Project indicator */}
+            {project && (
+              <div className="flex items-center gap-1.5 min-w-0 max-w-[120px]">
                 <span
-                  key={area.id}
-                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                  style={{ 
-                    backgroundColor: `${area.color}15`,
-                    color: area.color,
-                  }}
-                >
-                  {area.name}
-                </span>
-              ))}
-              {areas.length > 2 && (
-                <span className="text-[10px] text-muted-foreground">+{areas.length - 2}</span>
-              )}
-            </div>
-          )}
+                  className="h-2 w-2 rounded-full shrink-0"
+                  style={{ backgroundColor: project.color }}
+                />
+                <span className="truncate">{project.name}</span>
+              </div>
+            )}
 
-          {/* Responsible assignees */}
-          {task.assignees && task.assignees.length > 0 && (
-            <div className="flex items-center gap-1">
-              <span className="text-muted-foreground/70">·</span>
-              <UserAvatarGroup users={task.assignees} max={3} size="xs" teamLeaderIds={projectLeadNames} />
-            </div>
-          )}
-        </div>
-      )}
+            {/* Area tags */}
+            {areas.length > 0 && (
+              <div className="flex items-center gap-1">
+                {areas.slice(0, 2).map((area: any) => (
+                  <span
+                    key={area.id}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    style={{ 
+                      backgroundColor: `${area.color}15`,
+                      color: area.color,
+                    }}
+                  >
+                    {area.name}
+                  </span>
+                ))}
+                {areas.length > 2 && (
+                  <span className="text-[10px] text-muted-foreground">+{areas.length - 2}</span>
+                )}
+              </div>
+            )}
 
-      {/* Workload row - Effort, Estimated Time */}
-      {showDetails && (task.effort || task.estimatedTime) && (
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground pl-7">
-          {task.effort && (
-            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${effortColors[task.effort] || effortColors.light}`}>
-              {task.effort}
-            </span>
-          )}
-          {task.estimatedTime && (
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
-            </span>
-          )}
+            {/* Responsible assignees */}
+            {task.assignees && task.assignees.length > 0 && (
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground/70">·</span>
+                <UserAvatarGroup users={task.assignees} max={3} size="xs" teamLeaderIds={projectLeadNames} />
+              </div>
+            )}
+          </div>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Right side - Workload: Effort, Estimated Time */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {task.effort && (
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${effortColors[task.effort] || effortColors.light}`}>
+                {task.effort}
+              </span>
+            )}
+            {task.estimatedTime && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>
