@@ -96,11 +96,14 @@ export default function Settings() {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    console.log("File selected:", file);
     if (file) {
       // Create object URL for the cropper
       const imageUrl = URL.createObjectURL(file);
+      console.log("Image URL created:", imageUrl);
       setSelectedImageSrc(imageUrl);
       setCropDialogOpen(true);
+      console.log("Dialog should open now");
     }
     // Reset input so same file can be selected again
     if (fileInputRef.current) {
