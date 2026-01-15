@@ -1,4 +1,4 @@
-import { Bell, Search, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChatPopover } from "@/components/chat/ChatPopover";
+import { NotificationPopover } from "@/components/layout/NotificationPopover";
 import { useAuth } from "@/contexts/AuthContext";
 import { getFullName, getInitials } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -50,10 +51,7 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
       <div className="flex items-center gap-1">
         <ChatPopover />
         
-        <Button variant="ghost" size="icon" className="relative h-8 w-8">
-          <Bell className="w-[18px] h-[18px] text-muted-foreground" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
-        </Button>
+        <NotificationPopover />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
