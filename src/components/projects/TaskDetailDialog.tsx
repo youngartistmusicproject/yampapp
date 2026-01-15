@@ -591,7 +591,7 @@ export function TaskDetailDialog({
       <DialogContent className="w-full max-w-[95vw] md:max-w-[900px] max-h-[90vh] p-0 gap-0 overflow-hidden rounded-xl flex flex-col">
         {/* Header - matches TaskDialog */}
         <div className="px-6 pt-6 pb-4 border-b border-border/50 shrink-0">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-4 pr-8">
             <div className="flex-1 min-w-0">
               <EditableText
                 value={task.title}
