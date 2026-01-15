@@ -66,6 +66,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<User[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [hasSelectedProject, setHasSelectedProject] = useState(false); // tracks if user made a selection
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrence, setRecurrence] = useState<RecurrenceSettingsType | undefined>();
   const [howToLink, setHowToLink] = useState("");
@@ -108,6 +109,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
       setSelectedTags(task.tags);
       setSelectedAssignees(task.assignees);
       setSelectedProjectId(task.projectId || "");
+      setHasSelectedProject(true); // editing means already selected
       setIsRecurring(task.isRecurring || false);
       setRecurrence(task.recurrence);
       setHowToLink(task.howToLink || "");
@@ -139,6 +141,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     setSelectedTags([]);
     setSelectedAssignees([]);
     setSelectedProjectId("");
+    setHasSelectedProject(false);
     setIsRecurring(false);
     setRecurrence(undefined);
     setHowToLink("");
@@ -171,6 +174,9 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     
     if (!title.trim()) {
       errors.title = "Task title is required";
+    }
+    if (!hasSelectedProject) {
+      errors.project = "Project selection is required";
     }
     if (!dueDate) {
       errors.dueDate = "Due date is required";
@@ -263,12 +269,18 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             <div className="space-y-3">
               {/* Project */}
               <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0">Project</Label>
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">Project <span className="text-destructive">*</span></Label>
                 <Select 
-                  value={selectedProjectId || "none"} 
-                  onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
+                  value={hasSelectedProject ? (selectedProjectId || "none") : ""} 
+                  onValueChange={(v) => {
+                    setHasSelectedProject(true);
+                    setSelectedProjectId(v === "none" ? "" : v);
+                  }}
                 >
-                  <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent flex-1">
+                  <SelectTrigger className={cn(
+                    "h-9 text-sm border-border/50 bg-transparent flex-1",
+                    hasAttemptedSubmit && validationErrors.project && "border-destructive"
+                  )}>
                     <SelectValue placeholder="Select project..." />
                   </SelectTrigger>
                   <SelectContent>
