@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Group {
   id: string;
@@ -42,6 +43,8 @@ export function useCommunity() {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   // Cache group names to avoid refetching
   const groupNamesCache = useRef<Map<string, string>>(new Map());
@@ -62,6 +65,12 @@ export function useCommunity() {
   };
 
   const fetchGroups = async () => {
+    if (!orgId) {
+      setGroups([]);
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       // Fetch groups with member count in a single query using a subquery
       const { data: groupsData, error } = await supabase
@@ -70,6 +79,7 @@ export function useCommunity() {
           *,
           community_group_members(count)
         `)
+        .eq("organization_id", orgId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
@@ -222,7 +232,7 @@ export function useCommunity() {
   }, [toast]);
 
   const createPost = async (content: string, imageUrl?: string) => {
-    if (!selectedGroupId || !content.trim()) return;
+    if (!selectedGroupId || !content.trim() || !orgId) return;
 
     try {
       const { data, error } = await supabase
@@ -233,6 +243,7 @@ export function useCommunity() {
           author_role: "Member",
           content: content.trim(),
           image_url: imageUrl || null,
+          organization_id: orgId,
         })
         .select()
         .single();
@@ -388,7 +399,7 @@ export function useCommunity() {
   };
 
   const addComment = async (postId: string, content: string) => {
-    if (!content.trim()) return;
+    if (!content.trim() || !orgId) return;
 
     try {
       const { data, error } = await supabase
@@ -397,6 +408,7 @@ export function useCommunity() {
           post_id: postId,
           author_name: "You",
           content: content.trim(),
+          organization_id: orgId,
         })
         .select()
         .single();
@@ -491,10 +503,13 @@ export function useCommunity() {
     }
   };
 
-  // Initial fetch
+  // Initial fetch - refetch when organization changes
   useEffect(() => {
-    fetchGroups();
-  }, []);
+    if (orgId) {
+      setSelectedGroupId(null);
+      fetchGroups();
+    }
+  }, [orgId]);
 
   // Fetch posts when group changes
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Conversation {
   id: string;
@@ -78,13 +79,22 @@ export function useChat() {
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
 
   // Fetch all conversations with participants and last message
   const fetchConversations = async () => {
+    if (!orgId) {
+      setConversations([]);
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       const { data: convData, error: convError } = await supabase
         .from("conversations")
         .select("*")
+        .eq("organization_id", orgId)
         .order("updated_at", { ascending: false });
 
       if (convError) throw convError;
@@ -357,6 +367,15 @@ export function useChat() {
 
   // Create a new conversation (or return existing one for direct chats)
   const createConversation = async (name: string, type: "direct" | "group" = "direct") => {
+    if (!orgId) {
+      toast({
+        title: "Error",
+        description: "No organization selected",
+        variant: "destructive",
+      });
+      return null;
+    }
+    
     try {
       // For direct conversations, check if one already exists with this person
       if (type === "direct") {
@@ -369,7 +388,7 @@ export function useChat() {
 
       const { data, error } = await supabase
         .from("conversations")
-        .insert({ name, type })
+        .insert({ name, type, organization_id: orgId })
         .select()
         .single();
 
@@ -413,10 +432,13 @@ export function useChat() {
     }
   }
 
-  // Initial fetch
+  // Initial fetch - refetch when organization changes
   useEffect(() => {
-    fetchConversations();
-  }, []);
+    if (orgId) {
+      setSelectedConversationId(null);
+      fetchConversations();
+    }
+  }, [orgId]);
 
   // Fetch messages when conversation changes
   useEffect(() => {

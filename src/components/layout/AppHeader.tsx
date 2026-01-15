@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChatPopover } from "@/components/chat/ChatPopover";
 import { NotificationPopover } from "@/components/layout/NotificationPopover";
+import { OrganizationSwitcher } from "@/components/layout/OrganizationSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 import { getFullName, getInitials } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -38,6 +39,9 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
       >
         <Menu className="w-[18px] h-[18px]" />
       </Button>
+
+      {/* Organization Switcher */}
+      <OrganizationSwitcher />
 
       {/* Search */}
       <div className="relative flex-1 max-w-sm">
