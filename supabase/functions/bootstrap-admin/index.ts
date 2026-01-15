@@ -12,6 +12,53 @@ interface BootstrapRequest {
   last_name?: string;
 }
 
+// Simple in-memory rate limiting (resets on function restart)
+// For production, consider using a database or external cache
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_MAX_ATTEMPTS = 5;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function getClientIP(req: Request): string {
+  // Try various headers for client IP
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  const realIP = req.headers.get('x-real-ip');
+  if (realIP) {
+    return realIP;
+  }
+  // Fallback to a generic identifier
+  return 'unknown-client';
+}
+
+function checkRateLimit(clientIP: string): { allowed: boolean; retryAfterSeconds?: number } {
+  const now = Date.now();
+  const record = rateLimitMap.get(clientIP);
+  
+  // Clean up expired records
+  if (record && now > record.resetTime) {
+    rateLimitMap.delete(clientIP);
+  }
+  
+  const currentRecord = rateLimitMap.get(clientIP);
+  
+  if (!currentRecord) {
+    // First attempt
+    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
+  }
+  
+  if (currentRecord.count >= RATE_LIMIT_MAX_ATTEMPTS) {
+    const retryAfterSeconds = Math.ceil((currentRecord.resetTime - now) / 1000);
+    return { allowed: false, retryAfterSeconds };
+  }
+  
+  // Increment count
+  currentRecord.count++;
+  return { allowed: true };
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -19,6 +66,24 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Rate limiting check
+    const clientIP = getClientIP(req);
+    const rateLimit = checkRateLimit(clientIP);
+    
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Too many attempts. Please try again later.' }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': String(rateLimit.retryAfterSeconds || 3600)
+          } 
+        }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -35,15 +100,17 @@ Deno.serve(async (req) => {
       .limit(1);
 
     if (checkError) {
+      // Return generic error to avoid information disclosure
       return new Response(
-        JSON.stringify({ error: 'Failed to check existing admins' }),
+        JSON.stringify({ error: 'Setup is not available at this time' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (existingAdmins && existingAdmins.length > 0) {
+      // Return generic error - don't reveal that admin exists
       return new Response(
-        JSON.stringify({ error: 'A super-admin already exists. Use the User Management page to create more users.' }),
+        JSON.stringify({ error: 'Setup is not available. Please contact your administrator.' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
