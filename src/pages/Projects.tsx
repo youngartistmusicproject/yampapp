@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/select";
 import { format, differenceInDays, isToday, isYesterday, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { triggerConfetti } from "@/lib/confetti";
 
 import { teamMembers, statusLibrary as defaultStatuses, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { useTasks, useProjects, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useReorderTasks, useCompleteRecurringTask, useReorderProjects } from "@/hooks/useWorkManagement";
@@ -532,6 +533,7 @@ export default function Projects() {
     
     // If marking a recurring task as done, use the special hook
     if (updates.status === 'done' && task?.isRecurring && task?.recurrence) {
+      triggerConfetti();
       completeRecurringTask.mutate({ task }, {
         onSuccess: (result) => {
           if (result.nextTask) {
@@ -551,6 +553,11 @@ export default function Projects() {
         setViewingTask(prev => prev ? { ...prev, ...updates } : null);
       }
       return;
+    }
+    
+    // Trigger confetti for non-recurring task completion
+    if (updates.status === 'done') {
+      triggerConfetti();
     }
     
     updateTask.mutate({ taskId, updates }, {
