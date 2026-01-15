@@ -196,7 +196,7 @@ function SortableTableRow({
         </div>
 
         {/* Right side - Status & Priority info (Order: Importance → Due Date → Stage → Progress) */}
-        <div className="grid items-center gap-2 w-[294px] flex-shrink-0 grid-cols-[70px_52px_76px_72px]">
+        <div className="grid items-center w-[294px] flex-shrink-0 grid-cols-[70px_52px_72px_1fr]">
           {/* 1. Importance - first for triage */}
           <div className="flex items-center justify-center">
             <span 
@@ -228,7 +228,7 @@ function SortableTableRow({
           
           {/* 4. Progress - last as completion indicator */}
           <div className="flex items-center justify-end">
-            <div className={`flex items-center justify-end gap-1.5 w-full ${showDetails ? '' : 'opacity-0 pointer-events-none'}`}>
+            <div className={`flex items-center justify-end gap-1.5 ${showDetails ? '' : 'opacity-0 pointer-events-none'}`}>
               <div className="w-[38px] h-1.5 bg-muted rounded-full overflow-hidden">
                 <div 
                   className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
