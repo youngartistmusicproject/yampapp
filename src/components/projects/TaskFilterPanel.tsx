@@ -215,9 +215,8 @@ export function TaskFilterPanel({
         </button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-80 p-0 bg-popover z-[70]" 
-        align="end" 
-        side="top"
+        className="w-80 p-0 bg-popover z-[70] max-h-[min(520px,var(--radix-popper-available-height))] overflow-hidden"
+        align="end"
         sideOffset={8}
         collisionPadding={16}
       >
@@ -236,7 +235,7 @@ export function TaskFilterPanel({
           )}
         </div>
         
-        <ScrollArea className="max-h-[min(450px,calc(100vh-200px))]">
+        <ScrollArea className="h-[calc(min(520px,var(--radix-popper-available-height))-49px)]">
           <div className="p-3 space-y-4">
             {/* Areas Filter */}
             <div className="space-y-2">
