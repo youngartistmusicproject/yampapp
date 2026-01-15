@@ -11,6 +11,7 @@ interface CreateUserRequest {
   first_name: string;
   last_name?: string;
   role: 'super-admin' | 'admin' | 'staff' | 'faculty';
+  organization_id: string;
 }
 
 Deno.serve(async (req) => {
@@ -29,12 +30,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create a client with the user's token to verify they are a super-admin
+    // Create a client with the user's token to verify permissions
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Verify the calling user is a super-admin
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -47,7 +47,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if calling user is super-admin
+    // Parse request body
+    const { email, password, first_name, last_name, role, organization_id }: CreateUserRequest = await req.json();
+
+    if (!email || !password || !first_name || !role || !organization_id) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: email, password, first_name, role, organization_id' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if calling user is super-admin (platform level) or org admin
     const { data: callerRoles, error: roleError } = await userClient
       .from('user_roles')
       .select('role')
@@ -61,21 +71,38 @@ Deno.serve(async (req) => {
     }
 
     const isSuperAdmin = callerRoles?.some((r) => r.role === 'super-admin');
+
+    // If not a super-admin, check if they're an org admin for the target organization
     if (!isSuperAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Only super-admins can create users' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      const { data: orgMembership, error: orgError } = await userClient
+        .from('organization_members')
+        .select('role')
+        .eq('user_id', callingUser.id)
+        .eq('organization_id', organization_id)
+        .single();
 
-    // Parse request body
-    const { email, password, first_name, last_name, role }: CreateUserRequest = await req.json();
+      if (orgError || !orgMembership) {
+        return new Response(
+          JSON.stringify({ error: 'You are not a member of this organization' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    if (!email || !password || !first_name || !role) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: email, password, first_name, role' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const isOrgAdmin = orgMembership.role === 'super-admin' || orgMembership.role === 'admin';
+      if (!isOrgAdmin) {
+        return new Response(
+          JSON.stringify({ error: 'Only organization admins can create users' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Org admins cannot create super-admins
+      if (role === 'super-admin') {
+        return new Response(
+          JSON.stringify({ error: 'Only platform super-admins can create super-admin users' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Create admin client with service role to create user
@@ -105,14 +132,36 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Assign the role
+    // Assign the global role (for backward compatibility)
     const { error: roleInsertError } = await adminClient
       .from('user_roles')
       .insert({ user_id: newUser.user.id, role });
 
     if (roleInsertError) {
-      // User was created but role failed - log but don't fail
-      console.error('Failed to assign role:', roleInsertError);
+      console.error('Failed to assign global role:', roleInsertError);
+    }
+
+    // Add user to organization with role
+    const { error: orgMemberError } = await adminClient
+      .from('organization_members')
+      .insert({
+        organization_id,
+        user_id: newUser.user.id,
+        role,
+      });
+
+    if (orgMemberError) {
+      console.error('Failed to add user to organization:', orgMemberError);
+    }
+
+    // Set primary organization on profile
+    const { error: profileUpdateError } = await adminClient
+      .from('profiles')
+      .update({ primary_organization_id: organization_id })
+      .eq('id', newUser.user.id);
+
+    if (profileUpdateError) {
+      console.error('Failed to set primary organization:', profileUpdateError);
     }
 
     return new Response(
@@ -124,6 +173,7 @@ Deno.serve(async (req) => {
           first_name,
           last_name,
           role,
+          organization_id,
         },
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -634,6 +634,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string | null
+          primary_organization_id: string | null
           updated_at: string
         }
         Insert: {
@@ -643,6 +644,7 @@ export type Database = {
           first_name: string
           id: string
           last_name?: string | null
+          primary_organization_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -652,9 +654,18 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string | null
+          primary_organization_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_primary_organization_id_fkey"
+            columns: ["primary_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_members: {
         Row: {

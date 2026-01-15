@@ -33,7 +33,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Plus, Shield, UserPlus } from 'lucide-react';
+import { Loader2, Plus, Shield, UserPlus, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ROLE_LABELS: Record<AppRole, string> = {
@@ -52,7 +52,7 @@ const ROLE_COLORS: Record<AppRole, string> = {
 
 export default function UserManagement() {
   const { data: profiles, isLoading } = useProfiles();
-  const { session } = useAuth();
+  const { session, currentOrganization, isSuperAdmin, isOrgAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
@@ -66,6 +66,10 @@ export default function UserManagement() {
 
   const createUserMutation = useMutation({
     mutationFn: async () => {
+      if (!currentOrganization) {
+        throw new Error('No organization selected');
+      }
+
       const response = await supabase.functions.invoke('create-user', {
         body: {
           email: newUserEmail,
@@ -73,6 +77,7 @@ export default function UserManagement() {
           first_name: newUserFirstName,
           last_name: newUserLastName || null,
           role: newUserRole,
+          organization_id: currentOrganization.id,
         },
       });
 
@@ -88,6 +93,7 @@ export default function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-members'] });
       setCreateDialogOpen(false);
       resetForm();
       toast.success('User created successfully');
@@ -120,6 +126,9 @@ export default function UserManagement() {
     );
   }
 
+  // Check if user can create users (super-admin or org admin)
+  const canCreateUsers = isSuperAdmin || isOrgAdmin;
+
   return (
     <div className="container max-w-5xl py-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -131,128 +140,139 @@ export default function UserManagement() {
           <p className="text-muted-foreground mt-1">
             Manage user accounts and role assignments
           </p>
+          {currentOrganization && (
+            <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+              <Building2 className="h-4 w-4" />
+              <span>Creating users for: <strong>{currentOrganization.name}</strong></span>
+            </div>
+          )}
         </div>
 
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => resetForm()}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Create User
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New User</DialogTitle>
-              <DialogDescription>
-                Create a new user account with an assigned role. The user will
-                receive their credentials to log in.
-              </DialogDescription>
-            </DialogHeader>
+        {canCreateUsers && (
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => resetForm()} disabled={!currentOrganization}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Create User
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New User</DialogTitle>
+                <DialogDescription>
+                  Create a new user account in{' '}
+                  <strong>{currentOrganization?.name}</strong>. The user will
+                  receive their credentials to log in.
+                </DialogDescription>
+              </DialogHeader>
 
-            <form onSubmit={handleCreateUser} className="space-y-4 mt-4">
-              {createError && (
-                <Alert variant="destructive">
-                  <AlertDescription>{createError}</AlertDescription>
-                </Alert>
-              )}
+              <form onSubmit={handleCreateUser} className="space-y-4 mt-4">
+                {createError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{createError}</AlertDescription>
+                  </Alert>
+                )}
 
-              <div className="grid gap-4 grid-cols-2">
+                <div className="grid gap-4 grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      placeholder="John"
+                      value={newUserFirstName}
+                      onChange={(e) => setNewUserFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      placeholder="Doe"
+                      value={newUserLastName}
+                      onChange={(e) => setNewUserLastName(e.target.value)}
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id="firstName"
-                    placeholder="John"
-                    value={newUserFirstName}
-                    onChange={(e) => setNewUserFirstName(e.target.value)}
+                    id="email"
+                    type="email"
+                    placeholder="john@example.com"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="password">Password</Label>
                   <Input
-                    id="lastName"
-                    placeholder="Doe"
-                    value={newUserLastName}
-                    onChange={(e) => setNewUserLastName(e.target.value)}
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
+                    required
+                    minLength={6}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Minimum 6 characters
+                  </p>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="john@example.com"
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
-                  required
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Select
+                    value={newUserRole}
+                    onValueChange={(v) => setNewUserRole(v as AppRole)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="staff">Staff</SelectItem>
+                      <SelectItem value="faculty">Faculty</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      {isSuperAdmin && (
+                        <SelectItem value="super-admin">Super Admin</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={newUserPassword}
-                  onChange={(e) => setNewUserPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Minimum 6 characters
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select
-                  value={newUserRole}
-                  onValueChange={(v) => setNewUserRole(v as AppRole)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="staff">Staff</SelectItem>
-                    <SelectItem value="faculty">Faculty</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="super-admin">Super Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCreateDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={createUserMutation.isPending}
-                >
-                  {createUserMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create User
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setCreateDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createUserMutation.isPending}
+                  >
+                    {createUserMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create User
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="rounded-lg border bg-card">
