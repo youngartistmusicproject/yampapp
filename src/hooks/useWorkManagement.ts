@@ -276,7 +276,50 @@ export function useCreateTask() {
       
       return newTask;
     },
-    onSuccess: () => {
+    onMutate: async (newTask) => {
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
+      
+      // Optimistically add the new task to the list
+      const optimisticTask: Task = {
+        id: `temp-${Date.now()}`,
+        title: newTask.title,
+        description: newTask.description,
+        status: newTask.status || 'not-started',
+        effort: newTask.effort || 'easy',
+        importance: newTask.importance || 'routine',
+        dueDate: newTask.dueDate,
+        assignees: newTask.assignees || [],
+        projectId: newTask.projectId,
+        tags: newTask.tags || [],
+        isRecurring: newTask.isRecurring || false,
+        recurrence: newTask.recurrence,
+        progress: newTask.progress || 0,
+        estimatedTime: newTask.estimatedTime,
+        howToLink: newTask.howToLink,
+        subtasks: [],
+        sortOrder: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      queryClient.setQueryData<Task[]>(['tasks'], (old) => 
+        old ? [optimisticTask, ...old] : [optimisticTask]
+      );
+      
+      return { previousTasks };
+    },
+    onError: (_err, _newTask, context) => {
+      // Roll back to previous state on error
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
