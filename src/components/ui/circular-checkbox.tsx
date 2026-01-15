@@ -1,7 +1,6 @@
 import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { triggerConfettiFromElement } from "@/lib/confetti";
 
 interface CircularCheckboxProps {
   checked: boolean;
@@ -58,9 +57,6 @@ export function CircularCheckbox({
         aria-checked={checked}
         onClick={(e) => {
           e.stopPropagation();
-          if (!checked) {
-            triggerConfettiFromElement(e.currentTarget);
-          }
           onCheckedChange(!checked);
         }}
         onPointerDown={(e) => e.stopPropagation()}
