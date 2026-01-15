@@ -197,11 +197,19 @@ const IMPORTANCE_OPTIONS = importanceLibrary.map(i => ({
 }));
 
 const TIME_OPTIONS = [
+  { value: 2, label: '2 min' },
+  { value: 5, label: '5 min' },
+  { value: 10, label: '10 min' },
   { value: 15, label: '15 min' },
+  { value: 20, label: '20 min' },
   { value: 30, label: '30 min' },
-  { value: 60, label: '1 hour' },
-  { value: 120, label: '2 hours' },
-  { value: 240, label: '4 hours' },
+  { value: 45, label: '45 min' },
+  { value: 60, label: '1 hr' },
+  { value: 75, label: '1h 15m' },
+  { value: 90, label: '1h 30m' },
+  { value: 120, label: '2 hr' },
+  { value: 180, label: '3 hr' },
+  { value: 240, label: '4 hr' },
   { value: 480, label: '1 day' },
   { value: 960, label: '2 days' },
   { value: 2400, label: '1 week' },
@@ -211,8 +219,15 @@ const PROGRESS_OPTIONS = [0, 10, 25, 50, 75, 90, 100];
 
 const formatEstimatedTime = (minutes: number) => {
   if (minutes < 60) return `${minutes}m`;
-  if (minutes < 480) return `${minutes / 60}h`;
-  return `${minutes / 480}d`;
+  if (minutes === 60) return '1h';
+  if (minutes < 120) return `1h ${minutes - 60}m`;
+  if (minutes < 480) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  }
+  if (minutes < 2400) return `${minutes / 480}d`;
+  return `${minutes / 2400}w`;
 };
 
 export function TaskDetailDialog({
