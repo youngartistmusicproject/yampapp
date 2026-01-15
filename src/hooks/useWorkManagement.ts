@@ -210,6 +210,7 @@ export function useTasks() {
           archivedAt: (t as any).archived_at ? new Date((t as any).archived_at) : undefined,
           sortOrder: t.sort_order || 0,
           howToLink: (t as any).how_to_link || undefined,
+          subtasks: (t as any).subtasks || [],
           createdAt: new Date(t.created_at),
           updatedAt: new Date(t.updated_at),
         };
@@ -323,6 +324,7 @@ export function useUpdateTask() {
         (updateData as any).archived_at = (updates as any).archivedAt ? (updates as any).archivedAt.toISOString() : null;
       }
       if (updates.howToLink !== undefined) updateData.how_to_link = updates.howToLink || null;
+      if (updates.subtasks !== undefined) updateData.subtasks = JSON.stringify(updates.subtasks);
       
       // Handle recurrence settings
       if (updates.recurrence !== undefined) {
