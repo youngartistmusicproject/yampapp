@@ -172,9 +172,6 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
     if (!title.trim()) {
       errors.title = "Task title is required";
     }
-    if (!selectedProjectId) {
-      errors.project = "Project is required";
-    }
     if (!dueDate) {
       errors.dueDate = "Due date is required";
     }
@@ -266,20 +263,17 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             <div className="space-y-3">
               {/* Project */}
               <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0">Project <span className="text-destructive">*</span></Label>
+                <Label className="text-sm text-muted-foreground w-28 shrink-0">Project</Label>
                 <Select 
                   value={selectedProjectId || "none"} 
                   onValueChange={(v) => setSelectedProjectId(v === "none" ? "" : v)}
                 >
-                  <SelectTrigger className={cn(
-                    "h-9 text-sm border-border/50 bg-transparent flex-1",
-                    hasAttemptedSubmit && validationErrors.project && "border-destructive"
-                  )}>
-                    <SelectValue placeholder="Select a project" />
+                  <SelectTrigger className="h-9 text-sm border-border/50 bg-transparent flex-1">
+                    <SelectValue placeholder="Select project..." />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">
-                      <span className="text-muted-foreground">No Project</span>
+                      <span className="text-muted-foreground italic">No Project</span>
                     </SelectItem>
                     {(projects || []).map((p) => (
                       <SelectItem key={p.id} value={p.id}>
@@ -395,8 +389,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                     members={filteredAssignees}
                     selectedAssignees={selectedAssignees}
                     onAssigneesChange={setSelectedAssignees}
-                    placeholder={selectedProjectId ? "Add..." : "Select project first"}
-                    disabled={!selectedProjectId}
+                    placeholder="Add..."
                   />
                 </div>
               </div>
