@@ -1359,6 +1359,10 @@ export default function Projects() {
           const proj = projects.find(p => p.id === viewingTask?.projectId);
           return proj ? [...(proj.owners || []), ...(proj.members || [])] : teamMembers;
         })()}
+        projectLeads={(() => {
+          const proj = projects.find(p => p.id === viewingTask?.projectId);
+          return proj?.owners || [];
+        })()}
         onTaskUpdate={handleTaskUpdate}
         onAddComment={handleAddComment}
         onToggleReaction={handleToggleReaction}
