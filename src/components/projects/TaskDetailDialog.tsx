@@ -609,43 +609,41 @@ export function TaskDetailDialog({
                       </PopoverContent>
                     </Popover>
 
-                    {/* Due Date */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                          <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <span className="text-sm">{formatDate(task.dueDate) || <span className="text-muted-foreground">No date</span>}</span>
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <div className="p-3 border-b">
-                          <NaturalDateInput 
-                            value={task.dueDate} 
-                            onChange={(date) => onTaskUpdate(task.id, { dueDate: date })} 
-                            onRecurrenceChange={(recurrence) => onTaskUpdate(task.id, { 
-                              isRecurring: !!recurrence, 
-                              recurrence 
-                            })}
+                    {/* Due Date - inline NaturalDateInput matching TaskDialog */}
+                    <div className="flex items-center gap-2 px-3 py-2">
+                      <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <NaturalDateInput
+                        value={task.dueDate}
+                        onChange={(date) => onTaskUpdate(task.id, { dueDate: date })}
+                        onRecurrenceChange={(rec) => {
+                          if (rec) {
+                            onTaskUpdate(task.id, { isRecurring: true, recurrence: rec });
+                          }
+                        }}
+                        placeholder="e.g. next friday"
+                        className="flex-1 h-8 text-sm"
+                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={task.isRecurring ? "default" : "ghost"}
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                          >
+                            <Repeat className="w-4 h-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 z-[70] max-h-[400px] overflow-y-auto" align="end">
+                          <RecurrenceSettings
+                            isRecurring={task.isRecurring || false}
+                            onIsRecurringChange={(value) => onTaskUpdate(task.id, { isRecurring: value })}
+                            recurrence={task.recurrence}
+                            onRecurrenceChange={(recurrence) => onTaskUpdate(task.id, { recurrence })}
+                            compact
                           />
-                        </div>
-                        <Calendar 
-                          mode="single" 
-                          selected={task.dueDate} 
-                          onSelect={(date) => onTaskUpdate(task.id, { dueDate: date })} 
-                        />
-                        {task.dueDate && (
-                          <div className="p-3 border-t">
-                            <RecurrenceSettings 
-                              isRecurring={task.isRecurring || false} 
-                              onIsRecurringChange={(value) => onTaskUpdate(task.id, { isRecurring: value })}
-                              recurrence={task.recurrence}
-                              onRecurrenceChange={(recurrence) => onTaskUpdate(task.id, { recurrence })}
-                              compact
-                            />
-                          </div>
-                        )}
-                      </PopoverContent>
-                    </Popover>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
 
                     {/* Importance */}
                     <Popover>
@@ -662,13 +660,13 @@ export function TaskDetailDialog({
                       </PopoverContent>
                     </Popover>
 
-                    {/* Progress */}
+                    {/* Progress with colorByValue */}
                     <Popover>
                       <PopoverTrigger asChild>
                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
                           <BarChart3 className="w-4 h-4 text-muted-foreground shrink-0" />
                           <div className="flex items-center gap-2 flex-1">
-                            <Progress value={task.progress || 0} className="h-1.5 flex-1" />
+                            <Progress value={task.progress || 0} colorByValue className="h-1.5 flex-1" />
                             <span className="text-xs text-muted-foreground w-8">{task.progress || 0}%</span>
                           </div>
                         </button>
@@ -682,73 +680,8 @@ export function TaskDetailDialog({
                   </div>
                 </div>
 
-                {/* CONTEXT */}
-                <div className="mb-5">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium mb-2 px-3">Context</p>
-                  <div className="space-y-0.5">
-                    {/* Areas */}
-                    <div className="flex items-center gap-3 px-3 py-2">
-                      <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
-                      {projectAreas.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {projectAreas.map((area) => area && (<Badge key={area.id} variant="secondary" className="text-xs" style={{ backgroundColor: `${area.color}15`, color: area.color }}>{area.name}</Badge>))}
-                        </div>
-                      ) : (<span className="text-sm text-muted-foreground">No areas</span>)}
-                    </div>
-
-                    {/* Project */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                          <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
-                          {selectedProject ? (
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedProject.color || '#6b7280' }} />
-                              <span className="text-sm truncate">{selectedProject.name}</span>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">None</span>
-                          )}
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-56 p-2" align="start">
-                        <div className="space-y-1">
-                          <button onClick={() => onTaskUpdate(task.id, { projectId: undefined })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", !task.projectId && "bg-muted")}>No Project</button>
-                          {projects.map((project) => (
-                            <button key={project.id} onClick={() => onTaskUpdate(task.id, { projectId: project.id })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.projectId === project.id && "bg-muted")}>
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color || '#6b7280' }} />
-                              {project.name}
-                            </button>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-
-                    {/* Responsible */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                          <Users className="w-4 h-4 text-muted-foreground shrink-0" />
-                          {task.assignees && task.assignees.length > 0 ? (
-                            <UserAvatarGroup users={task.assignees} max={3} size="xs" />
-                          ) : (
-                            <span className="text-sm text-muted-foreground">Unassigned</span>
-                          )}
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 p-3" align="start">
-                        <SearchableAssigneeSelect 
-                          members={projectMembers} 
-                          selectedAssignees={task.assignees || []} 
-                          onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })} 
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-
                 {/* WORKLOAD */}
-                <div>
+                <div className="mb-5">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium mb-2 px-3">Workload</p>
                   <div className="space-y-0.5">
                     {/* Est. Time */}
@@ -778,6 +711,71 @@ export function TaskDetailDialog({
                         <div className="space-y-1">
                           {EFFORT_OPTIONS.map((effort) => (<button key={effort.id} onClick={() => onTaskUpdate(task.id, { effort: effort.id as 'easy' | 'light' | 'focused' | 'deep' })} className={cn("w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.effort === effort.id && "bg-muted")}><span>{effort.label}</span><span className="text-xs text-muted-foreground">{effort.description}</span></button>))}
                         </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+
+                {/* CONTEXT */}
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium mb-2 px-3">Context</p>
+                  <div className="space-y-0.5">
+                    {/* Project */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+                          <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+                          {selectedProject ? (
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedProject.color || '#6b7280' }} />
+                              <span className="text-sm truncate">{selectedProject.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">None</span>
+                          )}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-56 p-2" align="start">
+                        <div className="space-y-1">
+                          <button onClick={() => onTaskUpdate(task.id, { projectId: undefined })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", !task.projectId && "bg-muted")}>No Project</button>
+                          {projects.map((project) => (
+                            <button key={project.id} onClick={() => onTaskUpdate(task.id, { projectId: project.id })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.projectId === project.id && "bg-muted")}>
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color || '#6b7280' }} />
+                              {project.name}
+                            </button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+
+                    {/* Areas */}
+                    <div className="flex items-center gap-3 px-3 py-2">
+                      <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
+                      {projectAreas.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {projectAreas.map((area) => area && (<Badge key={area.id} variant="secondary" className="text-xs" style={{ backgroundColor: `${area.color}15`, color: area.color }}>{area.name}</Badge>))}
+                        </div>
+                      ) : (<span className="text-sm text-muted-foreground">No areas</span>)}
+                    </div>
+
+                    {/* Responsible */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+                          <Users className="w-4 h-4 text-muted-foreground shrink-0" />
+                          {task.assignees && task.assignees.length > 0 ? (
+                            <UserAvatarGroup users={task.assignees} max={3} size="xs" />
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Unassigned</span>
+                          )}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-3" align="start">
+                        <SearchableAssigneeSelect 
+                          members={projectMembers} 
+                          selectedAssignees={task.assignees || []} 
+                          onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })} 
+                        />
                       </PopoverContent>
                     </Popover>
                   </div>
