@@ -858,28 +858,41 @@ export function TaskDetailDialog({
                     {/* Areas */}
                     <div className="flex items-center gap-3 px-3 py-2">
                       <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
-                      {projectAreas.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {projectAreas.map((area) => area && (
-                            <Badge 
-                              key={area.id} 
-                              variant="secondary" 
-                              className="text-xs transition-colors cursor-default" 
-                              style={{ backgroundColor: `${area.color}15`, color: area.color }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = area.color;
-                                e.currentTarget.style.color = 'white';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = `${area.color}15`;
-                                e.currentTarget.style.color = area.color;
-                              }}
-                            >
-                              {area.name}
-                            </Badge>
-                          ))}
+                      {task.projectId ? (
+                        // Show read-only inherited areas from project
+                        projectAreas.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {projectAreas.map((area) => area && (
+                              <Badge 
+                                key={area.id} 
+                                variant="secondary" 
+                                className="text-xs transition-colors cursor-default" 
+                                style={{ backgroundColor: `${area.color}15`, color: area.color }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = area.color;
+                                  e.currentTarget.style.color = 'white';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = `${area.color}15`;
+                                  e.currentTarget.style.color = area.color;
+                                }}
+                              >
+                                {area.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (<span className="text-sm text-muted-foreground">No areas</span>)
+                      ) : (
+                        // Show editable area selector when no project
+                        <div className="flex-1">
+                          <SearchableTagSelect
+                            tags={areas || []}
+                            selectedTags={task.tags || []}
+                            onTagsChange={(tags) => onTaskUpdate(task.id, { tags })}
+                            placeholder="Add areas..."
+                          />
                         </div>
-                      ) : (<span className="text-sm text-muted-foreground">No areas</span>)}
+                      )}
                     </div>
 
                     {/* Responsible */}
