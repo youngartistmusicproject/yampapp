@@ -584,217 +584,231 @@ export function TaskDetailDialog({
             </div>
 
             <div className="w-[280px] border-l border-border/40 bg-muted/20 overflow-y-auto shrink-0">
-              <div className="p-4 space-y-1">
-                {/* Stage */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                      <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Stage</p>
-                        <Badge variant="secondary" className="text-xs" style={{ backgroundColor: `${getStatusColor(task.status)}20`, color: getStatusColor(task.status) }}>{getStatusLabel(task.status)}</Badge>
-                      </div>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-2" align="start">
-                    <div className="space-y-1">
-                      {statuses.map((status) => (
-                        <button key={status.id} onClick={() => onTaskUpdate(task.id, { status: status.id })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.status === status.id && "bg-muted")}>
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: status.color }} />
-                          {status.name}
+              <div className="p-4">
+                {/* STATUS & PRIORITY */}
+                <div className="mb-5">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium mb-2 px-3">Status & Priority</p>
+                  <div className="space-y-0.5">
+                    {/* Stage */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+                          <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Stage</p>
+                            <Badge variant="secondary" className="text-xs" style={{ backgroundColor: `${getStatusColor(task.status)}20`, color: getStatusColor(task.status) }}>{getStatusLabel(task.status)}</Badge>
+                          </div>
                         </button>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Due Date */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                      <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Due Date</p>
-                        <span className="text-sm">{formatDate(task.dueDate) || <span className="text-muted-foreground">No date</span>}</span>
-                      </div>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <div className="p-3 border-b">
-                      <NaturalDateInput 
-                        value={task.dueDate} 
-                        onChange={(date) => onTaskUpdate(task.id, { dueDate: date })} 
-                        onRecurrenceChange={(recurrence) => onTaskUpdate(task.id, { 
-                          isRecurring: !!recurrence, 
-                          recurrence 
-                        })}
-                      />
-                    </div>
-                    <Calendar 
-                      mode="single" 
-                      selected={task.dueDate} 
-                      onSelect={(date) => onTaskUpdate(task.id, { dueDate: date })} 
-                    />
-                    {task.dueDate && (
-                      <div className="p-3 border-t">
-                        <RecurrenceSettings 
-                          isRecurring={task.isRecurring || false} 
-                          onIsRecurringChange={(value) => onTaskUpdate(task.id, { isRecurring: value })}
-                          recurrence={task.recurrence}
-                          onRecurrenceChange={(recurrence) => onTaskUpdate(task.id, { recurrence })}
-                          compact
-                        />
-                      </div>
-                    )}
-                  </PopoverContent>
-                </Popover>
-
-                {/* Importance */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                      <Flag className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Importance</p>
-                        {task.importance ? (<Badge className={cn("text-xs", IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.color)}>{IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
-                      </div>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-56 p-2" align="start">
-                    <div className="space-y-1">
-                      {IMPORTANCE_OPTIONS.map((imp) => (<button key={imp.id} onClick={() => onTaskUpdate(task.id, { importance: imp.id as 'low' | 'routine' | 'important' | 'critical' })} className={cn("w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.importance === imp.id && "bg-muted")}><span>{imp.label}</span><span className="text-xs text-muted-foreground">{imp.description}</span></button>))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Progress */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                      <BarChart3 className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Progress</p>
-                        <div className="flex items-center gap-2">
-                          <Progress value={task.progress || 0} className="h-1.5 flex-1" />
-                          <span className="text-xs text-muted-foreground w-8">{task.progress || 0}%</span>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-2" align="start">
+                        <div className="space-y-1">
+                          {statuses.map((status) => (
+                            <button key={status.id} onClick={() => onTaskUpdate(task.id, { status: status.id })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.status === status.id && "bg-muted")}>
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: status.color }} />
+                              {status.name}
+                            </button>
+                          ))}
                         </div>
-                      </div>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-2" align="start">
-                    <div className="grid grid-cols-4 gap-1">
-                      {PROGRESS_OPTIONS.map((p) => (<button key={p} onClick={() => onTaskUpdate(task.id, { progress: p })} className={cn("px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.progress === p && "bg-muted")}>{p}%</button>))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                      </PopoverContent>
+                    </Popover>
 
-                <div className="border-t border-border/30 my-2" />
+                    {/* Due Date */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+                          <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Due Date</p>
+                            <span className="text-sm">{formatDate(task.dueDate) || <span className="text-muted-foreground">No date</span>}</span>
+                          </div>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <div className="p-3 border-b">
+                          <NaturalDateInput 
+                            value={task.dueDate} 
+                            onChange={(date) => onTaskUpdate(task.id, { dueDate: date })} 
+                            onRecurrenceChange={(recurrence) => onTaskUpdate(task.id, { 
+                              isRecurring: !!recurrence, 
+                              recurrence 
+                            })}
+                          />
+                        </div>
+                        <Calendar 
+                          mode="single" 
+                          selected={task.dueDate} 
+                          onSelect={(date) => onTaskUpdate(task.id, { dueDate: date })} 
+                        />
+                        {task.dueDate && (
+                          <div className="p-3 border-t">
+                            <RecurrenceSettings 
+                              isRecurring={task.isRecurring || false} 
+                              onIsRecurringChange={(value) => onTaskUpdate(task.id, { isRecurring: value })}
+                              recurrence={task.recurrence}
+                              onRecurrenceChange={(recurrence) => onTaskUpdate(task.id, { recurrence })}
+                              compact
+                            />
+                          </div>
+                        )}
+                      </PopoverContent>
+                    </Popover>
 
-                {/* Areas */}
-                <div className="px-3 py-2.5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Areas</p>
+                    {/* Importance */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+                          <Flag className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Importance</p>
+                            {task.importance ? (<Badge className={cn("text-xs", IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.color)}>{IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
+                          </div>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-56 p-2" align="start">
+                        <div className="space-y-1">
+                          {IMPORTANCE_OPTIONS.map((imp) => (<button key={imp.id} onClick={() => onTaskUpdate(task.id, { importance: imp.id as 'low' | 'routine' | 'important' | 'critical' })} className={cn("w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.importance === imp.id && "bg-muted")}><span>{imp.label}</span><span className="text-xs text-muted-foreground">{imp.description}</span></button>))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+
+                    {/* Progress */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+                          <BarChart3 className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Progress</p>
+                            <div className="flex items-center gap-2">
+                              <Progress value={task.progress || 0} className="h-1.5 flex-1" />
+                              <span className="text-xs text-muted-foreground w-8">{task.progress || 0}%</span>
+                            </div>
+                          </div>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-2" align="start">
+                        <div className="grid grid-cols-4 gap-1">
+                          {PROGRESS_OPTIONS.map((p) => (<button key={p} onClick={() => onTaskUpdate(task.id, { progress: p })} className={cn("px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.progress === p && "bg-muted")}>{p}%</button>))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                  {projectAreas.length > 0 ? (
-                    <div className="flex flex-wrap gap-1 pl-6">
-                      {projectAreas.map((area) => area && (<Badge key={area.id} variant="secondary" className="text-xs" style={{ backgroundColor: `${area.color}15`, color: area.color }}>{area.name}</Badge>))}
-                    </div>
-                  ) : (<p className="text-sm text-muted-foreground pl-6">No areas</p>)}
                 </div>
 
-                {/* Project */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                      <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Project</p>
-                        {selectedProject ? (
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedProject.color || '#6b7280' }} />
-                            <span className="text-sm truncate">{selectedProject.name}</span>
+                {/* CONTEXT */}
+                <div className="mb-5">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium mb-2 px-3">Context</p>
+                  <div className="space-y-0.5">
+                    {/* Areas */}
+                    <div className="px-3 py-2">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Areas</p>
+                      </div>
+                      {projectAreas.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 pl-6">
+                          {projectAreas.map((area) => area && (<Badge key={area.id} variant="secondary" className="text-xs" style={{ backgroundColor: `${area.color}15`, color: area.color }}>{area.name}</Badge>))}
+                        </div>
+                      ) : (<p className="text-sm text-muted-foreground pl-6">No areas</p>)}
+                    </div>
+
+                    {/* Project */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+                          <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Project</p>
+                            {selectedProject ? (
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedProject.color || '#6b7280' }} />
+                                <span className="text-sm truncate">{selectedProject.name}</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">None</span>
+                            )}
                           </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">None</span>
-                        )}
-                      </div>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-56 p-2" align="start">
-                    <div className="space-y-1">
-                      <button onClick={() => onTaskUpdate(task.id, { projectId: undefined })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", !task.projectId && "bg-muted")}>No Project</button>
-                      {projects.map((project) => (
-                        <button key={project.id} onClick={() => onTaskUpdate(task.id, { projectId: project.id })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.projectId === project.id && "bg-muted")}>
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color || '#6b7280' }} />
-                          {project.name}
                         </button>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-56 p-2" align="start">
+                        <div className="space-y-1">
+                          <button onClick={() => onTaskUpdate(task.id, { projectId: undefined })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", !task.projectId && "bg-muted")}>No Project</button>
+                          {projects.map((project) => (
+                            <button key={project.id} onClick={() => onTaskUpdate(task.id, { projectId: project.id })} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.projectId === project.id && "bg-muted")}>
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color || '#6b7280' }} />
+                              {project.name}
+                            </button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
 
-                <div className="border-t border-border/30 my-2" />
+                    {/* Responsible */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+                          <Users className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Responsible</p>
+                            {task.assignees && task.assignees.length > 0 ? (
+                              <UserAvatarGroup users={task.assignees} max={3} size="xs" />
+                            ) : (
+                              <span className="text-sm text-muted-foreground">Unassigned</span>
+                            )}
+                          </div>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-3" align="start">
+                        <SearchableAssigneeSelect 
+                          members={projectMembers} 
+                          selectedAssignees={task.assignees || []} 
+                          onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })} 
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
 
-                {/* Est. Time */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                      <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Est. Time</p>
-                        <span className="text-sm">{task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : <span className="text-muted-foreground">Not set</span>}</span>
-                      </div>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-40 p-2" align="start">
-                    <div className="grid grid-cols-2 gap-1">
-                      {TIME_OPTIONS.map((time) => (<button key={time.value} onClick={() => onTaskUpdate(task.id, { estimatedTime: time.value })} className={cn("px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.estimatedTime === time.value && "bg-muted")}>{time.label}</button>))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                {/* WORKLOAD */}
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium mb-2 px-3">Workload</p>
+                  <div className="space-y-0.5">
+                    {/* Est. Time */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+                          <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Est. Time</p>
+                            <span className="text-sm">{task.estimatedTime ? formatEstimatedTime(task.estimatedTime) : <span className="text-muted-foreground">Not set</span>}</span>
+                          </div>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-40 p-2" align="start">
+                        <div className="grid grid-cols-2 gap-1">
+                          {TIME_OPTIONS.map((time) => (<button key={time.value} onClick={() => onTaskUpdate(task.id, { estimatedTime: time.value })} className={cn("px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.estimatedTime === time.value && "bg-muted")}>{time.label}</button>))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
 
-                {/* Effort */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                      <Gauge className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Effort</p>
-                        {task.effort ? (<Badge className={cn("text-xs", EFFORT_OPTIONS.find(e => e.id === task.effort)?.color)}>{EFFORT_OPTIONS.find(e => e.id === task.effort)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
-                      </div>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-56 p-2" align="start">
-                    <div className="space-y-1">
-                      {EFFORT_OPTIONS.map((effort) => (<button key={effort.id} onClick={() => onTaskUpdate(task.id, { effort: effort.id as 'easy' | 'light' | 'focused' | 'deep' })} className={cn("w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.effort === effort.id && "bg-muted")}><span>{effort.label}</span><span className="text-xs text-muted-foreground">{effort.description}</span></button>))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Responsible */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/60 transition-colors text-left">
-                      <Users className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Responsible</p>
-                        {task.assignees && task.assignees.length > 0 ? (
-                          <UserAvatarGroup users={task.assignees} max={3} size="xs" />
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Unassigned</span>
-                        )}
-                      </div>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-3" align="start">
-                    <SearchableAssigneeSelect 
-                      members={projectMembers} 
-                      selectedAssignees={task.assignees || []} 
-                      onAssigneesChange={(assignees) => onTaskUpdate(task.id, { assignees })} 
-                    />
-                  </PopoverContent>
-                </Popover>
+                    {/* Effort */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
+                          <Gauge className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">Effort</p>
+                            {task.effort ? (<Badge className={cn("text-xs", EFFORT_OPTIONS.find(e => e.id === task.effort)?.color)}>{EFFORT_OPTIONS.find(e => e.id === task.effort)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
+                          </div>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-56 p-2" align="start">
+                        <div className="space-y-1">
+                          {EFFORT_OPTIONS.map((effort) => (<button key={effort.id} onClick={() => onTaskUpdate(task.id, { effort: effort.id as 'easy' | 'light' | 'focused' | 'deep' })} className={cn("w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm hover:bg-muted", task.effort === effort.id && "bg-muted")}><span>{effort.label}</span><span className="text-xs text-muted-foreground">{effort.description}</span></button>))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
