@@ -1,14 +1,55 @@
-import { User, Bell, Shield, Palette, Globe, HelpCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Bell, Shield } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUpdateProfile } from "@/hooks/useProfiles";
+import { getInitials } from "@/lib/utils";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export default function Settings() {
+  const { profile, refreshProfile } = useAuth();
+  const updateProfile = useUpdateProfile();
+  
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setFirstName(profile.first_name || "");
+      setLastName(profile.last_name || "");
+    }
+  }, [profile]);
+
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+    
+    setIsSaving(true);
+    try {
+      await updateProfile.mutateAsync({
+        id: profile.id,
+        first_name: firstName,
+        last_name: lastName || null,
+      });
+      await refreshProfile();
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      toast.error("Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const initials = profile ? getInitials(profile.first_name, profile.last_name) : "?";
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
       {/* Page Header */}
@@ -44,8 +85,11 @@ export default function Settings() {
               {/* Avatar */}
               <div className="flex items-center gap-4">
                 <Avatar className="w-20 h-20">
+                  {profile?.avatar_url && (
+                    <AvatarImage src={profile.avatar_url} alt="Profile" />
+                  )}
                   <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                    JD
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div>
@@ -64,29 +108,46 @@ export default function Settings() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" defaultValue="John" />
+                  <Input 
+                    id="firstName" 
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" defaultValue="Doe" />
+                  <Input 
+                    id="lastName" 
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" defaultValue="john@example.com" />
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    value={profile?.email || ""}
+                    disabled
+                    className="bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Contact an administrator to change your email
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" type="tel" defaultValue="(555) 123-4567" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Input id="bio" placeholder="Tell us about yourself..." />
               </div>
 
               <div className="flex justify-end">
-                <Button>Save Changes</Button>
+                <Button onClick={handleSaveProfile} disabled={isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
               </div>
             </CardContent>
           </Card>

@@ -3,6 +3,7 @@ import { useProfiles, ProfileWithRoles } from '@/hooks/useProfiles';
 import { useAuth, AppRole } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getFullName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -58,7 +59,8 @@ export default function UserManagement() {
   // Form state for creating new user
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
-  const [newUserDisplayName, setNewUserDisplayName] = useState('');
+  const [newUserFirstName, setNewUserFirstName] = useState('');
+  const [newUserLastName, setNewUserLastName] = useState('');
   const [newUserRole, setNewUserRole] = useState<AppRole>('staff');
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -68,7 +70,8 @@ export default function UserManagement() {
         body: {
           email: newUserEmail,
           password: newUserPassword,
-          display_name: newUserDisplayName,
+          first_name: newUserFirstName,
+          last_name: newUserLastName || null,
           role: newUserRole,
         },
       });
@@ -97,7 +100,8 @@ export default function UserManagement() {
   const resetForm = () => {
     setNewUserEmail('');
     setNewUserPassword('');
-    setNewUserDisplayName('');
+    setNewUserFirstName('');
+    setNewUserLastName('');
     setNewUserRole('staff');
     setCreateError(null);
   };
@@ -152,15 +156,27 @@ export default function UserManagement() {
                 </Alert>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
-                <Input
-                  id="displayName"
-                  placeholder="John Doe"
-                  value={newUserDisplayName}
-                  onChange={(e) => setNewUserDisplayName(e.target.value)}
-                  required
-                />
+              <div className="grid gap-4 grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    placeholder="John"
+                    value={newUserFirstName}
+                    onChange={(e) => setNewUserFirstName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Doe"
+                    value={newUserLastName}
+                    onChange={(e) => setNewUserLastName(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -250,51 +266,54 @@ export default function UserManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {profiles?.map((profile) => (
-              <TableRow key={profile.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <UserAvatar
-                      user={{
-                        id: profile.id,
-                        name: profile.display_name,
-                        email: profile.email || '',
-                        avatar: profile.avatar_url || undefined,
-                        role: profile.roles[0] || 'staff',
-                      }}
-                      size="sm"
-                      showTooltip={false}
-                    />
-                    <span className="font-medium">{profile.display_name}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {profile.email}
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {profile.roles.length > 0 ? (
-                      profile.roles.map((role) => (
-                        <Badge
-                          key={role}
-                          variant="outline"
-                          className={ROLE_COLORS[role]}
-                        >
-                          {ROLE_LABELS[role]}
-                        </Badge>
-                      ))
-                    ) : (
-                      <span className="text-muted-foreground text-sm">
-                        No role assigned
-                      </span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {new Date(profile.created_at).toLocaleDateString()}
-                </TableCell>
-              </TableRow>
-            ))}
+            {profiles?.map((profile) => {
+              const fullName = getFullName(profile.first_name, profile.last_name);
+              return (
+                <TableRow key={profile.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <UserAvatar
+                        user={{
+                          id: profile.id,
+                          name: fullName,
+                          email: profile.email || '',
+                          avatar: profile.avatar_url || undefined,
+                          role: profile.roles[0] || 'staff',
+                        }}
+                        size="sm"
+                        showTooltip={false}
+                      />
+                      <span className="font-medium">{fullName}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {profile.email}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {profile.roles.length > 0 ? (
+                        profile.roles.map((role) => (
+                          <Badge
+                            key={role}
+                            variant="outline"
+                            className={ROLE_COLORS[role]}
+                          >
+                            {ROLE_LABELS[role]}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground text-sm">
+                          No role assigned
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {new Date(profile.created_at).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {(!profiles || profiles.length === 0) && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-8">
