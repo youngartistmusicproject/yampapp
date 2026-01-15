@@ -741,7 +741,7 @@ export function TaskDetailDialog({
                       <PopoverTrigger asChild>
                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
                           <Flag className="w-4 h-4 text-muted-foreground shrink-0" />
-                          {task.importance ? (<Badge className={cn("text-xs", IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.color)}>{IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
+                          {task.importance ? (<Badge variant="outline" className={cn("text-xs border-0", IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.color)}>{IMPORTANCE_OPTIONS.find(i => i.id === task.importance)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-56 p-2" align="start">
@@ -832,7 +832,7 @@ export function TaskDetailDialog({
                       <PopoverTrigger asChild>
                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/60 transition-colors text-left">
                           <Gauge className="w-4 h-4 text-muted-foreground shrink-0" />
-                          {task.effort ? (<Badge className={cn("text-xs", EFFORT_OPTIONS.find(e => e.id === task.effort)?.color)}>{EFFORT_OPTIONS.find(e => e.id === task.effort)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
+                          {task.effort ? (<Badge variant="outline" className={cn("text-xs border-0", EFFORT_OPTIONS.find(e => e.id === task.effort)?.color)}>{EFFORT_OPTIONS.find(e => e.id === task.effort)?.label}</Badge>) : (<span className="text-sm text-muted-foreground">Not set</span>)}
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-56 p-2" align="start">
