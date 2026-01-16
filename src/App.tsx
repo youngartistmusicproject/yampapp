@@ -20,6 +20,8 @@ import UserManagement from "./pages/UserManagement";
 import OrganizationManagement from "./pages/OrganizationManagement";
 import Login from "./pages/Login";
 import SetupAdmin from "./pages/SetupAdmin";
+import RegisterOrganization from "./pages/RegisterOrganization";
+import AcceptInvitation from "./pages/AcceptInvitation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +37,8 @@ const App = () => (
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/setup" element={<SetupAdmin />} />
+            <Route path="/register" element={<RegisterOrganization />} />
+            <Route path="/accept-invitation" element={<AcceptInvitation />} />
             
             {/* Protected routes */}
             <Route

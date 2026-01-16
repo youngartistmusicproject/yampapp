@@ -42,6 +42,7 @@ export function useCreateOrganization() {
 
   return useMutation({
     mutationFn: async (org: { name: string; slug: string; logo_url?: string }) => {
+      // Create the organization
       const { data, error } = await supabase
         .from('organizations')
         .insert(org)
@@ -49,10 +50,29 @@ export function useCreateOrganization() {
         .single();
 
       if (error) throw error;
+
+      // Get current user and add them as admin member
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error: memberError } = await supabase
+          .from('organization_members')
+          .insert({
+            organization_id: data.id,
+            user_id: user.id,
+            role: 'admin' as AppRole,
+          });
+        
+        if (memberError) {
+          console.error('Failed to add creator as org member:', memberError);
+        }
+      }
+
       return data as Organization;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['all-organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-members'] });
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
     },
   });
 }
