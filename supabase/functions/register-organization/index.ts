@@ -5,21 +5,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface BootstrapRequest {
+interface RegisterRequest {
+  org_name: string;
   email: string;
   password: string;
   first_name: string;
   last_name?: string;
 }
 
-// Simple in-memory rate limiting (resets on function restart)
-// For production, consider using a database or external cache
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// Simple in-memory rate limiting
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_MAX_ATTEMPTS = 5;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 function getClientIP(req: Request): string {
-  // Try various headers for client IP
   const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) {
     return forwarded.split(',')[0].trim();
@@ -28,7 +34,6 @@ function getClientIP(req: Request): string {
   if (realIP) {
     return realIP;
   }
-  // Fallback to a generic identifier
   return 'unknown-client';
 }
 
@@ -36,7 +41,6 @@ function checkRateLimit(clientIP: string): { allowed: boolean; retryAfterSeconds
   const now = Date.now();
   const record = rateLimitMap.get(clientIP);
   
-  // Clean up expired records
   if (record && now > record.resetTime) {
     rateLimitMap.delete(clientIP);
   }
@@ -44,7 +48,6 @@ function checkRateLimit(clientIP: string): { allowed: boolean; retryAfterSeconds
   const currentRecord = rateLimitMap.get(clientIP);
   
   if (!currentRecord) {
-    // First attempt
     rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
     return { allowed: true };
   }
@@ -54,7 +57,6 @@ function checkRateLimit(clientIP: string): { allowed: boolean; retryAfterSeconds
     return { allowed: false, retryAfterSeconds };
   }
   
-  // Increment count
   currentRecord.count++;
   return { allowed: true };
 }
@@ -87,40 +89,17 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Create admin client
     const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Check if any super-admin exists
-    const { data: existingAdmins, error: checkError } = await adminClient
-      .from('user_roles')
-      .select('id')
-      .eq('role', 'super-admin')
-      .limit(1);
-
-    if (checkError) {
-      // Return generic error to avoid information disclosure
-      return new Response(
-        JSON.stringify({ error: 'Setup is not available at this time' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (existingAdmins && existingAdmins.length > 0) {
-      // Return generic error - don't reveal that admin exists
-      return new Response(
-        JSON.stringify({ error: 'Setup is not available. Please contact your administrator.' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Parse request body
-    const { email, password, first_name, last_name }: BootstrapRequest = await req.json();
+    const { org_name, email, password, first_name, last_name }: RegisterRequest = await req.json();
 
-    if (!email || !password || !first_name) {
+    // Validation
+    if (!org_name || !email || !password || !first_name) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: email, password, first_name' }),
+        JSON.stringify({ error: 'Missing required fields: org_name, email, password, first_name' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -132,17 +111,30 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create the first super-admin user
-    const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+    // Generate slug and check uniqueness
+    let slug = generateSlug(org_name);
+    const { data: existingOrg } = await adminClient
+      .from('organizations')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (existingOrg) {
+      // Add random suffix if slug exists
+      slug = `${slug}-${Date.now().toString(36)}`;
+    }
+
+    // 1. Create the user
+    const { data: newUser, error: createUserError } = await adminClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: { first_name, last_name },
     });
 
-    if (createError) {
+    if (createUserError) {
       return new Response(
-        JSON.stringify({ error: createError.message }),
+        JSON.stringify({ error: createUserError.message }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -154,61 +146,78 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Assign super-admin role
-    const { error: roleInsertError } = await adminClient
-      .from('user_roles')
-      .insert({ user_id: newUser.user.id, role: 'super-admin' });
+    // 2. Create the organization
+    const { data: org, error: orgError } = await adminClient
+      .from('organizations')
+      .insert({
+        name: org_name,
+        slug,
+      })
+      .select()
+      .single();
 
-    if (roleInsertError) {
-      console.error('Failed to assign role:', roleInsertError);
+    if (orgError) {
+      console.error('Failed to create organization:', orgError);
+      // Cleanup: delete the user we just created
+      await adminClient.auth.admin.deleteUser(newUser.user.id);
       return new Response(
-        JSON.stringify({ error: 'User created but failed to assign super-admin role' }),
+        JSON.stringify({ error: 'Failed to create organization' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Add super-admin to Default Organization
-    const DEFAULT_ORG_ID = '00000000-0000-0000-0000-000000000001';
-    
-    const { error: orgMemberError } = await adminClient
+    // 3. Assign admin role globally
+    const { error: roleError } = await adminClient
+      .from('user_roles')
+      .insert({ user_id: newUser.user.id, role: 'admin' });
+
+    if (roleError) {
+      console.error('Failed to assign role:', roleError);
+    }
+
+    // 4. Add user as organization admin
+    const { error: memberError } = await adminClient
       .from('organization_members')
       .insert({
-        organization_id: DEFAULT_ORG_ID,
+        organization_id: org.id,
         user_id: newUser.user.id,
         role: 'admin',
       });
 
-    if (orgMemberError) {
-      console.error('Failed to add to Default Organization:', orgMemberError);
-      // Non-fatal - continue anyway as user is created
+    if (memberError) {
+      console.error('Failed to add org member:', memberError);
     }
 
-    // Set primary organization on profile
-    const { error: profileUpdateError } = await adminClient
+    // 5. Set primary organization on profile
+    const { error: profileError } = await adminClient
       .from('profiles')
-      .update({ primary_organization_id: DEFAULT_ORG_ID })
+      .update({ primary_organization_id: org.id })
       .eq('id', newUser.user.id);
 
-    if (profileUpdateError) {
-      console.error('Failed to set primary organization:', profileUpdateError);
-      // Non-fatal - continue anyway
+    if (profileError) {
+      console.error('Failed to update profile:', profileError);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Super-admin account created successfully! You can now log in.',
+        message: 'Organization and admin account created successfully! You can now log in.',
         user: {
           id: newUser.user.id,
           email: newUser.user.email,
           first_name,
           last_name,
         },
+        organization: {
+          id: org.id,
+          name: org.name,
+          slug: org.slug,
+        },
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in bootstrap-admin function:', error);
+    console.error('Error in register-organization function:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
