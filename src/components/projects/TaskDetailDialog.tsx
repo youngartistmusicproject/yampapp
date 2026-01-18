@@ -76,7 +76,9 @@ import type { Task, Project, User, RecurrenceSettings as RecurrenceSettingsType 
 import { cn } from "@/lib/utils";
 import { triggerConfetti } from "@/lib/confetti";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTaskComments, useAddTaskComment, useDeleteTaskComment, useTaskAttachments, useUploadTaskAttachment } from "@/hooks/useTaskComments";
+import { useTaskComments, useAddTaskComment, useDeleteTaskComment, useTaskAttachments, useUploadTaskAttachment, useToggleCommentReaction } from "@/hooks/useTaskComments";
+import { MentionInput, renderMentionContent } from "./MentionInput";
+import { CommentReactions } from "./CommentReactions";
 
 interface Subtask {
   id: string;
@@ -343,6 +345,7 @@ export function TaskDetailDialog({
   const addComment = useAddTaskComment();
   const deleteComment = useDeleteTaskComment();
   const uploadAttachment = useUploadTaskAttachment();
+  const toggleReaction = useToggleCommentReaction();
 
   const subtasks: Subtask[] = (() => {
     if (!task?.subtasks) return [];
@@ -661,42 +664,64 @@ export function TaskDetailDialog({
                         ) : comments.length === 0 ? (
                           <p className="text-sm text-muted-foreground/60 italic">No comments yet</p>
                         ) : (
-                          comments.map((comment) => (
-                            <div key={comment.id} className="group flex items-start gap-3">
-                              <UserAvatar user={comment.author} size="sm" showTooltip={false} />
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium">{comment.author.name}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {format(new Date(comment.createdAt), 'MMM d, h:mm a')}
-                                  </span>
-                                  <button
-                                    onClick={() => handleDeleteComment(comment.id)}
-                                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-opacity ml-auto"
-                                  >
-                                    <Trash2 className="w-3 h-3 text-destructive" />
-                                  </button>
-                                </div>
-                                <p className="text-sm mt-0.5">{comment.content}</p>
-                                {comment.attachments && comment.attachments.length > 0 && (
-                                  <div className="flex flex-wrap gap-2 mt-2">
-                                    {comment.attachments.map((file) => (
-                                      <a 
-                                        key={file.id} 
-                                        href={file.url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded text-xs hover:bg-muted/80"
-                                      >
-                                        <Paperclip className="w-3 h-3" />
-                                        {file.name}
-                                      </a>
-                                    ))}
+                          comments.map((comment) => {
+                            // Transform reactions for CommentReactions component
+                            const reactionsForDisplay = (comment.reactions || []).map(r => ({
+                              emoji: r.emoji,
+                              count: r.users.length,
+                              hasReacted: r.users.some(u => u.id === profile?.id),
+                              users: r.users.map(u => u.name),
+                            }));
+
+                            return (
+                              <div key={comment.id} className="group flex items-start gap-3">
+                                <UserAvatar user={comment.author} size="sm" showTooltip={false} />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium">{comment.author.name}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {format(new Date(comment.createdAt), 'MMM d, h:mm a')}
+                                    </span>
+                                    <button
+                                      onClick={() => handleDeleteComment(comment.id)}
+                                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-opacity ml-auto"
+                                    >
+                                      <Trash2 className="w-3 h-3 text-destructive" />
+                                    </button>
                                   </div>
-                                )}
+                                  <p className="text-sm mt-0.5">{renderMentionContent(comment.content)}</p>
+                                  {comment.attachments && comment.attachments.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                      {comment.attachments.map((file) => (
+                                        <a 
+                                          key={file.id} 
+                                          href={file.url} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded text-xs hover:bg-muted/80"
+                                        >
+                                          <Paperclip className="w-3 h-3" />
+                                          {file.name}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {/* Comment reactions */}
+                                  <div className="mt-2">
+                                    <CommentReactions
+                                      reactions={reactionsForDisplay}
+                                      onToggleReaction={(emoji) => {
+                                        if (task) {
+                                          toggleReaction.mutate({ taskId: task.id, commentId: comment.id, emoji });
+                                        }
+                                      }}
+                                      size="sm"
+                                    />
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          ))
+                            );
+                          })
                         )}
                       </div>
 
@@ -725,17 +750,17 @@ export function TaskDetailDialog({
                       <div className="flex items-start gap-3">
                         <UserAvatar user={currentUser} size="sm" showTooltip={false} />
                         <div className="flex-1 relative">
-                          <Textarea 
+                          <MentionInput 
                             value={newComment} 
-                            onChange={(e) => setNewComment(e.target.value)} 
+                            onChange={setNewComment} 
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
                                 handleAddComment();
                               }
                             }}
-                            placeholder="Write a comment... Press Enter to send" 
-                            className="min-h-[80px] pr-20 resize-none text-sm" 
+                            placeholder="Write a comment... Use @ to mention. Press Enter to send" 
+                            className="min-h-[80px] pr-20 text-sm" 
                           />
                           <input 
                             ref={fileInputRef}

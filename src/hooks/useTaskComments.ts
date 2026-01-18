@@ -1,10 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { User, TaskComment, TaskAttachment } from '@/types';
+import type { User, TaskComment, TaskAttachment, CommentReaction } from '@/types';
+
+// Interface for comment reactions from database
+interface CommentReactionRow {
+  id: string;
+  comment_id: string;
+  user_id: string;
+  user_name: string;
+  emoji: string;
+  created_at: string;
+}
 
 // Fetch comments for a specific task
 export function useTaskComments(taskId: string | null) {
+  const { user } = useAuth();
+  
   return useQuery({
     queryKey: ['task-comments', taskId],
     queryFn: async () => {
@@ -27,6 +39,19 @@ export function useTaskComments(taskId: string | null) {
       
       if (attachmentsError) throw attachmentsError;
       
+      // Fetch comment reactions
+      const commentIds = commentsData.map(c => c.id);
+      let reactionsData: CommentReactionRow[] = [];
+      if (commentIds.length > 0) {
+        const { data, error: reactionsError } = await supabase
+          .from('task_comment_reactions')
+          .select('*')
+          .in('comment_id', commentIds);
+        
+        if (reactionsError) throw reactionsError;
+        reactionsData = (data || []) as CommentReactionRow[];
+      }
+      
       // Group attachments by comment_id
       const attachmentsByComment = new Map<string, TaskAttachment[]>();
       attachmentsData?.forEach(att => {
@@ -43,6 +68,32 @@ export function useTaskComments(taskId: string | null) {
         attachmentsByComment.set(att.comment_id, existing);
       });
       
+      // Group reactions by comment_id and emoji
+      const reactionsByComment = new Map<string, CommentReaction[]>();
+      reactionsData.forEach(reaction => {
+        const existing = reactionsByComment.get(reaction.comment_id) || [];
+        const emojiReaction = existing.find(r => r.emoji === reaction.emoji);
+        if (emojiReaction) {
+          emojiReaction.users.push({ 
+            id: reaction.user_id, 
+            name: reaction.user_name, 
+            email: '', 
+            role: 'staff' as const 
+          });
+        } else {
+          existing.push({
+            emoji: reaction.emoji,
+            users: [{ 
+              id: reaction.user_id, 
+              name: reaction.user_name, 
+              email: '', 
+              role: 'staff' as const 
+            }],
+          });
+        }
+        reactionsByComment.set(reaction.comment_id, existing);
+      });
+      
       // Map to TaskComment format
       return commentsData.map(c => ({
         id: c.id,
@@ -50,10 +101,67 @@ export function useTaskComments(taskId: string | null) {
         author: { id: c.author_name, name: c.author_name, email: '', role: 'staff' as const } as User,
         createdAt: new Date(c.created_at),
         attachments: attachmentsByComment.get(c.id) || [],
+        reactions: reactionsByComment.get(c.id) || [],
         parentCommentId: c.parent_comment_id || undefined,
       })) as TaskComment[];
     },
     enabled: !!taskId,
+  });
+}
+
+// Toggle reaction on a comment
+export function useToggleCommentReaction() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      taskId, 
+      commentId, 
+      emoji 
+    }: { 
+      taskId: string; 
+      commentId: string; 
+      emoji: string;
+    }) => {
+      if (!user) throw new Error('Not authenticated');
+      
+      // Check if reaction already exists
+      const { data: existing } = await supabase
+        .from('task_comment_reactions')
+        .select('id')
+        .eq('comment_id', commentId)
+        .eq('user_id', user.id)
+        .eq('emoji', emoji)
+        .maybeSingle();
+      
+      if (existing) {
+        // Remove reaction
+        const { error } = await supabase
+          .from('task_comment_reactions')
+          .delete()
+          .eq('id', existing.id);
+        
+        if (error) throw error;
+        return { action: 'removed' };
+      } else {
+        // Add reaction
+        const { error } = await supabase
+          .from('task_comment_reactions')
+          .insert({
+            comment_id: commentId,
+            user_id: user.id,
+            user_name: 'placeholder', // Will be set by trigger
+            emoji,
+          });
+        
+        if (error) throw error;
+        return { action: 'added' };
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['task-comments', variables.taskId] });
+    },
   });
 }
 
