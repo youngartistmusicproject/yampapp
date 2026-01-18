@@ -1130,6 +1130,7 @@ export type Database = {
       }
     }
     Functions: {
+      get_current_user_name: { Args: never; Returns: string }
       get_org_role: {
         Args: { _org_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
