@@ -3,16 +3,14 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle, 
-  TrendingUp,
   Calendar,
   MessageSquare,
-  FileText,
   ArrowRight,
   Loader2,
   CalendarClock,
-  BarChart3
+  BarChart3,
+  FolderKanban
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -30,6 +28,7 @@ import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { Task, TaskComment } from "@/types";
 import { teamMembers, statusLibrary, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const currentUser = teamMembers[0];
 
@@ -57,6 +56,7 @@ export default function Dashboard() {
   const { events, isLoading: eventsLoading } = useGoogleCalendar();
   
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
+  const [quickFilter, setQuickFilter] = useState<'all' | 'overdue' | 'today' | 'tomorrow'>('all');
 
   // Get upcoming events (next 3)
   const upcomingEvents = events
@@ -66,6 +66,24 @@ export default function Dashboard() {
 
   const overdueCount = stats?.overdueTasks ?? 0;
 
+  // Filter tasks based on quick filter
+  const filteredTasks = tasks.filter(task => {
+    if (quickFilter === 'all') return true;
+    if (!task.dueDate) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dueDate = new Date(task.dueDate);
+    dueDate.setHours(0, 0, 0, 0);
+    
+    if (quickFilter === 'overdue') return dueDate < today;
+    if (quickFilter === 'today') return dueDate.getTime() === today.getTime();
+    if (quickFilter === 'tomorrow') return dueDate.getTime() === tomorrow.getTime();
+    return true;
+  });
+
   const handleTaskClick = (taskId: string) => {
     const fullTask = fullTasks.find(t => t.id === taskId);
     if (fullTask) {
@@ -74,10 +92,8 @@ export default function Dashboard() {
   };
 
   const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
-    // Find the task to check if it's recurring
     const task = fullTasks.find(t => t.id === taskId);
     
-    // If marking a recurring task as done, use the special hook
     if (updates.status === 'done' && task?.isRecurring && task?.recurrence) {
       completeRecurringTask.mutate({ task }, {
         onSuccess: (result) => {
@@ -120,401 +136,419 @@ export default function Dashboard() {
   const handleDeleteComment = (taskId: string, commentId: string) => {};
   const handleToggleReaction = (taskId: string, commentId: string, emoji: string) => {};
 
-  const statCards = [
+  const statItems = [
     { 
-      label: "Overdue Tasks", 
+      label: "Overdue", 
       value: overdueCount, 
       icon: AlertCircle, 
-      trend: "Past due date",
       highlight: overdueCount > 0,
       link: "/projects?filter=overdue"
     },
     { 
-      label: "Due Today", 
+      label: "Today", 
       value: stats?.tasksDueToday ?? 0, 
       icon: Clock, 
-      trend: "Tasks due today",
       highlight: false,
       link: "/projects?filter=today"
     },
     { 
-      label: "Due Tomorrow", 
+      label: "Tomorrow", 
       value: stats?.tasksDueTomorrow ?? 0, 
       icon: CalendarClock, 
-      trend: "Plan ahead",
       highlight: false,
       link: "/projects?filter=tomorrow"
     },
     { 
-      label: "Active Projects", 
+      label: "Projects", 
       value: stats?.activeProjects ?? 0, 
-      icon: CheckCircle2, 
-      trend: "In progress",
+      icon: FolderKanban, 
       highlight: false,
       link: undefined as string | undefined
     },
   ];
 
+  const quickFilters = [
+    { id: 'all' as const, label: 'All' },
+    { id: 'overdue' as const, label: 'Overdue', count: overdueCount },
+    { id: 'today' as const, label: 'Today', count: stats?.tasksDueToday ?? 0 },
+    { id: 'tomorrow' as const, label: 'Tomorrow', count: stats?.tasksDueTomorrow ?? 0 },
+  ];
+
   return (
-    <div className="space-y-4 sm:space-y-6 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       {/* Page Header */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Dashboard</h1>
-        <p className="text-sm sm:text-base text-muted-foreground mt-1">Welcome back! Here's what's happening today.</p>
+        <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Your daily overview</p>
       </div>
 
-      {/* Stats Grid - 2 cols on mobile, 4 on desktop */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat) => {
-          const cardContent = (
-            <Card
-              className={`shadow-card hover:shadow-elevated transition-shadow ${
-                stat.highlight ? 'border-destructive bg-destructive/5' : ''
-              } ${stat.link ? 'cursor-pointer' : ''}`}
+      {/* Compact Stats Row */}
+      <div className="flex flex-wrap gap-2">
+        {statItems.map((stat) => {
+          const content = (
+            <div
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors",
+                stat.highlight 
+                  ? "bg-destructive/10 border-destructive/30 text-destructive" 
+                  : "bg-secondary/50 border-border/50 hover:bg-secondary",
+                stat.link && "cursor-pointer"
+              )}
             >
-              <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
-                <CardTitle className={`text-xs sm:text-sm font-medium line-clamp-1 ${
-                  stat.highlight ? 'text-destructive' : 'text-muted-foreground'
-                }`}>
-                  {stat.label}
-                </CardTitle>
-                <stat.icon className={`h-4 w-4 flex-shrink-0 ${
-                  stat.highlight ? 'text-destructive' : 'text-muted-foreground'
-                }`} />
-              </CardHeader>
-              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-                {statsLoading ? (
-                  <Skeleton className="h-7 w-12" />
-                ) : (
-                  <div className={`text-xl sm:text-2xl font-bold ${
-                    stat.highlight ? 'text-destructive' : ''
-                  }`}>{stat.value}</div>
-                )}
-                <p className={`text-[10px] sm:text-xs mt-1 line-clamp-1 ${
-                  stat.highlight ? 'text-destructive/80' : 'text-muted-foreground'
-                }`}>{stat.trend}</p>
-              </CardContent>
-            </Card>
+              <stat.icon className="w-3.5 h-3.5" />
+              <span className="text-[13px] font-medium">{stat.label}</span>
+              {statsLoading ? (
+                <Skeleton className="h-4 w-4 rounded-full" />
+              ) : (
+                <span className={cn(
+                  "text-[13px] font-semibold",
+                  stat.highlight && "text-destructive"
+                )}>
+                  ({stat.value})
+                </span>
+              )}
+            </div>
           );
 
           return stat.link ? (
-            <Link key={stat.label} to={stat.link} className="block">
-              {cardContent}
+            <Link key={stat.label} to={stat.link}>
+              {content}
             </Link>
           ) : (
-            <div key={stat.label}>{cardContent}</div>
+            <div key={stat.label}>{content}</div>
           );
         })}
       </div>
 
-      {/* Main Content Grid - stack on mobile */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+      {/* Main Content Grid */}
+      <div className="grid gap-5 lg:grid-cols-3">
         {/* Tasks Section */}
-        <Card className="lg:col-span-2 shadow-card">
-          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
-            <div>
-              <CardTitle className="text-base sm:text-lg">Recent Tasks</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Your assigned and recent tasks</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" className="gap-1 text-xs sm:text-sm" asChild>
+        <div className="lg:col-span-2 space-y-3">
+          {/* Section Header with Quick Filters */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-medium text-foreground">Recent Tasks</h2>
+            <Button variant="ghost" size="sm" className="gap-1 text-xs h-7" asChild>
               <Link to="/projects">
-                View All <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
+                View All <ArrowRight className="w-3 h-3" />
               </Link>
             </Button>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+          </div>
+          
+          {/* Quick Filter Pills */}
+          <div className="flex flex-wrap gap-1.5">
+            {quickFilters.map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => setQuickFilter(filter.id)}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors",
+                  quickFilter === filter.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                )}
+              >
+                {filter.label}
+                {filter.count !== undefined && filter.count > 0 && (
+                  <span className="ml-1 opacity-80">({filter.count})</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Task List */}
+          <div className="space-y-1.5">
             {tasksLoading ? (
-              <div className="space-y-2 sm:space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-14 w-full" />
+              <div className="space-y-1.5">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-14 w-full rounded-lg" />
                 ))}
               </div>
-            ) : tasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No tasks yet</p>
+            ) : filteredTasks.length === 0 ? (
+              <div className="text-sm text-muted-foreground text-center py-8 bg-muted/30 rounded-lg border border-border/50">
+                No tasks found
+              </div>
             ) : (
-              <div className="space-y-2 sm:space-y-3">
-                {tasks.map((task) => {
-                  // Get area names for this task
-                  const taskAreas = task.areaIds?.map(id => areas.find(a => a.id === id)).filter(Boolean) || [];
-                  
-                  return (
-                    <div
-                      key={task.id}
-                      onClick={() => handleTaskClick(task.id)}
-                      className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                          task.status === 'done' ? 'bg-green-500' :
-                          task.status === 'in_progress' ? 'bg-primary' : 'bg-muted-foreground'
-                        }`} />
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-xs sm:text-sm font-medium truncate ${task.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>
-                            {task.title}
-                          </p>
-                          <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground flex-wrap">
-                            {task.projectName && (
-                              <span className="flex items-center gap-1">
-                                <span 
-                                  className="w-2 h-2 rounded-full"
-                                  style={{ backgroundColor: task.projectColor || '#6b7280' }}
-                                />
-                                <span className="font-medium">{task.projectName}</span>
+              filteredTasks.map((task) => {
+                const taskAreas = task.areaIds?.map(id => areas.find(a => a.id === id)).filter(Boolean) || [];
+                const effortConfig = effortLibrary.find(e => e.id === task.effort);
+                const importanceConfig = importanceLibrary.find(i => i.id === task.importance);
+                
+                return (
+                  <div
+                    key={task.id}
+                    onClick={() => handleTaskClick(task.id)}
+                    className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer border border-transparent hover:border-border/50"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className={cn(
+                        "w-2 h-2 rounded-full flex-shrink-0",
+                        task.status === 'done' ? 'bg-green-500' :
+                        task.status === 'in_progress' ? 'bg-primary' : 'bg-muted-foreground'
+                      )} />
+                      <div className="min-w-0 flex-1">
+                        <p className={cn(
+                          "text-sm font-medium truncate",
+                          task.status === 'done' && 'line-through text-muted-foreground'
+                        )}>
+                          {task.title}
+                        </p>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap mt-0.5">
+                          {task.projectName && (
+                            <span className="flex items-center gap-1">
+                              <span 
+                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: task.projectColor || '#6b7280' }}
+                              />
+                              <span className="font-medium">{task.projectName}</span>
+                            </span>
+                          )}
+                          {taskAreas.length > 0 && (
+                            <>
+                              {task.projectName && <span className="text-border">•</span>}
+                              <span className="flex gap-1">
+                                {taskAreas.slice(0, 2).map(area => (
+                                  <span 
+                                    key={area!.id}
+                                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                    style={{
+                                      backgroundColor: `${area!.color}20`,
+                                      color: area!.color
+                                    }}
+                                  >
+                                    {area!.name}
+                                  </span>
+                                ))}
+                                {taskAreas.length > 2 && (
+                                  <span className="text-muted-foreground text-[10px]">+{taskAreas.length - 2}</span>
+                                )}
                               </span>
-                            )}
-                            {taskAreas.length > 0 && (
-                              <>
-                                {task.projectName && <span>•</span>}
-                                <span className="flex gap-1">
-                                  {taskAreas.slice(0, 2).map(area => (
-                                    <span 
-                                      key={area!.id}
-                                      className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px]"
-                                      style={{
-                                        backgroundColor: `${area!.color}20`,
-                                        color: area!.color
-                                      }}
-                                    >
-                                      {area!.name}
-                                    </span>
-                                  ))}
-                                  {taskAreas.length > 2 && (
-                                    <span className="text-muted-foreground">+{taskAreas.length - 2}</span>
-                                  )}
-                                </span>
-                              </>
-                            )}
-                            {(task.projectName || taskAreas.length > 0) && task.dueDate && <span>•</span>}
-                            {task.dueDate && (
-                              <span className={task.dueDate < new Date(new Date().setHours(0,0,0,0)) ? 'text-destructive font-medium' : ''}>
-                                {formatEventDate(task.dueDate)}
-                              </span>
-                            )}
-                          </div>
+                            </>
+                          )}
+                          {(task.projectName || taskAreas.length > 0) && task.dueDate && <span className="text-border">•</span>}
+                          {task.dueDate && (
+                            <span className={cn(
+                              task.dueDate < new Date(new Date().setHours(0,0,0,0)) && 'text-destructive font-medium'
+                            )}>
+                              {formatEventDate(task.dueDate)}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
-                        <Badge 
-                          variant="secondary"
-                          className="text-[10px] sm:text-xs"
+                    </div>
+                    <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
+                      {effortConfig && (
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[10px] font-medium"
                           style={{ 
-                            backgroundColor: effortLibrary.find(e => e.id === task.effort)?.color + '20',
-                            color: effortLibrary.find(e => e.id === task.effort)?.color
+                            backgroundColor: effortConfig.color + '20',
+                            color: effortConfig.color
                           }}
                         >
                           {task.effort}
-                        </Badge>
-                        <Badge 
-                          variant="secondary"
-                          className="text-[10px] sm:text-xs"
+                        </span>
+                      )}
+                      {importanceConfig && (
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[10px] font-medium"
                           style={{ 
-                            backgroundColor: importanceLibrary.find(i => i.id === task.importance)?.color + '20',
-                            color: importanceLibrary.find(i => i.id === task.importance)?.color
+                            backgroundColor: importanceConfig.color + '20',
+                            color: importanceConfig.color
                           }}
                         >
                           {task.importance}
-                        </Badge>
-                      </div>
+                        </span>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Right Sidebar */}
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-5">
           {/* Upcoming Events */}
-          <Card className="shadow-card">
-            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-primary" />
-                  <CardTitle className="text-sm sm:text-base">Upcoming Events</CardTitle>
-                </div>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
-                  <Link to="/calendar">View</Link>
-                </Button>
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-medium">Upcoming Events</h3>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-2 sm:space-y-3 p-4 pt-0 sm:p-6 sm:pt-0">
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" asChild>
+                <Link to="/calendar">View</Link>
+              </Button>
+            </div>
+            <div className="space-y-2 rounded-lg border border-border/50 bg-muted/30 p-3">
               {eventsLoading ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {[1, 2, 3].map((i) => (
                     <Skeleton key={i} className="h-10 w-full" />
                   ))}
                 </div>
               ) : upcomingEvents.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">No upcoming events</p>
+                <p className="text-xs text-muted-foreground text-center py-3">No upcoming events</p>
               ) : (
                 upcomingEvents.map((event) => (
-                  <div key={event.id} className="flex items-center gap-2 sm:gap-3">
-                    <div className="min-w-[3.5rem] sm:min-w-[4rem] text-center flex-shrink-0 pr-2">
-                      <p className="text-[10px] sm:text-xs font-semibold">{formatEventDate(event.start)}</p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground">
+                  <div key={event.id} className="flex items-center gap-2.5">
+                    <div className="min-w-[3.5rem] text-center flex-shrink-0">
+                      <p className="text-xs font-semibold">{formatEventDate(event.start)}</p>
+                      <p className="text-[10px] text-muted-foreground">
                         {event.isAllDay ? 'All day' : format(event.start, 'h:mm a')}
                       </p>
                     </div>
                     <div className="h-8 w-px bg-border flex-shrink-0" />
-                    <p className="text-xs sm:text-sm truncate">{event.title}</p>
+                    <p className="text-xs truncate">{event.title}</p>
                   </div>
                 ))
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Recent Activity */}
-          <Card className="shadow-card">
-            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-primary" />
-                <CardTitle className="text-sm sm:text-base">Recent Activity</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3 sm:space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-medium">Recent Activity</h3>
+            </div>
+            <div className="space-y-2.5 rounded-lg border border-border/50 bg-muted/30 p-3">
               {activityLoading ? (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {[1, 2, 3].map((i) => (
                     <Skeleton key={i} className="h-12 w-full" />
                   ))}
                 </div>
               ) : activity.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">No recent activity</p>
+                <p className="text-xs text-muted-foreground text-center py-3">No recent activity</p>
               ) : (
                 activity.map((item) => (
-                  <div key={item.id} className="flex items-start gap-2 sm:gap-3">
-                    <Avatar className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0">
-                      <AvatarFallback className="text-[10px] sm:text-xs bg-secondary">
+                  <div key={item.id} className="flex items-start gap-2.5">
+                    <Avatar className="w-6 h-6 flex-shrink-0">
+                      <AvatarFallback className="text-[10px] bg-secondary">
                         {item.user_name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm">
+                      <p className="text-xs leading-snug">
                         <span className="font-medium">{item.user_name}</span>{' '}
                         <span className="text-muted-foreground">{item.action}</span>{' '}
                         <span className="font-medium truncate">{item.target_title}</span>
                       </p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
                         {formatRelativeTime(item.created_at)}
                       </p>
                     </div>
                   </div>
                 ))
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Weekly Completion & Projects Progress */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         {/* Weekly Task Completion Chart */}
-        <Card className="shadow-card">
-          <CardHeader className="p-4 sm:p-6">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-primary" />
-              <CardTitle className="text-sm sm:text-base">Weekly Completion</CardTitle>
-            </div>
-            <CardDescription className="text-xs">Tasks completed in the last 7 days</CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-medium">Weekly Completion</h3>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-muted/30 p-4">
             {weeklyCompletionLoading ? (
               <Skeleton className="h-[180px] w-full" />
             ) : (
-              <ChartContainer
-                config={{
-                  completed: {
-                    label: "Completed",
-                    color: "hsl(var(--primary))",
-                  },
-                }}
+              <ChartContainer 
+                config={{ completed: { label: "Completed", color: "hsl(var(--primary))" } }}
                 className="h-[180px] w-full"
               >
-                <BarChart data={weeklyCompletion} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
-                  <XAxis 
-                    dataKey="day" 
-                    tickLine={false} 
-                    axisLine={false}
-                    tick={{ fontSize: 11 }}
-                    className="fill-muted-foreground"
-                  />
-                  <YAxis 
-                    tickLine={false} 
-                    axisLine={false}
-                    tick={{ fontSize: 11 }}
-                    allowDecimals={false}
-                    className="fill-muted-foreground"
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar 
-                    dataKey="completed" 
-                    fill="hsl(var(--primary))" 
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyCompletion}>
+                    <XAxis 
+                      dataKey="day" 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    />
+                    <YAxis 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                      allowDecimals={false}
+                    />
+                    <ChartTooltip
+                      content={<ChartTooltipContent />}
+                      cursor={{ fill: 'hsl(var(--muted))' }}
+                    />
+                    <Bar 
+                      dataKey="completed" 
+                      fill="hsl(var(--primary))" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </ChartContainer>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Projects Progress */}
-        <Card className="shadow-card">
-          <CardHeader className="p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-primary" />
-                <CardTitle className="text-sm sm:text-base">Project Progress</CardTitle>
-              </div>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
-                <Link to="/projects">View All</Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2">
+            <FolderKanban className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-medium">Project Progress</h3>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-muted/30 p-3 space-y-3">
             {projectsLoading ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
+                  <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
             ) : projects.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No active projects</p>
+              <p className="text-xs text-muted-foreground text-center py-6">No active projects</p>
             ) : (
-              <div className="space-y-4">
-                {projects.map((project) => (
-                  <div key={project.id} className="space-y-2">
-                    <div className="flex justify-between text-xs sm:text-sm">
-                      <span className="font-medium truncate">{project.name}</span>
-                      <span className="text-muted-foreground flex-shrink-0 ml-2">{project.progress}%</span>
+              projects.slice(0, 4).map((project) => (
+                <div key={project.id} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: project.color }}
+                      />
+                      <span className="text-sm font-medium truncate">{project.name}</span>
                     </div>
-                    <Progress value={project.progress} className="h-2" />
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">
-                      {project.completedTasks}/{project.totalTasks} tasks
-                    </p>
+                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                      {project.completedTasks}/{project.totalTasks}
+                    </span>
                   </div>
-                ))}
-              </div>
+                  <Progress 
+                    value={project.totalTasks > 0 ? (project.completedTasks / project.totalTasks) * 100 : 0} 
+                    className="h-1.5"
+                  />
+                </div>
+              ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Task Detail Dialog */}
-      <TaskDetailDialog
-        open={!!viewingTask}
-        onOpenChange={(open) => !open && setViewingTask(null)}
-        task={viewingTask}
-        projects={projects.map(p => ({ id: p.id, name: p.name, color: p.color }))}
-        currentUser={currentUser}
-        availableMembers={teamMembers}
-        statuses={statusLibrary}
-        tags={tags}
-        onTaskUpdate={handleTaskUpdate}
-        onAddComment={handleAddComment}
-        onDeleteComment={handleDeleteComment}
-        onToggleReaction={handleToggleReaction}
-      />
+      {viewingTask && (
+        <TaskDetailDialog
+          task={viewingTask}
+          projects={[]}
+          statuses={statusLibrary}
+          tags={tags}
+          currentUser={currentUser}
+          open={!!viewingTask}
+          onOpenChange={(open) => !open && setViewingTask(null)}
+          onTaskUpdate={handleTaskUpdate}
+          onAddComment={handleAddComment}
+          onDeleteComment={handleDeleteComment}
+          onToggleReaction={handleToggleReaction}
+        />
+      )}
     </div>
   );
 }
