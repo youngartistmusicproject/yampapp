@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,7 +7,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
+import EmojiPicker, { EmojiClickData, Theme, SkinTones } from "emoji-picker-react";
+
+const SKIN_TONE_KEY = "emoji-skin-tone";
+
+const getSavedSkinTone = (): SkinTones => {
+  const saved = localStorage.getItem(SKIN_TONE_KEY);
+  return (saved as SkinTones) || SkinTones.NEUTRAL;
+};
 
 // Quick emoji options for fast access
 const QUICK_EMOJIS = [
@@ -39,6 +46,12 @@ export function CommentReactions({
 }: CommentReactionsProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showFullPicker, setShowFullPicker] = useState(false);
+  const [skinTone, setSkinTone] = useState<SkinTones>(getSavedSkinTone);
+
+  const handleSkinToneChange = (tone: SkinTones) => {
+    setSkinTone(tone);
+    localStorage.setItem(SKIN_TONE_KEY, tone);
+  };
 
   const handleQuickReaction = (emoji: string) => {
     onToggleReaction(emoji);
@@ -105,6 +118,8 @@ export function CommentReactions({
               height={350}
               searchPlaceHolder="Search emoji..."
               previewConfig={{ showPreview: false }}
+              defaultSkinTone={skinTone}
+              onSkinToneChange={handleSkinToneChange}
             />
           ) : (
             <div className="flex flex-col gap-2">
