@@ -25,7 +25,7 @@ import { Task, Project } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, MessageSquare, Paperclip, Check, BookOpen } from "lucide-react";
+import { Calendar, Repeat, Copy, Trash2, ChevronDown, ChevronRight, Clock, Tag, MessageSquare, Paperclip, Check, BookOpen, ListChecks } from "lucide-react";
 import { getTagById, TagItem } from "@/data/workManagementConfig";
 import { Progress, getProgressColor } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -152,6 +152,8 @@ function SortableTaskCard({
   const overdue = isTaskOverdue(task);
   const commentCount = task.comments?.length || 0;
   const attachmentCount = task.attachments?.length || 0;
+  const subtaskCount = task.subtasks?.length || 0;
+  const completedSubtaskCount = task.subtasks?.filter(s => s.completed).length || 0;
 
   return (
     <div
@@ -182,7 +184,13 @@ function SortableTaskCard({
           {task.isRecurring && (
             <Repeat className="w-3 h-3 text-muted-foreground/60 flex-shrink-0 mt-0.5" />
           )}
-          {/* Comment & Attachment indicators */}
+          {/* Subtask, Comment & Attachment indicators */}
+          {subtaskCount > 0 && (
+            <span className="flex items-center gap-0.5 text-muted-foreground/60 flex-shrink-0 mt-0.5">
+              <ListChecks className="w-3 h-3" />
+              <span className="text-[10px]">{completedSubtaskCount}/{subtaskCount}</span>
+            </span>
+          )}
           {commentCount > 0 && (
             <span className="flex items-center gap-0.5 text-muted-foreground/60 flex-shrink-0 mt-0.5">
               <MessageSquare className="w-3 h-3" />
