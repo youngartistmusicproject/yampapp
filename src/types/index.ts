@@ -24,6 +24,7 @@ export interface TaskComment {
   content: string;
   author: User;
   createdAt: Date;
+  updatedAt?: Date; // For tracking edits
   attachments?: TaskAttachment[];
   reactions?: CommentReaction[];
   parentCommentId?: string; // For replies

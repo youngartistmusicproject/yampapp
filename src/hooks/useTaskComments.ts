@@ -140,6 +140,7 @@ export function useTaskComments(taskId: string | null) {
         content: c.content,
         author: { id: c.author_name, name: c.author_name, email: '', role: 'staff' as const } as User,
         createdAt: new Date(c.created_at),
+        updatedAt: new Date(c.updated_at),
         attachments: attachmentsByComment.get(c.id) || [],
         reactions: reactionsByComment.get(c.id) || [],
         parentCommentId: c.parent_comment_id || undefined,
@@ -149,7 +150,7 @@ export function useTaskComments(taskId: string | null) {
   });
 }
 
-// Toggle reaction on a comment
+// Toggle reaction on a comment - only one emoji per user at a time
 export function useToggleCommentReaction() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -166,8 +167,8 @@ export function useToggleCommentReaction() {
     }) => {
       if (!user) throw new Error('Not authenticated');
       
-      // Check if reaction already exists
-      const { data: existing } = await supabase
+      // Check if user already has this exact reaction
+      const { data: existingSame } = await supabase
         .from('task_comment_reactions')
         .select('id')
         .eq('comment_id', commentId)
@@ -175,29 +176,36 @@ export function useToggleCommentReaction() {
         .eq('emoji', emoji)
         .maybeSingle();
       
-      if (existing) {
-        // Remove reaction
+      if (existingSame) {
+        // Remove the same reaction (toggle off)
         const { error } = await supabase
           .from('task_comment_reactions')
           .delete()
-          .eq('id', existing.id);
+          .eq('id', existingSame.id);
         
         if (error) throw error;
         return { action: 'removed' };
-      } else {
-        // Add reaction
-        const { error } = await supabase
-          .from('task_comment_reactions')
-          .insert({
-            comment_id: commentId,
-            user_id: user.id,
-            user_name: 'placeholder', // Will be set by trigger
-            emoji,
-          });
-        
-        if (error) throw error;
-        return { action: 'added' };
       }
+      
+      // Remove any existing reaction from this user on this comment (only one emoji allowed)
+      await supabase
+        .from('task_comment_reactions')
+        .delete()
+        .eq('comment_id', commentId)
+        .eq('user_id', user.id);
+      
+      // Add new reaction
+      const { error } = await supabase
+        .from('task_comment_reactions')
+        .insert({
+          comment_id: commentId,
+          user_id: user.id,
+          user_name: 'placeholder', // Will be set by trigger
+          emoji,
+        });
+      
+      if (error) throw error;
+      return { action: 'added' };
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task-comments', variables.taskId] });
@@ -280,6 +288,26 @@ export function useAddTaskComment() {
       queryClient.invalidateQueries({ queryKey: ['task-comments', variables.taskId] });
       queryClient.invalidateQueries({ queryKey: ['task-attachments', variables.taskId] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+}
+
+// Update a comment
+export function useUpdateTaskComment() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ taskId, commentId, content }: { taskId: string; commentId: string; content: string }) => {
+      const { error } = await supabase
+        .from('task_comments')
+        .update({ content, updated_at: new Date().toISOString() })
+        .eq('id', commentId);
+      
+      if (error) throw error;
+      return commentId;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['task-comments', variables.taskId] });
     },
   });
 }
