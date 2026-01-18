@@ -76,7 +76,7 @@ import type { Task, Project, User, RecurrenceSettings as RecurrenceSettingsType 
 import { cn } from "@/lib/utils";
 import { triggerConfetti } from "@/lib/confetti";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTaskComments, useAddTaskComment, useDeleteTaskComment, useTaskAttachments, useUploadTaskAttachment, useToggleCommentReaction } from "@/hooks/useTaskComments";
+import { useTaskComments, useAddTaskComment, useDeleteTaskComment, useUpdateTaskComment, useTaskAttachments, useUploadTaskAttachment, useToggleCommentReaction } from "@/hooks/useTaskComments";
 import { MentionInput, renderMentionContent } from "./MentionInput";
 import { CommentReactions } from "./CommentReactions";
 import { ThreadedComment } from "./ThreadedComment";
@@ -345,6 +345,7 @@ export function TaskDetailDialog({
   const { data: attachments = [], isLoading: attachmentsLoading } = useTaskAttachments(task?.id || null);
   const addComment = useAddTaskComment();
   const deleteComment = useDeleteTaskComment();
+  const updateComment = useUpdateTaskComment();
   const uploadAttachment = useUploadTaskAttachment();
   const toggleReaction = useToggleCommentReaction();
 
@@ -653,17 +654,19 @@ export function TaskDetailDialog({
                   </button>
                 </div>
 
-                <div className="flex-1 px-6 py-4 overflow-y-auto">
+                <div className="flex-1 flex flex-col min-h-0 px-6 py-4">
                   {activeTab === 'comments' ? (
                     <>
-                      {/* Comments list */}
-                      <div className="space-y-4 mb-4">
+                      {/* Comments list - scrollable area with newest at bottom */}
+                      <div className="flex-1 overflow-y-auto space-y-3 mb-3">
                         {commentsLoading ? (
                           <div className="flex items-center justify-center py-4">
                             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                           </div>
                         ) : comments.length === 0 ? (
-                          <p className="text-sm text-muted-foreground/60 italic">No comments yet</p>
+                          <div className="flex-1 flex items-center justify-center">
+                            <p className="text-sm text-muted-foreground/60 italic">No comments yet</p>
+                          </div>
                         ) : (
                           (() => {
                             // Separate top-level comments and replies
@@ -684,12 +687,13 @@ export function TaskDetailDialog({
                                 replies={repliesMap.get(comment.id) || []}
                                 currentUserId={profile?.id}
                                 onDelete={handleDeleteComment}
-                                onReply={async (content, parentId) => {
+                                onReply={async (content, parentId, files) => {
                                   if (task) {
                                     await addComment.mutateAsync({
                                       taskId: task.id,
                                       content,
                                       parentCommentId: parentId,
+                                      files,
                                     });
                                   }
                                 }}
@@ -698,77 +702,89 @@ export function TaskDetailDialog({
                                     toggleReaction.mutate({ taskId: task.id, commentId, emoji });
                                   }
                                 }}
+                                onEdit={async (commentId, content) => {
+                                  if (task) {
+                                    await updateComment.mutateAsync({
+                                      taskId: task.id,
+                                      commentId,
+                                      content,
+                                    });
+                                  }
+                                }}
                               />
                             ));
                           })()
                         )}
                       </div>
 
-                      {/* Pending files preview */}
-                      {pendingFiles.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {pendingFiles.map((file, index) => (
-                            <div 
-                              key={index}
-                              className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded text-xs"
-                            >
-                              <Paperclip className="w-3 h-3" />
-                              <span className="max-w-[100px] truncate">{file.name}</span>
-                              <button
-                                onClick={() => handleRemovePendingFile(index)}
-                                className="p-0.5 hover:bg-destructive/20 rounded"
+                      {/* Fixed comment input at bottom */}
+                      <div className="border-t border-border/30 pt-3">
+                        {/* Pending files preview */}
+                        {pendingFiles.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {pendingFiles.map((file, index) => (
+                              <div 
+                                key={index}
+                                className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded text-xs"
                               >
-                                <Trash2 className="w-3 h-3 text-destructive" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                                <Paperclip className="w-3 h-3" />
+                                <span className="max-w-[100px] truncate">{file.name}</span>
+                                <button
+                                  onClick={() => handleRemovePendingFile(index)}
+                                  className="p-0.5 hover:bg-destructive/20 rounded"
+                                >
+                                  <Trash2 className="w-3 h-3 text-destructive" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
-                      {/* Comment input */}
-                      <div className="flex items-start gap-3">
-                        <UserAvatar user={currentUser} size="sm" showTooltip={false} />
-                        <div className="flex-1 relative">
-                          <MentionInput 
-                            value={newComment} 
-                            onChange={setNewComment} 
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleAddComment();
-                              }
-                            }}
-                            placeholder="Write a comment... Use @ to mention. Press Enter to send" 
-                            className="min-h-[80px] pr-20 text-sm" 
-                          />
-                          <input 
-                            ref={fileInputRef}
-                            type="file" 
-                            multiple 
-                            className="hidden" 
-                            onChange={handleFileSelect}
-                          />
-                          <div className="absolute bottom-2 right-2 flex items-center gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-7 w-7"
-                              onClick={() => fileInputRef.current?.click()}
-                            >
-                              <Paperclip className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              className="h-7 w-7" 
-                              disabled={(!newComment.trim() && pendingFiles.length === 0) || addComment.isPending}
-                              onClick={handleAddComment}
-                            >
-                              {addComment.isPending ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <Send className="w-3.5 h-3.5" />
-                              )}
-                            </Button>
+                        {/* Comment input */}
+                        <div className="flex items-start gap-2">
+                          <UserAvatar user={currentUser} size="sm" showTooltip={false} />
+                          <div className="flex-1 relative">
+                            <MentionInput 
+                              value={newComment} 
+                              onChange={setNewComment} 
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleAddComment();
+                                }
+                              }}
+                              placeholder="Write a comment... (@ to mention, Enter to send)" 
+                              className="min-h-[60px] pr-16 text-sm" 
+                            />
+                            <input 
+                              ref={fileInputRef}
+                              type="file" 
+                              multiple 
+                              className="hidden" 
+                              onChange={handleFileSelect}
+                            />
+                            <div className="absolute bottom-2 right-2 flex items-center gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6"
+                                onClick={() => fileInputRef.current?.click()}
+                              >
+                                <Paperclip className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button 
+                                size="icon" 
+                                className="h-6 w-6" 
+                                disabled={(!newComment.trim() && pendingFiles.length === 0) || addComment.isPending}
+                                onClick={handleAddComment}
+                              >
+                                {addComment.isPending ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Send className="w-3 h-3" />
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
