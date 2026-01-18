@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -67,12 +67,16 @@ import {
   MessageSquare,
   File,
   Info,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { format, parseISO, isValid } from "date-fns";
 import type { Task, Project, User, RecurrenceSettings as RecurrenceSettingsType } from "@/types";
 import { cn } from "@/lib/utils";
 import { triggerConfetti } from "@/lib/confetti";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTaskComments, useAddTaskComment, useDeleteTaskComment, useTaskAttachments, useUploadTaskAttachment } from "@/hooks/useTaskComments";
 
 interface Subtask {
   id: string;
@@ -322,12 +326,23 @@ export function TaskDetailDialog({
   projectLeads = [],
   areas = [],
 }: TaskDetailDialogProps) {
+  const { profile } = useAuth();
   const [showIncompleteWarning, setShowIncompleteWarning] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [newComment, setNewComment] = useState("");
   const [sopPopoverOpen, setSopPopoverOpen] = useState(false);
   const [sopUrl, setSopUrl] = useState("");
   const [activeTab, setActiveTab] = useState<'comments' | 'files'>('comments');
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const directFileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Hooks for comments and attachments
+  const { data: comments = [], isLoading: commentsLoading } = useTaskComments(task?.id || null);
+  const { data: attachments = [], isLoading: attachmentsLoading } = useTaskAttachments(task?.id || null);
+  const addComment = useAddTaskComment();
+  const deleteComment = useDeleteTaskComment();
+  const uploadAttachment = useUploadTaskAttachment();
 
   const subtasks: Subtask[] = (() => {
     if (!task?.subtasks) return [];
@@ -342,6 +357,11 @@ export function TaskDetailDialog({
   const projectAreas = selectedProject?.areaIds
     ?.map(areaId => areas.find(a => a.id === areaId))
     .filter(Boolean) || [];
+    
+  // Current user for comment avatar
+  const currentUser: User = profile 
+    ? { id: profile.id, name: `${profile.first_name}${profile.last_name ? ' ' + profile.last_name : ''}`, email: profile.email || '', role: 'staff' as const }
+    : { id: 'current', name: 'You', email: '', role: 'staff' as const };
 
   const handleComplete = () => {
     if (!task) return;
@@ -438,8 +458,57 @@ export function TaskDetailDialog({
 
   if (!task) return null;
 
-  // Create a dummy user for comment avatar
-  const dummyUser: User = { id: 'current', name: 'You', email: '', role: 'staff' };
+  const handleAddComment = async () => {
+    if (!task || (!newComment.trim() && pendingFiles.length === 0)) return;
+    
+    try {
+      await addComment.mutateAsync({
+        taskId: task.id,
+        content: newComment.trim() || '(file attachment)',
+        files: pendingFiles.length > 0 ? pendingFiles : undefined,
+      });
+      setNewComment("");
+      setPendingFiles([]);
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!task) return;
+    try {
+      await deleteComment.mutateAsync({ taskId: task.id, commentId });
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      setPendingFiles(prev => [...prev, ...Array.from(files)]);
+    }
+    e.target.value = '';
+  };
+
+  const handleRemovePendingFile = (index: number) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDirectFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!task) return;
+    const files = e.target.files;
+    if (files) {
+      for (const file of Array.from(files)) {
+        try {
+          await uploadAttachment.mutateAsync({ taskId: task.id, file });
+        } catch (error) {
+          console.error('Error uploading file:', error);
+        }
+      }
+    }
+    e.target.value = '';
+  };
 
   return (
     <>
@@ -559,8 +628,8 @@ export function TaskDetailDialog({
                   >
                     <MessageSquare className="w-4 h-4" />
                     Comments
-                    {task.comments && task.comments.length > 0 && (
-                      <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{task.comments.length}</span>
+                    {comments.length > 0 && (
+                      <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{comments.length}</span>
                     )}
                   </button>
                   <button
@@ -574,8 +643,8 @@ export function TaskDetailDialog({
                   >
                     <File className="w-4 h-4" />
                     Files
-                    {task.attachments && task.attachments.length > 0 && (
-                      <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{task.attachments.length}</span>
+                    {attachments.length > 0 && (
+                      <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{attachments.length}</span>
                     )}
                   </button>
                 </div>
@@ -585,11 +654,15 @@ export function TaskDetailDialog({
                     <>
                       {/* Comments list */}
                       <div className="space-y-3 mb-4">
-                        {(!task.comments || task.comments.length === 0) ? (
+                        {commentsLoading ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : comments.length === 0 ? (
                           <p className="text-sm text-muted-foreground/60 italic">No comments yet</p>
                         ) : (
-                          task.comments.map((comment) => (
-                            <div key={comment.id} className="flex items-start gap-3">
+                          comments.map((comment) => (
+                            <div key={comment.id} className="group flex items-start gap-3">
                               <UserAvatar user={comment.author} size="sm" showTooltip={false} />
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
@@ -597,6 +670,12 @@ export function TaskDetailDialog({
                                   <span className="text-xs text-muted-foreground">
                                     {format(new Date(comment.createdAt), 'MMM d, h:mm a')}
                                   </span>
+                                  <button
+                                    onClick={() => handleDeleteComment(comment.id)}
+                                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-opacity ml-auto"
+                                  >
+                                    <Trash2 className="w-3 h-3 text-destructive" />
+                                  </button>
                                 </div>
                                 <p className="text-sm mt-0.5">{comment.content}</p>
                                 {comment.attachments && comment.attachments.length > 0 && (
@@ -621,51 +700,136 @@ export function TaskDetailDialog({
                         )}
                       </div>
 
+                      {/* Pending files preview */}
+                      {pendingFiles.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {pendingFiles.map((file, index) => (
+                            <div 
+                              key={index}
+                              className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded text-xs"
+                            >
+                              <Paperclip className="w-3 h-3" />
+                              <span className="max-w-[100px] truncate">{file.name}</span>
+                              <button
+                                onClick={() => handleRemovePendingFile(index)}
+                                className="p-0.5 hover:bg-destructive/20 rounded"
+                              >
+                                <Trash2 className="w-3 h-3 text-destructive" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Comment input */}
                       <div className="flex items-start gap-3">
-                        <UserAvatar user={dummyUser} size="sm" showTooltip={false} />
+                        <UserAvatar user={currentUser} size="sm" showTooltip={false} />
                         <div className="flex-1 relative">
                           <Textarea 
                             value={newComment} 
                             onChange={(e) => setNewComment(e.target.value)} 
-                            placeholder="Write a comment... Use @ to mention someone" 
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleAddComment();
+                              }
+                            }}
+                            placeholder="Write a comment... Press Enter to send" 
                             className="min-h-[80px] pr-20 resize-none text-sm" 
                           />
+                          <input 
+                            ref={fileInputRef}
+                            type="file" 
+                            multiple 
+                            className="hidden" 
+                            onChange={handleFileSelect}
+                          />
                           <div className="absolute bottom-2 right-2 flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-7 w-7"
+                              onClick={() => fileInputRef.current?.click()}
+                            >
                               <Paperclip className="w-4 h-4" />
                             </Button>
-                            <Button size="icon" className="h-7 w-7" disabled={!newComment.trim()}>
-                              <Send className="w-3.5 h-3.5" />
+                            <Button 
+                              size="icon" 
+                              className="h-7 w-7" 
+                              disabled={(!newComment.trim() && pendingFiles.length === 0) || addComment.isPending}
+                              onClick={handleAddComment}
+                            >
+                              {addComment.isPending ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Send className="w-3.5 h-3.5" />
+                              )}
                             </Button>
                           </div>
                         </div>
                       </div>
                     </>
                   ) : (
-                    /* Files tab - shows all attachments from comments */
+                    /* Files tab - shows all attachments */
                     <div>
-                      {(() => {
-                        // Collect all files from comments
-                        const allFiles = (task.comments || []).flatMap(c => c.attachments || []);
-                        const taskFiles = task.attachments || [];
-                        const combinedFiles = [...taskFiles, ...allFiles];
-                        
-                        if (combinedFiles.length === 0) {
-                          return (
-                            <div className="flex flex-col items-center justify-center py-8 text-center">
-                              <File className="w-8 h-8 text-muted-foreground/40 mb-2" />
-                              <p className="text-sm text-muted-foreground/60">No files yet</p>
-                              <p className="text-xs text-muted-foreground/40 mt-1">
-                                Attach files through comments
-                              </p>
-                            </div>
-                          );
-                        }
-                        
-                        return (
+                      {attachmentsLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : attachments.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <File className="w-8 h-8 text-muted-foreground/40 mb-2" />
+                          <p className="text-sm text-muted-foreground/60">No files yet</p>
+                          <p className="text-xs text-muted-foreground/40 mt-1 mb-3">
+                            Attach files through comments or upload directly
+                          </p>
+                          <input 
+                            ref={directFileInputRef}
+                            type="file" 
+                            multiple 
+                            className="hidden" 
+                            onChange={handleDirectFileUpload}
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => directFileInputRef.current?.click()}
+                            disabled={uploadAttachment.isPending}
+                          >
+                            {uploadAttachment.isPending ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Upload className="w-4 h-4 mr-2" />
+                            )}
+                            Upload File
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-end mb-3">
+                            <input 
+                              ref={directFileInputRef}
+                              type="file" 
+                              multiple 
+                              className="hidden" 
+                              onChange={handleDirectFileUpload}
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => directFileInputRef.current?.click()}
+                              disabled={uploadAttachment.isPending}
+                            >
+                              {uploadAttachment.isPending ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <Upload className="w-4 h-4 mr-2" />
+                              )}
+                              Upload
+                            </Button>
+                          </div>
                           <div className="grid grid-cols-2 gap-2">
-                            {combinedFiles.map((file) => (
+                            {attachments.map((file) => (
                               <a
                                 key={file.id}
                                 href={file.url}
@@ -683,8 +847,8 @@ export function TaskDetailDialog({
                               </a>
                             ))}
                           </div>
-                        );
-                      })()}
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

@@ -868,6 +868,143 @@ export type Database = {
           },
         ]
       }
+      task_attachments: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          size: number
+          task_id: string
+          type: string
+          uploaded_by: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          size: number
+          task_id: string
+          type: string
+          uploaded_by: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          size?: number
+          task_id?: string
+          type?: string
+          uploaded_by?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_attachments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_comment_attachments: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          name: string
+          size: number
+          task_id: string
+          type: string
+          uploaded_by: string
+          url: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          name: string
+          size: number
+          task_id: string
+          type: string
+          uploaded_by: string
+          url: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          size?: number
+          task_id?: string
+          type?: string
+          uploaded_by?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comment_attachments_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "task_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comment_attachments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_comments: {
+        Row: {
+          author_name: string
+          content: string
+          created_at: string
+          id: string
+          parent_comment_id: string | null
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_name: string
+          content: string
+          created_at?: string
+          id?: string
+          parent_comment_id?: string | null
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string
+          content?: string
+          created_at?: string
+          id?: string
+          parent_comment_id?: string | null
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "task_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           archived_at: string | null
