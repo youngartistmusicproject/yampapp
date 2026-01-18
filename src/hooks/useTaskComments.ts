@@ -174,11 +174,13 @@ export function useAddTaskComment() {
     mutationFn: async ({ 
       taskId, 
       content, 
-      files 
+      files,
+      parentCommentId,
     }: { 
       taskId: string; 
       content: string; 
       files?: File[];
+      parentCommentId?: string;
     }) => {
       const authorName = profile ? `${profile.first_name}${profile.last_name ? ' ' + profile.last_name : ''}` : 'You';
       
@@ -189,6 +191,7 @@ export function useAddTaskComment() {
           task_id: taskId,
           content,
           author_name: authorName,
+          parent_comment_id: parentCommentId || null,
         })
         .select()
         .single();
