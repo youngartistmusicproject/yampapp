@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { cn } from "@/lib/utils";
 import { useOrganizationProfiles, PublicProfileWithRoles } from "@/hooks/useProfiles";
 
@@ -194,20 +196,77 @@ export const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(
 
 MentionInput.displayName = "MentionInput";
 
-// Helper to render comment content with styled mentions
-export function renderMentionContent(content: string) {
+// Helper to render comment content with styled mentions and hover profile
+export function renderMentionContent(content: string, profiles?: PublicProfileWithRoles[]) {
   // Replace @[Name](id) pattern with styled spans
   const parts = content.split(/(@\[[^\]]+\]\([^)]+\))/g);
 
   return parts.map((part, index) => {
     const mentionMatch = part.match(/@\[([^\]]+)\]\(([^)]+)\)/);
     if (mentionMatch) {
+      const name = mentionMatch[1];
+      const userId = mentionMatch[2];
+      const profile = profiles?.find(p => p.id === userId);
+      
       return (
-        <span key={index} className="text-primary font-medium">
-          @{mentionMatch[1]}
-        </span>
+        <MentionBadge key={index} name={name} userId={userId} profile={profile} />
       );
     }
     return part;
   });
+}
+
+// Separate component for mention badge with hover card
+function MentionBadge({ 
+  name, 
+  userId, 
+  profile 
+}: { 
+  name: string; 
+  userId: string; 
+  profile?: PublicProfileWithRoles;
+}) {
+  const user = profile ? {
+    id: profile.id,
+    name: `${profile.first_name}${profile.last_name ? ' ' + profile.last_name : ''}`,
+    avatarUrl: profile.avatar_url,
+  } : null;
+
+  return (
+    <HoverCard openDelay={200} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <span className="text-primary font-semibold cursor-pointer hover:underline">
+          @{name}
+        </span>
+      </HoverCardTrigger>
+      <HoverCardContent className="w-64 p-3" side="top" align="start">
+        <div className="flex items-center gap-3">
+          {user ? (
+            <>
+              <UserAvatar 
+                user={{ id: user.id, name: user.name, email: '', role: 'staff', avatar: user.avatarUrl }} 
+                size="md" 
+                showTooltip={false} 
+              />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium truncate">{user.name}</p>
+                {profile?.roles && profile.roles.length > 0 && (
+                  <p className="text-xs text-muted-foreground capitalize">{profile.roles[0]}</p>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
+                {name.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium truncate">{name}</p>
+              </div>
+            </>
+          )}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
 }

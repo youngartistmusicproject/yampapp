@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { CommentReactions } from "./CommentReactions";
 import { MentionInput, renderMentionContent } from "./MentionInput";
+import { useOrganizationProfiles } from "@/hooks/useProfiles";
 import type { TaskComment } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +16,7 @@ interface ThreadedCommentProps {
   onDelete: (commentId: string) => void;
   onReply: (content: string, parentCommentId: string) => Promise<void>;
   onToggleReaction: (commentId: string, emoji: string) => void;
-  rootParentId?: string; // For flattening deep replies
+  rootParentId?: string;
   depth?: number;
 }
 
@@ -33,11 +34,11 @@ export function ThreadedComment({
   const [replyContent, setReplyContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showReplies, setShowReplies] = useState(true);
-
-  const maxDepth = 1; // Limit to 2 levels (0 and 1)
-  const isAtMaxDepth = depth >= maxDepth;
   
-  // For replies at max depth, use root parent to flatten
+  const { data: profiles = [] } = useOrganizationProfiles();
+
+  const maxDepth = 1;
+  const isAtMaxDepth = depth >= maxDepth;
   const effectiveRootParent = rootParentId || comment.id;
 
   const reactionsForDisplay = (comment.reactions || []).map((r) => ({
@@ -88,7 +89,7 @@ export function ThreadedComment({
               </button>
             </div>
           </div>
-          <p className="text-sm mt-0.5 break-words">{renderMentionContent(comment.content)}</p>
+          <p className="text-sm mt-0.5 break-words">{renderMentionContent(comment.content, profiles)}</p>
           
           {/* Attachments */}
           {comment.attachments && comment.attachments.length > 0 && (
