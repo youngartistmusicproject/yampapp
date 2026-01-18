@@ -233,58 +233,91 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground text-center py-8">No tasks yet</p>
             ) : (
               <div className="space-y-2 sm:space-y-3">
-                {tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    onClick={() => handleTaskClick(task.id)}
-                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        task.status === 'done' ? 'bg-green-500' :
-                        task.status === 'in_progress' ? 'bg-primary' : 'bg-muted-foreground'
-                      }`} />
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-xs sm:text-sm font-medium truncate ${task.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>
-                          {task.title}
-                        </p>
-                        <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
-                          <span>{task.assignee || 'Unassigned'}</span>
-                          {task.dueDate && (
-                            <>
-                              <span>•</span>
+                {tasks.map((task) => {
+                  // Get area names for this task
+                  const taskAreas = task.areaIds?.map(id => areas.find(a => a.id === id)).filter(Boolean) || [];
+                  
+                  return (
+                    <div
+                      key={task.id}
+                      onClick={() => handleTaskClick(task.id)}
+                      className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                          task.status === 'done' ? 'bg-green-500' :
+                          task.status === 'in_progress' ? 'bg-primary' : 'bg-muted-foreground'
+                        }`} />
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-xs sm:text-sm font-medium truncate ${task.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>
+                            {task.title}
+                          </p>
+                          <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground flex-wrap">
+                            {task.projectName && (
+                              <span className="flex items-center gap-1">
+                                <span 
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: task.projectColor || '#6b7280' }}
+                                />
+                                <span className="font-medium">{task.projectName}</span>
+                              </span>
+                            )}
+                            {taskAreas.length > 0 && (
+                              <>
+                                {task.projectName && <span>•</span>}
+                                <span className="flex gap-1">
+                                  {taskAreas.slice(0, 2).map(area => (
+                                    <span 
+                                      key={area!.id}
+                                      className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px]"
+                                      style={{
+                                        backgroundColor: `${area!.color}20`,
+                                        color: area!.color
+                                      }}
+                                    >
+                                      {area!.name}
+                                    </span>
+                                  ))}
+                                  {taskAreas.length > 2 && (
+                                    <span className="text-muted-foreground">+{taskAreas.length - 2}</span>
+                                  )}
+                                </span>
+                              </>
+                            )}
+                            {(task.projectName || taskAreas.length > 0) && task.dueDate && <span>•</span>}
+                            {task.dueDate && (
                               <span className={task.dueDate < new Date(new Date().setHours(0,0,0,0)) ? 'text-destructive font-medium' : ''}>
                                 {formatEventDate(task.dueDate)}
                               </span>
-                            </>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
+                        <Badge 
+                          variant="secondary"
+                          className="text-[10px] sm:text-xs"
+                          style={{ 
+                            backgroundColor: effortLibrary.find(e => e.id === task.effort)?.color + '20',
+                            color: effortLibrary.find(e => e.id === task.effort)?.color
+                          }}
+                        >
+                          {task.effort}
+                        </Badge>
+                        <Badge 
+                          variant="secondary"
+                          className="text-[10px] sm:text-xs"
+                          style={{ 
+                            backgroundColor: importanceLibrary.find(i => i.id === task.importance)?.color + '20',
+                            color: importanceLibrary.find(i => i.id === task.importance)?.color
+                          }}
+                        >
+                          {task.importance}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
-                      <Badge 
-                        variant="secondary"
-                        className="text-[10px] sm:text-xs"
-                        style={{ 
-                          backgroundColor: effortLibrary.find(e => e.id === task.effort)?.color + '20',
-                          color: effortLibrary.find(e => e.id === task.effort)?.color
-                        }}
-                      >
-                        {task.effort}
-                      </Badge>
-                      <Badge 
-                        variant="secondary"
-                        className="text-[10px] sm:text-xs"
-                        style={{ 
-                          backgroundColor: importanceLibrary.find(i => i.id === task.importance)?.color + '20',
-                          color: importanceLibrary.find(i => i.id === task.importance)?.color
-                        }}
-                      >
-                        {task.importance}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

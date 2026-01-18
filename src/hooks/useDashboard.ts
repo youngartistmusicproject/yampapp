@@ -19,6 +19,10 @@ export interface DashboardTask {
   importance: string;
   assignee: string | null;
   dueDate: Date | null;
+  projectId: string | null;
+  projectName: string | null;
+  projectColor: string | null;
+  areaIds: string[] | null;
 }
 
 export interface DashboardEvent {
@@ -73,57 +77,33 @@ export function useDashboard() {
         };
       }
 
-      // Tasks due today
+      // Tasks due today (not completed - completed_at is null)
       const { count: tasksDueToday } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
         .eq('organization_id', orgId)
-        .eq('status', 'todo')
-        .gte('due_date', format(startOfDay(today), 'yyyy-MM-dd'))
-        .lte('due_date', format(endOfDay(today), 'yyyy-MM-dd'));
+        .is('completed_at', null)
+        .eq('due_date', format(today, 'yyyy-MM-dd'));
 
-      // Also count in-progress tasks due today
-      const { count: inProgressDueToday } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', orgId)
-        .eq('status', 'in_progress')
-        .gte('due_date', format(startOfDay(today), 'yyyy-MM-dd'))
-        .lte('due_date', format(endOfDay(today), 'yyyy-MM-dd'));
-
-      // Tasks due tomorrow
+      // Tasks due tomorrow (not completed)
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
       
-      const { count: tasksDueTomorrowTodo } = await supabase
+      const { count: tasksDueTomorrow } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
         .eq('organization_id', orgId)
-        .eq('status', 'todo')
-        .eq('due_date', tomorrowStr);
-
-      const { count: tasksDueTomorrowInProgress } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', orgId)
-        .eq('status', 'in_progress')
+        .is('completed_at', null)
         .eq('due_date', tomorrowStr);
 
       // Overdue tasks (due date before today and not completed)
       const todayStr = format(today, 'yyyy-MM-dd');
-      const { count: overdueTodo } = await supabase
+      const { count: overdueTasks } = await supabase
         .from('tasks')
         .select('*', { count: 'exact', head: true })
         .eq('organization_id', orgId)
-        .eq('status', 'todo')
-        .lt('due_date', todayStr);
-
-      const { count: overdueInProgress } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', orgId)
-        .eq('status', 'in_progress')
+        .is('completed_at', null)
         .lt('due_date', todayStr);
 
       // Active projects
@@ -133,27 +113,18 @@ export function useDashboard() {
         .eq('organization_id', orgId)
         .eq('status', 'active');
 
-      // For pending requests, we'll count tasks that need review (could be customized)
-      // For now, counting high priority todo tasks as "pending"
-      const { count: pendingRequests } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', orgId)
-        .eq('status', 'todo')
-        .eq('priority', 'high');
-
       return {
-        tasksDueToday: (tasksDueToday || 0) + (inProgressDueToday || 0),
-        tasksDueTomorrow: (tasksDueTomorrowTodo || 0) + (tasksDueTomorrowInProgress || 0),
-        overdueTasks: (overdueTodo || 0) + (overdueInProgress || 0),
-        pendingRequests: pendingRequests || 0,
+        tasksDueToday: tasksDueToday || 0,
+        tasksDueTomorrow: tasksDueTomorrow || 0,
+        overdueTasks: overdueTasks || 0,
+        pendingRequests: 0, // Reserved for future use
         activeProjects: activeProjects || 0,
       };
     },
     enabled: !!orgId,
   });
 
-  // Fetch tasks due today first, then recent tasks
+  // Fetch tasks due today first, then recent tasks - include project info
   const tasksQuery = useQuery({
     queryKey: ['dashboard-tasks', orgId],
     queryFn: async (): Promise<DashboardTask[]> => {
@@ -164,10 +135,10 @@ export function useDashboard() {
       // First, get tasks due today (not completed)
       const { data: dueTodayData, error: dueTodayError } = await supabase
         .from('tasks')
-        .select('id, title, status, effort, importance, assignee, due_date')
+        .select('id, title, status, effort, importance, assignee, due_date, project_id, projects(id, name, color, area_ids)')
         .eq('organization_id', orgId)
         .eq('due_date', todayStr)
-        .neq('status', 'done')
+        .is('completed_at', null)
         .order('importance', { ascending: false });
 
       if (dueTodayError) throw dueTodayError;
@@ -177,9 +148,9 @@ export function useDashboard() {
       
       let recentQuery = supabase
         .from('tasks')
-        .select('id, title, status, effort, importance, assignee, due_date')
+        .select('id, title, status, effort, importance, assignee, due_date, project_id, projects(id, name, color, area_ids)')
         .eq('organization_id', orgId)
-        .neq('status', 'done')
+        .is('completed_at', null)
         .order('due_date', { ascending: true, nullsFirst: false })
         .limit(5 - dueTodayIds.length);
 
@@ -201,15 +172,22 @@ export function useDashboard() {
         return new Date(y, (m || 1) - 1, d || 1);
       };
 
-      return combined.map(t => ({
-        id: t.id,
-        title: t.title,
-        status: t.status,
-        effort: t.effort || 'easy',
-        importance: t.importance || 'routine',
-        assignee: t.assignee,
-        dueDate: parseDateOnly(t.due_date),
-      }));
+      return combined.map(t => {
+        const project = t.projects as { id: string; name: string; color: string; area_ids: string[] } | null;
+        return {
+          id: t.id,
+          title: t.title,
+          status: t.status,
+          effort: t.effort || 'easy',
+          importance: t.importance || 'routine',
+          assignee: t.assignee,
+          dueDate: parseDateOnly(t.due_date),
+          projectId: t.project_id,
+          projectName: project?.name || null,
+          projectColor: project?.color || null,
+          areaIds: project?.area_ids || null,
+        };
+      });
     },
     enabled: !!orgId,
   });
