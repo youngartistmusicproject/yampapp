@@ -82,24 +82,44 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
       )}
     >
       {/* Header with logo and collapse toggle */}
-      <div className="flex items-center justify-between h-14 px-3 border-b border-border/40">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary flex-shrink-0">
-            <span className="text-primary-foreground font-semibold text-sm">W</span>
-          </div>
-          {!collapsed && (
-            <span className="font-semibold text-foreground text-[15px] truncate">WorkOS</span>
-          )}
-        </div>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-          className="h-7 w-7 text-muted-foreground hover:text-foreground flex-shrink-0"
-        >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </Button>
+      <div className={cn(
+        "flex items-center h-14 border-b border-border/40",
+        collapsed ? "justify-center px-1.5" : "justify-between px-3"
+      )}>
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setCollapsed(false)}
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary">
+                  <span className="text-primary-foreground font-semibold text-sm">W</span>
+                </div>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-xs">
+              Expand sidebar
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary flex-shrink-0">
+                <span className="text-primary-foreground font-semibold text-sm">W</span>
+              </div>
+              <span className="font-semibold text-foreground text-[15px] truncate">WorkOS</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCollapsed(true)}
+              className="h-7 w-7 text-muted-foreground hover:text-foreground flex-shrink-0"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Navigation */}
