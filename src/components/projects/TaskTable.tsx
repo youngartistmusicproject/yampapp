@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
-import { Repeat, Copy, Trash2, Clock, MessageSquare, Paperclip, BookOpen } from "lucide-react";
+import { Repeat, Copy, Trash2, Clock, MessageSquare, Paperclip, BookOpen, ListChecks } from "lucide-react";
 import { getProgressColor } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -142,6 +142,8 @@ function SortableTableRow({
   const isDone = task.status === doneStatusId;
   const commentCount = task.comments?.length || 0;
   const attachmentCount = task.attachments?.length || 0;
+  const subtaskCount = task.subtasks?.length || 0;
+  const completedSubtaskCount = task.subtasks?.filter(s => s.completed).length || 0;
 
   // Get areas for display
   const areas = task.inheritedAreas || (task.tags && task.tags.length > 0 
@@ -175,6 +177,12 @@ function SortableTableRow({
           </span>
           {task.isRecurring && (
             <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+          )}
+          {subtaskCount > 0 && (
+            <span className="flex items-center gap-0.5 text-muted-foreground/60">
+              <ListChecks className="w-3 h-3" />
+              <span className="text-[10px]">{completedSubtaskCount}/{subtaskCount}</span>
+            </span>
           )}
           {commentCount > 0 && (
             <span className="flex items-center gap-0.5 text-muted-foreground/60">
