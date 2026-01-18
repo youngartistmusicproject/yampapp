@@ -356,7 +356,28 @@ export function TaskDetailDialog({
   // Calculate new comments since last seen
   const newCommentCount = comments.length - seenCommentCount;
   
-  // Scroll to bottom of comments
+  // Check if element is visible in the scroll container
+  const isElementVisible = (element: HTMLElement | null) => {
+    if (!element || !commentsContainerRef.current) return false;
+    const container = commentsContainerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+    return elementRect.top >= containerRect.top && elementRect.bottom <= containerRect.bottom;
+  };
+  
+  // Scroll to bottom of comments only if not already visible
+  const scrollToBottomIfNeeded = () => {
+    // Wait for DOM to update, then check if bottom is visible
+    requestAnimationFrame(() => {
+      if (commentsEndRef.current && !isElementVisible(commentsEndRef.current)) {
+        commentsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+      setSeenCommentCount(comments.length);
+      setIsAtBottom(true);
+    });
+  };
+  
+  // Force scroll to bottom (for initial load)
   const scrollToBottom = () => {
     commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     setSeenCommentCount(comments.length);
@@ -386,7 +407,10 @@ export function TaskDetailDialog({
   // Auto-scroll when user is at bottom and new comments arrive
   useEffect(() => {
     if (isAtBottom && comments.length > 0) {
-      setTimeout(() => scrollToBottom(), 50);
+      // Use requestAnimationFrame to ensure DOM has updated first
+      requestAnimationFrame(() => {
+        scrollToBottomIfNeeded();
+      });
     }
   }, [comments.length]);
 
@@ -515,8 +539,7 @@ export function TaskDetailDialog({
       });
       setNewComment("");
       setPendingFiles([]);
-      // Scroll to bottom after posting
-      setTimeout(() => scrollToBottom(), 100);
+      // Let the useEffect handle scrolling after DOM updates
     } catch (error) {
       console.error('Error adding comment:', error);
     }
@@ -755,7 +778,7 @@ export function TaskDetailDialog({
                                           parentCommentId: parentId,
                                           files,
                                         });
-                                        setTimeout(() => scrollToBottom(), 100);
+                                        // Let the useEffect handle scrolling after DOM updates
                                       }
                                     }}
                                     onToggleReaction={(commentId, emoji) => {
