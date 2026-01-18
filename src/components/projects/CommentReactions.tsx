@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Smile, Plus } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -7,17 +7,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 
-// Common emoji reactions for task comments
-const EMOJI_OPTIONS = [
+// Quick emoji options for fast access
+const QUICK_EMOJIS = [
   { emoji: "👍", label: "Thumbs up" },
   { emoji: "❤️", label: "Heart" },
   { emoji: "🎉", label: "Party" },
   { emoji: "👏", label: "Clap" },
   { emoji: "🚀", label: "Rocket" },
   { emoji: "👀", label: "Eyes" },
-  { emoji: "✅", label: "Check" },
-  { emoji: "💡", label: "Idea" },
 ];
 
 interface Reaction {
@@ -39,10 +38,18 @@ export function CommentReactions({
   size = "default",
 }: CommentReactionsProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [showFullPicker, setShowFullPicker] = useState(false);
 
-  const handleReactionClick = (emoji: string) => {
+  const handleQuickReaction = (emoji: string) => {
     onToggleReaction(emoji);
     setPickerOpen(false);
+    setShowFullPicker(false);
+  };
+
+  const handleEmojiSelect = (emojiData: EmojiClickData) => {
+    onToggleReaction(emojiData.emoji);
+    setPickerOpen(false);
+    setShowFullPicker(false);
   };
 
   const isSmall = size === "sm";
@@ -69,7 +76,10 @@ export function CommentReactions({
       ))}
 
       {/* Add reaction button */}
-      <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+      <Popover open={pickerOpen} onOpenChange={(open) => {
+        setPickerOpen(open);
+        if (!open) setShowFullPicker(false);
+      }}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
@@ -82,19 +92,42 @@ export function CommentReactions({
             <Smile className={cn("text-muted-foreground", isSmall ? "w-3.5 h-3.5" : "w-4 h-4")} />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-2" side="top" align="start">
-          <div className="flex gap-1">
-            {EMOJI_OPTIONS.map((option) => (
+        <PopoverContent 
+          className={cn("p-0", showFullPicker ? "w-[350px]" : "w-auto p-2")} 
+          side="top" 
+          align="start"
+        >
+          {showFullPicker ? (
+            <EmojiPicker
+              onEmojiClick={handleEmojiSelect}
+              theme={Theme.AUTO}
+              width="100%"
+              height={350}
+              searchPlaceHolder="Search emoji..."
+              previewConfig={{ showPreview: false }}
+            />
+          ) : (
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-1">
+                {QUICK_EMOJIS.map((option) => (
+                  <button
+                    key={option.emoji}
+                    onClick={() => handleQuickReaction(option.emoji)}
+                    className="p-1.5 rounded hover:bg-muted transition-colors hover:scale-110"
+                    title={option.label}
+                  >
+                    <span className="text-xl leading-none">{option.emoji}</span>
+                  </button>
+                ))}
+              </div>
               <button
-                key={option.emoji}
-                onClick={() => handleReactionClick(option.emoji)}
-                className="p-1.5 rounded hover:bg-muted transition-colors hover:scale-110"
-                title={option.label}
+                onClick={() => setShowFullPicker(true)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 border-t border-border"
               >
-                <span className="text-xl leading-none">{option.emoji}</span>
+                More emojis...
               </button>
-            ))}
-          </div>
+            </div>
+          )}
         </PopoverContent>
       </Popover>
     </div>

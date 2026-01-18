@@ -79,6 +79,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTaskComments, useAddTaskComment, useDeleteTaskComment, useTaskAttachments, useUploadTaskAttachment, useToggleCommentReaction } from "@/hooks/useTaskComments";
 import { MentionInput, renderMentionContent } from "./MentionInput";
 import { CommentReactions } from "./CommentReactions";
+import { ThreadedComment } from "./ThreadedComment";
 
 interface Subtask {
   id: string;
@@ -656,7 +657,7 @@ export function TaskDetailDialog({
                   {activeTab === 'comments' ? (
                     <>
                       {/* Comments list */}
-                      <div className="space-y-3 mb-4">
+                      <div className="space-y-4 mb-4">
                         {commentsLoading ? (
                           <div className="flex items-center justify-center py-4">
                             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -664,64 +665,42 @@ export function TaskDetailDialog({
                         ) : comments.length === 0 ? (
                           <p className="text-sm text-muted-foreground/60 italic">No comments yet</p>
                         ) : (
-                          comments.map((comment) => {
-                            // Transform reactions for CommentReactions component
-                            const reactionsForDisplay = (comment.reactions || []).map(r => ({
-                              emoji: r.emoji,
-                              count: r.users.length,
-                              hasReacted: r.users.some(u => u.id === profile?.id),
-                              users: r.users.map(u => u.name),
-                            }));
+                          (() => {
+                            // Separate top-level comments and replies
+                            const topLevelComments = comments.filter(c => !c.parentCommentId);
+                            const repliesMap = new Map<string, typeof comments>();
+                            comments.forEach(c => {
+                              if (c.parentCommentId) {
+                                const existing = repliesMap.get(c.parentCommentId) || [];
+                                existing.push(c);
+                                repliesMap.set(c.parentCommentId, existing);
+                              }
+                            });
 
-                            return (
-                              <div key={comment.id} className="group flex items-start gap-3">
-                                <UserAvatar user={comment.author} size="sm" showTooltip={false} />
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium">{comment.author.name}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {format(new Date(comment.createdAt), 'MMM d, h:mm a')}
-                                    </span>
-                                    <button
-                                      onClick={() => handleDeleteComment(comment.id)}
-                                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-opacity ml-auto"
-                                    >
-                                      <Trash2 className="w-3 h-3 text-destructive" />
-                                    </button>
-                                  </div>
-                                  <p className="text-sm mt-0.5">{renderMentionContent(comment.content)}</p>
-                                  {comment.attachments && comment.attachments.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                      {comment.attachments.map((file) => (
-                                        <a 
-                                          key={file.id} 
-                                          href={file.url} 
-                                          target="_blank" 
-                                          rel="noopener noreferrer"
-                                          className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded text-xs hover:bg-muted/80"
-                                        >
-                                          <Paperclip className="w-3 h-3" />
-                                          {file.name}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  )}
-                                  {/* Comment reactions */}
-                                  <div className="mt-2">
-                                    <CommentReactions
-                                      reactions={reactionsForDisplay}
-                                      onToggleReaction={(emoji) => {
-                                        if (task) {
-                                          toggleReaction.mutate({ taskId: task.id, commentId: comment.id, emoji });
-                                        }
-                                      }}
-                                      size="sm"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })
+                            return topLevelComments.map((comment) => (
+                              <ThreadedComment
+                                key={comment.id}
+                                comment={comment}
+                                replies={repliesMap.get(comment.id) || []}
+                                currentUserId={profile?.id}
+                                onDelete={handleDeleteComment}
+                                onReply={async (content, parentId) => {
+                                  if (task) {
+                                    await addComment.mutateAsync({
+                                      taskId: task.id,
+                                      content,
+                                      parentCommentId: parentId,
+                                    });
+                                  }
+                                }}
+                                onToggleReaction={(commentId, emoji) => {
+                                  if (task) {
+                                    toggleReaction.mutate({ taskId: task.id, commentId, emoji });
+                                  }
+                                }}
+                              />
+                            ));
+                          })()
                         )}
                       </div>
 
