@@ -337,8 +337,12 @@ export function TaskDetailDialog({
   const [sopUrl, setSopUrl] = useState("");
   const [activeTab, setActiveTab] = useState<'comments' | 'files'>('comments');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [seenCommentCount, setSeenCommentCount] = useState(0);
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const directFileInputRef = useRef<HTMLInputElement>(null);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
+  const commentsContainerRef = useRef<HTMLDivElement>(null);
   
   // Hooks for comments and attachments
   const { data: comments = [], isLoading: commentsLoading } = useTaskComments(task?.id || null);
@@ -348,6 +352,43 @@ export function TaskDetailDialog({
   const updateComment = useUpdateTaskComment();
   const uploadAttachment = useUploadTaskAttachment();
   const toggleReaction = useToggleCommentReaction();
+  
+  // Calculate new comments since last seen
+  const newCommentCount = comments.length - seenCommentCount;
+  
+  // Scroll to bottom of comments
+  const scrollToBottom = () => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setSeenCommentCount(comments.length);
+    setIsAtBottom(true);
+  };
+  
+  // Handle scroll to detect if user is at bottom
+  const handleCommentsScroll = () => {
+    if (!commentsContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = commentsContainerRef.current;
+    const atBottom = scrollHeight - scrollTop - clientHeight < 50;
+    setIsAtBottom(atBottom);
+    if (atBottom) {
+      setSeenCommentCount(comments.length);
+    }
+  };
+  
+  // Initialize seen count when dialog opens or task changes
+  useEffect(() => {
+    if (open && task) {
+      setSeenCommentCount(comments.length);
+      // Scroll to bottom on initial open
+      setTimeout(() => scrollToBottom(), 100);
+    }
+  }, [open, task?.id]);
+  
+  // Auto-scroll when user is at bottom and new comments arrive
+  useEffect(() => {
+    if (isAtBottom && comments.length > 0) {
+      setTimeout(() => scrollToBottom(), 50);
+    }
+  }, [comments.length]);
 
   const subtasks: Subtask[] = (() => {
     if (!task?.subtasks) return [];
@@ -474,6 +515,8 @@ export function TaskDetailDialog({
       });
       setNewComment("");
       setPendingFiles([]);
+      // Scroll to bottom after posting
+      setTimeout(() => scrollToBottom(), 100);
     } catch (error) {
       console.error('Error adding comment:', error);
     }
@@ -657,8 +700,23 @@ export function TaskDetailDialog({
                 <div className="flex-1 flex flex-col min-h-0 px-6 py-4">
                   {activeTab === 'comments' ? (
                     <>
+                      {/* New comments indicator */}
+                      {newCommentCount > 0 && !isAtBottom && (
+                        <button
+                          onClick={scrollToBottom}
+                          className="mb-2 mx-auto flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-full text-xs font-medium shadow-md hover:bg-primary/90 transition-colors animate-in slide-in-from-top-2"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          {newCommentCount} new {newCommentCount === 1 ? 'comment' : 'comments'}
+                        </button>
+                      )}
+                      
                       {/* Comments list - scrollable area with newest at bottom */}
-                      <div className="flex-1 overflow-y-auto space-y-3 mb-3">
+                      <div 
+                        ref={commentsContainerRef}
+                        onScroll={handleCommentsScroll}
+                        className="flex-1 overflow-y-auto space-y-3 mb-3"
+                      >
                         {commentsLoading ? (
                           <div className="flex items-center justify-center py-4">
                             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -680,39 +738,45 @@ export function TaskDetailDialog({
                               }
                             });
 
-                            return topLevelComments.map((comment) => (
-                              <ThreadedComment
-                                key={comment.id}
-                                comment={comment}
-                                replies={repliesMap.get(comment.id) || []}
-                                currentUserId={profile?.id}
-                                onDelete={handleDeleteComment}
-                                onReply={async (content, parentId, files) => {
-                                  if (task) {
-                                    await addComment.mutateAsync({
-                                      taskId: task.id,
-                                      content,
-                                      parentCommentId: parentId,
-                                      files,
-                                    });
-                                  }
-                                }}
-                                onToggleReaction={(commentId, emoji) => {
-                                  if (task) {
-                                    toggleReaction.mutate({ taskId: task.id, commentId, emoji });
-                                  }
-                                }}
-                                onEdit={async (commentId, content) => {
-                                  if (task) {
-                                    await updateComment.mutateAsync({
-                                      taskId: task.id,
-                                      commentId,
-                                      content,
-                                    });
-                                  }
-                                }}
-                              />
-                            ));
+                            return (
+                              <>
+                                {topLevelComments.map((comment) => (
+                                  <ThreadedComment
+                                    key={comment.id}
+                                    comment={comment}
+                                    replies={repliesMap.get(comment.id) || []}
+                                    currentUserId={profile?.id}
+                                    onDelete={handleDeleteComment}
+                                    onReply={async (content, parentId, files) => {
+                                      if (task) {
+                                        await addComment.mutateAsync({
+                                          taskId: task.id,
+                                          content,
+                                          parentCommentId: parentId,
+                                          files,
+                                        });
+                                        setTimeout(() => scrollToBottom(), 100);
+                                      }
+                                    }}
+                                    onToggleReaction={(commentId, emoji) => {
+                                      if (task) {
+                                        toggleReaction.mutate({ taskId: task.id, commentId, emoji });
+                                      }
+                                    }}
+                                    onEdit={async (commentId, content) => {
+                                      if (task) {
+                                        await updateComment.mutateAsync({
+                                          taskId: task.id,
+                                          commentId,
+                                          content,
+                                        });
+                                      }
+                                    }}
+                                  />
+                                ))}
+                                <div ref={commentsEndRef} />
+                              </>
+                            );
                           })()
                         )}
                       </div>
