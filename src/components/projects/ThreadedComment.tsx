@@ -95,7 +95,10 @@ export function ThreadedComment({
   };
 
   return (
-    <div className={cn("group/comment", depth > 0 && "ml-6 mt-1.5 pl-2.5 border-l border-border/30")}>
+    <div 
+      data-comment-id={comment.id}
+      className={cn("group/comment", depth > 0 && "ml-6 mt-1.5 pl-2.5 border-l border-border/30")}
+    >
       <div className="flex items-start gap-2">
         <UserAvatar user={comment.author} size="sm" showTooltip={false} />
         <div className="flex-1 min-w-0">

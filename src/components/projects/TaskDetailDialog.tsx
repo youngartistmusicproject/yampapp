@@ -339,6 +339,7 @@ export function TaskDetailDialog({
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [seenCommentCount, setSeenCommentCount] = useState(0);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [lastPostedCommentId, setLastPostedCommentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const directFileInputRef = useRef<HTMLInputElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
@@ -404,15 +405,35 @@ export function TaskDetailDialog({
     }
   }, [open, task?.id]);
   
-  // Auto-scroll when user is at bottom and new comments arrive
+  // Auto-scroll when user is at bottom and new comments arrive (from others)
   useEffect(() => {
-    if (isAtBottom && comments.length > 0) {
-      // Use requestAnimationFrame to ensure DOM has updated first
+    // Only auto-scroll if we're at bottom AND there's no pending scroll to a specific comment
+    if (isAtBottom && comments.length > 0 && !lastPostedCommentId) {
       requestAnimationFrame(() => {
         scrollToBottomIfNeeded();
       });
     }
   }, [comments.length]);
+  
+  // Scroll to the specific comment that was just posted
+  useEffect(() => {
+    if (lastPostedCommentId && commentsContainerRef.current) {
+      // Wait for DOM to update with the new comment
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const commentElement = commentsContainerRef.current?.querySelector(
+            `[data-comment-id="${lastPostedCommentId}"]`
+          );
+          if (commentElement) {
+            commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          setLastPostedCommentId(null);
+          setSeenCommentCount(comments.length);
+          setIsAtBottom(true);
+        });
+      });
+    }
+  }, [lastPostedCommentId, comments]);
 
   const subtasks: Subtask[] = (() => {
     if (!task?.subtasks) return [];
@@ -532,14 +553,15 @@ export function TaskDetailDialog({
     if (!task || (!newComment.trim() && pendingFiles.length === 0)) return;
     
     try {
-      await addComment.mutateAsync({
+      const newCommentData = await addComment.mutateAsync({
         taskId: task.id,
         content: newComment.trim() || '(file attachment)',
         files: pendingFiles.length > 0 ? pendingFiles : undefined,
       });
       setNewComment("");
       setPendingFiles([]);
-      // Let the useEffect handle scrolling after DOM updates
+      // Set the ID of the newly posted comment to scroll to it
+      setLastPostedCommentId(newCommentData.id);
     } catch (error) {
       console.error('Error adding comment:', error);
     }
@@ -772,13 +794,14 @@ export function TaskDetailDialog({
                                     onDelete={handleDeleteComment}
                                     onReply={async (content, parentId, files) => {
                                       if (task) {
-                                        await addComment.mutateAsync({
+                                        const newReply = await addComment.mutateAsync({
                                           taskId: task.id,
                                           content,
                                           parentCommentId: parentId,
                                           files,
                                         });
-                                        // Let the useEffect handle scrolling after DOM updates
+                                        // Set the ID of the newly posted reply to scroll to it
+                                        setLastPostedCommentId(newReply.id);
                                       }
                                     }}
                                     onToggleReaction={(commentId, emoji) => {
