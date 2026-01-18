@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { User, TaskComment, TaskAttachment, CommentReaction } from '@/types';
@@ -13,9 +14,48 @@ interface CommentReactionRow {
   created_at: string;
 }
 
-// Fetch comments for a specific task
+// Fetch comments for a specific task with realtime updates
 export function useTaskComments(taskId: string | null) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  // Realtime subscription for comments
+  useEffect(() => {
+    if (!taskId) return;
+    
+    const channel = supabase
+      .channel(`task-comments-${taskId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'task_comments',
+          filter: `task_id=eq.${taskId}`,
+        },
+        () => {
+          // Invalidate and refetch on any change
+          queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'task_comment_reactions',
+        },
+        () => {
+          // Invalidate on reaction changes
+          queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] });
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [taskId, queryClient]);
   
   return useQuery({
     queryKey: ['task-comments', taskId],
