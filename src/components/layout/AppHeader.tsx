@@ -2,6 +2,7 @@ import { Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,8 +23,12 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, currentOrganization } = useAuth();
   const navigate = useNavigate();
+  
+  const isDemo = currentOrganization?.slug === 'demo' 
+    || currentOrganization?.name?.toLowerCase().includes('demo')
+    || currentOrganization?.name?.toLowerCase().includes('staging');
   
   const fullName = profile ? getFullName(profile.first_name, profile.last_name) : "User";
   const initials = profile ? getInitials(profile.first_name, profile.last_name) : "?";
@@ -41,7 +46,14 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
       </Button>
 
       {/* Organization Switcher */}
-      <OrganizationSwitcher />
+      <div className="flex items-center gap-2">
+        <OrganizationSwitcher />
+        {isDemo && (
+          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-[10px] font-semibold px-1.5 py-0">
+            DEMO
+          </Badge>
+        )}
+      </div>
 
       {/* Search */}
       <div className="relative flex-1 max-w-sm">
