@@ -18,6 +18,7 @@ import CRM from "./pages/CRM";
 import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
 import OrganizationManagement from "./pages/OrganizationManagement";
+import FeatureFlagManagement from "./pages/FeatureFlagManagement";
 import Login from "./pages/Login";
 import SetupAdmin from "./pages/SetupAdmin";
 import RegisterOrganization from "./pages/RegisterOrganization";
@@ -70,6 +71,14 @@ const App = () => (
                         element={
                           <ProtectedRoute requiredRoles={['super-admin', 'admin']}>
                             <OrganizationManagement />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/feature-flags"
+                        element={
+                          <ProtectedRoute requiredRoles={['super-admin']}>
+                            <FeatureFlagManagement />
                           </ProtectedRoute>
                         }
                       />

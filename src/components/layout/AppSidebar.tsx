@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Menu,
   Shield,
+  Flag,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -135,10 +136,16 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
       {/* Bottom section */}
       <div className="px-2 py-3 border-t border-border/40 space-y-0.5">
         {isSuperAdmin && (
-          <NavItem
-            item={{ name: "User Management", href: "/users", icon: Shield }}
-            isActive={location.pathname === "/users"}
-          />
+          <>
+            <NavItem
+              item={{ name: "User Management", href: "/users", icon: Shield }}
+              isActive={location.pathname === "/users"}
+            />
+            <NavItem
+              item={{ name: "Feature Flags", href: "/feature-flags", icon: Flag }}
+              isActive={location.pathname === "/feature-flags"}
+            />
+          </>
         )}
 
         <NavItem
@@ -221,19 +228,34 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         {/* Bottom section */}
         <div className="px-2 py-3 border-t border-border/40 space-y-0.5">
           {isSuperAdmin && (
-            <NavLink
-              to="/users"
-              onClick={() => onOpenChange(false)}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                location.pathname === "/users"
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              )}
-            >
-              <Shield className="w-5 h-5 flex-shrink-0" />
-              <span>User Management</span>
-            </NavLink>
+            <>
+              <NavLink
+                to="/users"
+                onClick={() => onOpenChange(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  location.pathname === "/users"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                <Shield className="w-5 h-5 flex-shrink-0" />
+                <span>User Management</span>
+              </NavLink>
+              <NavLink
+                to="/feature-flags"
+                onClick={() => onOpenChange(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  location.pathname === "/feature-flags"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                <Flag className="w-5 h-5 flex-shrink-0" />
+                <span>Feature Flags</span>
+              </NavLink>
+            </>
           )}
 
           <NavLink
