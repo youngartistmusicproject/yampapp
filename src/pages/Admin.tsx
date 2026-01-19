@@ -61,6 +61,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ImageCropDialog } from '@/components/settings/ImageCropDialog';
 import {
   Loader2,
   Plus,
@@ -144,6 +145,12 @@ export default function Admin() {
   const [brandingPrimaryColor, setBrandingPrimaryColor] = useState(currentOrganization?.primary_color || '#6366f1');
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingFavicon, setIsUploadingFavicon] = useState(false);
+
+  // Image crop dialog state
+  const [logoCropDialogOpen, setLogoCropDialogOpen] = useState(false);
+  const [faviconCropDialogOpen, setFaviconCropDialogOpen] = useState(false);
+  const [selectedLogoSrc, setSelectedLogoSrc] = useState<string | null>(null);
+  const [selectedFaviconSrc, setSelectedFaviconSrc] = useState<string | null>(null);
 
   // Sync branding form state when organization changes
   useEffect(() => {
@@ -256,18 +263,34 @@ export default function Admin() {
   });
 
   // Handlers
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !currentOrganization) return;
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSelectedLogoSrc(reader.result as string);
+      setLogoCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; // Reset input
+  };
+
+  const handleLogoCropComplete = async (croppedBlob: Blob) => {
+    if (!currentOrganization) return;
 
     setIsUploadingLogo(true);
+    setLogoCropDialogOpen(false);
+
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${currentOrganization.id}/logo.${fileExt}`;
+      const fileName = `${currentOrganization.id}/logo.png`;
 
       const { error: uploadError } = await supabase.storage
         .from('organization-assets')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, croppedBlob, {
+          upsert: true,
+          contentType: 'image/png',
+        });
 
       if (uploadError) throw uploadError;
 
@@ -275,11 +298,14 @@ export default function Admin() {
         .from('organization-assets')
         .getPublicUrl(fileName);
 
-      await updateBrandingMutation.mutateAsync({ logo_url: urlData.publicUrl });
+      // Add cache-busting parameter
+      const urlWithCacheBust = `${urlData.publicUrl}?t=${Date.now()}`;
+      await updateBrandingMutation.mutateAsync({ logo_url: urlWithCacheBust });
     } catch (error: any) {
       toast.error(error.message || 'Failed to upload logo');
     } finally {
       setIsUploadingLogo(false);
+      setSelectedLogoSrc(null);
     }
   };
 
@@ -287,18 +313,34 @@ export default function Admin() {
     await updateBrandingMutation.mutateAsync({ logo_url: null });
   };
 
-  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFaviconFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !currentOrganization) return;
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSelectedFaviconSrc(reader.result as string);
+      setFaviconCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; // Reset input
+  };
+
+  const handleFaviconCropComplete = async (croppedBlob: Blob) => {
+    if (!currentOrganization) return;
 
     setIsUploadingFavicon(true);
+    setFaviconCropDialogOpen(false);
+
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${currentOrganization.id}/favicon.${fileExt}`;
+      const fileName = `${currentOrganization.id}/favicon.png`;
 
       const { error: uploadError } = await supabase.storage
         .from('organization-assets')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, croppedBlob, {
+          upsert: true,
+          contentType: 'image/png',
+        });
 
       if (uploadError) throw uploadError;
 
@@ -306,11 +348,14 @@ export default function Admin() {
         .from('organization-assets')
         .getPublicUrl(fileName);
 
-      await updateBrandingMutation.mutateAsync({ favicon_url: urlData.publicUrl });
+      // Add cache-busting parameter
+      const urlWithCacheBust = `${urlData.publicUrl}?t=${Date.now()}`;
+      await updateBrandingMutation.mutateAsync({ favicon_url: urlWithCacheBust });
     } catch (error: any) {
       toast.error(error.message || 'Failed to upload favicon');
     } finally {
       setIsUploadingFavicon(false);
+      setSelectedFaviconSrc(null);
     }
   };
 
@@ -671,7 +716,7 @@ export default function Admin() {
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={handleLogoUpload}
+                        onChange={handleLogoFileSelect}
                         disabled={isUploadingLogo}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
@@ -764,7 +809,7 @@ export default function Admin() {
                         type="file"
                         accept="image/*,.ico"
                         className="hidden"
-                        onChange={handleFaviconUpload}
+                        onChange={handleFaviconFileSelect}
                         disabled={isUploadingFavicon}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
@@ -1287,6 +1332,42 @@ export default function Admin() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Logo Crop Dialog */}
+      <ImageCropDialog
+        open={logoCropDialogOpen}
+        onOpenChange={(open) => {
+          setLogoCropDialogOpen(open);
+          if (!open) setSelectedLogoSrc(null);
+        }}
+        imageSrc={selectedLogoSrc || ''}
+        onCropComplete={handleLogoCropComplete}
+        isProcessing={isUploadingLogo}
+        title="Crop Organization Logo"
+        description="Adjust your logo to fit a square frame"
+        cropShape="rect"
+        aspect={1}
+        maxOutputSize={512}
+        outputFormat="image/png"
+      />
+
+      {/* Favicon Crop Dialog */}
+      <ImageCropDialog
+        open={faviconCropDialogOpen}
+        onOpenChange={(open) => {
+          setFaviconCropDialogOpen(open);
+          if (!open) setSelectedFaviconSrc(null);
+        }}
+        imageSrc={selectedFaviconSrc || ''}
+        onCropComplete={handleFaviconCropComplete}
+        isProcessing={isUploadingFavicon}
+        title="Crop Favicon"
+        description="Adjust your favicon to fit a square frame"
+        cropShape="rect"
+        aspect={1}
+        maxOutputSize={64}
+        outputFormat="image/png"
+      />
     </div>
   );
 }
