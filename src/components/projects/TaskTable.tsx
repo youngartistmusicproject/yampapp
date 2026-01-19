@@ -154,14 +154,14 @@ function SortableTableRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex flex-col gap-1 px-3 py-2.5 border-b border-border/50 cursor-grab active:cursor-grabbing transition-colors ${
-        overdue ? 'bg-destructive/5' : 'hover:bg-muted/30'
+      className={`group flex flex-col px-3 py-2 border-b border-border/40 cursor-grab active:cursor-grabbing transition-colors ${
+        overdue ? 'bg-destructive/5' : 'hover:bg-muted/20'
       }`}
       onClick={() => onViewTask(task)}
       {...attributes}
       {...listeners}
     >
-      {/* Main row - Task title */}
+      {/* Main row */}
       <div className="flex items-center gap-3">
         <CircularCheckbox
           checked={isDone}
@@ -171,60 +171,67 @@ function SortableTableRow({
           size="sm"
         />
         
-        <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className={`text-[13px] font-medium truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-            {task.title}
-          </span>
-          {task.isRecurring && (
-            <Repeat className="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
-          )}
-          {subtaskCount > 0 && (
-            <span className="flex items-center gap-0.5 text-muted-foreground/60">
-              <ListChecks className="w-3 h-3" />
-              <span className="text-[10px]">{completedSubtaskCount}/{subtaskCount}</span>
+        {/* Title + indicators */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={`text-[13px] font-medium truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+              {task.title}
             </span>
-          )}
-          {commentCount > 0 && (
-            <span className="flex items-center gap-0.5 text-muted-foreground/60">
-              <MessageSquare className="w-3 h-3" />
-              <span className="text-[10px]">{commentCount}</span>
-            </span>
-          )}
-          {attachmentCount > 0 && (
-            <span className="flex items-center gap-0.5 text-muted-foreground/60">
-              <Paperclip className="w-3 h-3" />
-              <span className="text-[10px]">{attachmentCount}</span>
-            </span>
-          )}
-          {task.howToLink && (
-            <span className="text-primary/70" title="Has SOP">
-              <BookOpen className="w-3 h-3" />
-            </span>
+            
+            {/* Inline indicators - always visible */}
+            <div className="flex items-center gap-1.5 text-muted-foreground/50 shrink-0">
+              {task.isRecurring && (
+                <Repeat className="w-3 h-3" />
+              )}
+              {subtaskCount > 0 && (
+                <span className="flex items-center gap-0.5 text-[10px]">
+                  <ListChecks className="w-3 h-3" />
+                  {completedSubtaskCount}/{subtaskCount}
+                </span>
+              )}
+              {commentCount > 0 && (
+                <span className="flex items-center gap-0.5 text-[10px]">
+                  <MessageSquare className="w-3 h-3" />
+                  {commentCount}
+                </span>
+              )}
+              {attachmentCount > 0 && (
+                <span className="flex items-center gap-0.5 text-[10px]">
+                  <Paperclip className="w-3 h-3" />
+                  {attachmentCount}
+                </span>
+              )}
+              {task.howToLink && (
+                <BookOpen className="w-3 h-3 text-primary/60" />
+              )}
+            </div>
+          </div>
+          
+          {/* Project - always visible on second line */}
+          {project && (
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span
+                className="h-2 w-2 rounded-full shrink-0"
+                style={{ backgroundColor: project.color }}
+              />
+              <span className="text-[11px] text-muted-foreground truncate">{project.name}</span>
+            </div>
           )}
         </div>
 
-        {/* Right side - Status & Priority info (Order: Importance → Due Date → Stage → Progress) */}
-        <div className="grid items-center gap-3 w-[316px] flex-shrink-0 grid-cols-[70px_52px_68px_90px]">
-          {/* 1. Importance - first for triage */}
-          <div className="flex items-center justify-center">
-            <span 
-              className={`text-[10px] font-medium px-2 py-0.5 rounded capitalize h-5 inline-flex items-center justify-center min-w-[52px] ${showDetails ? (importanceColors[task.importance || 'routine'] || importanceColors.routine) : 'opacity-0 pointer-events-none'}`}
-            >
-              {task.importance || 'routine'}
-            </span>
-          </div>
-          
-          {/* 2. Due Date */}
-          <div className="flex items-center justify-center">
-            <span className={`text-[11px] leading-none ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+        {/* Right side - Always visible: Due Date, Stage, Assignees */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Due Date - always visible */}
+          <div className="w-14 text-right">
+            <span className={`text-[11px] ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
               {task.dueDate ? format(task.dueDate, "MMM d") : "—"}
             </span>
           </div>
 
-          {/* 3. Stage */}
-          <div className="flex items-center justify-start">
+          {/* Stage - always visible */}
+          <div className="w-20">
             <span 
-              className="text-[10px] font-medium px-2 py-0.5 rounded h-5 inline-flex items-center justify-center max-w-full truncate"
+              className="text-[10px] font-medium px-2 py-0.5 rounded h-5 inline-flex items-center justify-center truncate"
               style={{
                 backgroundColor: status ? `${status.color}15` : 'transparent',
                 color: status?.color || 'var(--muted-foreground)',
@@ -234,20 +241,17 @@ function SortableTableRow({
             </span>
           </div>
           
-          {/* 4. Progress - last as completion indicator */}
-          <div className="flex items-center justify-end">
-            <div className={`flex items-center justify-end gap-1.5 w-full ${showDetails ? '' : 'opacity-0 pointer-events-none'}`}>
-              <div className="w-[38px] h-1.5 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
-                  style={{ width: `${task.progress || 0}%` }}
-                />
-              </div>
-              <span className="text-[10px] font-medium text-muted-foreground w-7 text-right tabular-nums">{task.progress || 0}%</span>
-            </div>
+          {/* Assignees - always visible */}
+          <div className="w-16">
+            {task.assignees && task.assignees.length > 0 ? (
+              <UserAvatarGroup users={task.assignees} max={3} size="xs" teamLeaderIds={projectLeadNames} />
+            ) : (
+              <span className="text-[10px] text-muted-foreground/40">—</span>
+            )}
           </div>
         </div>
 
+        {/* Hover actions */}
         <div 
           className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity w-14 justify-end"
           onClick={(e) => e.stopPropagation()} 
@@ -272,62 +276,56 @@ function SortableTableRow({
         </div>
       </div>
 
-      {/* Context + Workload row */}
+      {/* Expanded details row - Areas, Effort, Importance, Progress, Est. Time */}
       {showDetails && (
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground pl-7 pr-14">
-          {/* Left side - Context: Project, Areas, Responsible */}
-          <div className="flex items-center gap-2 min-w-0">
-            {/* Project indicator */}
-            {project && (
-              <div className="flex items-center gap-1.5 min-w-0 max-w-[120px]">
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground pl-7 mt-1">
+          {/* Areas */}
+          {areas.length > 0 && (
+            <div className="flex items-center gap-1">
+              {areas.slice(0, 2).map((area: any) => (
                 <span
-                  className="h-2 w-2 rounded-full shrink-0"
-                  style={{ backgroundColor: project.color }}
-                />
-                <span className="truncate">{project.name}</span>
-              </div>
-            )}
-
-            {/* Area tags */}
-            {areas.length > 0 && (
-              <div className="flex items-center gap-1">
-                {areas.slice(0, 2).map((area: any) => (
-                  <span
-                    key={area.id}
-                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                    style={{ 
-                      backgroundColor: `${area.color}15`,
-                      color: area.color,
-                    }}
-                  >
-                    {area.name}
-                  </span>
-                ))}
-                {areas.length > 2 && (
-                  <span className="text-[10px] text-muted-foreground">+{areas.length - 2}</span>
-                )}
-              </div>
-            )}
-
-            {/* Responsible assignees */}
-            {task.assignees && task.assignees.length > 0 && (
-              <div className="flex items-center gap-1">
-                <span className="text-muted-foreground/70">·</span>
-                <UserAvatarGroup users={task.assignees} max={3} size="xs" teamLeaderIds={projectLeadNames} />
-              </div>
-            )}
-          </div>
-
-          {/* Spacer */}
+                  key={area.id}
+                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                  style={{ 
+                    backgroundColor: `${area.color}15`,
+                    color: area.color,
+                  }}
+                >
+                  {area.name}
+                </span>
+              ))}
+              {areas.length > 2 && (
+                <span className="text-[10px] text-muted-foreground">+{areas.length - 2}</span>
+              )}
+            </div>
+          )}
+          
           <div className="flex-1" />
-
-          {/* Right side - Workload: Effort, Estimated Time */}
-          <div className="flex items-center justify-end gap-2 w-[316px] flex-shrink-0">
+          
+          {/* Metadata: Effort, Importance, Progress, Est. Time */}
+          <div className="flex items-center gap-2">
             {task.effort && (
               <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${effortColors[task.effort] || effortColors.light}`}>
                 {task.effort}
               </span>
             )}
+            {task.importance && (
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded capitalize ${importanceColors[task.importance] || importanceColors.routine}`}>
+                {task.importance}
+              </span>
+            )}
+            
+            {/* Progress */}
+            <div className="flex items-center gap-1.5">
+              <div className="w-10 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all ${getProgressColor(task.progress || 0)}`}
+                  style={{ width: `${task.progress || 0}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-medium w-6 text-right tabular-nums">{task.progress || 0}%</span>
+            </div>
+            
             {task.estimatedTime && (
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
