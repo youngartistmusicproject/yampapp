@@ -16,6 +16,7 @@ import {
   Shield,
   Flag,
   LogOut,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ const navItems: Array<{
   { name: "Community", href: "/community", icon: Users, featureKey: "community" },
   { name: "Requests", href: "/requests", icon: ClipboardList, featureKey: "requests" },
   { name: "CRM", href: "/crm", icon: UserCircle, featureKey: "crm" },
+  { name: "Organizations", href: "/organizations", icon: Building2, featureKey: "organization_management" },
 ];
 
 // Desktop Sidebar - Todoist minimalist style
