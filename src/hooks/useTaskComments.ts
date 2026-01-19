@@ -216,7 +216,8 @@ export function useToggleCommentReaction() {
 // Add a comment to a task
 export function useAddTaskComment() {
   const queryClient = useQueryClient();
-  const { profile } = useAuth();
+  const { profile, currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async ({ 
@@ -287,7 +288,7 @@ export function useAddTaskComment() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task-comments', variables.taskId] });
       queryClient.invalidateQueries({ queryKey: ['task-attachments', variables.taskId] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', orgId] });
     },
   });
 }
@@ -315,6 +316,8 @@ export function useUpdateTaskComment() {
 // Delete a comment
 export function useDeleteTaskComment() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async ({ taskId, commentId }: { taskId: string; commentId: string }) => {
@@ -329,7 +332,7 @@ export function useDeleteTaskComment() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task-comments', variables.taskId] });
       queryClient.invalidateQueries({ queryKey: ['task-attachments', variables.taskId] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', orgId] });
     },
   });
 }
@@ -388,7 +391,8 @@ export function useTaskAttachments(taskId: string | null) {
 // Upload a direct attachment to a task
 export function useUploadTaskAttachment() {
   const queryClient = useQueryClient();
-  const { profile } = useAuth();
+  const { profile, currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async ({ taskId, file }: { taskId: string; file: File }) => {
@@ -428,7 +432,7 @@ export function useUploadTaskAttachment() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task-attachments', variables.taskId] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', orgId] });
     },
   });
 }
@@ -436,6 +440,8 @@ export function useUploadTaskAttachment() {
 // Delete a task attachment
 export function useDeleteTaskAttachment() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async ({ taskId, attachmentId, isCommentAttachment }: { 
@@ -455,7 +461,7 @@ export function useDeleteTaskAttachment() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task-attachments', variables.taskId] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', orgId] });
     },
   });
 }

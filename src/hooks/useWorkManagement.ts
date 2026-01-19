@@ -305,11 +305,12 @@ export function useCreateTask() {
       return newTask;
     },
     onMutate: async (newTask) => {
+      const orgId = currentOrganization?.id;
       // Cancel any outgoing refetches to avoid overwriting optimistic update
-      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      await queryClient.cancelQueries({ queryKey: ['tasks', orgId] });
       
       // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks', orgId]);
       
       // Optimistically add the new task to the list
       const optimisticTask: Task = {
@@ -334,24 +335,25 @@ export function useCreateTask() {
         updatedAt: new Date(),
       };
       
-      queryClient.setQueryData<Task[]>(['tasks'], (old) => 
+      queryClient.setQueryData<Task[]>(['tasks', orgId], (old) => 
         old ? [optimisticTask, ...old] : [optimisticTask]
       );
       
-      return { previousTasks };
+      return { previousTasks, orgId };
     },
     onError: (_err, _newTask, context) => {
       // Roll back to previous state on error
       if (context?.previousTasks) {
-        queryClient.setQueryData(['tasks'], context.previousTasks);
+        queryClient.setQueryData(['tasks', context.orgId], context.previousTasks);
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _error, _variables, context) => {
+      const orgId = context?.orgId;
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-activity', orgId] });
     },
   });
 }
@@ -359,6 +361,8 @@ export function useCreateTask() {
 // Update a task
 export function useUpdateTask() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async ({ taskId, updates }: { taskId: string; updates: Partial<Task> }) => {
@@ -436,10 +440,10 @@ export function useUpdateTask() {
       return taskId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-projects'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-projects', orgId] });
     },
   });
 }
@@ -447,6 +451,8 @@ export function useUpdateTask() {
 // Complete a recurring task and create next instance
 export function useCompleteRecurringTask() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async ({ task }: { task: Task }) => {
@@ -551,10 +557,10 @@ export function useCompleteRecurringTask() {
       return { taskId: task.id, nextTask: newTask };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-activity', orgId] });
     },
   });
 }
@@ -562,6 +568,8 @@ export function useCompleteRecurringTask() {
 // Reorder tasks (batch update sort_order)
 export function useReorderTasks() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async (updates: { taskId: string; sortOrder: number }[]) => {
@@ -579,10 +587,10 @@ export function useReorderTasks() {
       return updates;
     },
     onMutate: async (updates) => {
-      await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData<Task[]>(['tasks']);
+      await queryClient.cancelQueries({ queryKey: ['tasks', orgId] });
+      const previous = queryClient.getQueryData<Task[]>(['tasks', orgId]);
 
-      queryClient.setQueryData<Task[]>(['tasks'], (old) => {
+      queryClient.setQueryData<Task[]>(['tasks', orgId], (old) => {
         if (!old) return old;
         const byId = new Map(updates.map(u => [u.taskId, u.sortOrder] as const));
         return old.map(t => {
@@ -595,11 +603,11 @@ export function useReorderTasks() {
     },
     onError: (_err, _updates, ctx) => {
       if (ctx?.previous) {
-        queryClient.setQueryData(['tasks'], ctx.previous);
+        queryClient.setQueryData(['tasks', orgId], ctx.previous);
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', orgId] });
     },
   });
 }
@@ -607,6 +615,8 @@ export function useReorderTasks() {
 // Delete a task
 export function useDeleteTask() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async (taskId: string) => {
@@ -619,10 +629,10 @@ export function useDeleteTask() {
       return taskId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-projects'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-projects', orgId] });
     },
   });
 }
@@ -630,6 +640,8 @@ export function useDeleteTask() {
 // Duplicate a task
 export function useDuplicateTask() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async (taskId: string) => {
@@ -682,9 +694,9 @@ export function useDuplicateTask() {
       return newTask;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-tasks', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', orgId] });
     },
   });
 }
@@ -750,9 +762,9 @@ export function useCreateProject() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['projects', currentOrganization?.id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentOrganization?.id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-activity', currentOrganization?.id] });
     },
   });
 }
@@ -760,6 +772,8 @@ export function useCreateProject() {
 // Update an existing project
 export function useUpdateProject() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async ({ projectId, updates }: { projectId: string; updates: { name?: string; description?: string; color?: string; areaIds?: string[]; owners?: User[]; members?: User[] } }) => {
@@ -818,8 +832,8 @@ export function useUpdateProject() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['projects', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-activity', orgId] });
     },
   });
 }
@@ -827,6 +841,8 @@ export function useUpdateProject() {
 // Delete a project
 export function useDeleteProject() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useAuth();
+  const orgId = currentOrganization?.id;
   
   return useMutation({
     mutationFn: async (projectId: string) => {
@@ -859,10 +875,10 @@ export function useDeleteProject() {
       return projectId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['projects', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-activity', orgId] });
     },
   });
 }
