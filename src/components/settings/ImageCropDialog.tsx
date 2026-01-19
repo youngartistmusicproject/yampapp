@@ -74,11 +74,16 @@ const createCroppedImage = async (
     throw new Error("No 2d context");
   }
 
-  // Set output size
-  const outputSize = Math.min(maxOutputSize, pixelCrop.width, pixelCrop.height);
+  // Calculate output dimensions preserving aspect ratio
+  // maxOutputSize is the max pixels for the longest edge
+  const longestEdge = Math.max(pixelCrop.width, pixelCrop.height);
+  const scale = Math.min(1, maxOutputSize / longestEdge);
   
-  croppedCanvas.width = outputSize;
-  croppedCanvas.height = outputSize;
+  const outputWidth = Math.round(pixelCrop.width * scale);
+  const outputHeight = Math.round(pixelCrop.height * scale);
+  
+  croppedCanvas.width = outputWidth;
+  croppedCanvas.height = outputHeight;
 
   croppedCtx.drawImage(
     canvas,
@@ -88,8 +93,8 @@ const createCroppedImage = async (
     pixelCrop.height,
     0,
     0,
-    outputSize,
-    outputSize
+    outputWidth,
+    outputHeight
   );
 
   return new Promise((resolve, reject) => {
