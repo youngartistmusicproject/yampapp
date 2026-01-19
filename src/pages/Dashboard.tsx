@@ -294,7 +294,7 @@ export default function Dashboard() {
                       onClick={() => handleTaskClick(task.id)}
                       className={cn(
                         "px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer",
-                        isOverdue && "border-l-2 border-l-destructive"
+                        isOverdue && "bg-destructive/5"
                       )}
                     >
                       {/* Single row: Checkbox + Title + Indicators + Project + Due + Stage + Avatars */}
