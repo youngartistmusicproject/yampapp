@@ -7,7 +7,10 @@ import {
   ArrowRight,
   CalendarClock,
   BarChart3,
-  FolderKanban
+  FolderKanban,
+  ListChecks,
+  Paperclip,
+  Repeat
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,7 +21,7 @@ import { useDashboard, formatRelativeTime, formatEventDate } from "@/hooks/useDa
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { useTasks, useUpdateTask, useCompleteRecurringTask } from "@/hooks/useWorkManagement";
 import { useAreas } from "@/hooks/useAreas";
-import { format } from "date-fns";
+import { format, isToday, isTomorrow, isPast, startOfDay } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
@@ -26,6 +29,8 @@ import { Task, TaskComment } from "@/types";
 import { teamMembers, statusLibrary } from "@/data/workManagementConfig";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CircularCheckbox } from "@/components/ui/circular-checkbox";
+import { UserAvatarGroup } from "@/components/ui/user-avatar";
 
 const currentUser = teamMembers[0];
 
@@ -248,72 +253,130 @@ export default function Dashboard() {
             ) : (
               <div className="divide-y divide-border/30">
                 {sortedTasks.map((task) => {
+                  const fullTask = fullTasks.find(t => t.id === task.id);
                   const taskAreas = task.areaIds?.map(id => areas.find(a => a.id === id)).filter(Boolean) || [];
-                  const isOverdue = task.dueDate && task.dueDate < new Date(new Date().setHours(0,0,0,0));
+                  const isOverdue = task.dueDate && isPast(startOfDay(task.dueDate)) && !isToday(task.dueDate);
+                  const isDueToday = task.dueDate && isToday(task.dueDate);
+                  const isDueTomorrow = task.dueDate && isTomorrow(task.dueDate);
+                  const isDone = task.status === 'done';
+                  
+                  // Get stage info
+                  const stageInfo = statusLibrary.find(s => s.id === task.status);
+                  
+                  // Subtask count
+                  const subtasks = fullTask?.subtasks || [];
+                  const completedSubtasks = subtasks.filter((s: any) => s.completed).length;
+                  const totalSubtasks = subtasks.length;
+                  
+                  // Comment and attachment counts
+                  const commentCount = fullTask?.commentCount || 0;
+                  const attachmentCount = fullTask?.attachmentCount || 0;
+                  
+                  // Assignees - already User[] type
+                  const assigneeUsers = fullTask?.assignees || [];
+                  
+                  const handleCheckboxClick = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    handleTaskUpdate(task.id, { status: isDone ? 'not_started' : 'done' });
+                  };
+                  
+                  // Format due date
+                  const formatDueDate = () => {
+                    if (!task.dueDate) return null;
+                    if (isDueToday) return 'Today';
+                    if (isDueTomorrow) return 'Tomorrow';
+                    return format(task.dueDate, 'MMM d');
+                  };
                   
                   return (
                     <div
                       key={task.id}
                       onClick={() => handleTaskClick(task.id)}
-                      className="px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer"
+                      className={cn(
+                        "px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer",
+                        isOverdue && "bg-destructive/5"
+                      )}
                     >
-                      {/* Row 1: Status dot + Title + Icons */}
+                      {/* Single row: Checkbox + Title + Indicators + Project + Due + Stage + Avatars */}
                       <div className="flex items-center gap-2.5">
-                        <div className={cn(
-                          "w-2 h-2 rounded-full flex-shrink-0",
-                          task.status === 'done' ? 'bg-green-500' :
-                          task.status === 'in_progress' ? 'bg-primary' : 'bg-muted-foreground/50'
-                        )} />
+                        {/* Checkbox */}
+                        <div onClick={handleCheckboxClick}>
+                          <CircularCheckbox
+                            checked={isDone}
+                            onCheckedChange={() => {}}
+                            className="flex-shrink-0"
+                          />
+                        </div>
+                        
+                        {/* Title */}
                         <p className={cn(
-                          "flex-1 text-[13px] font-medium truncate",
-                          task.status === 'done' && 'line-through text-muted-foreground'
+                          "flex-1 text-[13px] font-medium truncate min-w-0",
+                          isDone && 'line-through text-muted-foreground'
                         )}>
                           {task.title}
                         </p>
-                      </div>
-                      
-                      {/* Row 2: Project + Areas + Due Date */}
-                      <div className="flex items-center gap-2 mt-1.5 ml-[18px] text-xs text-muted-foreground">
+                        
+                        {/* Indicators */}
+                        <div className="flex items-center gap-1.5 text-muted-foreground/60 flex-shrink-0">
+                          {fullTask?.isRecurring && (
+                            <Repeat className="w-3 h-3" />
+                          )}
+                          {totalSubtasks > 0 && (
+                            <div className="flex items-center gap-0.5">
+                              <ListChecks className="w-3 h-3" />
+                              <span className="text-[10px]">{completedSubtasks}/{totalSubtasks}</span>
+                            </div>
+                          )}
+                          {commentCount > 0 && (
+                            <div className="flex items-center gap-0.5">
+                              <MessageSquare className="w-3 h-3" />
+                              <span className="text-[10px]">{commentCount}</span>
+                            </div>
+                          )}
+                          {attachmentCount > 0 && (
+                            <div className="flex items-center gap-0.5">
+                              <Paperclip className="w-3 h-3" />
+                              <span className="text-[10px]">{attachmentCount}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Project */}
                         {task.projectName && (
-                          <span className="flex items-center gap-1.5">
+                          <span className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
                             <span 
-                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              className="w-2 h-2 rounded-full"
                               style={{ backgroundColor: task.projectColor || 'hsl(var(--muted-foreground))' }}
                             />
-                            <span className="font-medium">{task.projectName}</span>
+                            <span className="max-w-[80px] truncate">{task.projectName}</span>
                           </span>
                         )}
-                        {taskAreas.length > 0 && (
-                          <>
-                            {task.projectName && <span className="text-border/60">•</span>}
-                            <span className="flex gap-1">
-                              {taskAreas.slice(0, 2).map(area => (
-                                <span 
-                                  key={area!.id}
-                                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                                  style={{
-                                    backgroundColor: `${area!.color}15`,
-                                    color: area!.color
-                                  }}
-                                >
-                                  {area!.name}
-                                </span>
-                              ))}
-                              {taskAreas.length > 2 && (
-                                <span className="text-muted-foreground text-[10px]">+{taskAreas.length - 2}</span>
-                              )}
-                            </span>
-                          </>
-                        )}
+                        
+                        {/* Due Date */}
                         {task.dueDate && (
-                          <>
-                            {(task.projectName || taskAreas.length > 0) && <span className="text-border/60">•</span>}
-                            <span className={cn(
-                              isOverdue && 'text-destructive font-medium'
-                            )}>
-                              {formatEventDate(task.dueDate)}
-                            </span>
-                          </>
+                          <span className={cn(
+                            "text-xs flex-shrink-0",
+                            isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'
+                          )}>
+                            {formatDueDate()}
+                          </span>
+                        )}
+                        
+                        {/* Stage Badge */}
+                        {stageInfo && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex-shrink-0">
+                            {stageInfo.name}
+                          </span>
+                        )}
+                        
+                        {/* Assignees */}
+                        {assigneeUsers.length > 0 && (
+                          <UserAvatarGroup 
+                            users={assigneeUsers} 
+                            max={2} 
+                            size="sm" 
+                            className="flex-shrink-0"
+                          />
                         )}
                       </div>
                     </div>
