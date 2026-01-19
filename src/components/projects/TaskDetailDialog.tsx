@@ -791,6 +791,7 @@ export function TaskDetailDialog({
                                     comment={comment}
                                     replies={repliesMap.get(comment.id) || []}
                                     currentUserId={profile?.id}
+                                    currentUserName={currentUser.name}
                                     onDelete={handleDeleteComment}
                                     onReply={async (content, parentId, files) => {
                                       if (task) {
