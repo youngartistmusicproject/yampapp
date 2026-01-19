@@ -138,17 +138,11 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
                 <img
                   src={logoUrl}
                   alt={appName}
-                  className="w-7 h-7 rounded-lg object-cover flex-shrink-0"
+                  className="h-7 w-auto max-w-[140px] rounded object-contain flex-shrink-0"
                 />
               ) : (
-                <div
-                  className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  <span className="text-white font-semibold text-sm">{logoLetter}</span>
-                </div>
+                <span className="font-semibold text-foreground text-[15px] truncate">{appName}</span>
               )}
-              <span className="font-semibold text-foreground text-[15px] truncate">{appName}</span>
             </div>
             <Button
               variant="ghost"
@@ -248,17 +242,11 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               <img
                 src={logoUrl}
                 alt={appName}
-                className="w-7 h-7 rounded-lg object-cover"
+                className="h-7 w-auto max-w-[140px] rounded object-contain"
               />
             ) : (
-              <div
-                className="flex items-center justify-center w-7 h-7 rounded-lg"
-                style={{ backgroundColor: primaryColor }}
-              >
-                <span className="text-white font-semibold text-sm">{logoLetter}</span>
-              </div>
+              <span className="font-semibold text-foreground text-[15px]">{appName}</span>
             )}
-            <span className="font-semibold text-foreground text-[15px]">{appName}</span>
           </div>
         </div>
 

@@ -1344,10 +1344,10 @@ export default function Admin() {
         onCropComplete={handleLogoCropComplete}
         isProcessing={isUploadingLogo}
         title="Crop Organization Logo"
-        description="Adjust your logo to fit a square frame"
-        cropShape="rect"
-        aspect={1}
-        maxOutputSize={512}
+          description="Adjust your logo to fit a rectangular frame (3:1 ratio recommended)"
+          cropShape="rect"
+          aspect={3}
+          maxOutputSize={600}
         outputFormat="image/png"
       />
 
