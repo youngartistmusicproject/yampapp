@@ -73,6 +73,8 @@ export interface Task {
   progress?: number; // 0-100 percentage
   comments?: TaskComment[];
   attachments?: TaskAttachment[];
+  commentCount?: number; // Count from database for list views
+  attachmentCount?: number; // Count from database for list views
   subtasks?: Subtask[];
   howToLink?: string; // Link to SOP documentation
   sortOrder?: number; // for manual drag-and-drop sorting

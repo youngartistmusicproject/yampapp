@@ -164,6 +164,20 @@ export function useTasks() {
       
       if (assigneesError) throw assigneesError;
       
+      // Fetch comment counts per task
+      const { data: commentCountsData, error: commentCountsError } = await supabase
+        .from('task_comments')
+        .select('task_id');
+      
+      if (commentCountsError) throw commentCountsError;
+      
+      // Fetch attachment counts per task
+      const { data: attachmentCountsData, error: attachmentCountsError } = await supabase
+        .from('task_attachments')
+        .select('task_id');
+      
+      if (attachmentCountsError) throw attachmentCountsError;
+      
       // Fetch all projects with area_ids
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
@@ -195,6 +209,18 @@ export function useTasks() {
         const existing = assigneesByTask.get(a.task_id) || [];
         existing.push(a.user_name);
         assigneesByTask.set(a.task_id, existing);
+      });
+      
+      // Count comments by task_id
+      const commentCountsByTask = new Map<string, number>();
+      commentCountsData?.forEach(c => {
+        commentCountsByTask.set(c.task_id, (commentCountsByTask.get(c.task_id) || 0) + 1);
+      });
+      
+      // Count attachments by task_id
+      const attachmentCountsByTask = new Map<string, number>();
+      attachmentCountsData?.forEach(a => {
+        attachmentCountsByTask.set(a.task_id, (attachmentCountsByTask.get(a.task_id) || 0) + 1);
       });
       
       return tasksData.map(t => {
@@ -232,6 +258,8 @@ export function useTasks() {
           sortOrder: t.sort_order || 0,
           howToLink: (t as any).how_to_link || undefined,
           subtasks: Array.isArray((t as any).subtasks) ? (t as any).subtasks : [],
+          commentCount: commentCountsByTask.get(t.id) || 0,
+          attachmentCount: attachmentCountsByTask.get(t.id) || 0,
           createdAt: new Date(t.created_at),
           updatedAt: new Date(t.updated_at),
         };

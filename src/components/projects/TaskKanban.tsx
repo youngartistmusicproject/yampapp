@@ -150,8 +150,8 @@ function SortableTaskCard({
   };
 
   const overdue = isTaskOverdue(task);
-  const commentCount = task.comments?.length || 0;
-  const attachmentCount = task.attachments?.length || 0;
+  const commentCount = task.commentCount ?? task.comments?.length ?? 0;
+  const attachmentCount = task.attachmentCount ?? task.attachments?.length ?? 0;
   const subtaskCount = task.subtasks?.length || 0;
   const completedSubtaskCount = task.subtasks?.filter(s => s.completed).length || 0;
 
