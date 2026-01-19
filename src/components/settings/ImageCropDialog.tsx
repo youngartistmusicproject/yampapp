@@ -19,13 +19,22 @@ interface ImageCropDialogProps {
   imageSrc: string;
   onCropComplete: (croppedBlob: Blob) => void;
   isProcessing?: boolean;
+  // Customization props
+  title?: string;
+  description?: string;
+  cropShape?: "round" | "rect";
+  aspect?: number;
+  maxOutputSize?: number;
+  outputFormat?: "image/jpeg" | "image/png";
 }
 
 // Helper function to create a cropped image from the crop area
 const createCroppedImage = async (
   imageSrc: string,
   pixelCrop: Area,
-  rotation: number = 0
+  rotation: number = 0,
+  maxOutputSize: number = 512,
+  outputFormat: "image/jpeg" | "image/png" = "image/jpeg"
 ): Promise<Blob> => {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -65,9 +74,8 @@ const createCroppedImage = async (
     throw new Error("No 2d context");
   }
 
-  // Set output size (max 512px for avatars)
-  const maxSize = 512;
-  const outputSize = Math.min(maxSize, pixelCrop.width, pixelCrop.height);
+  // Set output size
+  const outputSize = Math.min(maxOutputSize, pixelCrop.width, pixelCrop.height);
   
   croppedCanvas.width = outputSize;
   croppedCanvas.height = outputSize;
@@ -93,7 +101,7 @@ const createCroppedImage = async (
           reject(new Error("Canvas is empty"));
         }
       },
-      "image/jpeg",
+      outputFormat,
       0.9
     );
   });
@@ -128,6 +136,12 @@ export function ImageCropDialog({
   imageSrc,
   onCropComplete,
   isProcessing = false,
+  title = "Crop Profile Picture",
+  description = "Adjust your photo to fit the circular frame",
+  cropShape = "round",
+  aspect = 1,
+  maxOutputSize = 512,
+  outputFormat = "image/jpeg",
 }: ImageCropDialogProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -148,7 +162,9 @@ export function ImageCropDialog({
       const croppedBlob = await createCroppedImage(
         imageSrc,
         croppedAreaPixels,
-        rotation
+        rotation,
+        maxOutputSize,
+        outputFormat
       );
       onCropComplete(croppedBlob);
     } catch (error) {
@@ -173,9 +189,9 @@ export function ImageCropDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Crop Profile Picture</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Adjust your photo to fit the circular frame
+            {description}
           </DialogDescription>
         </DialogHeader>
 
@@ -185,9 +201,9 @@ export function ImageCropDialog({
             crop={crop}
             zoom={zoom}
             rotation={rotation}
-            aspect={1}
-            cropShape="round"
-            showGrid={false}
+            aspect={aspect}
+            cropShape={cropShape}
+            showGrid={cropShape === "rect"}
             onCropChange={setCrop}
             onCropComplete={onCropAreaComplete}
             onZoomChange={setZoom}
