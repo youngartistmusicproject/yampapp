@@ -26,6 +26,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useBranding } from "@/contexts/BrandingContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Flat navigation list (Todoist style) with optional feature flag keys
@@ -48,15 +49,19 @@ const navItems: Array<{
 // Desktop Sidebar - Todoist minimalist style
 function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, currentOrganization } = useAuth();
   const { isSuperAdmin } = useUserRole();
   const { isFeatureEnabled } = useFeatureFlags();
+  const { appName, logoUrl, primaryColor } = useBranding();
 
   // Filter nav items based on feature flags
   const filteredNavItems = navItems.filter(item => {
     if (!item.featureKey) return true;
     return isFeatureEnabled(item.featureKey);
   });
+
+  // Get the first letter for the logo fallback
+  const logoLetter = currentOrganization?.name?.charAt(0).toUpperCase() || appName.charAt(0).toUpperCase();
 
   const NavItem = ({ item, isActive }: { item: typeof navItems[0]; isActive: boolean }) => {
     const content = (
@@ -107,9 +112,20 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
                 onClick={() => setCollapsed(false)}
                 className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted/50 transition-colors"
               >
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary">
-                  <span className="text-primary-foreground font-semibold text-sm">W</span>
-                </div>
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt={appName}
+                    className="w-7 h-7 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div
+                    className="flex items-center justify-center w-7 h-7 rounded-lg"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <span className="text-white font-semibold text-sm">{logoLetter}</span>
+                  </div>
+                )}
               </button>
             </TooltipTrigger>
             <TooltipContent side="right" className="text-xs">
@@ -119,10 +135,21 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
         ) : (
           <>
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary flex-shrink-0">
-                <span className="text-primary-foreground font-semibold text-sm">W</span>
-              </div>
-              <span className="font-semibold text-foreground text-[15px] truncate">WorkOS</span>
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={appName}
+                  className="w-7 h-7 rounded-lg object-cover flex-shrink-0"
+                />
+              ) : (
+                <div
+                  className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <span className="text-white font-semibold text-sm">{logoLetter}</span>
+                </div>
+              )}
+              <span className="font-semibold text-foreground text-[15px] truncate">{appName}</span>
             </div>
             <Button
               variant="ghost"
@@ -197,9 +224,10 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
 // Mobile Sheet Navigation - Todoist style
 function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, currentOrganization } = useAuth();
   const { isSuperAdmin } = useUserRole();
   const { isFeatureEnabled } = useFeatureFlags();
+  const { appName, logoUrl, primaryColor } = useBranding();
 
   // Filter nav items based on feature flags
   const filteredNavItems = navItems.filter(item => {
@@ -207,16 +235,30 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
     return isFeatureEnabled(item.featureKey);
   });
 
+  // Get the first letter for the logo fallback
+  const logoLetter = currentOrganization?.name?.charAt(0).toUpperCase() || appName.charAt(0).toUpperCase();
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-[280px] p-0 bg-background">
         {/* Header */}
         <div className="flex items-center h-14 px-4 border-b border-border/40">
           <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary">
-              <span className="text-primary-foreground font-semibold text-sm">W</span>
-            </div>
-            <span className="font-semibold text-foreground text-[15px]">WorkOS</span>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={appName}
+                className="w-7 h-7 rounded-lg object-cover"
+              />
+            ) : (
+              <div
+                className="flex items-center justify-center w-7 h-7 rounded-lg"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <span className="text-white font-semibold text-sm">{logoLetter}</span>
+              </div>
+            )}
+            <span className="font-semibold text-foreground text-[15px]">{appName}</span>
           </div>
         </div>
 

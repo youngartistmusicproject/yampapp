@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { BrandingProvider } from "@/contexts/BrandingContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
@@ -46,45 +47,47 @@ const App = () => (
               path="/*"
               element={
                 <ProtectedRoute>
-                  <AppLayout>
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/projects" element={<Projects />} />
-                      <Route path="/knowledge" element={<Knowledge />} />
-                      <Route path="/content" element={<ContentHub />} />
-                      <Route path="/chat" element={<Chat />} />
-                      <Route path="/community" element={<Community />} />
-                      <Route path="/requests" element={<Requests />} />
-                      <Route path="/calendar" element={<CalendarPage />} />
-                      <Route path="/crm" element={<CRM />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route
-                        path="/users"
-                        element={
-                          <ProtectedRoute requiredRoles={['super-admin', 'admin']}>
-                            <UserManagement />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/organizations"
-                        element={
-                          <ProtectedRoute requiredRoles={['super-admin', 'admin']}>
-                            <OrganizationManagement />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/feature-flags"
-                        element={
-                          <ProtectedRoute requiredRoles={['super-admin']}>
-                            <FeatureFlagManagement />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </AppLayout>
+                  <BrandingProvider>
+                    <AppLayout>
+                      <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/projects" element={<Projects />} />
+                        <Route path="/knowledge" element={<Knowledge />} />
+                        <Route path="/content" element={<ContentHub />} />
+                        <Route path="/chat" element={<Chat />} />
+                        <Route path="/community" element={<Community />} />
+                        <Route path="/requests" element={<Requests />} />
+                        <Route path="/calendar" element={<CalendarPage />} />
+                        <Route path="/crm" element={<CRM />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route
+                          path="/users"
+                          element={
+                            <ProtectedRoute requiredRoles={['super-admin', 'admin']}>
+                              <UserManagement />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/organizations"
+                          element={
+                            <ProtectedRoute requiredRoles={['super-admin', 'admin']}>
+                              <OrganizationManagement />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/feature-flags"
+                          element={
+                            <ProtectedRoute requiredRoles={['super-admin']}>
+                              <FeatureFlagManagement />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </AppLayout>
+                  </BrandingProvider>
                 </ProtectedRoute>
               }
             />
