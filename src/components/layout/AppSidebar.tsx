@@ -11,12 +11,10 @@ import {
   UserCircle,
   Settings,
   ChevronLeft,
-  ChevronRight,
   Menu,
   Shield,
   Flag,
   LogOut,
-  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -45,13 +43,12 @@ const navItems: Array<{
   { name: "Community", href: "/community", icon: Users, featureKey: "community" },
   { name: "Requests", href: "/requests", icon: ClipboardList, featureKey: "requests" },
   { name: "CRM", href: "/crm", icon: UserCircle, featureKey: "crm" },
-  { name: "Organizations", href: "/organizations", icon: Building2, featureKey: "organization_management" },
 ];
 
 // Desktop Sidebar - Todoist minimalist style
 function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
   const location = useLocation();
-  const { signOut, currentOrganization } = useAuth();
+  const { signOut, currentOrganization, isOrgAdmin } = useAuth();
   const { isSuperAdmin } = useUserRole();
   const { isFeatureEnabled } = useFeatureFlags();
   const { appName, logoUrl, primaryColor } = useBranding();
@@ -177,17 +174,18 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
 
       {/* Bottom section */}
       <div className="px-2 py-3 border-t border-border/40 space-y-0.5">
+        {(isSuperAdmin || isOrgAdmin) && (
+          <NavItem
+            item={{ name: "Admin", href: "/admin", icon: Shield }}
+            isActive={location.pathname === "/admin"}
+          />
+        )}
+
         {isSuperAdmin && (
-          <>
-            <NavItem
-              item={{ name: "User Management", href: "/users", icon: Shield }}
-              isActive={location.pathname === "/users"}
-            />
-            <NavItem
-              item={{ name: "Feature Flags", href: "/feature-flags", icon: Flag }}
-              isActive={location.pathname === "/feature-flags"}
-            />
-          </>
+          <NavItem
+            item={{ name: "Feature Flags", href: "/feature-flags", icon: Flag }}
+            isActive={location.pathname === "/feature-flags"}
+          />
         )}
 
         <NavItem
@@ -226,7 +224,7 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
 // Mobile Sheet Navigation - Todoist style
 function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const location = useLocation();
-  const { signOut, currentOrganization } = useAuth();
+  const { signOut, currentOrganization, isOrgAdmin } = useAuth();
   const { isSuperAdmin } = useUserRole();
   const { isFeatureEnabled } = useFeatureFlags();
   const { appName, logoUrl, primaryColor } = useBranding();
@@ -291,35 +289,36 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
 
         {/* Bottom section */}
         <div className="px-2 py-3 border-t border-border/40 space-y-0.5">
+          {(isSuperAdmin || isOrgAdmin) && (
+            <NavLink
+              to="/admin"
+              onClick={() => onOpenChange(false)}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                location.pathname === "/admin"
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              )}
+            >
+              <Shield className="w-5 h-5 flex-shrink-0" />
+              <span>Admin</span>
+            </NavLink>
+          )}
+
           {isSuperAdmin && (
-            <>
-              <NavLink
-                to="/users"
-                onClick={() => onOpenChange(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  location.pathname === "/users"
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                )}
-              >
-                <Shield className="w-5 h-5 flex-shrink-0" />
-                <span>User Management</span>
-              </NavLink>
-              <NavLink
-                to="/feature-flags"
-                onClick={() => onOpenChange(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  location.pathname === "/feature-flags"
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                )}
-              >
-                <Flag className="w-5 h-5 flex-shrink-0" />
-                <span>Feature Flags</span>
-              </NavLink>
-            </>
+            <NavLink
+              to="/feature-flags"
+              onClick={() => onOpenChange(false)}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                location.pathname === "/feature-flags"
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              )}
+            >
+              <Flag className="w-5 h-5 flex-shrink-0" />
+              <span>Feature Flags</span>
+            </NavLink>
           )}
 
           <NavLink
