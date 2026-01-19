@@ -79,11 +79,20 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
     const hsl = hexToHSL(primaryColor);
     if (hsl) {
-      root.style.setProperty('--brand-primary', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
+      const hslValue = `${hsl.h} ${hsl.s}% ${hsl.l}%`;
+      
+      // Update all primary-related CSS variables used by Tailwind
+      root.style.setProperty('--primary', hslValue);
+      root.style.setProperty('--ring', hslValue);
+      root.style.setProperty('--sidebar-primary', hslValue);
+      root.style.setProperty('--sidebar-ring', hslValue);
     }
 
     return () => {
-      root.style.removeProperty('--brand-primary');
+      root.style.removeProperty('--primary');
+      root.style.removeProperty('--ring');
+      root.style.removeProperty('--sidebar-primary');
+      root.style.removeProperty('--sidebar-ring');
     };
   }, [primaryColor]);
 
