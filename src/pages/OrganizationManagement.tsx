@@ -12,6 +12,7 @@ import {
 } from '@/hooks/useOrganizations';
 import { useProfiles } from '@/hooks/useProfiles';
 import { getFullName } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,8 +53,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Plus, Building2, Users, Crown, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Building2, Users, Crown, Trash2, Palette, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ROLE_LABELS: Record<AppRole, string> = {
   'super-admin': 'Super Admin',
@@ -70,10 +72,11 @@ const ROLE_COLORS: Record<AppRole, string> = {
 };
 
 export default function OrganizationManagement() {
-  const { isSuperAdmin, currentOrganization, isOrgAdmin } = useAuth();
+  const { isSuperAdmin, currentOrganization, isOrgAdmin, refreshProfile } = useAuth();
   const { data: allOrganizations, isLoading: loadingOrgs } = useAllOrganizations();
   const { data: profiles } = useProfiles();
   const { data: members, isLoading: loadingMembers } = useOrganizationMembers(currentOrganization?.id);
+  const queryClient = useQueryClient();
   
   const createOrgMutation = useCreateOrganization();
   const addMemberMutation = useAddOrganizationMember();
@@ -91,6 +94,85 @@ export default function OrganizationManagement() {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedRole, setSelectedRole] = useState<AppRole>('staff');
   const [createError, setCreateError] = useState<string | null>(null);
+
+  // Branding form state
+  const [brandingAppName, setBrandingAppName] = useState(currentOrganization?.app_name || '');
+  const [brandingPrimaryColor, setBrandingPrimaryColor] = useState(currentOrganization?.primary_color || '#6366f1');
+  const [brandingFaviconUrl, setBrandingFaviconUrl] = useState(currentOrganization?.favicon_url || '');
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
+  // Update branding form when organization changes
+  useState(() => {
+    setBrandingAppName(currentOrganization?.app_name || '');
+    setBrandingPrimaryColor(currentOrganization?.primary_color || '#6366f1');
+    setBrandingFaviconUrl(currentOrganization?.favicon_url || '');
+  });
+
+  // Branding update mutation
+  const updateBrandingMutation = useMutation({
+    mutationFn: async (branding: {
+      app_name?: string | null;
+      primary_color?: string | null;
+      favicon_url?: string | null;
+      logo_url?: string | null;
+    }) => {
+      if (!currentOrganization) throw new Error('No organization selected');
+      
+      const { error } = await supabase
+        .from('organizations')
+        .update(branding)
+        .eq('id', currentOrganization.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      refreshProfile();
+      toast.success('Branding updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update branding');
+    },
+  });
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentOrganization) return;
+
+    setIsUploadingLogo(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentOrganization.id}-logo.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      await updateBrandingMutation.mutateAsync({ logo_url: urlData.publicUrl });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload logo');
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    await updateBrandingMutation.mutateAsync({ logo_url: null });
+  };
+
+  const handleSaveBranding = async () => {
+    await updateBrandingMutation.mutateAsync({
+      app_name: brandingAppName || null,
+      primary_color: brandingPrimaryColor || null,
+      favicon_url: brandingFaviconUrl || null,
+    });
+  };
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -296,6 +378,141 @@ export default function OrganizationManagement() {
                 </p>
               )}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Branding Settings */}
+      {currentOrganization && isOrgAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Palette className="h-5 w-5" />
+              Branding Settings
+            </CardTitle>
+            <CardDescription>
+              Customize the app appearance for your organization (whitelabeling)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Logo Upload */}
+            <div className="space-y-2">
+              <Label>Organization Logo</Label>
+              <div className="flex items-center gap-4">
+                {currentOrganization.logo_url ? (
+                  <div className="relative">
+                    <img
+                      src={currentOrganization.logo_url}
+                      alt="Organization logo"
+                      className="w-16 h-16 rounded-lg object-cover border"
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6"
+                      onClick={handleRemoveLogo}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div
+                    className="w-16 h-16 rounded-lg flex items-center justify-center text-white font-bold text-xl"
+                    style={{ backgroundColor: brandingPrimaryColor }}
+                  >
+                    {currentOrganization.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <Label htmlFor="logo-upload" className="cursor-pointer">
+                    <div className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-muted/50 transition-colors">
+                      {isUploadingLogo ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                      <span>Upload Logo</span>
+                    </div>
+                  </Label>
+                  <input
+                    id="logo-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleLogoUpload}
+                    disabled={isUploadingLogo}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Recommended: Square image, at least 128x128px
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* App Name */}
+            <div className="space-y-2">
+              <Label htmlFor="app-name">App Name</Label>
+              <Input
+                id="app-name"
+                placeholder="WorkOS"
+                value={brandingAppName}
+                onChange={(e) => setBrandingAppName(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Custom name shown in the sidebar and browser tab. Leave empty for default.
+              </p>
+            </div>
+
+            {/* Primary Color */}
+            <div className="space-y-2">
+              <Label htmlFor="primary-color">Primary Color</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  id="primary-color"
+                  value={brandingPrimaryColor}
+                  onChange={(e) => setBrandingPrimaryColor(e.target.value)}
+                  className="w-10 h-10 rounded border cursor-pointer"
+                />
+                <Input
+                  value={brandingPrimaryColor}
+                  onChange={(e) => setBrandingPrimaryColor(e.target.value)}
+                  placeholder="#6366f1"
+                  className="w-32"
+                />
+                <div
+                  className="w-10 h-10 rounded-lg"
+                  style={{ backgroundColor: brandingPrimaryColor }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Used for the logo background when no custom logo is uploaded
+              </p>
+            </div>
+
+            {/* Favicon URL */}
+            <div className="space-y-2">
+              <Label htmlFor="favicon-url">Favicon URL (Optional)</Label>
+              <Input
+                id="favicon-url"
+                placeholder="https://example.com/favicon.ico"
+                value={brandingFaviconUrl}
+                onChange={(e) => setBrandingFaviconUrl(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Custom favicon for the browser tab. Leave empty for default.
+              </p>
+            </div>
+
+            <Button
+              onClick={handleSaveBranding}
+              disabled={updateBrandingMutation.isPending}
+            >
+              {updateBrandingMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Save Branding
+            </Button>
           </CardContent>
         </Card>
       )}

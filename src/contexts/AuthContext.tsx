@@ -20,6 +20,9 @@ export interface Organization {
   name: string;
   slug: string;
   logo_url: string | null;
+  app_name: string | null;
+  primary_color: string | null;
+  favicon_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -103,6 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           name,
           slug,
           logo_url,
+          app_name,
+          primary_color,
+          favicon_url,
           created_at,
           updated_at
         )

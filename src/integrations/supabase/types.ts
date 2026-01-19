@@ -768,26 +768,35 @@ export type Database = {
       }
       organizations: {
         Row: {
+          app_name: string | null
           created_at: string
+          favicon_url: string | null
           id: string
           logo_url: string | null
           name: string
+          primary_color: string | null
           slug: string
           updated_at: string
         }
         Insert: {
+          app_name?: string | null
           created_at?: string
+          favicon_url?: string | null
           id?: string
           logo_url?: string | null
           name: string
+          primary_color?: string | null
           slug: string
           updated_at?: string
         }
         Update: {
+          app_name?: string | null
           created_at?: string
+          favicon_url?: string | null
           id?: string
           logo_url?: string | null
           name?: string
+          primary_color?: string | null
           slug?: string
           updated_at?: string
         }
