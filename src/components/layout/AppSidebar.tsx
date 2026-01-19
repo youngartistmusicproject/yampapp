@@ -25,18 +25,24 @@ import {
 } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-// Flat navigation list (Todoist style)
-const navItems = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Work Management", href: "/projects", icon: FolderKanban },
-  { name: "Calendar", href: "/calendar", icon: Calendar },
-  { name: "Knowledge Base", href: "/knowledge", icon: BookOpen },
-  { name: "Content Hub", href: "/content", icon: FolderOpen },
-  { name: "Community", href: "/community", icon: Users },
-  { name: "Requests", href: "/requests", icon: ClipboardList },
-  { name: "CRM", href: "/crm", icon: UserCircle },
+// Flat navigation list (Todoist style) with optional feature flag keys
+const navItems: Array<{
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  featureKey?: string;
+}> = [
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, featureKey: "dashboard" },
+  { name: "Work Management", href: "/projects", icon: FolderKanban, featureKey: "work_management" },
+  { name: "Calendar", href: "/calendar", icon: Calendar, featureKey: "calendar" },
+  { name: "Knowledge Base", href: "/knowledge", icon: BookOpen, featureKey: "knowledge_base" },
+  { name: "Content Hub", href: "/content", icon: FolderOpen, featureKey: "content_hub" },
+  { name: "Community", href: "/community", icon: Users, featureKey: "community" },
+  { name: "Requests", href: "/requests", icon: ClipboardList, featureKey: "requests" },
+  { name: "CRM", href: "/crm", icon: UserCircle, featureKey: "crm" },
 ];
 
 // Desktop Sidebar - Todoist minimalist style
@@ -44,6 +50,13 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
   const location = useLocation();
   const { signOut } = useAuth();
   const { isSuperAdmin } = useUserRole();
+  const { isFeatureEnabled } = useFeatureFlags();
+
+  // Filter nav items based on feature flags
+  const filteredNavItems = navItems.filter(item => {
+    if (!item.featureKey) return true;
+    return isFeatureEnabled(item.featureKey);
+  });
 
   const NavItem = ({ item, isActive }: { item: typeof navItems[0]; isActive: boolean }) => {
     const content = (
@@ -126,7 +139,7 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
       {/* Navigation */}
       <nav className="flex-1 px-2 py-3 overflow-y-auto">
         <div className="space-y-0.5">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = location.pathname === item.href;
             return <NavItem key={item.name} item={item} isActive={isActive} />;
           })}
@@ -186,6 +199,13 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
   const location = useLocation();
   const { signOut } = useAuth();
   const { isSuperAdmin } = useUserRole();
+  const { isFeatureEnabled } = useFeatureFlags();
+
+  // Filter nav items based on feature flags
+  const filteredNavItems = navItems.filter(item => {
+    if (!item.featureKey) return true;
+    return isFeatureEnabled(item.featureKey);
+  });
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -203,7 +223,7 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         {/* Navigation */}
         <nav className="flex-1 px-2 py-3 overflow-y-auto">
           <div className="space-y-0.5">
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const isActive = location.pathname === item.href;
               return (
                 <NavLink
