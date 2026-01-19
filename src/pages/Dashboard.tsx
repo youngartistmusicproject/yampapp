@@ -187,28 +187,38 @@ export default function Dashboard() {
           const content = (
             <div
               className={cn(
-                "relative rounded-xl border p-4 transition-all duration-150",
+                "relative rounded-lg border p-4 transition-all duration-150",
                 stat.highlight 
-                  ? "bg-card border-border/50 border-l-4 border-l-destructive" 
+                  ? "bg-destructive/5 border-destructive/20 hover:bg-destructive/10" 
                   : "bg-card border-border/50 hover:bg-muted/30 hover:border-border",
                 stat.link && "cursor-pointer"
               )}
             >
-              <stat.icon className={cn(
-                "w-4 h-4 mb-2",
-                stat.highlight ? "text-destructive" : "text-muted-foreground"
-              )} />
+              <div className="flex items-center justify-between mb-3">
+                <stat.icon className={cn(
+                  "w-4 h-4",
+                  stat.highlight ? "text-destructive" : "text-muted-foreground"
+                )} />
+                {stat.highlight && stat.value > 0 && (
+                  <span className="text-[10px] font-medium text-destructive bg-destructive/10 px-1.5 py-0.5 rounded">
+                    Needs attention
+                  </span>
+                )}
+              </div>
               {statsLoading ? (
                 <Skeleton className="h-8 w-12 mb-1" />
               ) : (
                 <p className={cn(
                   "text-2xl font-semibold",
-                  stat.highlight && "text-destructive"
+                  stat.highlight ? "text-destructive" : "text-foreground"
                 )}>
                   {stat.value}
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className={cn(
+                "text-xs",
+                stat.highlight ? "text-destructive/70" : "text-muted-foreground"
+              )}>{stat.label}</p>
             </div>
           );
 
