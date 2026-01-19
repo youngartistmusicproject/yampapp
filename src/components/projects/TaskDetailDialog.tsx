@@ -863,7 +863,7 @@ export function TaskDetailDialog({
                                   handleAddComment();
                                 }
                               }}
-                              placeholder="Write a comment... (@ to mention, Enter to send)" 
+                              placeholder={`Commenting as ${currentUser.name}`} 
                               className="min-h-[60px] pr-16 text-sm" 
                             />
                             <input 
