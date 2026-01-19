@@ -103,9 +103,7 @@ export default function Projects() {
     const saved = localStorage.getItem('workManagement_selectedAreas');
     return saved ? JSON.parse(saved) : [];
   });
-  const [selectedMember, setSelectedMember] = useState<string>(() => {
-    return localStorage.getItem('workManagement_selectedMember') || 'all';
-  });
+  // selectedMember filter removed - use TaskFilterPanel "Responsible" filter instead
   const [sortField, setSortField] = useState<SortField>('dueDate');
   const [sortAscending, setSortAscending] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -199,9 +197,10 @@ export default function Projects() {
     localStorage.setItem('workManagement_selectedAreas', JSON.stringify(selectedAreas));
   }, [selectedAreas]);
 
+  // Clear any old selectedMember from localStorage
   useEffect(() => {
-    localStorage.setItem('workManagement_selectedMember', selectedMember);
-  }, [selectedMember]);
+    localStorage.removeItem('workManagement_selectedMember');
+  }, []);
 
 
   // Active tasks (not completed)
@@ -362,10 +361,6 @@ export default function Projects() {
       const matchesAssignee = filters.assignees.length === 0 || 
         task.assignees?.some(a => filters.assignees.includes(a.id));
       
-      // Quick member filter (dropdown)
-      const matchesMember = selectedMember === "all" || 
-        task.assignees?.some(a => a.name === selectedMember);
-      
       // Tags filter
       const matchesTags = filters.tags.length === 0 || 
         task.tags?.some(t => filters.tags.includes(t));
@@ -386,7 +381,7 @@ export default function Projects() {
         (task.dueDate && new Date(task.dueDate) < today && task.status !== 'done');
       
       return matchesSearch && matchesProject && matchesAreas && matchesQuickFilter && matchesStatus && matchesEffort && matchesImportance &&
-             matchesAssignee && matchesMember && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
+             matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
       // Define sort order for effort, importance, and stage
       const effortOrder = effortLibrary.map(e => e.id);
@@ -451,7 +446,7 @@ export default function Projects() {
       const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       return sortAscending ? comparison : -comparison;
     });
-  }, [activeTasks, searchQuery, selectedProjects, selectedAreas, selectedMember, filters, activeQuickFilter, sortField, sortAscending, statuses]);
+  }, [activeTasks, searchQuery, selectedProjects, selectedAreas, filters, activeQuickFilter, sortField, sortAscending, statuses]);
 
   // Filtered tasks for completed view
   const filteredCompletedTasks = useMemo(() => {
