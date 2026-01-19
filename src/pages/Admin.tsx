@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth, AppRole } from '@/contexts/AuthContext';
 import {
   useAllOrganizations,
@@ -142,8 +142,16 @@ export default function Admin() {
   // Branding form state
   const [brandingAppName, setBrandingAppName] = useState(currentOrganization?.app_name || '');
   const [brandingPrimaryColor, setBrandingPrimaryColor] = useState(currentOrganization?.primary_color || '#6366f1');
-  const [brandingFaviconUrl, setBrandingFaviconUrl] = useState(currentOrganization?.favicon_url || '');
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingFavicon, setIsUploadingFavicon] = useState(false);
+
+  // Sync branding form state when organization changes
+  useEffect(() => {
+    if (currentOrganization) {
+      setBrandingAppName(currentOrganization.app_name || '');
+      setBrandingPrimaryColor(currentOrganization.primary_color || '#6366f1');
+    }
+  }, [currentOrganization]);
 
   // Fetch pending invitations
   const { data: invitations, isLoading: invitationsLoading } = useQuery({
@@ -255,16 +263,16 @@ export default function Admin() {
     setIsUploadingLogo(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${currentOrganization.id}-logo.${fileExt}`;
+      const fileName = `${currentOrganization.id}/logo.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
+        .from('organization-assets')
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
-        .from('avatars')
+        .from('organization-assets')
         .getPublicUrl(fileName);
 
       await updateBrandingMutation.mutateAsync({ logo_url: urlData.publicUrl });
@@ -279,11 +287,41 @@ export default function Admin() {
     await updateBrandingMutation.mutateAsync({ logo_url: null });
   };
 
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentOrganization) return;
+
+    setIsUploadingFavicon(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentOrganization.id}/favicon.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('organization-assets')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('organization-assets')
+        .getPublicUrl(fileName);
+
+      await updateBrandingMutation.mutateAsync({ favicon_url: urlData.publicUrl });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload favicon');
+    } finally {
+      setIsUploadingFavicon(false);
+    }
+  };
+
+  const handleRemoveFavicon = async () => {
+    await updateBrandingMutation.mutateAsync({ favicon_url: null });
+  };
+
   const handleSaveBranding = async () => {
     await updateBrandingMutation.mutateAsync({
       app_name: brandingAppName || null,
       primary_color: brandingPrimaryColor || null,
-      favicon_url: brandingFaviconUrl || null,
     });
   };
 
@@ -685,18 +723,55 @@ export default function Admin() {
                   </p>
                 </div>
 
-                {/* Favicon URL */}
+                {/* Favicon */}
                 <div className="space-y-2">
-                  <Label htmlFor="favicon-url">Favicon URL (Optional)</Label>
-                  <Input
-                    id="favicon-url"
-                    placeholder="https://example.com/favicon.ico"
-                    value={brandingFaviconUrl}
-                    onChange={(e) => setBrandingFaviconUrl(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Custom favicon for the browser tab. Leave empty for default.
-                  </p>
+                  <Label>Favicon</Label>
+                  <div className="flex items-center gap-4">
+                    {currentOrganization?.favicon_url ? (
+                      <div className="relative">
+                        <img
+                          src={currentOrganization.favicon_url}
+                          alt="Favicon"
+                          className="w-8 h-8 rounded object-cover border"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -top-2 -right-2 h-5 w-5"
+                          onClick={handleRemoveFavicon}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded border-2 border-dashed border-muted-foreground/25 flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">ico</span>
+                      </div>
+                    )}
+                    <div>
+                      <Label htmlFor="favicon-upload" className="cursor-pointer">
+                        <div className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-muted/50 transition-colors">
+                          {isUploadingFavicon ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4" />
+                          )}
+                          <span>Upload Favicon</span>
+                        </div>
+                      </Label>
+                      <input
+                        id="favicon-upload"
+                        type="file"
+                        accept="image/*,.ico"
+                        className="hidden"
+                        onChange={handleFaviconUpload}
+                        disabled={isUploadingFavicon}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Square image, 32x32 or 64x64px recommended
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <Button
