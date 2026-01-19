@@ -672,60 +672,6 @@ export default function Admin() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Logo Upload */}
-                <div className="space-y-2">
-                  <Label>Organization Logo</Label>
-                  <div className="flex items-center gap-4">
-                    {currentOrganization.logo_url ? (
-                      <div className="relative">
-                        <img
-                          src={currentOrganization.logo_url}
-                          alt="Organization logo"
-                          className="w-16 h-16 rounded-lg object-cover border"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -top-2 -right-2 h-6 w-6"
-                          onClick={handleRemoveLogo}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div
-                        className="w-16 h-16 rounded-lg flex items-center justify-center text-white font-bold text-xl"
-                        style={{ backgroundColor: brandingPrimaryColor }}
-                      >
-                        {currentOrganization.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div>
-                      <Label htmlFor="logo-upload" className="cursor-pointer">
-                        <div className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-muted/50 transition-colors">
-                          {isUploadingLogo ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Upload className="h-4 w-4" />
-                          )}
-                          <span>Upload Logo</span>
-                        </div>
-                      </Label>
-                      <input
-                        id="logo-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleLogoFileSelect}
-                        disabled={isUploadingLogo}
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Recommended: Square image, at least 128x128px
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
                 {/* App Name */}
                 <div className="space-y-2">
                   <Label htmlFor="app-name">App Name</Label>
@@ -766,6 +712,60 @@ export default function Admin() {
                   <p className="text-xs text-muted-foreground">
                     Used throughout the app for buttons, links, and accents
                   </p>
+                </div>
+
+                {/* Organization Logo */}
+                <div className="space-y-2">
+                  <Label>Organization Logo</Label>
+                  <div className="flex items-center gap-4">
+                    {currentOrganization.logo_url ? (
+                      <div className="relative">
+                        <img
+                          src={currentOrganization.logo_url}
+                          alt="Organization logo"
+                          className="h-12 w-auto max-w-[144px] rounded-lg object-contain border"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -top-2 -right-2 h-6 w-6"
+                          onClick={handleRemoveLogo}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div
+                        className="w-16 h-16 rounded-lg flex items-center justify-center text-white font-bold text-xl"
+                        style={{ backgroundColor: brandingPrimaryColor }}
+                      >
+                        {currentOrganization.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <Label htmlFor="logo-upload" className="cursor-pointer">
+                        <div className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-muted/50 transition-colors">
+                          {isUploadingLogo ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4" />
+                          )}
+                          <span>Upload Logo</span>
+                        </div>
+                      </Label>
+                      <input
+                        id="logo-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoFileSelect}
+                        disabled={isUploadingLogo}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Rectangular image (3:1 ratio), at least 300x100px
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Favicon */}
@@ -813,7 +813,7 @@ export default function Admin() {
                         disabled={isUploadingFavicon}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Square image, 32x32 or 64x64px recommended
+                        Square image (1:1 ratio), 64x64px recommended
                       </p>
                     </div>
                   </div>
