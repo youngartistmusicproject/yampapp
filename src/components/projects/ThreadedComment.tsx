@@ -13,6 +13,7 @@ interface ThreadedCommentProps {
   comment: TaskComment;
   replies: TaskComment[];
   currentUserId?: string;
+  currentUserName?: string;
   onDelete: (commentId: string) => void;
   onReply: (content: string, parentCommentId: string, files?: File[]) => Promise<void>;
   onToggleReaction: (commentId: string, emoji: string) => void;
@@ -25,6 +26,7 @@ export function ThreadedComment({
   comment,
   replies,
   currentUserId,
+  currentUserName,
   onDelete,
   onReply,
   onToggleReaction,
@@ -257,7 +259,7 @@ export function ThreadedComment({
                         setReplyFiles([]);
                       }
                     }}
-                    placeholder="Reply... (Enter to send)"
+                    placeholder={currentUserName ? `Replying as ${currentUserName}` : "Reply..."}
                     className="min-h-[40px] pr-16 text-sm py-1.5"
                   />
                   <input 
@@ -320,6 +322,7 @@ export function ThreadedComment({
               comment={reply}
               replies={[]}
               currentUserId={currentUserId}
+              currentUserName={currentUserName}
               onDelete={onDelete}
               onReply={onReply}
               onToggleReaction={onToggleReaction}
