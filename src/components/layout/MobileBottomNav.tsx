@@ -5,6 +5,11 @@ import {
   Users,
   Calendar,
   MoreHorizontal,
+  BookOpen,
+  FolderOpen,
+  ClipboardList,
+  UserCircle,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -15,13 +20,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useState } from "react";
-import {
-  BookOpen,
-  FolderOpen,
-  ClipboardList,
-  UserCircle,
-  Settings,
-} from "lucide-react";
 
 // Primary navigation items for bottom tabs (most used)
 const primaryNavItems = [
@@ -50,8 +48,8 @@ export function MobileBottomNav() {
   );
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-pb">
-      <div className="flex items-center justify-around h-16">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border shadow-[0_-2px_10px_-2px_rgba(0,0,0,0.05)] safe-area-pb">
+      <div className="flex items-center justify-around h-[68px]">
         {primaryNavItems.map((item) => {
           const isActive = location.pathname === item.href;
           return (
@@ -59,14 +57,14 @@ export function MobileBottomNav() {
               key={item.name}
               to={item.href}
               className={cn(
-                "flex flex-col items-center justify-center flex-1 h-full gap-1 text-xs transition-colors",
+                "flex flex-col items-center justify-center flex-1 h-full gap-1 text-xs transition-all active:scale-95",
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <item.icon className={cn("w-5 h-5", isActive && "fill-primary/10")} />
-              <span className="font-medium">{item.name}</span>
+              <item.icon className={cn("w-6 h-6", isActive && "fill-primary/10")} />
+              <span className="font-medium text-[11px]">{item.name}</span>
             </NavLink>
           );
         })}
@@ -76,21 +74,25 @@ export function MobileBottomNav() {
           <SheetTrigger asChild>
             <button
               className={cn(
-                "flex flex-col items-center justify-center flex-1 h-full gap-1 text-xs transition-colors",
+                "flex flex-col items-center justify-center flex-1 h-full gap-1 text-xs transition-all active:scale-95",
                 isSecondaryRoute
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <MoreHorizontal className="w-5 h-5" />
-              <span className="font-medium">More</span>
+              <MoreHorizontal className="w-6 h-6" />
+              <span className="font-medium text-[11px]">More</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-xl">
-            <SheetHeader className="pb-4">
-              <SheetTitle>More Options</SheetTitle>
+          <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-2xl px-6 pb-8">
+            {/* Drag handle indicator */}
+            <div className="flex justify-center pt-2 pb-4">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/20" />
+            </div>
+            <SheetHeader className="pb-5">
+              <SheetTitle className="text-lg font-semibold text-left">More Options</SheetTitle>
             </SheetHeader>
-            <div className="grid grid-cols-3 gap-4 pb-6">
+            <div className="grid grid-cols-3 gap-3">
               {secondaryNavItems.map((item) => {
                 const isActive = location.pathname === item.href;
                 return (
@@ -99,14 +101,14 @@ export function MobileBottomNav() {
                     to={item.href}
                     onClick={() => setMoreSheetOpen(false)}
                     className={cn(
-                      "flex flex-col items-center gap-2 p-4 rounded-xl transition-colors",
+                      "flex flex-col items-center gap-2.5 p-4 rounded-xl transition-all active:scale-95 min-h-[88px]",
                       isActive
                         ? "bg-primary/10 text-primary"
-                        : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
                     )}
                   >
-                    <item.icon className="w-6 h-6" />
-                    <span className="text-xs font-medium text-center leading-tight">
+                    <item.icon className="w-7 h-7" />
+                    <span className="text-[11px] font-medium text-center leading-tight">
                       {item.name}
                     </span>
                   </NavLink>

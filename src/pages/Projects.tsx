@@ -851,7 +851,7 @@ export default function Projects() {
     <div className="space-y-5 animate-fade-in">
       {/* Page Header */}
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-foreground">
+        <h1 className="text-2xl font-semibold text-foreground font-serif">
           Work Management
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -860,11 +860,11 @@ export default function Projects() {
       </div>
 
       {/* More Prominent Search Bar */}
-      <div className="relative max-w-xl">
+      <div className="relative w-full md:max-w-xl">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Search tasks..."
-          className="pl-10 h-9 text-sm bg-muted/30 border-border/60"
+          className="pl-10 text-sm bg-muted/30 border-border/60"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -889,7 +889,7 @@ export default function Projects() {
             <Button
               variant={viewMode === 'completed' ? 'default' : 'outline'}
               size="sm"
-              className="h-8 gap-1.5 px-3 shrink-0"
+              className="h-10 md:h-8 gap-1.5 px-3 shrink-0"
               onClick={() => {
                 const newMode = viewMode === 'active' ? 'completed' : 'active';
                 setViewMode(newMode);
@@ -909,13 +909,13 @@ export default function Projects() {
             <div className="h-4 w-px bg-border hidden sm:block shrink-0" />
 
             {/* Quick Filters - scrollable on mobile, wrap on larger screens */}
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide sm:flex-wrap min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 md:gap-1 overflow-x-auto scrollbar-hide sm:flex-wrap min-w-0 flex-1 -mx-1 px-1">
               {viewMode === 'active' ? (
                 <>
                   <button
                     onClick={() => setActiveQuickFilter('all')}
                     className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors",
+                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors whitespace-nowrap",
                       activeQuickFilter === 'all'
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -926,7 +926,7 @@ export default function Projects() {
                   <button
                     onClick={() => setActiveQuickFilter('overdue')}
                     className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors flex items-center gap-1 whitespace-nowrap",
                       activeQuickFilter === 'overdue'
                         ? "bg-destructive text-destructive-foreground"
                         : activeQuickFilterCounts.overdue > 0
@@ -942,7 +942,7 @@ export default function Projects() {
                   <button
                     onClick={() => setActiveQuickFilter('today')}
                     className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors flex items-center gap-1 whitespace-nowrap",
                       activeQuickFilter === 'today'
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -956,7 +956,7 @@ export default function Projects() {
                   <button
                     onClick={() => setActiveQuickFilter('tomorrow')}
                     className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors flex items-center gap-1 whitespace-nowrap",
                       activeQuickFilter === 'tomorrow'
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -970,7 +970,7 @@ export default function Projects() {
                   <button
                     onClick={() => setActiveQuickFilter('upcoming')}
                     className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors flex items-center gap-1 whitespace-nowrap",
                       activeQuickFilter === 'upcoming'
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -984,7 +984,7 @@ export default function Projects() {
                   <button
                     onClick={() => setActiveQuickFilter('later')}
                     className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors flex items-center gap-1 whitespace-nowrap",
                       activeQuickFilter === 'later'
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
