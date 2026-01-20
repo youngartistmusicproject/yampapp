@@ -67,13 +67,13 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
       <NavLink
         to={item.href}
         className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150",
           isActive
             ? "bg-primary/10 text-primary font-medium"
-            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
         )}
       >
-        <item.icon className="w-5 h-5 flex-shrink-0" />
+        <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
         {!collapsed && <span>{item.name}</span>}
       </NavLink>
     );
@@ -95,13 +95,13 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col h-screen bg-background border-r border-border/40 transition-all duration-200",
+        "hidden md:flex flex-col h-screen bg-sidebar-background border-r border-sidebar-border/50 transition-all duration-200",
         collapsed ? "w-[56px]" : "w-[240px]"
       )}
     >
       {/* Header with logo and collapse toggle */}
       <div className={cn(
-        "flex items-center h-16 border-b border-border/40",
+        "flex items-center h-16 border-b border-sidebar-border/50",
         collapsed ? "justify-center px-1.5" : "justify-between px-3"
       )}>
         {collapsed ? (
@@ -157,8 +157,8 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-3 overflow-y-auto">
-        <div className="space-y-0.5">
+      <nav className="flex-1 px-2 py-4 overflow-y-auto">
+        <div className="space-y-1">
           {filteredNavItems.map((item) => {
             const isActive = location.pathname === item.href;
             return <NavItem key={item.name} item={item} isActive={isActive} />;
@@ -167,7 +167,7 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
       </nav>
 
       {/* Bottom section */}
-      <div className="px-2 py-3 border-t border-border/40 space-y-0.5">
+      <div className="px-2 py-4 border-t border-sidebar-border/50 space-y-1">
         {(isSuperAdmin || isOrgAdmin) && (
           <NavItem
             item={{ name: "Admin", href: "/admin", icon: Shield }}

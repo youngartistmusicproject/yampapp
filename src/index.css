@@ -6,46 +6,46 @@
 
 @layer base {
   :root {
-    /* Todoist-inspired with Monday flair */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
+    /* Rork x Todoist - Warm minimal aesthetic */
+    --background: 0 0% 98%;           /* #FAFAFA - warm off-white */
+    --foreground: 0 0% 10%;           /* #1A1A1A - softer black */
     
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
+    --card: 0 0% 100%;                /* Pure white cards */
+    --card-foreground: 0 0% 10%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover-foreground: 0 0% 10%;
     
-    /* Todoist red-orange accent */
-    --primary: 12 90% 54%;
+    /* Coral accent - kept from Todoist */
+    --primary: 12 90% 54%;            /* #EB5C5C */
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 20%;
+    --secondary: 0 0% 97%;            /* Warmer secondary */
+    --secondary-foreground: 0 0% 18%;
     
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 0 0% 97%;
+    --muted-foreground: 0 0% 42%;     /* #6B6B6B - warmer gray */
     
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
+    --accent: 0 0% 97%;
+    --accent-foreground: 0 0% 10%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 0 0% 92%;               /* #EBEBEB - subtler */
+    --input: 0 0% 92%;
     --ring: 12 90% 54%;
     
     --radius: 0.5rem;
     
-    /* Clean sidebar */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 35%;
+    /* Premium sidebar */
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 0 0% 38%;
     --sidebar-primary: 12 90% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 94%;
-    --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-border: 0 0% 92%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 94%;
     --sidebar-ring: 12 90% 54%;
   }
 
@@ -111,11 +111,11 @@
 
 @layer utilities {
   .shadow-card {
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.02), 0 1px 2px -1px rgb(0 0 0 / 0.02);
   }
   
   .shadow-elevated {
-    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.08);
+    box-shadow: 0 4px 16px -4px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
   }
 }
 

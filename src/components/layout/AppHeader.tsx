@@ -34,7 +34,7 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
   const initials = profile ? getInitials(profile.first_name, profile.last_name) : "?";
 
   return (
-    <header className="flex items-center justify-between h-12 px-3 sm:px-4 border-b border-border/50 bg-background gap-3">
+    <header className="flex items-center justify-between h-14 px-4 sm:px-5 border-b border-border/40 bg-background gap-3">
       {/* Mobile menu trigger */}
       <Button
         variant="ghost"
@@ -60,7 +60,7 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
         <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
         <Input
           placeholder="Search..."
-          className="pl-8 h-8 bg-muted/50 border-0 text-[13px] placeholder:text-muted-foreground/60"
+          className="pl-8 h-9 bg-muted/40 border-0 text-sm placeholder:text-muted-foreground/60"
         />
       </div>
 
