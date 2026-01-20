@@ -33,13 +33,11 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Lock className="h-6 w-6 text-primary" />
-          </div>
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-          <CardDescription>
+      <Card className="w-full max-w-sm shadow-elevated">
+        <CardHeader className="space-y-2 text-center pb-2">
+          <Lock className="h-8 w-8 text-primary mx-auto" />
+          <CardTitle className="text-2xl font-semibold">Welcome back</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Sign in to your account to continue
           </CardDescription>
         </CardHeader>
