@@ -238,17 +238,17 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-[640px] max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="w-full max-w-[100vw] sm:max-w-[640px] h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-0 rounded-none sm:rounded-lg">
         <form onSubmit={handleSubmit}>
           {/* Header area - editable title & description */}
-          <div className="px-6 pt-6 pb-4 border-b border-border/50">
+          <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-border/50">
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What needs to get done?"
               className={cn(
-                "w-full text-xl font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/60",
+                "w-full text-lg sm:text-xl font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/60",
                 hasAttemptedSubmit && validationErrors.title && "placeholder:text-destructive/60"
               )}
             />
@@ -262,13 +262,13 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
           </div>
 
           {/* Form fields */}
-          <div className="px-6 py-5 space-y-4">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4">
 
             {/* Property rows - clean inline layout */}
-            <div className="space-y-3">
+            <div className="space-y-4 sm:space-y-3">
               {/* Project */}
-              <div className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-28 shrink-0">Project <span className="text-destructive">*</span></Label>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <Label className="text-sm text-muted-foreground sm:w-28 shrink-0">Project <span className="text-destructive">*</span></Label>
                 <Select 
                   value={hasSelectedProject ? (selectedProjectId || "none") : ""} 
                   onValueChange={(v) => {
@@ -277,7 +277,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
                   }}
                 >
                   <SelectTrigger className={cn(
-                    "h-9 text-sm border-border/50 bg-transparent flex-1",
+                    "text-base sm:text-sm border-border/50 bg-transparent flex-1",
                     hasAttemptedSubmit && validationErrors.project && "border-destructive"
                   )}>
                     <SelectValue placeholder="Select project..." />
@@ -514,11 +514,11 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border/50 bg-muted/30">
-            <Button type="button" variant="ghost" size="default" onClick={() => onOpenChange(false)}>
+          <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-4 border-t border-border/50 bg-muted/30 safe-area-pb">
+            <Button type="button" variant="ghost" size="lg" className="flex-1 sm:flex-none" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" size="default">{isEditing ? "Save" : "Create"}</Button>
+            <Button type="submit" size="lg" className="flex-1 sm:flex-none">{isEditing ? "Save" : "Create"}</Button>
           </div>
         </form>
       </DialogContent>
