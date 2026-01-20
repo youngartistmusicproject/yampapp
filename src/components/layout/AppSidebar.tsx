@@ -95,13 +95,13 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col h-screen bg-sidebar-background border-r border-sidebar-border/50 transition-all duration-200",
+        "hidden md:flex flex-col h-screen bg-sidebar-background border-r border-sidebar-border transition-all duration-200",
         collapsed ? "w-[56px]" : "w-[240px]"
       )}
     >
       {/* Header with logo and collapse toggle */}
       <div className={cn(
-        "flex items-center h-16 border-b border-sidebar-border/50",
+        "flex items-center h-16 border-b border-sidebar-border",
         collapsed ? "justify-center px-1.5" : "justify-between px-3"
       )}>
         {collapsed ? (
@@ -167,7 +167,7 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
       </nav>
 
       {/* Bottom section */}
-      <div className="px-2 py-4 border-t border-sidebar-border/50 space-y-1">
+      <div className="px-2 py-4 border-t border-sidebar-border space-y-1">
         {(isSuperAdmin || isOrgAdmin) && (
           <NavItem
             item={{ name: "Admin", href: "/admin", icon: Shield }}

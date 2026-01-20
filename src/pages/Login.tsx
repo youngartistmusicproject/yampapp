@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Lock } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -33,11 +33,10 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm shadow-elevated">
-        <CardHeader className="space-y-2 text-center pb-2">
-          <Lock className="h-8 w-8 text-primary mx-auto" />
-          <CardTitle className="text-2xl font-semibold">Welcome back</CardTitle>
-          <CardDescription className="text-muted-foreground">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="space-y-1 text-center pb-2">
+          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardDescription>
             Sign in to your account to continue
           </CardDescription>
         </CardHeader>
