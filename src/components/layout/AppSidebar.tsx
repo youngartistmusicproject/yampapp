@@ -115,7 +115,7 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
                   <img
                     src={logoUrl}
                     alt={appName}
-                    className="w-8 h-8 rounded-lg object-cover"
+                    className="w-8 h-8 rounded-lg object-cover shadow-sm ring-1 ring-border/50"
                   />
                 ) : (
                   <div
@@ -138,7 +138,7 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
                 <img
                   src={logoUrl}
                   alt={appName}
-                  className="h-10 w-auto max-w-[180px] object-contain flex-shrink-0"
+                  className="h-10 w-auto max-w-[180px] object-contain flex-shrink-0 drop-shadow-sm"
                 />
               ) : (
                 <span className="font-semibold text-foreground text-[15px] truncate">{appName}</span>
@@ -242,7 +242,7 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               <img
                 src={logoUrl}
                 alt={appName}
-                className="h-10 w-auto max-w-[200px] object-contain"
+                className="h-10 w-auto max-w-[200px] object-contain drop-shadow-sm"
               />
             ) : (
               <span className="font-semibold text-foreground text-[15px]">{appName}</span>
