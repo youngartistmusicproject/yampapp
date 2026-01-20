@@ -606,10 +606,17 @@ export function TaskDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-full max-w-[900px] max-h-[85vh] p-0 gap-0 overflow-hidden rounded-xl border shadow-xl flex flex-col bg-background">
-          <div className="flex flex-1 min-h-0">
+        <DialogContent className={cn(
+          // Mobile: Full-height bottom sheet
+          "max-sm:h-[95vh] max-sm:max-h-[95vh] max-sm:p-0 max-sm:pb-0 max-sm:gap-0",
+          // Desktop: Centered large modal  
+          "sm:max-w-[900px] sm:max-h-[85vh] sm:p-0 sm:gap-0 sm:rounded-xl",
+          // Shared styles
+          "w-full overflow-hidden border shadow-xl flex flex-col bg-background"
+        )}>
+          <div className="flex flex-col sm:flex-row flex-1 min-h-0">
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-                <div className="p-6 pb-4">
+                <div className="p-4 sm:p-6 pb-4">
                 <div className="flex items-start gap-3">
                   <div className="mt-1">
                     <CircularCheckbox 
@@ -986,7 +993,7 @@ export function TaskDetailDialog({
               </div>
             </div>
 
-            <div className="w-[280px] border-l border-border/40 bg-muted/20 overflow-y-auto shrink-0">
+            <div className="w-full sm:w-[280px] border-t sm:border-t-0 sm:border-l border-border/40 bg-muted/20 overflow-y-auto shrink-0 max-sm:max-h-[40vh]">
               <div className="p-4">
                 {/* STATUS & PRIORITY */}
                 <div className="mb-5">
