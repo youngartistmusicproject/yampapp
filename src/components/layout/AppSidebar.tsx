@@ -101,7 +101,7 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
     >
       {/* Header with logo and collapse toggle */}
       <div className={cn(
-        "flex items-center h-14 border-b border-border/40",
+        "flex items-center h-16 border-b border-border/40",
         collapsed ? "justify-center px-1.5" : "justify-between px-3"
       )}>
         {collapsed ? (
@@ -109,17 +109,17 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
             <TooltipTrigger asChild>
               <button
                 onClick={() => setCollapsed(false)}
-                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted/50 transition-colors"
               >
                 {logoUrl ? (
                   <img
                     src={logoUrl}
                     alt={appName}
-                    className="w-7 h-7 rounded-lg object-cover"
+                    className="w-8 h-8 rounded-lg object-cover"
                   />
                 ) : (
                   <div
-                    className="flex items-center justify-center w-7 h-7 rounded-lg"
+                    className="flex items-center justify-center w-8 h-8 rounded-lg"
                     style={{ backgroundColor: primaryColor }}
                   >
                     <span className="text-white font-semibold text-sm">{logoLetter}</span>
@@ -138,7 +138,7 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
                 <img
                   src={logoUrl}
                   alt={appName}
-                  className="h-8 w-auto max-w-[160px] object-contain flex-shrink-0"
+                  className="h-10 w-auto max-w-[180px] object-contain flex-shrink-0"
                 />
               ) : (
                 <span className="font-semibold text-foreground text-[15px] truncate">{appName}</span>
@@ -236,13 +236,13 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-[280px] p-0 bg-background">
         {/* Header */}
-        <div className="flex items-center h-14 px-4 border-b border-border/40">
+        <div className="flex items-center h-16 px-4 border-b border-border/40">
           <div className="flex items-center gap-2.5">
             {logoUrl ? (
               <img
                 src={logoUrl}
                 alt={appName}
-                className="h-8 w-auto max-w-[180px] object-contain"
+                className="h-10 w-auto max-w-[200px] object-contain"
               />
             ) : (
               <span className="font-semibold text-foreground text-[15px]">{appName}</span>
