@@ -51,7 +51,7 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
   const { signOut, currentOrganization, isOrgAdmin } = useAuth();
   const { isSuperAdmin } = useUserRole();
   const { isFeatureEnabled } = useFeatureFlags();
-  const { appName, logoUrl, primaryColor } = useBranding();
+  const { appName, logoUrl, primaryColor, faviconUrl } = useBranding();
 
   // Filter nav items based on feature flags
   const filteredNavItems = navItems.filter(item => {
@@ -111,15 +111,15 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
                 onClick={() => setCollapsed(false)}
                 className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted/50 transition-colors"
               >
-                {logoUrl ? (
+                {faviconUrl ? (
                   <img
-                    src={logoUrl}
+                    src={faviconUrl}
                     alt={appName}
                     className="w-8 h-8 rounded-lg object-cover shadow-sm ring-1 ring-border/50"
                   />
                 ) : (
                   <div
-                    className="flex items-center justify-center w-8 h-8 rounded-lg"
+                    className="flex items-center justify-center w-8 h-8 rounded-lg shadow-sm ring-1 ring-border/50"
                     style={{ backgroundColor: primaryColor }}
                   >
                     <span className="text-white font-semibold text-sm">{logoLetter}</span>
