@@ -142,16 +142,16 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-[640px] max-h-[90vh] overflow-y-auto p-0 top-[10%] translate-y-0 data-[state=open]:slide-in-from-top-[5%] data-[state=closed]:slide-out-to-top-[5%]">
+      <DialogContent className="w-full sm:max-w-[640px] max-sm:max-h-[90vh] sm:max-h-[90vh] overflow-y-auto p-0 sm:top-[10%] sm:translate-y-0 sm:data-[state=open]:slide-in-from-top-[5%] sm:data-[state=closed]:slide-out-to-top-[5%]">
         <form onSubmit={handleSubmit}>
           {/* Header area */}
-          <div className="px-6 pt-6 pb-4 border-b border-border/50">
+          <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-border/50">
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Project name"
-              className="w-full text-xl font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/60"
+              className="w-full text-lg sm:text-xl font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/60"
               required
             />
             <textarea
@@ -164,7 +164,7 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
           </div>
 
           {/* Form fields */}
-          <div className="px-6 py-5 space-y-4">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4">
             <div className="space-y-3">
               {/* Project Color */}
               <div className="flex items-center gap-3">
@@ -298,11 +298,11 @@ export function ProjectDialog({ open, onOpenChange, onSubmit, availableMembers, 
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-border/50 flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="px-4 sm:px-6 py-4 border-t border-border/50 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 safe-area-pb">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="max-sm:h-12 max-sm:text-base">
               Cancel
             </Button>
-            <Button type="submit">{isEditing ? 'Save Changes' : 'Create Project'}</Button>
+            <Button type="submit" className="max-sm:h-12 max-sm:text-base">{isEditing ? 'Save Changes' : 'Create Project'}</Button>
           </div>
         </form>
       </DialogContent>
