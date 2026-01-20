@@ -46,13 +46,12 @@ import { toast } from "sonner";
 import { triggerConfetti, triggerDayCompleteConfetti, triggerOverdueClearedConfetti } from "@/lib/confetti";
 import { isToday as isDateToday, isBefore, startOfDay } from "date-fns";
 
-import { teamMembers, statusLibrary as defaultStatuses, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
+import { statusLibrary as defaultStatuses, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { useTasks, useProjects, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useReorderTasks, useCompleteRecurringTask, useReorderProjects } from "@/hooks/useWorkManagement";
 import { useAssigneeFrequency } from "@/hooks/useAssigneeFrequency";
 import { useAreas } from "@/hooks/useAreas";
-
-// Current user for demo purposes
-const currentUser = teamMembers[0];
+import { useOrgMembers } from "@/hooks/useOrgMembers";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Types for view modes and quick filters
 type ViewMode = 'active' | 'completed';
@@ -69,6 +68,21 @@ function formatCompletedTime(date: Date): string {
 }
 
 export default function Projects() {
+  const { profile } = useAuth();
+  const { members: orgMembers } = useOrgMembers();
+  
+  // Current user from auth context
+  const currentUser = profile ? {
+    id: profile.id,
+    name: profile.last_name ? `${profile.first_name} ${profile.last_name}` : profile.first_name,
+    email: profile.email || '',
+    role: 'staff' as const,
+    avatar: profile.avatar_url || undefined,
+  } : orgMembers[0];
+  
+  // Use org members as the team members list
+  const teamMembers = orgMembers;
+  
   const { data: dbTasks = [], isLoading: tasksLoading } = useTasks();
   const { data: dbProjects = [], isLoading: projectsLoading } = useProjects();
   
