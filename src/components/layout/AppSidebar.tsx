@@ -109,17 +109,17 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
             <TooltipTrigger asChild>
               <button
                 onClick={() => setCollapsed(false)}
-                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted/50 transition-all duration-200 hover:scale-110 active:scale-95"
               >
                 {faviconUrl ? (
                   <img
                     src={faviconUrl}
                     alt={appName}
-                    className="w-8 h-8 rounded-lg object-cover shadow-sm ring-1 ring-border/50"
+                    className="w-8 h-8 rounded-lg object-cover shadow-sm ring-1 ring-border/50 transition-transform duration-200"
                   />
                 ) : (
                   <div
-                    className="flex items-center justify-center w-8 h-8 rounded-lg shadow-sm ring-1 ring-border/50"
+                    className="flex items-center justify-center w-8 h-8 rounded-lg shadow-sm ring-1 ring-border/50 transition-transform duration-200"
                     style={{ backgroundColor: primaryColor }}
                   >
                     <span className="text-white font-semibold text-sm">{logoLetter}</span>
@@ -133,7 +133,7 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
           </Tooltip>
         ) : (
           <>
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex-1 flex items-center justify-center min-w-0">
               {logoUrl ? (
                 <img
                   src={logoUrl}
