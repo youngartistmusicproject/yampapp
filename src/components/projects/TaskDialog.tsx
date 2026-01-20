@@ -238,7 +238,7 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[100vw] sm:max-w-[640px] h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-0 rounded-none sm:rounded-lg">
+      <DialogContent className="w-full sm:max-w-[640px] max-sm:max-h-[90vh] sm:max-h-[90vh] overflow-y-auto p-0">
         <form onSubmit={handleSubmit}>
           {/* Header area - editable title & description */}
           <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-border/50">
@@ -514,11 +514,11 @@ export function TaskDialog({ open, onOpenChange, onSubmit, availableMembers, sta
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-4 border-t border-border/50 bg-muted/30 safe-area-pb">
-            <Button type="button" variant="ghost" size="lg" className="flex-1 sm:flex-none" onClick={() => onOpenChange(false)}>
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-4 border-t border-border/50 bg-muted/30 safe-area-pb">
+            <Button type="button" variant="ghost" className="w-full sm:w-auto max-sm:h-12 max-sm:text-base" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" size="lg" className="flex-1 sm:flex-none">{isEditing ? "Save" : "Create"}</Button>
+            <Button type="submit" className="w-full sm:w-auto max-sm:h-12 max-sm:text-base">{isEditing ? "Save" : "Create"}</Button>
           </div>
         </form>
       </DialogContent>

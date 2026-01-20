@@ -47,15 +47,17 @@ export function RequestDialog({ open, onOpenChange, onSubmit }: RequestDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Submit New Request</DialogTitle>
-          <DialogDescription>
-            Fill in the details for your request. It will be reviewed by an administrator.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[500px] p-0">
+        <div className="px-4 sm:px-6 pt-5 sm:pt-6">
+          <DialogHeader>
+            <DialogTitle>Submit New Request</DialogTitle>
+            <DialogDescription>
+              Fill in the details for your request. It will be reviewed by an administrator.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 px-4 sm:px-6 py-4">
             <div className="space-y-2">
               <Label htmlFor="type">Request Type</Label>
               <Select value={type} onValueChange={(v) => setType(v as Request["type"])}>
@@ -95,11 +97,11 @@ export function RequestDialog({ open, onOpenChange, onSubmit }: RequestDialogPro
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="px-4 sm:px-6 py-4 border-t border-border/50 safe-area-pb">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="max-sm:h-12 max-sm:text-base max-sm:flex-1">
               Cancel
             </Button>
-            <Button type="submit">Submit Request</Button>
+            <Button type="submit" className="max-sm:h-12 max-sm:text-base max-sm:flex-1">Submit Request</Button>
           </DialogFooter>
         </form>
       </DialogContent>

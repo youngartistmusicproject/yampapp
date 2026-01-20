@@ -95,80 +95,84 @@ export function TwoFactorSetup({ open, onOpenChange, onEnrollmentComplete }: Two
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            {step === "enroll" ? "Enable Two-Factor Authentication" : "Verify Your Authenticator"}
-          </DialogTitle>
-          <DialogDescription>
-            {step === "enroll"
-              ? "Add an extra layer of security to your account using an authenticator app."
-              : "Enter the 6-digit code from your authenticator app to complete setup."}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-md p-0">
+        <div className="px-4 sm:px-6 pt-5 sm:pt-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              {step === "enroll" ? "Enable Two-Factor Authentication" : "Verify Your Authenticator"}
+            </DialogTitle>
+            <DialogDescription>
+              {step === "enroll"
+                ? "Add an extra layer of security to your account using an authenticator app."
+                : "Enter the 6-digit code from your authenticator app to complete setup."}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        {step === "enroll" && !qrCode && (
-          <div className="py-6 text-center">
-            <p className="text-sm text-muted-foreground mb-4">
-              You'll need an authenticator app like Google Authenticator, Authy, or 1Password.
-            </p>
-            <Button onClick={handleEnroll} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Setting up...
-                </>
-              ) : (
-                "Get Started"
-              )}
-            </Button>
-          </div>
-        )}
-
-        {step === "verify" && qrCode && (
-          <div className="space-y-4">
-            <div className="flex justify-center">
-              <img src={qrCode} alt="QR Code" className="w-48 h-48 rounded-lg border" />
+        <div className="px-4 sm:px-6 py-4">
+          {step === "enroll" && !qrCode && (
+            <div className="py-6 text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                You'll need an authenticator app like Google Authenticator, Authy, or 1Password.
+              </p>
+              <Button onClick={handleEnroll} disabled={isLoading} className="max-sm:h-12 max-sm:text-base max-sm:w-full">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Setting up...
+                  </>
+                ) : (
+                  "Get Started"
+                )}
+              </Button>
             </div>
-            
-            <div className="text-center space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Scan this QR code with your authenticator app
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Or enter this secret manually:
-              </p>
-              <div className="flex items-center justify-center gap-2">
-                <code className="bg-muted px-2 py-1 rounded text-xs font-mono">
-                  {secret}
-                </code>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copySecret}>
-                  <Copy className="h-3 w-3" />
-                </Button>
+          )}
+
+          {step === "verify" && qrCode && (
+            <div className="space-y-4">
+              <div className="flex justify-center">
+                <img src={qrCode} alt="QR Code" className="w-48 h-48 rounded-lg border" />
+              </div>
+              
+              <div className="text-center space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Scan this QR code with your authenticator app
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Or enter this secret manually:
+                </p>
+                <div className="flex items-center justify-center gap-2">
+                  <code className="bg-muted px-2 py-1 rounded text-xs font-mono">
+                    {secret}
+                  </code>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copySecret}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="code">Verification Code</Label>
+                <Input
+                  id="code"
+                  placeholder="Enter 6-digit code"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  maxLength={6}
+                  className="text-center text-lg tracking-widest"
+                />
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="code">Verification Code</Label>
-              <Input
-                id="code"
-                placeholder="Enter 6-digit code"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                maxLength={6}
-                className="text-center text-lg tracking-widest"
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {step === "verify" && (
-          <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="px-4 sm:px-6 py-4 border-t border-border/50 safe-area-pb">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="max-sm:h-12 max-sm:text-base max-sm:flex-1">
               Cancel
             </Button>
-            <Button onClick={handleVerify} disabled={isLoading || verificationCode.length !== 6}>
+            <Button onClick={handleVerify} disabled={isLoading || verificationCode.length !== 6} className="max-sm:h-12 max-sm:text-base max-sm:flex-1">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
