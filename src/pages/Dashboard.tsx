@@ -26,15 +26,26 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { TaskDetailDialog } from "@/components/projects/TaskDetailDialog";
 import { Task, TaskComment } from "@/types";
-import { teamMembers, statusLibrary } from "@/data/workManagementConfig";
+import { statusLibrary } from "@/data/workManagementConfig";
+import { useOrgMembers } from "@/hooks/useOrgMembers";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CircularCheckbox } from "@/components/ui/circular-checkbox";
 import { UserAvatarGroup } from "@/components/ui/user-avatar";
 
-const currentUser = teamMembers[0];
-
 export default function Dashboard() {
+  const { profile } = useAuth();
+  const { members: orgMembers } = useOrgMembers();
+  
+  // Current user from auth context
+  const currentUser = profile ? {
+    id: profile.id,
+    name: profile.last_name ? `${profile.first_name} ${profile.last_name}` : profile.first_name,
+    email: profile.email || '',
+    role: 'staff' as const,
+    avatar: profile.avatar_url || undefined,
+  } : orgMembers[0];
   const { 
     stats, 
     statsLoading, 

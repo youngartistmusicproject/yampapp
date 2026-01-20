@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { X, Users, Crown, Tag } from "lucide-react";
 import { SearchableUserMultiSelect } from "@/components/projects/SearchableUserMultiSelect";
 import { SearchableTagSelect } from "@/components/projects/SearchableTagSelect";
-import { teamMembers as allTeamMembers } from "@/data/workManagementConfig";
 import { useAreas } from "@/hooks/useAreas";
 
 interface ProjectDialogProps {
