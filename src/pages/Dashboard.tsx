@@ -188,7 +188,7 @@ export default function Dashboard() {
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
+        <h1 className="text-2xl md:text-2xl font-semibold text-foreground font-serif">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Your daily overview</p>
       </div>
 
@@ -198,16 +198,16 @@ export default function Dashboard() {
           const content = (
             <div
               className={cn(
-                "relative rounded-lg border p-4 transition-all duration-150",
+                "relative rounded-xl border p-4 md:p-4 transition-all duration-150",
                 stat.highlight 
                   ? "bg-destructive/5 border-destructive/20 hover:bg-destructive/10" 
                   : "bg-card border-border/50 hover:bg-muted/30 hover:border-border",
-                stat.link && "cursor-pointer"
+                stat.link && "cursor-pointer active:scale-[0.98]"
               )}
             >
               <div className="flex items-center justify-between mb-3">
                 <stat.icon className={cn(
-                  "w-4 h-4",
+                  "w-5 h-5 md:w-4 md:h-4",
                   stat.highlight ? "text-destructive" : "text-muted-foreground"
                 )} />
                 {stat.highlight && stat.value > 0 && (
@@ -220,7 +220,7 @@ export default function Dashboard() {
                 <Skeleton className="h-8 w-12 mb-1" />
               ) : (
                 <p className={cn(
-                  "text-2xl font-semibold",
+                  "text-2xl md:text-2xl font-semibold",
                   stat.highlight ? "text-destructive" : "text-foreground"
                 )}>
                   {stat.value}
@@ -249,8 +249,8 @@ export default function Dashboard() {
         <div className="lg:col-span-2 space-y-3">
           {/* Section Header */}
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-medium text-foreground">Recent Tasks</h2>
-            <Button variant="ghost" size="sm" className="gap-1 text-xs h-7 text-muted-foreground hover:text-foreground" asChild>
+            <h2 className="text-base font-medium text-foreground font-serif">Recent Tasks</h2>
+            <Button variant="ghost" size="sm" className="gap-1 text-xs h-8 md:h-7 text-muted-foreground hover:text-foreground" asChild>
               <Link to="/projects">
                 View All <ArrowRight className="w-3 h-3" />
               </Link>
@@ -258,7 +258,7 @@ export default function Dashboard() {
           </div>
 
           {/* Task List */}
-          <div className="rounded-lg border border-border/40 bg-card overflow-hidden">
+          <div className="rounded-xl border border-border/40 bg-card overflow-hidden">
             {tasksLoading ? (
               <div className="divide-y divide-border/30">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -309,19 +309,19 @@ export default function Dashboard() {
                     return format(task.dueDate, 'MMM d');
                   };
                   
-                  return (
+                    return (
                     <div
                       key={task.id}
                       onClick={() => handleTaskClick(task.id)}
                       className={cn(
-                        "px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer",
+                        "px-3 py-3.5 md:py-2.5 hover:bg-muted/30 transition-all cursor-pointer active:bg-muted/50",
                         isOverdue && "bg-destructive/5"
                       )}
                     >
                       {/* Single row: Checkbox + Title + Indicators + Project + Due + Stage + Avatars */}
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 md:gap-2.5">
                         {/* Checkbox */}
-                        <div onClick={handleCheckboxClick}>
+                        <div onClick={handleCheckboxClick} className="flex items-center justify-center w-11 h-11 md:w-auto md:h-auto -m-2 md:m-0">
                           <CircularCheckbox
                             checked={isDone}
                             onCheckedChange={() => {}}
@@ -331,14 +331,14 @@ export default function Dashboard() {
                         
                         {/* Title */}
                         <p className={cn(
-                          "flex-1 text-[13px] font-medium truncate min-w-0",
+                          "flex-1 text-sm md:text-[13px] font-medium truncate min-w-0",
                           isDone && 'line-through text-muted-foreground'
                         )}>
                           {task.title}
                         </p>
                         
-                        {/* Indicators */}
-                        <div className="flex items-center gap-1.5 text-muted-foreground/60 flex-shrink-0">
+                        {/* Indicators - hidden on mobile */}
+                        <div className="hidden md:flex items-center gap-1.5 text-muted-foreground/60 flex-shrink-0">
                           {fullTask?.isRecurring && (
                             <Repeat className="w-3 h-3" />
                           )}
@@ -362,9 +362,9 @@ export default function Dashboard() {
                           )}
                         </div>
                         
-                        {/* Project */}
+                        {/* Project - hidden on mobile */}
                         {task.projectName && (
-                          <span className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
+                          <span className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
                             <span 
                               className="w-2 h-2 rounded-full"
                               style={{ backgroundColor: task.projectColor || 'hsl(var(--muted-foreground))' }}
@@ -373,7 +373,7 @@ export default function Dashboard() {
                           </span>
                         )}
                         
-                        {/* Due Date */}
+                        {/* Due Date - always visible */}
                         {task.dueDate && (
                           <span className={cn(
                             "text-xs flex-shrink-0",
@@ -383,21 +383,23 @@ export default function Dashboard() {
                           </span>
                         )}
                         
-                        {/* Stage Badge */}
+                        {/* Stage Badge - hidden on mobile */}
                         {stageInfo && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex-shrink-0">
+                          <span className="hidden md:inline-block text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex-shrink-0">
                             {stageInfo.name}
                           </span>
                         )}
                         
-                        {/* Assignees */}
+                        {/* Assignees - hidden on mobile */}
                         {assigneeUsers.length > 0 && (
-                          <UserAvatarGroup 
-                            users={assigneeUsers} 
-                            max={2} 
-                            size="sm" 
-                            className="flex-shrink-0"
-                          />
+                          <div className="hidden md:block">
+                            <UserAvatarGroup 
+                              users={assigneeUsers} 
+                              max={2} 
+                              size="sm" 
+                              className="flex-shrink-0"
+                            />
+                          </div>
                         )}
                       </div>
                     </div>
@@ -415,13 +417,13 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-medium">Upcoming Events</h3>
+                <h3 className="text-sm font-medium font-serif">Upcoming Events</h3>
               </div>
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground" asChild>
+              <Button variant="ghost" size="sm" className="h-8 md:h-6 px-2 text-xs text-muted-foreground hover:text-foreground" asChild>
                 <Link to="/calendar">View</Link>
               </Button>
             </div>
-            <div className="rounded-lg border border-border/40 bg-muted/20 p-3">
+            <div className="rounded-xl border border-border/40 bg-muted/20 p-4 md:p-3">
               {eventsLoading ? (
                 <div className="space-y-2">
                   {[1, 2, 3].map((i) => (

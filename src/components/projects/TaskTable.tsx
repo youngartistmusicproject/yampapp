@@ -154,7 +154,7 @@ function SortableTableRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex flex-col px-3 py-2 border-b border-border/40 cursor-grab active:cursor-grabbing transition-colors ${
+      className={`group flex flex-col px-3 py-3.5 md:py-2 border-b border-border/40 cursor-grab active:cursor-grabbing transition-colors ${
         overdue ? 'bg-destructive/5' : 'hover:bg-muted/20'
       }`}
       onClick={() => onViewTask(task)}
@@ -163,13 +163,15 @@ function SortableTableRow({
     >
       {/* Main row */}
       <div className="flex items-center gap-3">
-        <CircularCheckbox
-          checked={isDone}
-          onCheckedChange={(checked) =>
-            onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
-          }
-          size="sm"
-        />
+        <div className="flex items-center justify-center w-11 h-11 md:w-auto md:h-auto -m-2 md:m-0">
+          <CircularCheckbox
+            checked={isDone}
+            onCheckedChange={(checked) =>
+              onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+            }
+            size="sm"
+          />
+        </div>
         
         {/* Title + indicators */}
         <div className="flex-1 min-w-0">
@@ -390,7 +392,7 @@ function SortableMobileCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-lg border p-4 cursor-grab active:cursor-grabbing transition-colors ${
+      className={`rounded-xl border p-4 cursor-grab active:cursor-grabbing transition-all active:scale-[0.98] ${
         overdue ? 'bg-destructive/5 border-destructive/20' : 'bg-card hover:bg-muted/30'
       }`}
       onClick={() => onViewTask(task)}
@@ -398,13 +400,15 @@ function SortableMobileCard({
       {...listeners}
     >
       <div className="flex items-start gap-3">
-        <CircularCheckbox
-          checked={task.status === doneStatusId}
-          onCheckedChange={(checked) =>
-            onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
-          }
-          size="sm"
-        />
+        <div className="flex items-center justify-center w-11 h-11 -m-1.5">
+          <CircularCheckbox
+            checked={task.status === doneStatusId}
+            onCheckedChange={(checked) =>
+              onTaskUpdate(task.id, { status: checked ? doneStatusId : "todo" })
+            }
+            size="sm"
+          />
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className={`font-medium ${task.status === doneStatusId ? 'line-through text-muted-foreground' : ''}`}>
