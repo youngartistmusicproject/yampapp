@@ -6,25 +6,25 @@
 
 @layer base {
   :root {
-    /* Substack Editorial - Pure white, content-first */
-    --background: 0 0% 100%;          /* Pure white */
-    --foreground: 0 0% 9%;            /* #171717 - strong black */
+    /* Todoist-inspired with Monday flair */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
     
-    --card: 0 0% 100%;                /* Pure white cards */
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 9%;
     
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
     
-    /* Coral accent - preserved */
-    --primary: 12 90% 54%;            /* #EB5C5C */
+    /* Todoist red-orange accent */
+    --primary: 12 90% 54%;
     --primary-foreground: 0 0% 100%;
     
     --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 12%;
+    --secondary-foreground: 0 0% 20%;
     
     --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;     /* Warmer gray */
+    --muted-foreground: 0 0% 45%;
     
     --accent: 0 0% 96%;
     --accent-foreground: 0 0% 9%;
@@ -32,20 +32,20 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 0 0% 88%;               /* #E0E0E0 - more visible */
-    --input: 0 0% 88%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
     --ring: 12 90% 54%;
     
     --radius: 0.5rem;
     
-    /* Editorial sidebar - white, matching content */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 40%;
+    /* Clean sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 35%;
     --sidebar-primary: 12 90% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent: 0 0% 94%;
     --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-border: 0 0% 90%;
+    --sidebar-border: 0 0% 92%;
     --sidebar-ring: 12 90% 54%;
   }
 
@@ -111,26 +111,11 @@
 
 @layer utilities {
   .shadow-card {
-    box-shadow: none;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03);
   }
   
   .shadow-elevated {
-    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.06);
-  }
-  
-  /* Mobile touch target helpers */
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
-  /* Safe area padding for notched devices */
-  .safe-area-pb {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  
-  .safe-area-pt {
-    padding-top: env(safe-area-inset-top, 0px);
+    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.08);
   }
 }
 
@@ -161,24 +146,4 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
-}
-
-/* Mobile-specific overrides */
-@media (max-width: 640px) {
-  /* Better text sizing */
-  html {
-    font-size: 16px;
-    -webkit-text-size-adjust: 100%;
-    touch-action: manipulation;
-  }
-  
-  /* Smooth momentum scrolling */
-  * {
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  /* Prevent double-tap zoom */
-  button, a, [role="button"], input, select, textarea {
-    touch-action: manipulation;
-  }
 }

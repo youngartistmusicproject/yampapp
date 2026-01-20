@@ -36,32 +36,14 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        // Base styles
-        "fixed z-50 grid w-full gap-4 border bg-background shadow-lg",
-        // Mobile: bottom sheet style with safe area
-        "max-sm:inset-x-0 max-sm:bottom-0 max-sm:top-auto max-sm:translate-x-0 max-sm:translate-y-0",
-        "max-sm:rounded-t-2xl max-sm:max-h-[85vh] max-sm:overflow-y-auto max-sm:p-5 max-sm:pb-8 max-sm:safe-area-pb",
-        "max-sm:duration-300 max-sm:data-[state=open]:animate-in max-sm:data-[state=closed]:animate-out",
-        "max-sm:data-[state=closed]:fade-out-0 max-sm:data-[state=open]:fade-in-0",
-        "max-sm:data-[state=closed]:slide-out-to-bottom max-sm:data-[state=open]:slide-in-from-bottom",
-        // Desktop: centered modal style
-        "sm:left-[50%] sm:top-[50%] sm:max-w-lg sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg sm:p-6",
-        "sm:duration-200 sm:data-[state=open]:animate-in sm:data-[state=closed]:animate-out",
-        "sm:data-[state=closed]:fade-out-0 sm:data-[state=open]:fade-in-0",
-        "sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
-        "sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%]",
-        "sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
         className,
       )}
       {...props}
     >
-      {/* Mobile drag handle */}
-      <div className="sm:hidden flex justify-center pt-2 pb-1">
-        <div className="w-12 h-1.5 rounded-full bg-muted-foreground/30" />
-      </div>
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1.5 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted active:scale-95 focus:outline-none disabled:pointer-events-none max-sm:right-3 max-sm:top-3 touch-target">
-        <X className="h-5 w-5 sm:h-4 sm:w-4" />
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+        <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>

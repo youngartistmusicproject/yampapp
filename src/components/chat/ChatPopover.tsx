@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { MessageCircle, Search, SquarePen, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -11,8 +11,19 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useChat } from "@/hooks/useChat";
-import { useOrgContacts } from "@/hooks/useOrgContacts";
 import { ChatWindow } from "./ChatWindow";
+
+// Mock contacts for new message - in a real app this would come from the database
+const MOCK_CONTACTS = [
+  { id: "1", name: "Alice Johnson", avatar: null },
+  { id: "2", name: "Bob Smith", avatar: null },
+  { id: "3", name: "Carol Williams", avatar: null },
+  { id: "4", name: "David Brown", avatar: null },
+  { id: "5", name: "Emma Davis", avatar: null },
+  { id: "6", name: "Frank Miller", avatar: null },
+  { id: "7", name: "Grace Wilson", avatar: null },
+  { id: "8", name: "Henry Taylor", avatar: null },
+];
 
 type View = "conversations" | "new-message";
 
@@ -39,8 +50,6 @@ export function ChatPopover() {
     isUserOnline,
     markMessagesAsRead,
   } = useChat();
-
-  const { contacts, isLoading: contactsLoading } = useOrgContacts();
 
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<View>("conversations");
@@ -76,13 +85,9 @@ export function ChatPopover() {
     });
   }, [conversations, normalizedSearchQuery]);
 
-  const filteredContacts = useMemo(() => {
-    if (!contactSearchQuery.trim()) return contacts;
-    const query = contactSearchQuery.toLowerCase();
-    return contacts.filter((contact) =>
-      contact.displayName.toLowerCase().includes(query)
-    );
-  }, [contacts, contactSearchQuery]);
+  const filteredContacts = MOCK_CONTACTS.filter((contact) =>
+    contact.name.toLowerCase().includes(contactSearchQuery.toLowerCase())
+  );
 
   const unreadCount = conversations.reduce((acc, conv) => acc + conv.unread, 0);
 
@@ -125,17 +130,17 @@ export function ChatPopover() {
     setView("conversations");
   };
 
-  const handleSelectContact = async (contact: { id: string; displayName: string }) => {
-    // Check if conversation already exists with this person
-    const existingConv = conversations.find((c) => c.name === contact.displayName);
+  const handleSelectContact = async (contact: { id: string; name: string }) => {
+    // Check if conversation already exists
+    const existingConv = conversations.find((c) => c.name === contact.name);
     if (existingConv) {
       handleSelectConversation(existingConv.id);
     } else {
-      const newConv = await createConversation(contact.displayName);
+      const newConv = await createConversation(contact.name);
       if (newConv) {
         const newChat: OpenChat = {
           id: newConv.id,
-          name: contact.displayName,
+          name: contact.name,
           minimized: false,
         };
         setOpenChats((prev) => {
@@ -170,13 +175,6 @@ export function ChatPopover() {
     setSelectedConversationId(chatId);
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2);
-  };
 
   return (
     <>
@@ -273,7 +271,11 @@ export function ChatPopover() {
                           <div className="relative">
                             <Avatar className="w-12 h-12">
                               <AvatarFallback className="bg-primary/10 text-primary">
-                                {getInitials(conv.name)}
+                                {conv.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .slice(0, 2)}
                               </AvatarFallback>
                             </Avatar>
                             {isUserOnline(conv.name) && (
@@ -325,23 +327,10 @@ export function ChatPopover() {
                 {/* Contacts List */}
                 <ScrollArea className="flex-1">
                   <div className="py-1">
-                    {contactsLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : filteredContacts.length === 0 ? (
-                      <div className="text-center py-8 px-4">
-                        <p className="text-sm text-muted-foreground">
-                          {contacts.length === 0
-                            ? "No other members in your organization yet."
-                            : "No contacts found"}
-                        </p>
-                        {contacts.length === 0 && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Invite team members from Settings
-                          </p>
-                        )}
-                      </div>
+                    {filteredContacts.length === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground py-8">
+                        No contacts found
+                      </p>
                     ) : (
                       filteredContacts.map((contact) => (
                         <button
@@ -350,14 +339,15 @@ export function ChatPopover() {
                           onClick={() => handleSelectContact(contact)}
                         >
                           <Avatar className="w-10 h-10">
-                            {contact.avatarUrl && (
-                              <AvatarImage src={contact.avatarUrl} alt={contact.displayName} />
-                            )}
                             <AvatarFallback className="bg-primary/10 text-primary">
-                              {getInitials(contact.displayName)}
+                              {contact.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .slice(0, 2)}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="font-medium text-sm">{contact.displayName}</span>
+                          <span className="font-medium text-sm">{contact.name}</span>
                         </button>
                       ))
                     )}
@@ -382,7 +372,11 @@ export function ChatPopover() {
             >
               <Avatar className="w-12 h-12 border-2 border-background shadow-lg hover:scale-105 transition-transform cursor-pointer">
                 <AvatarFallback className="bg-primary text-primary-foreground">
-                  {getInitials(chat.name)}
+                  {chat.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)}
                 </AvatarFallback>
               </Avatar>
             </button>

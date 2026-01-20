@@ -79,11 +79,8 @@ export function useChat() {
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const { toast } = useToast();
-  const { currentOrganization, profile } = useAuth();
+  const { currentOrganization } = useAuth();
   const orgId = currentOrganization?.id;
-  
-  // Get the current user's display name for chat operations
-  const currentUserName = profile?.first_name || "You";
 
   // Fetch all conversations with participants and last message
   const fetchConversations = async () => {
@@ -240,7 +237,7 @@ export function useChat() {
       emoji,
       count: data.count,
       users: data.users,
-      hasReacted: data.users.includes(currentUserName),
+      hasReacted: data.users.includes("You"),
     }));
   };
 
@@ -250,7 +247,7 @@ export function useChat() {
       // Check if user already reacted with this emoji
       const existingReactions = reactions.get(messageId) || [];
       const existingReaction = existingReactions.find(
-        (r) => r.emoji === emoji && r.user_name === currentUserName
+        (r) => r.emoji === emoji && r.user_name === "You"
       );
 
       if (existingReaction) {
@@ -260,10 +257,10 @@ export function useChat() {
           .delete()
           .eq("id", existingReaction.id);
       } else {
-        // Add reaction - the trigger will set the correct user_name
+        // Add reaction
         await supabase.from("message_reactions").insert({
           message_id: messageId,
-          user_name: currentUserName,
+          user_name: "You",
           emoji,
         });
       }
@@ -331,10 +328,9 @@ export function useChat() {
         attachments = await uploadFiles(files);
       }
 
-      // The trigger will override sender_name with the authenticated user's first_name
       const { error } = await supabase.from("messages").insert({
         conversation_id: selectedConversationId,
-        sender_name: currentUserName,
+        sender_name: "You",
         content: content.trim(),
         is_own: true,
         attachments: JSON.parse(JSON.stringify(attachments)),
@@ -363,7 +359,7 @@ export function useChat() {
     return conversations.find((conv) => {
       // For direct conversations, check if the participant is in the conversation
       if (conv.type === "direct") {
-        return conv.participants.includes(participantName) && conv.participants.includes(currentUserName);
+        return conv.participants.includes(participantName) && conv.participants.includes("You");
       }
       return false;
     });
@@ -398,9 +394,9 @@ export function useChat() {
 
       if (error) throw error;
 
-      // Add current user and the other participant
+      // Add current user as participant
       await supabase.from("conversation_participants").insert([
-        { conversation_id: data.id, user_name: currentUserName },
+        { conversation_id: data.id, user_name: "You" },
         { conversation_id: data.id, user_name: name },
       ]);
 
@@ -554,7 +550,7 @@ export function useChat() {
           if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const indicator = payload.new as any;
             // Only show typing for others, not yourself
-            if (indicator.user_name !== currentUserName) {
+            if (indicator.user_name !== "You") {
               setTypingUsers((prev) => {
                 const exists = prev.some(
                   (t) =>
@@ -581,7 +577,7 @@ export function useChat() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedConversationId, currentUserName]);
+  }, [selectedConversationId]);
 
   // Broadcast typing status
   const setTyping = async (conversationId: string, isTyping: boolean) => {
@@ -589,7 +585,7 @@ export function useChat() {
       await supabase
         .from("typing_indicators")
         .upsert(
-          { conversation_id: conversationId, user_name: currentUserName, updated_at: new Date().toISOString() },
+          { conversation_id: conversationId, user_name: "You", updated_at: new Date().toISOString() },
           { onConflict: "conversation_id,user_name" }
         );
     } else {
@@ -597,7 +593,7 @@ export function useChat() {
         .from("typing_indicators")
         .delete()
         .eq("conversation_id", conversationId)
-        .eq("user_name", currentUserName);
+        .eq("user_name", "You");
     }
   };
 
@@ -623,15 +619,13 @@ export function useChat() {
     await supabase
       .from("user_presence")
       .upsert(
-        { user_name: currentUserName, last_seen: new Date().toISOString(), is_online: true },
+        { user_name: "You", last_seen: new Date().toISOString(), is_online: true },
         { onConflict: "user_name" }
       );
   };
 
   // Set up presence tracking
   useEffect(() => {
-    if (!currentUserName || currentUserName === "You") return;
-    
     // Mark self as online
     updatePresence();
     fetchOnlineUsers();
@@ -662,7 +656,7 @@ export function useChat() {
       navigator.sendBeacon && supabase
         .from("user_presence")
         .update({ is_online: false })
-        .eq("user_name", currentUserName);
+        .eq("user_name", "You");
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -675,9 +669,9 @@ export function useChat() {
       supabase
         .from("user_presence")
         .update({ is_online: false })
-        .eq("user_name", currentUserName);
+        .eq("user_name", "You");
     };
-  }, [currentUserName]);
+  }, []);
 
   // Check if a user is online
   const isUserOnline = (userName: string) => {
@@ -691,7 +685,7 @@ export function useChat() {
       (msg) =>
         msg.conversation_id === conversationId &&
         !msg.is_own &&
-        !(msg.readBy || []).some((r) => r.user_name === currentUserName)
+        !(msg.readBy || []).some((r) => r.user_name === "You")
     );
 
     if (unreadMessages.length === 0) return;
@@ -699,7 +693,7 @@ export function useChat() {
     // Insert read receipts for unread messages
     const readsToInsert = unreadMessages.map((msg) => ({
       message_id: msg.id,
-      user_name: currentUserName,
+      user_name: "You",
     }));
 
     await supabase.from("message_reads").upsert(readsToInsert, {

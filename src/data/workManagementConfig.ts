@@ -1,3 +1,5 @@
+import { User } from "@/types";
+
 // Area tags - admin-configurable labels for categorizing work
 export const tagLibrary = [
   { id: "operations", name: "Operations", color: "#3b82f6" },
@@ -43,6 +45,45 @@ export const importanceLibrary = [
 ];
 
 export type ImportanceItem = (typeof importanceLibrary)[number];
+
+// Mock team members with avatars
+export const teamMembers: User[] = [
+  { 
+    id: "u1", 
+    name: "Sarah Johnson", 
+    email: "sarah@company.com", 
+    role: "super-admin",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face"
+  },
+  { 
+    id: "u2", 
+    name: "Mike Chen", 
+    email: "mike@company.com", 
+    role: "admin",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
+  },
+  { 
+    id: "u3", 
+    name: "Emily Davis", 
+    email: "emily@company.com", 
+    role: "faculty",
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face"
+  },
+  { 
+    id: "u4", 
+    name: "Alex Rivera", 
+    email: "alex@company.com", 
+    role: "staff"
+    // No avatar - will show initials
+  },
+  { 
+    id: "u5", 
+    name: "Jordan Smith", 
+    email: "jordan@company.com", 
+    role: "faculty",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
+  },
+];
 
 export function getTagById(id: string): TagItem | undefined {
   return tagLibrary.find(tag => tag.id === id);

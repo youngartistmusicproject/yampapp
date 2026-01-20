@@ -184,15 +184,12 @@ export function TaskFilterPanel({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "flex items-center gap-1.5 h-10 sm:h-8 px-3 text-sm sm:text-[13px] rounded-lg sm:rounded-md border border-border/50 bg-transparent hover:bg-muted/50 transition-all active:scale-[0.98]",
+            "flex items-center gap-1.5 h-8 px-3 text-[13px] rounded-md border border-border/50 bg-transparent hover:bg-muted/50 transition-colors",
             activeFilterCount > 0 && "border-primary/50"
           )}
         >
-          <Filter className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-muted-foreground" />
-          <span className={cn(
-            activeFilterCount > 0 ? "text-foreground" : "text-muted-foreground",
-            "hidden sm:inline"
-          )}>
+          <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className={activeFilterCount > 0 ? "text-foreground" : "text-muted-foreground"}>
             Filter
           </span>
           {activeFilterCount > 0 && (
@@ -204,7 +201,7 @@ export function TaskFilterPanel({
                 {activeFilterCount}
               </Badge>
               <X
-                className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-muted-foreground hover:text-foreground"
+                className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleClearFilters();
@@ -213,32 +210,32 @@ export function TaskFilterPanel({
             </>
           )}
           {activeFilterCount === 0 && (
-            <ChevronDown className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-muted-foreground hidden sm:block" />
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
           )}
         </button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[calc(100vw-2rem)] sm:w-80 p-0 bg-popover z-[70] max-h-[70vh] sm:max-h-[min(520px,var(--radix-popper-available-height))] overflow-hidden"
+        className="w-80 p-0 bg-popover z-[70] max-h-[min(520px,var(--radix-popper-available-height))] overflow-hidden"
         align="end"
         sideOffset={8}
         collisionPadding={16}
       >
-        <div className="flex items-center justify-between p-4 sm:p-3 border-b">
-          <h4 className="font-medium text-base sm:text-sm">Filters</h4>
+        <div className="flex items-center justify-between p-3 border-b">
+          <h4 className="font-medium text-sm">Filters</h4>
           {activeFilterCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 sm:h-7 text-sm sm:text-xs gap-1"
+              className="h-7 text-xs gap-1"
               onClick={handleClearFilters}
             >
-              <X className="w-4 h-4 sm:w-3 sm:h-3" />
+              <X className="w-3 h-3" />
               Clear all
             </Button>
           )}
         </div>
         
-        <ScrollArea className="h-[calc(70vh-60px)] sm:h-[calc(min(520px,var(--radix-popper-available-height))-49px)]">
+        <ScrollArea className="h-[calc(min(520px,var(--radix-popper-available-height))-49px)]">
           <div className="p-3 space-y-4">
             {/* Areas Filter */}
             <div className="space-y-2">

@@ -171,12 +171,12 @@ function SortableTaskCard({
       )}
 
       <div
-        className={`group rounded-xl border bg-card transition-all active:scale-[0.98] ${
+        className={`group rounded-lg border bg-card transition-colors ${
           overdue ? "bg-destructive/5 border-destructive/30" : "hover:bg-muted/20 hover:border-border"
         }`}
         onClick={() => onViewTask(task)}
       >
-        <div className="p-3 md:p-2.5">
+        <div className="p-2.5">
           {/* Row 1: Title + Indicators */}
           <div className="flex items-start gap-1.5 min-w-0">
             <p className="text-sm font-medium leading-snug line-clamp-2 flex-1">

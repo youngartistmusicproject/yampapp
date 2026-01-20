@@ -46,12 +46,13 @@ import { toast } from "sonner";
 import { triggerConfetti, triggerDayCompleteConfetti, triggerOverdueClearedConfetti } from "@/lib/confetti";
 import { isToday as isDateToday, isBefore, startOfDay } from "date-fns";
 
-import { statusLibrary as defaultStatuses, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
+import { teamMembers, statusLibrary as defaultStatuses, effortLibrary, importanceLibrary } from "@/data/workManagementConfig";
 import { useTasks, useProjects, useCreateTask, useUpdateTask, useDeleteTask, useDuplicateTask, useCreateProject, useUpdateProject, useDeleteProject, useReorderTasks, useCompleteRecurringTask, useReorderProjects } from "@/hooks/useWorkManagement";
 import { useAssigneeFrequency } from "@/hooks/useAssigneeFrequency";
 import { useAreas } from "@/hooks/useAreas";
-import { useOrgMembers } from "@/hooks/useOrgMembers";
-import { useAuth } from "@/contexts/AuthContext";
+
+// Current user for demo purposes
+const currentUser = teamMembers[0];
 
 // Types for view modes and quick filters
 type ViewMode = 'active' | 'completed';
@@ -68,21 +69,6 @@ function formatCompletedTime(date: Date): string {
 }
 
 export default function Projects() {
-  const { profile } = useAuth();
-  const { members: orgMembers } = useOrgMembers();
-  
-  // Current user from auth context
-  const currentUser = profile ? {
-    id: profile.id,
-    name: profile.last_name ? `${profile.first_name} ${profile.last_name}` : profile.first_name,
-    email: profile.email || '',
-    role: 'staff' as const,
-    avatar: profile.avatar_url || undefined,
-  } : orgMembers[0];
-  
-  // Use org members as the team members list
-  const teamMembers = orgMembers;
-  
   const { data: dbTasks = [], isLoading: tasksLoading } = useTasks();
   const { data: dbProjects = [], isLoading: projectsLoading } = useProjects();
   
@@ -848,23 +834,23 @@ export default function Projects() {
   const isLoading = tasksLoading || projectsLoading;
 
   return (
-    <div className="space-y-4 sm:space-y-5 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       {/* Page Header */}
       <div className="space-y-1">
-        <h1 className="text-xl sm:text-2xl font-semibold text-foreground font-serif">
+        <h1 className="text-2xl font-semibold text-foreground">
           Work Management
         </h1>
-        <p className="text-sm text-muted-foreground hidden sm:block">
+        <p className="text-sm text-muted-foreground">
           Manage your tasks, projects, and workflows
         </p>
       </div>
 
       {/* More Prominent Search Bar */}
-      <div className="relative w-full md:max-w-xl">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 sm:w-4 sm:h-4 text-muted-foreground" />
+      <div className="relative max-w-xl">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Search tasks..."
-          className="pl-11 sm:pl-10 text-base sm:text-sm bg-muted/30 border-border/60"
+          className="pl-10 h-9 text-sm bg-muted/30 border-border/60"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -872,9 +858,9 @@ export default function Projects() {
           <button
             type="button"
             onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
-            <X className="h-5 w-5 sm:h-4 sm:w-4" />
+            <X className="h-4 w-4" />
           </button>
         )}
       </div>
@@ -889,7 +875,7 @@ export default function Projects() {
             <Button
               variant={viewMode === 'completed' ? 'default' : 'outline'}
               size="sm"
-              className="h-10 md:h-8 gap-1.5 px-3 shrink-0"
+              className="h-8 gap-1.5 px-3 shrink-0"
               onClick={() => {
                 const newMode = viewMode === 'active' ? 'completed' : 'active';
                 setViewMode(newMode);
@@ -909,13 +895,13 @@ export default function Projects() {
             <div className="h-4 w-px bg-border hidden sm:block shrink-0" />
 
             {/* Quick Filters - scrollable on mobile, wrap on larger screens */}
-            <div className="flex items-center gap-1.5 md:gap-1 overflow-x-auto scrollbar-hide sm:flex-wrap min-w-0 flex-1 -mx-1 px-1">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide sm:flex-wrap min-w-0 flex-1">
               {viewMode === 'active' ? (
                 <>
                   <button
                     onClick={() => setActiveQuickFilter('all')}
                     className={cn(
-                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors whitespace-nowrap",
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors",
                       activeQuickFilter === 'all'
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -926,7 +912,7 @@ export default function Projects() {
                   <button
                     onClick={() => setActiveQuickFilter('overdue')}
                     className={cn(
-                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors flex items-center gap-1 whitespace-nowrap",
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
                       activeQuickFilter === 'overdue'
                         ? "bg-destructive text-destructive-foreground"
                         : activeQuickFilterCounts.overdue > 0
@@ -942,7 +928,7 @@ export default function Projects() {
                   <button
                     onClick={() => setActiveQuickFilter('today')}
                     className={cn(
-                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors flex items-center gap-1 whitespace-nowrap",
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
                       activeQuickFilter === 'today'
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -956,7 +942,7 @@ export default function Projects() {
                   <button
                     onClick={() => setActiveQuickFilter('tomorrow')}
                     className={cn(
-                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors flex items-center gap-1 whitespace-nowrap",
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
                       activeQuickFilter === 'tomorrow'
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -970,7 +956,7 @@ export default function Projects() {
                   <button
                     onClick={() => setActiveQuickFilter('upcoming')}
                     className={cn(
-                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors flex items-center gap-1 whitespace-nowrap",
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
                       activeQuickFilter === 'upcoming'
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -984,7 +970,7 @@ export default function Projects() {
                   <button
                     onClick={() => setActiveQuickFilter('later')}
                     className={cn(
-                      "px-3 py-2 md:px-2.5 md:py-1 text-sm md:text-[13px] font-medium rounded-full transition-colors flex items-center gap-1 whitespace-nowrap",
+                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
                       activeQuickFilter === 'later'
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -1088,33 +1074,33 @@ export default function Projects() {
           {/* Right: Action Buttons */}
           <div className="flex items-center gap-2 shrink-0">
             <Button
-              size="default"
-              className="h-11 sm:h-8 gap-1.5 px-4 sm:px-3"
+              size="sm"
+              className="h-8 gap-1.5 px-3"
               onClick={() => setTaskDialogOpen(true)}
             >
-              <Plus className="w-5 h-5 sm:w-3.5 sm:h-3.5" />
+              <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Add Task</span>
             </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="default" className="h-11 sm:h-8 gap-1.5 px-4 sm:px-3">
-                  <Settings2 className="w-5 h-5 sm:w-3.5 sm:h-3.5" />
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3">
+                  <Settings2 className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Manage</span>
-                  <ChevronDown className="w-4 h-4 sm:w-3 sm:h-3 hidden sm:block" />
+                  <ChevronDown className="w-3 h-3 hidden sm:block" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 sm:w-40">
-                <DropdownMenuItem onClick={() => setProjectManagementOpen(true)} className="gap-2 py-3 sm:py-2 text-base sm:text-sm">
-                  <Folders className="h-5 w-5 sm:h-4 sm:w-4" />
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={() => setProjectManagementOpen(true)} className="gap-2">
+                  <Folders className="h-4 w-4" />
                   Projects
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTagManagerOpen(true)} className="gap-2 py-3 sm:py-2 text-base sm:text-sm">
-                  <Tags className="h-5 w-5 sm:h-4 sm:w-4" />
+                <DropdownMenuItem onClick={() => setTagManagerOpen(true)} className="gap-2">
+                  <Tags className="h-4 w-4" />
                   Areas
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusManagerOpen(true)} className="gap-2 py-3 sm:py-2 text-base sm:text-sm">
-                  <Layers className="h-5 w-5 sm:h-4 sm:w-4" />
+                <DropdownMenuItem onClick={() => setStatusManagerOpen(true)} className="gap-2">
+                  <Layers className="h-4 w-4" />
                   Stages
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -1127,18 +1113,18 @@ export default function Projects() {
       <Tabs defaultValue="table" className="space-y-4" onValueChange={(v) => setActiveView(v as 'table' | 'kanban')}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <TabsList className="h-10 sm:h-8 bg-transparent p-0 gap-1">
-              <TabsTrigger value="table" className="h-9 sm:h-7 px-3 sm:px-2.5 text-sm sm:text-[13px] data-[state=active]:bg-muted rounded-md">
-                <List className="w-4 h-4 sm:w-3.5 sm:h-3.5 mr-1.5" />
+            <TabsList className="h-8 bg-transparent p-0 gap-1">
+              <TabsTrigger value="table" className="h-7 px-2.5 text-[13px] data-[state=active]:bg-muted rounded-md">
+                <List className="w-3.5 h-3.5 mr-1.5" />
                 List
               </TabsTrigger>
-              <TabsTrigger value="kanban" className="h-9 sm:h-7 px-3 sm:px-2.5 text-sm sm:text-[13px] data-[state=active]:bg-muted rounded-md">
-                <LayoutGrid className="w-4 h-4 sm:w-3.5 sm:h-3.5 mr-1.5" />
+              <TabsTrigger value="kanban" className="h-7 px-2.5 text-[13px] data-[state=active]:bg-muted rounded-md">
+                <LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
                 Board
               </TabsTrigger>
             </TabsList>
             
-            <span className="text-sm sm:text-[13px] text-muted-foreground tabular-nums ml-2 hidden sm:inline">
+            <span className="text-[13px] text-muted-foreground tabular-nums ml-2">
               {displayTasks.length} {displayTasks.length === 1 ? 'task' : 'tasks'}
             </span>
           </div>

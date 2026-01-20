@@ -21,7 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <AppHeader onMobileMenuToggle={() => setMobileMenuOpen(true)} />
         
         {/* Main content - add bottom padding for mobile nav */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-8 pb-24 md:pb-8">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 pb-20 md:pb-6">
           {children}
         </main>
       </div>

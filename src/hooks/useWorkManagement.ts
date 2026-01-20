@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Task, Project, User, RecurrenceSettings } from '@/types';
+import { teamMembers } from '@/data/workManagementConfig';
 import { format } from 'date-fns';
 import { recurrenceToDb, dbToRecurrence, getNextRecurrenceDate } from '@/lib/recurrence';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,13 +17,16 @@ function formatDateForDB(date: Date): string {
   return format(date, 'yyyy-MM-dd');
 }
 
-// Helper to map user_name to User object (creates a basic user for display)
+// Helper to map user_name to User object
 function getUserByName(name: string): User {
-  // Create a basic user object for the name
+  const found = teamMembers.find(m => m.name === name || m.name.startsWith(name.split(' ')[0]));
+  if (found) return found;
+  
+  // Create a basic user object for unknown names
   return {
     id: name.toLowerCase().replace(/\s+/g, '-'),
     name: name,
-    email: '', // Not exposed for privacy
+    email: `${name.toLowerCase().replace(/\s+/g, '.')}@company.com`,
     role: 'staff' as const,
   };
 }
