@@ -34,7 +34,7 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
   const initials = profile ? getInitials(profile.first_name, profile.last_name) : "?";
 
   return (
-    <header className="flex items-center justify-between h-14 px-4 sm:px-5 border-b border-border/40 bg-background gap-3">
+    <header className="flex items-center justify-between h-14 px-4 sm:px-5 border-b border-border bg-background gap-3">
       {/* Mobile menu trigger */}
       <Button
         variant="ghost"
