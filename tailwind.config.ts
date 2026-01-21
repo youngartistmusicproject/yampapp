@@ -69,7 +69,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
+        heading: ['Outfit', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {
