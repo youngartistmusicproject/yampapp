@@ -834,23 +834,23 @@ export default function Projects() {
   const isLoading = tasksLoading || projectsLoading;
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-foreground">
+    <div className="space-y-6 animate-fade-in">
+      {/* Page Header - Youthful style */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Work Management
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your tasks, projects, and workflows
+        <p className="text-base text-muted-foreground">
+          Manage your tasks, projects, and workflows ✨
         </p>
       </div>
 
-      {/* More Prominent Search Bar */}
+      {/* More Prominent Search Bar - Youthful style */}
       <div className="relative max-w-xl">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <Input
           placeholder="Search tasks..."
-          className="pl-10 h-9 text-sm bg-muted/30 border-border/60"
+          className="pl-12 h-11 text-base bg-card border-2 border-border/60 rounded-xl shadow-card focus:border-primary/40 focus:shadow-elevated transition-all"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -858,24 +858,27 @@ export default function Projects() {
           <button
             type="button"
             onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
         )}
       </div>
 
-      {/* Unified Filter Row */}
+      {/* Unified Filter Row - Modern style */}
       <div className="flex flex-col gap-3">
         {/* View Toggle + Quick Filters Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-border/50 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b-2 border-border/30 pb-4">
           {/* Left: View Toggle + Quick Filters */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             {/* View Mode Toggle */}
             <Button
               variant={viewMode === 'completed' ? 'default' : 'outline'}
               size="sm"
-              className="h-8 gap-1.5 px-3 shrink-0"
+              className={cn(
+                "h-9 gap-2 px-4 shrink-0 rounded-full font-semibold transition-all",
+                viewMode === 'completed' ? "shadow-card" : "border-2"
+              )}
               onClick={() => {
                 const newMode = viewMode === 'active' ? 'completed' : 'active';
                 setViewMode(newMode);
@@ -892,19 +895,19 @@ export default function Projects() {
               </span>
             </Button>
 
-            <div className="h-4 w-px bg-border hidden sm:block shrink-0" />
+            <div className="h-5 w-px bg-border/50 hidden sm:block shrink-0" />
 
             {/* Quick Filters - scrollable on mobile, wrap on larger screens */}
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide sm:flex-wrap min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide sm:flex-wrap min-w-0 flex-1">
               {viewMode === 'active' ? (
                 <>
                   <button
                     onClick={() => setActiveQuickFilter('all')}
                     className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors",
+                      "px-3 py-1.5 text-sm font-semibold rounded-full transition-all whitespace-nowrap",
                       activeQuickFilter === 'all'
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        ? "bg-primary text-primary-foreground shadow-card"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent hover:border-border"
                     )}
                   >
                     All
@@ -912,31 +915,31 @@ export default function Projects() {
                   <button
                     onClick={() => setActiveQuickFilter('overdue')}
                     className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      "px-3 py-1.5 text-sm font-semibold rounded-full transition-all flex items-center gap-1.5 whitespace-nowrap",
                       activeQuickFilter === 'overdue'
-                        ? "bg-destructive text-destructive-foreground"
+                        ? "bg-destructive text-destructive-foreground shadow-card"
                         : activeQuickFilterCounts.overdue > 0
-                          ? "text-destructive/80 hover:text-destructive hover:bg-destructive/10"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                          ? "text-destructive hover:bg-destructive/10 border border-destructive/30"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent hover:border-border"
                     )}
                   >
                     Overdue
                     {activeQuickFilterCounts.overdue > 0 && (
-                      <span className="text-xs tabular-nums">{activeQuickFilterCounts.overdue}</span>
+                      <span className="text-xs tabular-nums bg-destructive/20 rounded-full px-1.5">{activeQuickFilterCounts.overdue}</span>
                     )}
                   </button>
                   <button
                     onClick={() => setActiveQuickFilter('today')}
                     className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
+                      "px-3 py-1.5 text-sm font-semibold rounded-full transition-all flex items-center gap-1.5 whitespace-nowrap",
                       activeQuickFilter === 'today'
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        ? "bg-primary text-primary-foreground shadow-card"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent hover:border-border"
                     )}
                   >
                     Today
                     {activeQuickFilterCounts.today > 0 && (
-                      <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.today}</span>
+                      <span className="text-xs tabular-nums opacity-80">{activeQuickFilterCounts.today}</span>
                     )}
                   </button>
                   <button

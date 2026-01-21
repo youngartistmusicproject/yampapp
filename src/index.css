@@ -7,85 +7,85 @@
 
 @layer base {
   :root {
-    /* Todoist-inspired with Monday flair */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
+    /* Youth-oriented fresh palette */
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
     
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
+    --card-foreground: 222 47% 11%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover-foreground: 222 47% 11%;
     
-    /* Todoist red-orange accent */
+    /* Vibrant coral accent */
     --primary: 12 90% 54%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 20%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 20%;
     
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
     
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
     --ring: 12 90% 54%;
     
-    --radius: 0.5rem;
+    --radius: 0.75rem;
     
-    /* Clean sidebar */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 35%;
+    /* Fresh sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 16% 47%;
     --sidebar-primary: 12 90% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 94%;
-    --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-border: 0 0% 92%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
     --sidebar-ring: 12 90% 54%;
   }
 
   .dark {
-    --background: 0 0% 7%;
-    --foreground: 0 0% 95%;
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
     
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
     
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
     
     --primary: 12 90% 54%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
     
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
     
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 95%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
     
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
     --ring: 12 90% 54%;
     
-    --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 0 0% 70%;
+    --sidebar-background: 222 47% 9%;
+    --sidebar-foreground: 215 20% 65%;
     --sidebar-primary: 12 90% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 14%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 16%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 20%;
     --sidebar-ring: 12 90% 54%;
   }
 }
@@ -115,11 +115,19 @@
 
 @layer utilities {
   .shadow-card {
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+    box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
   }
   
   .shadow-elevated {
-    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.08);
+    box-shadow: 0 8px 24px -4px rgb(0 0 0 / 0.1), 0 4px 8px -2px rgb(0 0 0 / 0.06);
+  }
+  
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(12 90% 54%) 0%, hsl(25 95% 53%) 100%);
+  }
+  
+  .gradient-accent {
+    background: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(280 85% 60%) 100%);
   }
 }
 

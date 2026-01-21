@@ -171,8 +171,8 @@ function SortableTaskCard({
       )}
 
       <div
-        className={`group rounded-lg border bg-card transition-colors ${
-          overdue ? "bg-destructive/5 border-destructive/30" : "hover:bg-muted/20 hover:border-border"
+        className={`group rounded-xl border-2 bg-card shadow-card transition-all duration-200 ${
+          overdue ? "bg-destructive/5 border-destructive/30" : "hover:bg-muted/30 hover:border-primary/20 hover:shadow-elevated hover:-translate-y-0.5"
         }`}
         onClick={() => onViewTask(task)}
       >

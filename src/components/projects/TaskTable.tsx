@@ -154,8 +154,8 @@ function SortableTableRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex flex-col px-3 py-2 border-b border-border/40 cursor-grab active:cursor-grabbing transition-colors ${
-        overdue ? 'bg-destructive/5' : 'hover:bg-muted/20'
+      className={`group flex flex-col px-4 py-3 border-b border-border/40 cursor-grab active:cursor-grabbing transition-all duration-200 rounded-lg mx-1 my-0.5 ${
+        overdue ? 'bg-destructive/5' : 'hover:bg-muted/40 hover:shadow-card'
       }`}
       onClick={() => onViewTask(task)}
       {...attributes}
@@ -390,8 +390,8 @@ function SortableMobileCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-lg border p-4 cursor-grab active:cursor-grabbing transition-colors ${
-        overdue ? 'bg-destructive/5 border-destructive/20' : 'bg-card hover:bg-muted/30'
+      className={`rounded-xl border-2 p-4 cursor-grab active:cursor-grabbing transition-all duration-200 ${
+        overdue ? 'bg-destructive/5 border-destructive/20' : 'bg-card hover:bg-muted/30 hover:border-primary/20 hover:shadow-card'
       }`}
       onClick={() => onViewTask(task)}
       {...attributes}
