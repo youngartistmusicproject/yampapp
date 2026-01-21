@@ -835,302 +835,310 @@ export default function Projects() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Page Header - Youthful style */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Work Management
         </h1>
-        <p className="text-base text-muted-foreground">
-          Manage your tasks, projects, and workflows ✨
+        <p className="text-sm text-muted-foreground">
+          Manage your tasks and projects
         </p>
       </div>
 
-      {/* More Prominent Search Bar - Youthful style */}
-      <div className="relative max-w-xl">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <Input
-          placeholder="Search tasks..."
-          className="pl-12 h-11 text-base bg-card border-2 border-border/60 rounded-xl shadow-card focus:border-primary/40 focus:shadow-elevated transition-all"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery("")}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
-      </div>
-
-      {/* Unified Filter Row - Modern style */}
-      <div className="flex flex-col gap-3">
-        {/* View Toggle + Quick Filters Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b-2 border-border/30 pb-4">
-          {/* Left: View Toggle + Quick Filters */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            {/* View Mode Toggle */}
+      {/* Row 1: View Toggle + Quick Filters + Action Buttons */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        {/* Left: View Toggle + Quick Filters */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {/* Active/Completed Toggle */}
+          <div className="flex items-center gap-1 shrink-0">
             <Button
-              variant={viewMode === 'completed' ? 'default' : 'outline'}
+              variant={viewMode === 'active' ? 'default' : 'ghost'}
               size="sm"
               className={cn(
-                "h-9 gap-2 px-4 shrink-0 rounded-full font-semibold transition-all",
-                viewMode === 'completed' ? "shadow-card" : "border-2"
+                "h-8 gap-1.5 px-3 rounded-full font-medium text-[13px]",
+                viewMode === 'active' && "shadow-sm"
               )}
               onClick={() => {
-                const newMode = viewMode === 'active' ? 'completed' : 'active';
-                setViewMode(newMode);
-                if (newMode === 'active') setActiveQuickFilter('all');
-                else setCompletedQuickFilter('all');
+                setViewMode('active');
+                setActiveQuickFilter('all');
               }}
             >
-              <CheckCircle2 className={cn(
-                "w-4 h-4",
-                viewMode === 'completed' ? "fill-current" : ""
-              )} />
-              <span className="hidden sm:inline">
-                {viewMode === 'completed' ? 'Completed' : 'Active'}
-              </span>
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Active
             </Button>
-
-            <div className="h-5 w-px bg-border/50 hidden sm:block shrink-0" />
-
-            {/* Quick Filters - scrollable on mobile, wrap on larger screens */}
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide sm:flex-wrap min-w-0 flex-1">
-              {viewMode === 'active' ? (
-                <>
-                  <button
-                    onClick={() => setActiveQuickFilter('all')}
-                    className={cn(
-                      "px-3 py-1.5 text-sm font-semibold rounded-full transition-all whitespace-nowrap",
-                      activeQuickFilter === 'all'
-                        ? "bg-primary text-primary-foreground shadow-card"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent hover:border-border"
-                    )}
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={() => setActiveQuickFilter('overdue')}
-                    className={cn(
-                      "px-3 py-1.5 text-sm font-semibold rounded-full transition-all flex items-center gap-1.5 whitespace-nowrap",
-                      activeQuickFilter === 'overdue'
-                        ? "bg-destructive text-destructive-foreground shadow-card"
-                        : activeQuickFilterCounts.overdue > 0
-                          ? "text-destructive hover:bg-destructive/10 border border-destructive/30"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent hover:border-border"
-                    )}
-                  >
-                    Overdue
-                    {activeQuickFilterCounts.overdue > 0 && (
-                      <span className="text-xs tabular-nums bg-destructive/20 rounded-full px-1.5">{activeQuickFilterCounts.overdue}</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveQuickFilter('today')}
-                    className={cn(
-                      "px-3 py-1.5 text-sm font-semibold rounded-full transition-all flex items-center gap-1.5 whitespace-nowrap",
-                      activeQuickFilter === 'today'
-                        ? "bg-primary text-primary-foreground shadow-card"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent hover:border-border"
-                    )}
-                  >
-                    Today
-                    {activeQuickFilterCounts.today > 0 && (
-                      <span className="text-xs tabular-nums opacity-80">{activeQuickFilterCounts.today}</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveQuickFilter('tomorrow')}
-                    className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
-                      activeQuickFilter === 'tomorrow'
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                    )}
-                  >
-                    Tomorrow
-                    {activeQuickFilterCounts.tomorrow > 0 && (
-                      <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.tomorrow}</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveQuickFilter('upcoming')}
-                    className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
-                      activeQuickFilter === 'upcoming'
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                    )}
-                  >
-                    Next 7 Days
-                    {activeQuickFilterCounts.upcoming > 0 && (
-                      <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.upcoming}</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveQuickFilter('later')}
-                    className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
-                      activeQuickFilter === 'later'
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                    )}
-                  >
-                    Later
-                    {activeQuickFilterCounts.later > 0 && (
-                      <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.later}</span>
-                    )}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setCompletedQuickFilter('all')}
-                    className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors",
-                      completedQuickFilter === 'all'
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                    )}
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={() => setCompletedQuickFilter('today')}
-                    className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
-                      completedQuickFilter === 'today'
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                    )}
-                  >
-                    Today
-                    {completedQuickFilterCounts.today > 0 && (
-                      <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.today}</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setCompletedQuickFilter('yesterday')}
-                    className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
-                      completedQuickFilter === 'yesterday'
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                    )}
-                  >
-                    Yesterday
-                    {completedQuickFilterCounts.yesterday > 0 && (
-                      <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.yesterday}</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setCompletedQuickFilter('week')}
-                    className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
-                      completedQuickFilter === 'week'
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                    )}
-                  >
-                    Last 7 Days
-                    {completedQuickFilterCounts.week > 0 && (
-                      <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.week}</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setCompletedQuickFilter('month')}
-                    className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
-                      completedQuickFilter === 'month'
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                    )}
-                  >
-                    Last 30 Days
-                    {completedQuickFilterCounts.month > 0 && (
-                      <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.month}</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setCompletedQuickFilter('older')}
-                    className={cn(
-                      "px-2.5 py-1 text-[13px] font-medium rounded-full transition-colors flex items-center gap-1",
-                      completedQuickFilter === 'older'
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                    )}
-                  >
-                    Older
-                    {completedQuickFilterCounts.older > 0 && (
-                      <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.older}</span>
-                    )}
-                  </button>
-                </>
-              )}
-            </div>
-
-          </div>
-
-          {/* Right: Action Buttons */}
-          <div className="flex items-center gap-2 shrink-0">
             <Button
+              variant={viewMode === 'completed' ? 'default' : 'ghost'}
               size="sm"
-              className="h-8 gap-1.5 px-3"
-              onClick={() => setTaskDialogOpen(true)}
+              className={cn(
+                "h-8 gap-1.5 px-3 rounded-full font-medium text-[13px]",
+                viewMode === 'completed' && "shadow-sm"
+              )}
+              onClick={() => {
+                setViewMode('completed');
+                setCompletedQuickFilter('all');
+              }}
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Add Task</span>
+              <CheckCircle2 className={cn("w-3.5 h-3.5", viewMode === 'completed' && "fill-current")} />
+              Completed
             </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3">
-                  <Settings2 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Manage</span>
-                  <ChevronDown className="w-3 h-3 hidden sm:block" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem onClick={() => setProjectManagementOpen(true)} className="gap-2">
-                  <Folders className="h-4 w-4" />
-                  Projects
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTagManagerOpen(true)} className="gap-2">
-                  <Tags className="h-4 w-4" />
-                  Areas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusManagerOpen(true)} className="gap-2">
-                  <Layers className="h-4 w-4" />
-                  Stages
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
+
+          <div className="h-5 w-px bg-border/50 shrink-0" />
+
+          {/* Quick Filters */}
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide min-w-0 flex-1">
+            {viewMode === 'active' ? (
+              <>
+                <button
+                  onClick={() => setActiveQuickFilter('all')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all whitespace-nowrap",
+                    activeQuickFilter === 'all'
+                      ? "bg-filter-active text-filter-active-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setActiveQuickFilter('overdue')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                    activeQuickFilter === 'overdue'
+                      ? "bg-destructive text-destructive-foreground"
+                      : activeQuickFilterCounts.overdue > 0
+                        ? "text-destructive hover:bg-destructive/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  Overdue
+                  {activeQuickFilterCounts.overdue > 0 && (
+                    <span className="text-xs tabular-nums">{activeQuickFilterCounts.overdue}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveQuickFilter('today')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                    activeQuickFilter === 'today'
+                      ? "bg-filter-active text-filter-active-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  Today
+                  {activeQuickFilterCounts.today > 0 && (
+                    <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.today}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveQuickFilter('tomorrow')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                    activeQuickFilter === 'tomorrow'
+                      ? "bg-filter-active text-filter-active-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  Tomorrow
+                  {activeQuickFilterCounts.tomorrow > 0 && (
+                    <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.tomorrow}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveQuickFilter('upcoming')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                    activeQuickFilter === 'upcoming'
+                      ? "bg-filter-active text-filter-active-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  Next 7 Days
+                  {activeQuickFilterCounts.upcoming > 0 && (
+                    <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.upcoming}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveQuickFilter('later')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                    activeQuickFilter === 'later'
+                      ? "bg-filter-active text-filter-active-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  Later
+                  {activeQuickFilterCounts.later > 0 && (
+                    <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.later}</span>
+                  )}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setCompletedQuickFilter('all')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all whitespace-nowrap",
+                    completedQuickFilter === 'all'
+                      ? "bg-filter-active text-filter-active-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setCompletedQuickFilter('today')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                    completedQuickFilter === 'today'
+                      ? "bg-filter-active text-filter-active-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  Today
+                  {completedQuickFilterCounts.today > 0 && (
+                    <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.today}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setCompletedQuickFilter('yesterday')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                    completedQuickFilter === 'yesterday'
+                      ? "bg-filter-active text-filter-active-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  Yesterday
+                  {completedQuickFilterCounts.yesterday > 0 && (
+                    <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.yesterday}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setCompletedQuickFilter('week')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                    completedQuickFilter === 'week'
+                      ? "bg-filter-active text-filter-active-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  Last 7 Days
+                  {completedQuickFilterCounts.week > 0 && (
+                    <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.week}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setCompletedQuickFilter('month')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                    completedQuickFilter === 'month'
+                      ? "bg-filter-active text-filter-active-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  Last 30 Days
+                  {completedQuickFilterCounts.month > 0 && (
+                    <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.month}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setCompletedQuickFilter('older')}
+                  className={cn(
+                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                    completedQuickFilter === 'older'
+                      ? "bg-filter-active text-filter-active-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  Older
+                  {completedQuickFilterCounts.older > 0 && (
+                    <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.older}</span>
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Action Buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="sm"
+            className="h-8 gap-1.5 px-3 rounded-lg"
+            onClick={() => setTaskDialogOpen(true)}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Add Task</span>
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 rounded-lg">
+                <Settings2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Manage</span>
+                <ChevronDown className="w-3 h-3 hidden sm:block" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => setProjectManagementOpen(true)} className="gap-2">
+                <Folders className="h-4 w-4" />
+                Projects
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTagManagerOpen(true)} className="gap-2">
+                <Tags className="h-4 w-4" />
+                Areas
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusManagerOpen(true)} className="gap-2">
+                <Layers className="h-4 w-4" />
+                Stages
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      {/* Views */}
+      {/* Row 2: Search + View Toggle + Task Count + Sort/Details/Filter */}
       <Tabs defaultValue="table" className="space-y-4" onValueChange={(v) => setActiveView(v as 'table' | 'kanban')}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TabsList className="h-8 bg-transparent p-0 gap-1">
-              <TabsTrigger value="table" className="h-7 px-2.5 text-[13px] data-[state=active]:bg-muted rounded-md">
-                <List className="w-3.5 h-3.5 mr-1.5" />
-                List
-              </TabsTrigger>
-              <TabsTrigger value="kanban" className="h-7 px-2.5 text-[13px] data-[state=active]:bg-muted rounded-md">
-                <LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
-                Board
-              </TabsTrigger>
-            </TabsList>
-            
-            <span className="text-[13px] text-muted-foreground tabular-nums ml-2">
-              {displayTasks.length} {displayTasks.length === 1 ? 'task' : 'tasks'}
-            </span>
+        <div className="flex items-center gap-3">
+          {/* Search */}
+          <div className="relative w-52">
+            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search tasks..."
+              className="pl-8 h-8 text-[13px] bg-background border-border rounded-lg"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
+
+          {/* View Toggle */}
+          <TabsList className="h-8 bg-muted/50 p-0.5 gap-0.5 rounded-lg">
+            <TabsTrigger value="table" className="h-7 px-2.5 text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md">
+              <List className="w-3.5 h-3.5 mr-1.5" />
+              List
+            </TabsTrigger>
+            <TabsTrigger value="kanban" className="h-7 px-2.5 text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md">
+              <LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
+              Board
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Task Count */}
+          <span className="text-[13px] text-muted-foreground tabular-nums">
+            {displayTasks.length} {displayTasks.length === 1 ? 'task' : 'tasks'}
+          </span>
+
+          <div className="flex-1" />
           
           <div className="flex items-center gap-2">
             <DropdownMenu>

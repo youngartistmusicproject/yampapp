@@ -33,6 +33,10 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
+    /* Filter active state - blue */
+    --filter-active: 217 91% 60%;
+    --filter-active-foreground: 0 0% 100%;
+    
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 12 90% 54%;
@@ -74,6 +78,10 @@
     
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
+    
+    /* Filter active state - blue */
+    --filter-active: 217 91% 60%;
+    --filter-active-foreground: 0 0% 100%;
     
     --border: 217 33% 20%;
     --input: 217 33% 20%;
