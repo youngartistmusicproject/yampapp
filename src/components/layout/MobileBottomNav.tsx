@@ -50,7 +50,7 @@ export function MobileBottomNav() {
   );
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-pb">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border safe-area-pb">
       <div className="flex items-center justify-around h-16">
         {primaryNavItems.map((item) => {
           const isActive = location.pathname === item.href;
@@ -62,10 +62,15 @@ export function MobileBottomNav() {
                 "flex flex-col items-center justify-center flex-1 h-full gap-1 text-xs transition-colors",
                 isActive
                   ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-sidebar-foreground hover:text-sidebar-accent-foreground"
               )}
             >
-              <item.icon className={cn("w-5 h-5", isActive && "fill-primary/10")} />
+              <div className={cn(
+                "flex items-center justify-center w-8 h-8 rounded-lg transition-colors",
+                isActive && "bg-primary/20"
+              )}>
+                <item.icon className="w-5 h-5" />
+              </div>
               <span className="font-medium">{item.name}</span>
             </NavLink>
           );
@@ -79,14 +84,19 @@ export function MobileBottomNav() {
                 "flex flex-col items-center justify-center flex-1 h-full gap-1 text-xs transition-colors",
                 isSecondaryRoute
                   ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-sidebar-foreground hover:text-sidebar-accent-foreground"
               )}
             >
-              <MoreHorizontal className="w-5 h-5" />
+              <div className={cn(
+                "flex items-center justify-center w-8 h-8 rounded-lg transition-colors",
+                isSecondaryRoute && "bg-primary/20"
+              )}>
+                <MoreHorizontal className="w-5 h-5" />
+              </div>
               <span className="font-medium">More</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-xl">
+          <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-2xl bg-card">
             <SheetHeader className="pb-4">
               <SheetTitle>More Options</SheetTitle>
             </SheetHeader>

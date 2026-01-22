@@ -10,14 +10,11 @@ import {
   Calendar,
   UserCircle,
   Settings,
-  ChevronLeft,
-  Menu,
   Shield,
   Flag,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -28,7 +25,7 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useBranding } from "@/contexts/BrandingContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-// Flat navigation list (Todoist style) with optional feature flag keys
+// Flat navigation list with optional feature flag keys
 const navItems: Array<{
   name: string;
   href: string;
@@ -45,13 +42,13 @@ const navItems: Array<{
   { name: "CRM", href: "/crm", icon: UserCircle, featureKey: "crm" },
 ];
 
-// Desktop Sidebar - Todoist minimalist style
-function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
+// Desktop Sidebar - Dark navy icon-only style with rounded right edge
+function DesktopSidebar() {
   const location = useLocation();
-  const { signOut, currentOrganization, isOrgAdmin } = useAuth();
+  const { signOut, isOrgAdmin } = useAuth();
   const { isSuperAdmin } = useUserRole();
   const { isFeatureEnabled } = useFeatureFlags();
-  const { appName, logoUrl, primaryColor, faviconUrl } = useBranding();
+  const { appName, faviconUrl, primaryColor } = useBranding();
 
   // Filter nav items based on feature flags
   const filteredNavItems = navItems.filter(item => {
@@ -60,114 +57,61 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
   });
 
   // Get the first letter for the logo fallback
-  const logoLetter = currentOrganization?.name?.charAt(0).toUpperCase() || appName.charAt(0).toUpperCase();
+  const logoLetter = appName.charAt(0).toUpperCase();
 
-  const NavItem = ({ item, isActive }: { item: typeof navItems[0]; isActive: boolean }) => {
-    const content = (
-      <NavLink
-        to={item.href}
-        className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-          isActive
-            ? "bg-primary/10 text-primary font-medium"
-            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-        )}
-      >
-        <item.icon className="w-5 h-5 flex-shrink-0" />
-        {!collapsed && <span>{item.name}</span>}
-      </NavLink>
-    );
-
-    if (collapsed) {
-      return (
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>{content}</TooltipTrigger>
-          <TooltipContent side="right" className="text-xs">
-            {item.name}
-          </TooltipContent>
-        </Tooltip>
-      );
-    }
-
-    return content;
-  };
+  const NavItem = ({ item, isActive }: { item: typeof navItems[0]; isActive: boolean }) => (
+    <Tooltip delayDuration={0}>
+      <TooltipTrigger asChild>
+        <NavLink
+          to={item.href}
+          className={cn(
+            "flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200",
+            isActive
+              ? "bg-primary text-primary-foreground shadow-md"
+              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          )}
+        >
+          <item.icon className="w-5 h-5" />
+        </NavLink>
+      </TooltipTrigger>
+      <TooltipContent side="right" className="text-xs font-medium">
+        {item.name}
+      </TooltipContent>
+    </Tooltip>
+  );
 
   return (
-    <aside
-      className={cn(
-        "hidden md:flex flex-col h-screen bg-background border-r border-border/40 transition-all duration-200",
-        collapsed ? "w-[56px]" : "w-[240px]"
-      )}
-    >
-      {/* Header with logo and collapse toggle */}
-      <div className={cn(
-        "flex items-center h-16 border-b border-border/40",
-        collapsed ? "justify-center px-1.5" : "justify-between px-3"
-      )}>
-        {collapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setCollapsed(false)}
-                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted/50 transition-all duration-200 hover:scale-110 active:scale-95"
-              >
-                {faviconUrl ? (
-                  <img
-                    src={faviconUrl}
-                    alt={appName}
-                    className="w-8 h-8 rounded-lg object-cover shadow-sm ring-1 ring-border/50 transition-transform duration-200"
-                  />
-                ) : (
-                  <div
-                    className="flex items-center justify-center w-8 h-8 rounded-lg shadow-sm ring-1 ring-border/50 transition-transform duration-200"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    <span className="text-white font-semibold text-sm">{logoLetter}</span>
-                  </div>
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-xs">
-              Expand sidebar
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <>
-            <div className="flex-1 flex items-center justify-center min-w-0">
-              {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt={appName}
-                  className="h-10 w-auto max-w-[180px] object-contain flex-shrink-0 drop-shadow-sm"
-                />
-              ) : (
-                <span className="font-semibold text-foreground text-[15px] truncate">{appName}</span>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCollapsed(true)}
-              className="h-7 w-7 text-muted-foreground hover:text-foreground flex-shrink-0"
+    <aside className="hidden md:flex flex-col h-screen w-[72px] bg-sidebar rounded-r-2xl transition-all duration-200">
+      {/* Header with logo */}
+      <div className="flex items-center justify-center h-16 pt-2">
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl overflow-hidden">
+          {faviconUrl ? (
+            <img
+              src={faviconUrl}
+              alt={appName}
+              className="w-8 h-8 rounded-lg object-cover"
+            />
+          ) : (
+            <div
+              className="flex items-center justify-center w-8 h-8 rounded-lg"
+              style={{ backgroundColor: primaryColor }}
             >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-          </>
-        )}
+              <span className="text-white font-semibold text-sm">{logoLetter}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-3 overflow-y-auto">
-        <div className="space-y-0.5">
-          {filteredNavItems.map((item) => {
-            const isActive = location.pathname === item.href;
-            return <NavItem key={item.name} item={item} isActive={isActive} />;
-          })}
-        </div>
+      <nav className="flex-1 flex flex-col items-center gap-1 py-4 px-3">
+        {filteredNavItems.map((item) => {
+          const isActive = location.pathname === item.href;
+          return <NavItem key={item.name} item={item} isActive={isActive} />;
+        })}
       </nav>
 
       {/* Bottom section */}
-      <div className="px-2 py-3 border-t border-border/40 space-y-0.5">
+      <div className="flex flex-col items-center gap-1 py-4 px-3 border-t border-sidebar-border">
         {(isSuperAdmin || isOrgAdmin) && (
           <NavItem
             item={{ name: "Admin", href: "/admin", icon: Shield }}
@@ -187,38 +131,28 @@ function DesktopSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCo
           isActive={location.pathname === "/settings"}
         />
 
-        {collapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => signOut()}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              >
-                <LogOut className="w-5 h-5 flex-shrink-0" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-xs">
-              Sign Out
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={() => signOut()}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-          >
-            <LogOut className="w-5 h-5 flex-shrink-0" />
-            <span>Sign Out</span>
-          </button>
-        )}
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => signOut()}
+              className="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="text-xs font-medium">
+            Sign Out
+          </TooltipContent>
+        </Tooltip>
       </div>
     </aside>
   );
 }
 
-// Mobile Sheet Navigation - Todoist style
+// Mobile Sheet Navigation
 function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const location = useLocation();
-  const { signOut, currentOrganization, isOrgAdmin } = useAuth();
+  const { signOut, isOrgAdmin } = useAuth();
   const { isSuperAdmin } = useUserRole();
   const { isFeatureEnabled } = useFeatureFlags();
   const { appName, logoUrl, primaryColor } = useBranding();
@@ -230,22 +164,30 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
   });
 
   // Get the first letter for the logo fallback
-  const logoLetter = currentOrganization?.name?.charAt(0).toUpperCase() || appName.charAt(0).toUpperCase();
+  const logoLetter = appName.charAt(0).toUpperCase();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-[280px] p-0 bg-background">
+      <SheetContent side="left" className="w-[280px] p-0 bg-sidebar border-sidebar-border">
         {/* Header */}
-        <div className="flex items-center h-16 px-4 border-b border-border/40">
+        <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2.5">
             {logoUrl ? (
               <img
                 src={logoUrl}
                 alt={appName}
-                className="h-10 w-auto max-w-[200px] object-contain drop-shadow-sm"
+                className="h-10 w-auto max-w-[200px] object-contain"
               />
             ) : (
-              <span className="font-semibold text-foreground text-[15px]">{appName}</span>
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center justify-center w-8 h-8 rounded-lg"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <span className="text-white font-semibold text-sm">{logoLetter}</span>
+                </div>
+                <span className="font-semibold text-sidebar-accent-foreground text-[15px]">{appName}</span>
+              </div>
             )}
           </div>
         </div>
@@ -263,8 +205,8 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
                     isActive
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      ? "bg-primary text-primary-foreground font-medium"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
                   <item.icon className="w-5 h-5 flex-shrink-0" />
@@ -276,7 +218,7 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         </nav>
 
         {/* Bottom section */}
-        <div className="px-2 py-3 border-t border-border/40 space-y-0.5">
+        <div className="px-2 py-3 border-t border-sidebar-border space-y-0.5">
           {(isSuperAdmin || isOrgAdmin) && (
             <NavLink
               to="/admin"
@@ -284,8 +226,8 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
                 location.pathname === "/admin"
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  ? "bg-primary text-primary-foreground font-medium"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
               <Shield className="w-5 h-5 flex-shrink-0" />
@@ -300,8 +242,8 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
                 location.pathname === "/feature-flags"
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  ? "bg-primary text-primary-foreground font-medium"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
               <Flag className="w-5 h-5 flex-shrink-0" />
@@ -315,8 +257,8 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
               location.pathname === "/settings"
-                ? "bg-primary/10 text-primary font-medium"
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                ? "bg-primary text-primary-foreground font-medium"
+                : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
             <Settings className="w-5 h-5 flex-shrink-0" />
@@ -328,7 +270,7 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               signOut();
               onOpenChange(false);
             }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
             <span>Sign Out</span>
@@ -339,27 +281,12 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
   );
 }
 
-// Mobile trigger button
-export function MobileMenuTrigger({ onClick }: { onClick: () => void }) {
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="md:hidden"
-      onClick={onClick}
-    >
-      <Menu className="w-5 h-5" />
-    </Button>
-  );
-}
-
 export function AppSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      <DesktopSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+      <DesktopSidebar />
       <MobileSidebar open={mobileOpen} onOpenChange={setMobileOpen} />
     </>
   );

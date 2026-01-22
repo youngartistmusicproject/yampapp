@@ -66,6 +66,20 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Pastel task card backgrounds
+        task: {
+          peach: "hsl(var(--task-peach))",
+          mint: "hsl(var(--task-mint))",
+          lavender: "hsl(var(--task-lavender))",
+          lemon: "hsl(var(--task-lemon))",
+          sky: "hsl(var(--task-sky))",
+        },
+        // Priority badge colors
+        priority: {
+          high: "hsl(var(--priority-high))",
+          medium: "hsl(var(--priority-medium))",
+          low: "hsl(var(--priority-low))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
