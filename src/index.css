@@ -7,8 +7,8 @@
 
 @layer base {
   :root {
-    /* Youth-oriented fresh palette */
-    --background: 210 20% 98%;
+    /* Warm beige/cream background */
+    --background: 40 20% 96%;
     --foreground: 222 47% 11%;
     
     --card: 0 0% 100%;
@@ -17,41 +17,53 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
     
-    /* Vibrant coral accent */
-    --primary: 12 90% 54%;
+    /* Coral red primary #Eb5c5c */
+    --primary: 0 78% 64%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 210 40% 96%;
+    --secondary: 40 15% 92%;
     --secondary-foreground: 222 47% 20%;
     
-    --muted: 210 40% 96%;
+    --muted: 40 15% 92%;
     --muted-foreground: 215 16% 47%;
     
-    --accent: 262 83% 58%;
+    --accent: 0 78% 64%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    /* Filter active state - blue */
-    --filter-active: 217 91% 60%;
+    /* Filter active state - coral */
+    --filter-active: 0 78% 64%;
     --filter-active-foreground: 0 0% 100%;
     
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 12 90% 54%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 0 78% 64%;
     
     --radius: 0.75rem;
     
-    /* Fresh sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 16% 47%;
-    --sidebar-primary: 12 90% 54%;
+    /* Dark navy sidebar */
+    --sidebar-background: 222 40% 15%;
+    --sidebar-foreground: 210 20% 75%;
+    --sidebar-primary: 0 78% 64%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 12 90% 54%;
+    --sidebar-accent: 222 40% 20%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 222 40% 20%;
+    --sidebar-ring: 0 78% 64%;
+    
+    /* Pastel task colors */
+    --task-peach: 15 85% 92%;
+    --task-mint: 150 50% 92%;
+    --task-lavender: 260 50% 93%;
+    --task-lemon: 50 80% 92%;
+    --task-sky: 200 60% 92%;
+    
+    /* Priority badge colors */
+    --priority-high: 0 80% 55%;
+    --priority-medium: 35 95% 55%;
+    --priority-low: 150 60% 40%;
   }
 
   .dark {
@@ -64,7 +76,7 @@
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
     
-    --primary: 12 90% 54%;
+    --primary: 0 78% 64%;
     --primary-foreground: 0 0% 100%;
     
     --secondary: 217 33% 17%;
@@ -73,28 +85,41 @@
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
     
-    --accent: 262 83% 58%;
+    --accent: 0 78% 64%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
     
-    /* Filter active state - blue */
-    --filter-active: 217 91% 60%;
+    /* Filter active state - coral */
+    --filter-active: 0 78% 64%;
     --filter-active-foreground: 0 0% 100%;
     
     --border: 217 33% 20%;
     --input: 217 33% 20%;
-    --ring: 12 90% 54%;
+    --ring: 0 78% 64%;
     
+    /* Dark sidebar stays same in dark mode */
     --sidebar-background: 222 47% 9%;
     --sidebar-foreground: 215 20% 65%;
-    --sidebar-primary: 12 90% 54%;
+    --sidebar-primary: 0 78% 64%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 33% 17%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217 33% 20%;
-    --sidebar-ring: 12 90% 54%;
+    --sidebar-ring: 0 78% 64%;
+    
+    /* Pastel task colors - slightly adjusted for dark mode */
+    --task-peach: 15 50% 25%;
+    --task-mint: 150 30% 22%;
+    --task-lavender: 260 30% 25%;
+    --task-lemon: 50 40% 22%;
+    --task-sky: 200 35% 22%;
+    
+    /* Priority badge colors */
+    --priority-high: 0 80% 55%;
+    --priority-medium: 35 95% 55%;
+    --priority-low: 150 60% 40%;
   }
 }
 
@@ -131,11 +156,11 @@
   }
   
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(12 90% 54%) 0%, hsl(25 95% 53%) 100%);
+    background: linear-gradient(135deg, hsl(0 78% 64%) 0%, hsl(15 80% 60%) 100%);
   }
   
   .gradient-accent {
-    background: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(280 85% 60%) 100%);
+    background: linear-gradient(135deg, hsl(0 78% 64%) 0%, hsl(350 70% 55%) 100%);
   }
 }
 
