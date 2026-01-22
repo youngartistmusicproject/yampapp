@@ -43,14 +43,14 @@
     
     --radius: 0.75rem;
     
-    /* Dark navy sidebar */
-    --sidebar-background: 222 40% 15%;
-    --sidebar-foreground: 210 20% 75%;
+    /* Light minimalist sidebar */
+    --sidebar-background: 40 15% 97%;
+    --sidebar-foreground: 222 20% 35%;
     --sidebar-primary: 0 78% 64%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 40% 20%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 222 40% 20%;
+    --sidebar-accent: 40 15% 92%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 40 15% 90%;
     --sidebar-ring: 0 78% 64%;
     
     /* Pastel task colors */
