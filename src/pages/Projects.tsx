@@ -14,7 +14,7 @@ import { ProjectManagementPanel } from "@/components/projects/ProjectManagementP
 import { StatusManager, StatusItem } from "@/components/projects/StatusManager";
 import { TagManager, TagItem } from "@/components/projects/TagManager";
 import { TaskFilterPanel, TaskFilters } from "@/components/projects/TaskFilterPanel";
-import { Task, Project, User, TaskComment } from "@/types";
+import type { Task, Project, User, TaskComment } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
