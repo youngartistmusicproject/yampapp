@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,6 +13,8 @@ import {
   Shield,
   Flag,
   LogOut,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -42,13 +44,23 @@ const navItems: Array<{
   { name: "CRM", href: "/crm", icon: UserCircle, featureKey: "crm" },
 ];
 
-// Desktop Sidebar - Dark navy icon-only style with rounded right edge
+// Desktop Sidebar - Dark navy with expand/collapse functionality
 function DesktopSidebar() {
   const location = useLocation();
   const { signOut, isOrgAdmin } = useAuth();
   const { isSuperAdmin } = useUserRole();
   const { isFeatureEnabled } = useFeatureFlags();
-  const { appName, faviconUrl, primaryColor } = useBranding();
+  const { appName, faviconUrl, logoUrl, primaryColor } = useBranding();
+
+  // Expanded state with localStorage persistence
+  const [isExpanded, setIsExpanded] = useState(() => {
+    const saved = localStorage.getItem('sidebarExpanded');
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sidebarExpanded', JSON.stringify(isExpanded));
+  }, [isExpanded]);
 
   // Filter nav items based on feature flags
   const filteredNavItems = navItems.filter(item => {
@@ -59,51 +71,120 @@ function DesktopSidebar() {
   // Get the first letter for the logo fallback
   const logoLetter = appName.charAt(0).toUpperCase();
 
-  const NavItem = ({ item, isActive }: { item: typeof navItems[0]; isActive: boolean }) => (
-    <Tooltip delayDuration={0}>
-      <TooltipTrigger asChild>
-        <NavLink
-          to={item.href}
-          className={cn(
-            "flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200",
-            isActive
-              ? "bg-primary text-primary-foreground shadow-md"
-              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          )}
-        >
-          <item.icon className="w-5 h-5" />
-        </NavLink>
-      </TooltipTrigger>
-      <TooltipContent side="right" className="text-xs font-medium">
-        {item.name}
-      </TooltipContent>
-    </Tooltip>
-  );
+  const NavItem = ({ item, isActive }: { item: typeof navItems[0]; isActive: boolean }) => {
+    const content = (
+      <NavLink
+        to={item.href}
+        className={cn(
+          "flex items-center gap-3 rounded-xl transition-all duration-200",
+          isExpanded ? "px-3 py-2.5 w-full" : "justify-center w-10 h-10",
+          isActive
+            ? "bg-primary text-primary-foreground shadow-md"
+            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        )}
+      >
+        <item.icon className="w-5 h-5 shrink-0" />
+        {isExpanded && (
+          <span className="text-sm font-medium truncate">{item.name}</span>
+        )}
+      </NavLink>
+    );
+
+    if (isExpanded) {
+      return content;
+    }
+
+    return (
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>
+          {content}
+        </TooltipTrigger>
+        <TooltipContent side="right" className="text-xs font-medium">
+          {item.name}
+        </TooltipContent>
+      </Tooltip>
+    );
+  };
 
   return (
-    <aside className="hidden md:flex flex-col h-screen w-[72px] bg-sidebar rounded-r-2xl transition-all duration-200">
+    <aside 
+      className={cn(
+        "hidden md:flex flex-col h-screen bg-sidebar rounded-r-2xl transition-all duration-300 relative",
+        isExpanded ? "w-[240px]" : "w-[72px]"
+      )}
+    >
       {/* Header with logo */}
-      <div className="flex items-center justify-center h-16 pt-2">
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl overflow-hidden">
-          {faviconUrl ? (
-            <img
-              src={faviconUrl}
-              alt={appName}
-              className="w-8 h-8 rounded-lg object-cover"
-            />
-          ) : (
-            <div
-              className="flex items-center justify-center w-8 h-8 rounded-lg"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <span className="text-white font-semibold text-sm">{logoLetter}</span>
-            </div>
-          )}
-        </div>
+      <div className={cn(
+        "flex items-center h-16 pt-2",
+        isExpanded ? "px-4 justify-start" : "justify-center"
+      )}>
+        {isExpanded ? (
+          <div className="flex items-center gap-2.5 min-w-0">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={appName}
+                className="h-10 w-auto max-w-[160px] object-contain"
+              />
+            ) : faviconUrl ? (
+              <>
+                <img
+                  src={faviconUrl}
+                  alt={appName}
+                  className="w-8 h-8 rounded-lg object-cover shrink-0"
+                />
+                <span className="text-sidebar-accent-foreground font-semibold text-[15px] truncate">
+                  {appName}
+                </span>
+              </>
+            ) : (
+              <>
+                <div
+                  className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <span className="text-white font-semibold text-sm">{logoLetter}</span>
+                </div>
+                <span className="text-sidebar-accent-foreground font-semibold text-[15px] truncate">
+                  {appName}
+                </span>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl overflow-hidden">
+            {faviconUrl ? (
+              <img
+                src={faviconUrl}
+                alt={appName}
+                className="w-8 h-8 rounded-lg object-cover"
+              />
+            ) : (
+              <div
+                className="flex items-center justify-center w-8 h-8 rounded-lg"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <span className="text-white font-semibold text-sm">{logoLetter}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* Section Label - only when expanded */}
+      {isExpanded && (
+        <div className="px-4 pt-4 pb-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+            Menu
+          </span>
+        </div>
+      )}
+
       {/* Navigation */}
-      <nav className="flex-1 flex flex-col items-center gap-1 py-4 px-3">
+      <nav className={cn(
+        "flex-1 flex flex-col gap-1 py-4",
+        isExpanded ? "px-3" : "items-center px-3"
+      )}>
         {filteredNavItems.map((item) => {
           const isActive = location.pathname === item.href;
           return <NavItem key={item.name} item={item} isActive={isActive} />;
@@ -111,7 +192,10 @@ function DesktopSidebar() {
       </nav>
 
       {/* Bottom section */}
-      <div className="flex flex-col items-center gap-1 py-4 px-3 border-t border-sidebar-border">
+      <div className={cn(
+        "flex flex-col gap-1 py-4 border-t border-sidebar-border",
+        isExpanded ? "px-3" : "items-center px-3"
+      )}>
         {(isSuperAdmin || isOrgAdmin) && (
           <NavItem
             item={{ name: "Admin", href: "/admin", icon: Shield }}
@@ -131,20 +215,42 @@ function DesktopSidebar() {
           isActive={location.pathname === "/settings"}
         />
 
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => signOut()}
-              className="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right" className="text-xs font-medium">
-            Sign Out
-          </TooltipContent>
-        </Tooltip>
+        {isExpanded ? (
+          <button
+            onClick={() => signOut()}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full"
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            <span className="text-sm font-medium">Sign Out</span>
+          </button>
+        ) : (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => signOut()}
+                className="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-xs font-medium">
+              Sign Out
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
+
+      {/* Expand/Collapse Toggle Button */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="absolute -right-3 top-20 flex items-center justify-center w-6 h-6 rounded-full bg-sidebar border-2 border-background text-sidebar-foreground hover:bg-sidebar-accent transition-colors shadow-md"
+      >
+        {isExpanded ? (
+          <ChevronLeft className="w-3.5 h-3.5" />
+        ) : (
+          <ChevronRight className="w-3.5 h-3.5" />
+        )}
+      </button>
     </aside>
   );
 }
@@ -192,8 +298,15 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
           </div>
         </div>
 
+        {/* Section Label */}
+        <div className="px-4 pt-4 pb-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+            Menu
+          </span>
+        </div>
+
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-3 overflow-y-auto">
+        <nav className="flex-1 px-2 py-1 overflow-y-auto">
           <div className="space-y-0.5">
             {filteredNavItems.map((item) => {
               const isActive = location.pathname === item.href;
@@ -203,7 +316,7 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
                   to={item.href}
                   onClick={() => onOpenChange(false)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors",
                     isActive
                       ? "bg-primary text-primary-foreground font-medium"
                       : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -224,7 +337,7 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               to="/admin"
               onClick={() => onOpenChange(false)}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors",
                 location.pathname === "/admin"
                   ? "bg-primary text-primary-foreground font-medium"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -240,7 +353,7 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               to="/feature-flags"
               onClick={() => onOpenChange(false)}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors",
                 location.pathname === "/feature-flags"
                   ? "bg-primary text-primary-foreground font-medium"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -255,7 +368,7 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
             to="/settings"
             onClick={() => onOpenChange(false)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors",
               location.pathname === "/settings"
                 ? "bg-primary text-primary-foreground font-medium"
                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -270,7 +383,7 @@ function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               signOut();
               onOpenChange(false);
             }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
             <span>Sign Out</span>
