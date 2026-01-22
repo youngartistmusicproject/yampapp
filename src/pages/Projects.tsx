@@ -1088,16 +1088,6 @@ export default function Projects() {
             Me
           </Button>
 
-          {/* Show/Hide Details */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 gap-1.5 px-3 rounded-lg"
-            onClick={() => setShowTaskDetails(!showTaskDetails)}
-          >
-            <User className="w-4 h-4" />
-            Me
-          </Button>
 
           {/* Show/Hide Details */}
           <Button
