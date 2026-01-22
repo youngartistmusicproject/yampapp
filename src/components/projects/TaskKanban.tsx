@@ -72,13 +72,6 @@ interface TaskKanbanProps {
   projectLeadMap?: Record<string, string[]>;
 }
 
-const importanceColors: Record<string, string> = {
-  low: "border-l-gray-400",
-  routine: "border-l-blue-400",
-  important: "border-l-amber-400",
-  critical: "border-l-red-500",
-};
-
 const effortColors: Record<string, string> = {
   easy: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
   light: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
@@ -171,136 +164,87 @@ function SortableTaskCard({
       )}
 
       <div
-        className={`group rounded-xl border-2 bg-card shadow-card transition-all duration-200 ${
-          overdue ? "bg-destructive/5 border-destructive/30" : "hover:bg-muted/30 hover:border-primary/20 hover:shadow-elevated hover:-translate-y-0.5"
+        className={`group rounded-xl border bg-card shadow-sm transition-all duration-200 ${
+          overdue ? "bg-destructive/5 border-destructive/30" : "hover:shadow-md hover:-translate-y-0.5"
         }`}
         onClick={() => onViewTask(task)}
       >
-        <div className="p-2.5">
-          {/* Row 1: Title + Indicators */}
-          <div className="flex items-start gap-1.5 min-w-0">
-            <p className="text-sm font-medium leading-snug line-clamp-2 flex-1">
-              {task.title}
-            </p>
-            {/* Compact indicators */}
-            <div className="flex items-center gap-1 text-muted-foreground/50 shrink-0 mt-0.5">
-              {task.isRecurring && <Repeat className="w-3 h-3" />}
-              {subtaskCount > 0 && (
-                <span className="flex items-center gap-0.5 text-[10px]">
-                  <ListChecks className="w-3 h-3" />
-                  {showDetails && <span>{completedSubtaskCount}/{subtaskCount}</span>}
-                </span>
-              )}
-              {commentCount > 0 && (
-                <span className="flex items-center gap-0.5 text-[10px]">
-                  <MessageSquare className="w-3 h-3" />
-                  {showDetails && <span>{commentCount}</span>}
-                </span>
-              )}
-              {attachmentCount > 0 && (
-                <span className="flex items-center gap-0.5 text-[10px]">
-                  <Paperclip className="w-3 h-3" />
-                  {showDetails && <span>{attachmentCount}</span>}
-                </span>
-              )}
-              {task.howToLink && <BookOpen className="w-3 h-3 text-primary/60" />}
-            </div>
-          </div>
-
-          {/* Row 2: Project - always visible */}
-          {project && (
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <span
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: project.color }}
-              />
-              <span className="text-[11px] text-muted-foreground truncate">{project.name}</span>
-            </div>
-          )}
-
-          {/* Expanded: Area badges */}
-          {showDetails && (() => {
-            const areas = task.inheritedAreas || (task.tags && task.tags.length > 0 
-              ? task.tags.map(tagId => tags.find(t => t.id === tagId)).filter(Boolean)
-              : []);
-            if (!areas.length) return null;
-            return (
-              <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                {areas.slice(0, 2).map((area: any) => (
-                  <span
-                    key={area.id}
-                    className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                    style={{ 
-                      backgroundColor: `${area.color}15`,
-                      color: area.color,
-                    }}
-                  >
-                    {area.name}
-                  </span>
-                ))}
-                {areas.length > 2 && (
-                  <span className="text-[10px] text-muted-foreground">+{areas.length - 2}</span>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* Expanded: Metadata row */}
-          {showDetails && (task.effort || task.importance || task.estimatedTime) && (
-            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/30 text-[10px] text-muted-foreground">
+        <div className="p-3 space-y-2.5">
+          {/* Top Pills: Effort & Importance */}
+          {(task.effort || task.importance) && (
+            <div className="flex items-center gap-1.5 flex-wrap">
               {task.effort && (
-                <span className={`font-medium px-1.5 py-0.5 rounded capitalize ${effortColors[task.effort] || effortColors.light}`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${effortColors[task.effort] || effortColors.light}`}>
                   {task.effort}
                 </span>
               )}
               {task.importance && (
-                <span className={`font-medium px-1.5 py-0.5 rounded capitalize ${importanceBadgeColors[task.importance] || importanceBadgeColors.routine}`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${importanceBadgeColors[task.importance] || importanceBadgeColors.routine}`}>
                   {task.importance}
                 </span>
               )}
-              {task.estimatedTime && (
-                <span className="flex items-center gap-1 ml-auto">
-                  <Clock className="w-3 h-3" />
-                  <span className="font-medium text-foreground">{formatEstimatedTime(task.estimatedTime)}</span>
-                </span>
-              )}
             </div>
           )}
 
-          {/* Expanded: Progress bar */}
-          {showDetails && (
-            <div className="flex items-center gap-1.5 mt-2">
-              <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className={`h-full rounded-full transition-all ${getProgressColor(task.progress)}`}
-                  style={{ width: `${task.progress}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-muted-foreground font-medium w-6 text-right">{task.progress}%</span>
+          {/* Task Title */}
+          <h3 className="text-base font-medium leading-snug line-clamp-2">
+            {task.title}
+          </h3>
+
+          {/* Description */}
+          {showDetails && task.description && (
+            <p className="text-sm text-muted-foreground line-clamp-3">
+              {task.description}
+            </p>
+          )}
+
+          {/* Due Date Pill */}
+          {task.dueDate && (
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-sm ${
+              overdue ? 'border-destructive/50 text-destructive bg-destructive/5' : 'border-border text-muted-foreground'
+            }`}>
+              <Calendar className="w-3.5 h-3.5" />
+              {format(task.dueDate, "d MMM")}
             </div>
           )}
 
-          {/* Footer: Assignees + Due Date - always visible */}
-          <div className="flex items-center justify-between mt-2">
+          {/* Divider + Footer */}
+          <div className="border-t border-border pt-2.5 flex items-center justify-between">
+            {/* Assignees */}
             {task.assignees && task.assignees.length > 0 ? (
-              <UserAvatarGroup users={task.assignees} max={2} size="sm" teamLeaderIds={projectLeadNames} />
+              <UserAvatarGroup users={task.assignees} max={3} size="sm" teamLeaderIds={projectLeadNames} />
             ) : (
-              <span className="text-[10px] text-muted-foreground/50">Unassigned</span>
+              <span className="text-xs text-muted-foreground/50">Unassigned</span>
             )}
             
-            {task.dueDate ? (
-              <span className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-                {format(task.dueDate, "MMM d")}
-              </span>
-            ) : (
-              <span className="text-[10px] text-muted-foreground/40">No date</span>
-            )}
+            {/* Indicators */}
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              {subtaskCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <ListChecks className="w-3.5 h-3.5" />
+                  <span className="text-xs">{completedSubtaskCount}/{subtaskCount}</span>
+                </span>
+              )}
+              {commentCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span className="text-xs">{commentCount}</span>
+                </span>
+              )}
+              {attachmentCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <Paperclip className="w-3.5 h-3.5" />
+                  <span className="text-xs">{attachmentCount}</span>
+                </span>
+              )}
+              {task.isRecurring && <Repeat className="w-3.5 h-3.5" />}
+            </div>
           </div>
         </div>
 
         {/* Hover actions */}
         <div 
-          className="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
         >
@@ -361,10 +305,10 @@ const TaskCardOverlay = React.forwardRef<HTMLDivElement, { task: Task }>(functio
   return (
     <div ref={ref}>
       <div
-        className="rounded-lg border bg-card p-3 shadow-lg cursor-grabbing"
-        style={{ width: "280px" }}
+        className="rounded-xl border bg-card p-3 shadow-lg cursor-grabbing"
+        style={{ width: "300px" }}
       >
-        <p className="text-sm font-medium leading-snug line-clamp-2">{task.title}</p>
+        <p className="text-base font-medium leading-snug line-clamp-2">{task.title}</p>
       </div>
     </div>
   );
@@ -683,8 +627,8 @@ export function TaskKanban({ tasks, projects = [], tags = [], onTaskUpdate, onEd
                 onOpenChange={() => toggleColumnCollapse(column.id)}
               >
                 <div
-                  className={`bg-muted/30 rounded-lg p-3 flex-shrink-0 transition-all duration-200 h-full flex flex-col ${
-                    isCollapsed ? "w-10" : "w-[280px]"
+                  className={`bg-muted/30 rounded-xl p-3 flex-shrink-0 transition-all duration-200 h-full flex flex-col ${
+                    isCollapsed ? "w-10" : "w-[300px]"
                   } ${
                     activeTask && (
                       (dropIndicator?.kind === "column" && dropIndicator.overId === column.id) ||

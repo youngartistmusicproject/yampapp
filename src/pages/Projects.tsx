@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, CheckCircle2, Folders, Tags, Layers } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar as CalendarIcon, Search, FolderPlus, Settings2, ListTodo, X, GripVertical, ChevronDown, Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, CheckCircle2, Folders, Tags, Layers, User as UserIcon, GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,6 +129,9 @@ export default function Projects() {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [activeView, setActiveView] = useState<'table' | 'kanban'>('table');
+  
+  // "Me" filter for current user's tasks
+  const [showOnlyMyTasks, setShowOnlyMyTasks] = useState(false);
 
   // Persist showTaskDetails preference
   useEffect(() => {
@@ -327,6 +330,9 @@ export default function Projects() {
       const taskAreas = task.inheritedAreas?.map(a => a.id) || task.tags || [];
       const matchesAreas = selectedAreas.length === 0 || selectedAreas.some(areaId => taskAreas.includes(areaId));
       
+      // "Me" filter - only show tasks assigned to current user
+      const matchesMe = !showOnlyMyTasks || task.assignees?.some(a => a.name === currentUser.name);
+      
       // Quick filter
       let matchesQuickFilter = true;
       if (activeQuickFilter !== 'all' && task.dueDate) {
@@ -380,7 +386,7 @@ export default function Projects() {
       const matchesOverdue = !filters.showOverdueOnly || 
         (task.dueDate && new Date(task.dueDate) < today && task.status !== 'done');
       
-      return matchesSearch && matchesProject && matchesAreas && matchesQuickFilter && matchesStatus && matchesEffort && matchesImportance &&
+      return matchesSearch && matchesProject && matchesAreas && matchesMe && matchesQuickFilter && matchesStatus && matchesEffort && matchesImportance &&
              matchesAssignee && matchesTags && matchesRecurring && matchesDueDateFrom && matchesDueDateTo && matchesOverdue;
     }).sort((a, b) => {
       // Define sort order for effort, importance, and stage
@@ -446,7 +452,7 @@ export default function Projects() {
       const comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       return sortAscending ? comparison : -comparison;
     });
-  }, [activeTasks, searchQuery, selectedProjects, selectedAreas, filters, activeQuickFilter, sortField, sortAscending, statuses]);
+  }, [activeTasks, searchQuery, selectedProjects, selectedAreas, filters, activeQuickFilter, sortField, sortAscending, statuses, showOnlyMyTasks]);
 
   // Filtered tasks for completed view
   const filteredCompletedTasks = useMemo(() => {
@@ -468,6 +474,9 @@ export default function Projects() {
       // Area filter
       const taskAreas = task.inheritedAreas?.map(a => a.id) || task.tags || [];
       const matchesAreas = selectedAreas.length === 0 || selectedAreas.some(areaId => taskAreas.includes(areaId));
+      
+      // "Me" filter
+      const matchesMe = !showOnlyMyTasks || task.assignees?.some(a => a.name === currentUser.name);
       
       // Quick filter based on completedAt
       let matchesQuickFilter = true;
@@ -504,10 +513,10 @@ export default function Projects() {
       const matchesTags = filters.tags.length === 0 || 
         task.tags?.some(t => filters.tags.includes(t));
       
-      return matchesSearch && matchesProject && matchesAreas && matchesQuickFilter && 
+      return matchesSearch && matchesProject && matchesAreas && matchesMe && matchesQuickFilter && 
              matchesEffort && matchesImportance && matchesAssignee && matchesTags;
     });
-  }, [allCompletedTasks, searchQuery, selectedProjects, selectedAreas, filters, completedQuickFilter]);
+  }, [allCompletedTasks, searchQuery, selectedProjects, selectedAreas, filters, completedQuickFilter, showOnlyMyTasks]);
 
   // The tasks to display based on view mode
   const displayTasks = viewMode === 'active' ? filteredActiveTasks : filteredCompletedTasks;
@@ -834,250 +843,68 @@ export default function Projects() {
   const isLoading = tasksLoading || projectsLoading;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Page Header */}
-      <div className="space-y-1">
+    <div className="space-y-4 animate-fade-in">
+      {/* Row 1: Page Title + View Buttons + Action Buttons */}
+      <div className="flex items-center gap-4">
+        {/* Page Title */}
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Work Management
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your tasks and projects
-        </p>
-      </div>
 
-      {/* Row 1: View Toggle + Quick Filters + Action Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        {/* Left: View Toggle + Quick Filters */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          {/* Active/Completed Toggle */}
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant={viewMode === 'active' ? 'default' : 'ghost'}
-              size="sm"
-              className={cn(
-                "h-8 gap-1.5 px-3 rounded-full font-medium text-[13px]",
-                viewMode === 'active' && "shadow-sm"
-              )}
-              onClick={() => {
-                setViewMode('active');
-                setActiveQuickFilter('all');
-              }}
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Active
-            </Button>
-            <Button
-              variant={viewMode === 'completed' ? 'default' : 'ghost'}
-              size="sm"
-              className={cn(
-                "h-8 gap-1.5 px-3 rounded-full font-medium text-[13px]",
-                viewMode === 'completed' && "shadow-sm"
-              )}
-              onClick={() => {
-                setViewMode('completed');
-                setCompletedQuickFilter('all');
-              }}
-            >
-              <CheckCircle2 className={cn("w-3.5 h-3.5", viewMode === 'completed' && "fill-current")} />
-              Completed
-            </Button>
-          </div>
-
-          <div className="h-5 w-px bg-border/50 shrink-0" />
-
-          {/* Quick Filters */}
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide min-w-0 flex-1">
-            {viewMode === 'active' ? (
-              <>
-                <button
-                  onClick={() => setActiveQuickFilter('all')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all whitespace-nowrap",
-                    activeQuickFilter === 'all'
-                      ? "bg-filter-active text-filter-active-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setActiveQuickFilter('overdue')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
-                    activeQuickFilter === 'overdue'
-                      ? "bg-destructive text-destructive-foreground"
-                      : activeQuickFilterCounts.overdue > 0
-                        ? "text-destructive hover:bg-destructive/10"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  Overdue
-                  {activeQuickFilterCounts.overdue > 0 && (
-                    <span className="text-xs tabular-nums">{activeQuickFilterCounts.overdue}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveQuickFilter('today')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
-                    activeQuickFilter === 'today'
-                      ? "bg-filter-active text-filter-active-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  Today
-                  {activeQuickFilterCounts.today > 0 && (
-                    <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.today}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveQuickFilter('tomorrow')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
-                    activeQuickFilter === 'tomorrow'
-                      ? "bg-filter-active text-filter-active-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  Tomorrow
-                  {activeQuickFilterCounts.tomorrow > 0 && (
-                    <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.tomorrow}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveQuickFilter('upcoming')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
-                    activeQuickFilter === 'upcoming'
-                      ? "bg-filter-active text-filter-active-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  Next 7 Days
-                  {activeQuickFilterCounts.upcoming > 0 && (
-                    <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.upcoming}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveQuickFilter('later')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
-                    activeQuickFilter === 'later'
-                      ? "bg-filter-active text-filter-active-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  Later
-                  {activeQuickFilterCounts.later > 0 && (
-                    <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.later}</span>
-                  )}
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => setCompletedQuickFilter('all')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all whitespace-nowrap",
-                    completedQuickFilter === 'all'
-                      ? "bg-filter-active text-filter-active-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setCompletedQuickFilter('today')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
-                    completedQuickFilter === 'today'
-                      ? "bg-filter-active text-filter-active-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  Today
-                  {completedQuickFilterCounts.today > 0 && (
-                    <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.today}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setCompletedQuickFilter('yesterday')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
-                    completedQuickFilter === 'yesterday'
-                      ? "bg-filter-active text-filter-active-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  Yesterday
-                  {completedQuickFilterCounts.yesterday > 0 && (
-                    <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.yesterday}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setCompletedQuickFilter('week')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
-                    completedQuickFilter === 'week'
-                      ? "bg-filter-active text-filter-active-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  Last 7 Days
-                  {completedQuickFilterCounts.week > 0 && (
-                    <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.week}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setCompletedQuickFilter('month')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
-                    completedQuickFilter === 'month'
-                      ? "bg-filter-active text-filter-active-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  Last 30 Days
-                  {completedQuickFilterCounts.month > 0 && (
-                    <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.month}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setCompletedQuickFilter('older')}
-                  className={cn(
-                    "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
-                    completedQuickFilter === 'older'
-                      ? "bg-filter-active text-filter-active-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  Older
-                  {completedQuickFilterCounts.older > 0 && (
-                    <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.older}</span>
-                  )}
-                </button>
-              </>
+        {/* View Toggle Buttons */}
+        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+          <button
+            onClick={() => setActiveView('table')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+              activeView === 'table'
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground"
             )}
-          </div>
+          >
+            <List className="w-4 h-4" />
+            List
+          </button>
+          <button
+            onClick={() => setActiveView('kanban')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+              activeView === 'kanban'
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <LayoutGrid className="w-4 h-4" />
+            Board
+          </button>
+          <button
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-all"
+            title="Workflow view coming soon"
+          >
+            <GitBranch className="w-4 h-4" />
+            Workflow
+          </button>
         </div>
 
-        {/* Right: Action Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex-1" />
+
+        {/* Action Buttons - Far Right */}
+        <div className="flex items-center gap-2">
           <Button
             size="sm"
-            className="h-8 gap-1.5 px-3 rounded-lg"
+            className="h-9 gap-1.5 px-4 rounded-lg"
             onClick={() => setTaskDialogOpen(true)}
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Add Task</span>
+            <Plus className="w-4 h-4" />
+            Add Task
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 rounded-lg">
-                <Settings2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Manage</span>
-                <ChevronDown className="w-3 h-3 hidden sm:block" />
+              <Button variant="outline" size="sm" className="h-9 gap-1.5 px-4 rounded-lg">
+                <Settings2 className="w-4 h-4" />
+                Manage
+                <ChevronDown className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
@@ -1098,294 +925,512 @@ export default function Projects() {
         </div>
       </div>
 
-      {/* Row 2: Search + View Toggle + Task Count + Sort/Details/Filter */}
-      <Tabs defaultValue="table" className="space-y-4" onValueChange={(v) => setActiveView(v as 'table' | 'kanban')}>
-        <div className="flex items-center gap-3">
-          {/* Search */}
-          <div className="relative w-52">
-            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Search tasks..."
-              className="pl-8 h-8 text-[13px] bg-background border-border rounded-lg"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* View Toggle */}
-          <TabsList className="h-8 bg-muted/50 p-0.5 gap-0.5 rounded-lg">
-            <TabsTrigger value="table" className="h-7 px-2.5 text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md">
-              <List className="w-3.5 h-3.5 mr-1.5" />
-              List
-            </TabsTrigger>
-            <TabsTrigger value="kanban" className="h-7 px-2.5 text-[13px] data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md">
-              <LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
-              Board
-            </TabsTrigger>
-          </TabsList>
-          
-          {/* Task Count */}
-          <span className="text-[13px] text-muted-foreground tabular-nums">
-            {displayTasks.length} {displayTasks.length === 1 ? 'task' : 'tasks'}
-          </span>
-
-          <div className="flex-1" />
-          
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors">
-                  <ArrowUpDown className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">
-                    {sortField === 'manual' ? 'Manual' : sortField === 'dueDate' ? 'Date' : sortField === 'effort' ? 'Effort' : sortField === 'importance' ? 'Importance' : sortField === 'stage' ? 'Stage' : sortField === 'area' ? 'Area' : 'Est. Time'}
-                  </span>
-                  {sortField !== 'manual' && (
-                    sortAscending ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem 
-                  onClick={() => { 
-                    if (sortField === 'dueDate') {
-                      setSortAscending(!sortAscending);
-                    } else {
-                      setSortField('dueDate'); 
-                      setSortAscending(true);
-                    }
-                  }}
-                  className={cn(sortField === 'dueDate' && 'bg-muted')}
-                >
-                  Due Date
-                  {sortField === 'dueDate' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => { 
-                    if (sortField === 'effort') {
-                      setSortAscending(!sortAscending);
-                    } else {
-                      setSortField('effort'); 
-                      setSortAscending(true);
-                    }
-                  }}
-                  className={cn(sortField === 'effort' && 'bg-muted')}
-                >
-                  Effort
-                  {sortField === 'effort' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => { 
-                    if (sortField === 'importance') {
-                      setSortAscending(!sortAscending);
-                    } else {
-                      setSortField('importance'); 
-                      setSortAscending(true);
-                    }
-                  }}
-                  className={cn(sortField === 'importance' && 'bg-muted')}
-                >
-                  Importance
-                  {sortField === 'importance' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
-                </DropdownMenuItem>
-                {activeView !== 'kanban' && (
-                  <DropdownMenuItem 
-                    onClick={() => { 
-                      if (sortField === 'stage') {
-                        setSortAscending(!sortAscending);
-                      } else {
-                        setSortField('stage'); 
-                        setSortAscending(true);
-                      }
-                    }}
-                    className={cn(sortField === 'stage' && 'bg-muted')}
-                  >
-                    Stage
-                    {sortField === 'stage' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem 
-                  onClick={() => { 
-                    if (sortField === 'estimatedTime') {
-                      setSortAscending(!sortAscending);
-                    } else {
-                      setSortField('estimatedTime'); 
-                      setSortAscending(true);
-                    }
-                  }}
-                  className={cn(sortField === 'estimatedTime' && 'bg-muted')}
-                >
-                  Est. Time
-                  {sortField === 'estimatedTime' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => { 
-                    if (sortField === 'area') {
-                      setSortAscending(!sortAscending);
-                    } else {
-                      setSortField('area'); 
-                      setSortAscending(true);
-                    }
-                  }}
-                  className={cn(sortField === 'area' && 'bg-muted')}
-                >
-                  Area
-                  {sortField === 'area' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
-                </DropdownMenuItem>
-                {sortField === 'manual' && (
-                  <DropdownMenuItem 
-                    onClick={() => { setSortField('dueDate'); setSortAscending(true); }}
-                    className="text-muted-foreground"
-                  >
-                    <GripVertical className="w-3.5 h-3.5 mr-1.5" />
-                    Manual
-                    <X className="w-3 h-3 ml-auto" />
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <div className="h-4 w-px bg-border" />
-            
+      {/* Row 2: Search + Controls */}
+      <div className="flex items-center gap-3">
+        {/* Search */}
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search tasks..."
+            className="pl-9 h-9 text-sm bg-background border-border rounded-lg"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
             <button
-              onClick={() => setShowTaskDetails(!showTaskDetails)}
-              className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              title={showTaskDetails ? "Hide details" : "Show details"}
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              {showTaskDetails ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">{showTaskDetails ? "Hide details" : "Show details"}</span>
+              <X className="h-4 w-4" />
             </button>
-            
-            <div className="h-4 w-px bg-border" />
-            
-            {/* Filter Panel - next to sort */}
-            <TaskFilterPanel
-              filters={filters}
-              onFiltersChange={setFilters}
-              statuses={statuses}
-              availableMembers={teamMembers}
-              frequentAssigneeNames={frequentAssigneeNames}
-              areas={tags}
-              selectedAreaIds={selectedAreas}
-              onAreasChange={setSelectedAreas}
-              projects={projects}
-              selectedProjectIds={selectedProjects}
-              onProjectsChange={setSelectedProjects}
-            />
-          </div>
+          )}
         </div>
 
-        <TabsContent value="table" className="mt-0">
-          {isLoading ? (
-            <div className="space-y-1">
-              {[1, 2, 3, 4, 5].map(i => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : displayTasks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              {viewMode === 'completed' ? (
-                <>
-                  <CheckCircle2 className="h-10 w-10 opacity-30 mb-3" />
-                  <p className="text-sm font-medium">No completed tasks</p>
-                  <p className="text-xs mt-1">Complete tasks to see them here</p>
-                </>
-              ) : (
-                <>
-                  <ListTodo className="h-10 w-10 opacity-30 mb-3" />
-                  <p className="text-sm font-medium">No tasks</p>
-                  <p className="text-xs mt-1">Create a task to get started</p>
-                </>
+        <div className="flex-1" />
+
+        {/* Right side controls */}
+        <div className="flex items-center gap-2">
+          {/* Sort By */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 gap-1.5 px-3 rounded-lg">
+                <ArrowUpDown className="w-4 h-4" />
+                Sort by
+                {sortField !== 'manual' && (
+                  sortAscending ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem 
+                onClick={() => { 
+                  if (sortField === 'dueDate') {
+                    setSortAscending(!sortAscending);
+                  } else {
+                    setSortField('dueDate'); 
+                    setSortAscending(true);
+                  }
+                }}
+                className={cn(sortField === 'dueDate' && 'bg-muted')}
+              >
+                Due Date
+                {sortField === 'dueDate' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => { 
+                  if (sortField === 'effort') {
+                    setSortAscending(!sortAscending);
+                  } else {
+                    setSortField('effort'); 
+                    setSortAscending(true);
+                  }
+                }}
+                className={cn(sortField === 'effort' && 'bg-muted')}
+              >
+                Effort
+                {sortField === 'effort' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => { 
+                  if (sortField === 'importance') {
+                    setSortAscending(!sortAscending);
+                  } else {
+                    setSortField('importance'); 
+                    setSortAscending(true);
+                  }
+                }}
+                className={cn(sortField === 'importance' && 'bg-muted')}
+              >
+                Importance
+                {sortField === 'importance' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+              </DropdownMenuItem>
+              {activeView !== 'kanban' && (
+                <DropdownMenuItem 
+                  onClick={() => { 
+                    if (sortField === 'stage') {
+                      setSortAscending(!sortAscending);
+                    } else {
+                      setSortField('stage'); 
+                      setSortAscending(true);
+                    }
+                  }}
+                  className={cn(sortField === 'stage' && 'bg-muted')}
+                >
+                  Stage
+                  {sortField === 'stage' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+                </DropdownMenuItem>
               )}
-            </div>
-          ) : (
-            <TaskTable 
-              tasks={displayTasks} 
-              projects={projects}
-              tags={tags}
-              onTaskUpdate={handleTaskUpdate} 
-              onEditTask={handleEditTask} 
-              onViewTask={handleViewTask} 
-              onDeleteTask={handleDeleteTask}
-              onDuplicateTask={handleDuplicateTask}
-              onReorderTasks={handleReorderTasks}
-              onToggleSort={(field) => {
-                if (sortField === field) {
-                  setSortAscending(!sortAscending);
-                } else {
-                  setSortField(field);
-                  setSortAscending(true);
-                }
-              }}
-              sortField={sortField}
-              sortAscending={sortAscending}
-              statuses={statuses}
-              showDetails={showTaskDetails}
-              isCompletedView={viewMode === 'completed'}
-              onRestoreTask={handleRestoreTask}
-              projectLeadMap={projectLeadMap}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="kanban" className="mt-0">
-          {isLoading ? (
-            <div className="flex gap-4">
-              {[1, 2, 3, 4].map(i => (
-                <Skeleton key={i} className="h-96 w-80 flex-shrink-0" />
-              ))}
-            </div>
-          ) : displayTasks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              {viewMode === 'completed' ? (
-                <>
-                  <CheckCircle2 className="h-10 w-10 opacity-30 mb-3" />
-                  <p className="text-sm font-medium">No completed tasks</p>
-                  <p className="text-xs mt-1">Complete tasks to see them here</p>
-                </>
-              ) : (
-                <>
-                  <ListTodo className="h-10 w-10 opacity-30 mb-3" />
-                  <p className="text-sm font-medium">No tasks</p>
-                  <p className="text-xs mt-1">Create a task to get started</p>
-                </>
+              <DropdownMenuItem 
+                onClick={() => { 
+                  if (sortField === 'estimatedTime') {
+                    setSortAscending(!sortAscending);
+                  } else {
+                    setSortField('estimatedTime'); 
+                    setSortAscending(true);
+                  }
+                }}
+                className={cn(sortField === 'estimatedTime' && 'bg-muted')}
+              >
+                Est. Time
+                {sortField === 'estimatedTime' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => { 
+                  if (sortField === 'area') {
+                    setSortAscending(!sortAscending);
+                  } else {
+                    setSortField('area'); 
+                    setSortAscending(true);
+                  }
+                }}
+                className={cn(sortField === 'area' && 'bg-muted')}
+              >
+                Area
+                {sortField === 'area' && (sortAscending ? <ArrowUp className="w-3 h-3 ml-auto" /> : <ArrowDown className="w-3 h-3 ml-auto" />)}
+              </DropdownMenuItem>
+              {sortField === 'manual' && (
+                <DropdownMenuItem 
+                  onClick={() => { setSortField('dueDate'); setSortAscending(true); }}
+                  className="text-muted-foreground"
+                >
+                  <GripVertical className="w-3.5 h-3.5 mr-1.5" />
+                  Manual
+                  <X className="w-3 h-3 ml-auto" />
+                </DropdownMenuItem>
               )}
-            </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Filters */}
+          <TaskFilterPanel
+            filters={filters}
+            onFiltersChange={setFilters}
+            statuses={statuses}
+            availableMembers={teamMembers}
+            frequentAssigneeNames={frequentAssigneeNames}
+            areas={tags}
+            selectedAreaIds={selectedAreas}
+            onAreasChange={setSelectedAreas}
+            projects={projects}
+            selectedProjectIds={selectedProjects}
+            onProjectsChange={setSelectedProjects}
+          />
+
+          {/* Me Filter */}
+          <Button
+            variant={showOnlyMyTasks ? "default" : "outline"}
+            size="sm"
+            className="h-9 gap-1.5 px-3 rounded-lg"
+            onClick={() => setShowOnlyMyTasks(!showOnlyMyTasks)}
+          >
+            <UserIcon className="w-4 h-4" />
+            Me
+          </Button>
+
+          {/* Show/Hide Details */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 px-3 rounded-lg"
+            onClick={() => setShowTaskDetails(!showTaskDetails)}
+          >
+            <User className="w-4 h-4" />
+            Me
+          </Button>
+
+          {/* Show/Hide Details */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 px-3 rounded-lg"
+            onClick={() => setShowTaskDetails(!showTaskDetails)}
+          >
+            {showTaskDetails ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            Show
+          </Button>
+        </div>
+      </div>
+
+      {/* Row 3: Quick Filters + Task Count */}
+      <div className="flex items-center gap-3">
+        {/* Active/Completed Toggle */}
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            variant={viewMode === 'active' ? 'default' : 'ghost'}
+            size="sm"
+            className={cn(
+              "h-8 gap-1.5 px-3 rounded-full font-medium text-[13px]",
+              viewMode === 'active' && "shadow-sm"
+            )}
+            onClick={() => {
+              setViewMode('active');
+              setActiveQuickFilter('all');
+            }}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Active
+          </Button>
+          <Button
+            variant={viewMode === 'completed' ? 'default' : 'ghost'}
+            size="sm"
+            className={cn(
+              "h-8 gap-1.5 px-3 rounded-full font-medium text-[13px]",
+              viewMode === 'completed' && "shadow-sm"
+            )}
+            onClick={() => {
+              setViewMode('completed');
+              setCompletedQuickFilter('all');
+            }}
+          >
+            <CheckCircle2 className={cn("w-3.5 h-3.5", viewMode === 'completed' && "fill-current")} />
+            Completed
+          </Button>
+        </div>
+
+        <div className="h-5 w-px bg-border/50 shrink-0" />
+
+        {/* Quick Filters */}
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide min-w-0 flex-1">
+          {viewMode === 'active' ? (
+            <>
+              <button
+                onClick={() => setActiveQuickFilter('all')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all whitespace-nowrap",
+                  activeQuickFilter === 'all'
+                    ? "bg-filter-active text-filter-active-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setActiveQuickFilter('overdue')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                  activeQuickFilter === 'overdue'
+                    ? "bg-destructive text-destructive-foreground"
+                    : activeQuickFilterCounts.overdue > 0
+                      ? "text-destructive hover:bg-destructive/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Overdue
+                {activeQuickFilterCounts.overdue > 0 && (
+                  <span className="text-xs tabular-nums">{activeQuickFilterCounts.overdue}</span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveQuickFilter('today')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                  activeQuickFilter === 'today'
+                    ? "bg-filter-active text-filter-active-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Today
+                {activeQuickFilterCounts.today > 0 && (
+                  <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.today}</span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveQuickFilter('tomorrow')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                  activeQuickFilter === 'tomorrow'
+                    ? "bg-filter-active text-filter-active-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Tomorrow
+                {activeQuickFilterCounts.tomorrow > 0 && (
+                  <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.tomorrow}</span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveQuickFilter('upcoming')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                  activeQuickFilter === 'upcoming'
+                    ? "bg-filter-active text-filter-active-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Next 7 Days
+                {activeQuickFilterCounts.upcoming > 0 && (
+                  <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.upcoming}</span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveQuickFilter('later')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                  activeQuickFilter === 'later'
+                    ? "bg-filter-active text-filter-active-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Later
+                {activeQuickFilterCounts.later > 0 && (
+                  <span className="text-xs tabular-nums opacity-70">{activeQuickFilterCounts.later}</span>
+                )}
+              </button>
+            </>
           ) : (
-            <TaskKanban 
-              tasks={displayTasks} 
-              projects={projects}
-              tags={tags}
-              onTaskUpdate={handleTaskUpdate} 
-              onEditTask={handleEditTask} 
-              onViewTask={handleViewTask} 
-              onDeleteTask={handleDeleteTask}
-              onDuplicateTask={handleDuplicateTask}
-              onReorderTasks={handleReorderTasks}
-              statuses={statuses}
-              showDetails={showTaskDetails}
-              sortField={sortField}
-              sortAscending={sortAscending}
-              projectLeadMap={projectLeadMap}
-            />
+            <>
+              <button
+                onClick={() => setCompletedQuickFilter('all')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all whitespace-nowrap",
+                  completedQuickFilter === 'all'
+                    ? "bg-filter-active text-filter-active-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setCompletedQuickFilter('today')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                  completedQuickFilter === 'today'
+                    ? "bg-filter-active text-filter-active-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Today
+                {completedQuickFilterCounts.today > 0 && (
+                  <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.today}</span>
+                )}
+              </button>
+              <button
+                onClick={() => setCompletedQuickFilter('yesterday')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                  completedQuickFilter === 'yesterday'
+                    ? "bg-filter-active text-filter-active-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Yesterday
+                {completedQuickFilterCounts.yesterday > 0 && (
+                  <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.yesterday}</span>
+                )}
+              </button>
+              <button
+                onClick={() => setCompletedQuickFilter('week')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                  completedQuickFilter === 'week'
+                    ? "bg-filter-active text-filter-active-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Last 7 Days
+                {completedQuickFilterCounts.week > 0 && (
+                  <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.week}</span>
+                )}
+              </button>
+              <button
+                onClick={() => setCompletedQuickFilter('month')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                  completedQuickFilter === 'month'
+                    ? "bg-filter-active text-filter-active-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Last 30 Days
+                {completedQuickFilterCounts.month > 0 && (
+                  <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.month}</span>
+                )}
+              </button>
+              <button
+                onClick={() => setCompletedQuickFilter('older')}
+                className={cn(
+                  "px-2.5 py-1 text-[13px] font-medium rounded-full transition-all flex items-center gap-1 whitespace-nowrap",
+                  completedQuickFilter === 'older'
+                    ? "bg-filter-active text-filter-active-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Older
+                {completedQuickFilterCounts.older > 0 && (
+                  <span className="text-xs tabular-nums opacity-70">{completedQuickFilterCounts.older}</span>
+                )}
+              </button>
+            </>
           )}
-        </TabsContent>
+        </div>
 
-        <TabsContent value="timeline" className="mt-0">
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
-            <p>Timeline view coming soon</p>
-          </div>
-        </TabsContent>
-      </Tabs>
+        {/* Task Count */}
+        <span className="text-sm text-muted-foreground tabular-nums shrink-0">
+          {displayTasks.length} {displayTasks.length === 1 ? 'task' : 'tasks'}
+        </span>
+      </div>
 
+      {/* Content */}
+      <div className="mt-2">
+        {activeView === 'table' ? (
+          <>
+            {isLoading ? (
+              <div className="space-y-1">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : displayTasks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                {viewMode === 'completed' ? (
+                  <>
+                    <CheckCircle2 className="h-10 w-10 opacity-30 mb-3" />
+                    <p className="text-sm font-medium">No completed tasks</p>
+                    <p className="text-xs mt-1">Complete tasks to see them here</p>
+                  </>
+                ) : (
+                  <>
+                    <ListTodo className="h-10 w-10 opacity-30 mb-3" />
+                    <p className="text-sm font-medium">No tasks</p>
+                    <p className="text-xs mt-1">Create a task to get started</p>
+                  </>
+                )}
+              </div>
+            ) : (
+              <TaskTable 
+                tasks={displayTasks} 
+                projects={projects}
+                tags={tags}
+                onTaskUpdate={handleTaskUpdate} 
+                onEditTask={handleEditTask} 
+                onViewTask={handleViewTask} 
+                onDeleteTask={handleDeleteTask}
+                onDuplicateTask={handleDuplicateTask}
+                onReorderTasks={handleReorderTasks}
+                onToggleSort={(field) => {
+                  if (sortField === field) {
+                    setSortAscending(!sortAscending);
+                  } else {
+                    setSortField(field);
+                    setSortAscending(true);
+                  }
+                }}
+                sortField={sortField}
+                sortAscending={sortAscending}
+                statuses={statuses}
+                showDetails={showTaskDetails}
+                isCompletedView={viewMode === 'completed'}
+                onRestoreTask={handleRestoreTask}
+                projectLeadMap={projectLeadMap}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            {isLoading ? (
+              <div className="flex gap-4">
+                {[1, 2, 3, 4].map(i => (
+                  <Skeleton key={i} className="h-96 w-80 flex-shrink-0" />
+                ))}
+              </div>
+            ) : displayTasks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                {viewMode === 'completed' ? (
+                  <>
+                    <CheckCircle2 className="h-10 w-10 opacity-30 mb-3" />
+                    <p className="text-sm font-medium">No completed tasks</p>
+                    <p className="text-xs mt-1">Complete tasks to see them here</p>
+                  </>
+                ) : (
+                  <>
+                    <ListTodo className="h-10 w-10 opacity-30 mb-3" />
+                    <p className="text-sm font-medium">No tasks</p>
+                    <p className="text-xs mt-1">Create a task to get started</p>
+                  </>
+                )}
+              </div>
+            ) : (
+              <TaskKanban 
+                tasks={displayTasks} 
+                projects={projects}
+                tags={tags}
+                onTaskUpdate={handleTaskUpdate} 
+                onEditTask={handleEditTask} 
+                onViewTask={handleViewTask} 
+                onDeleteTask={handleDeleteTask}
+                onDuplicateTask={handleDuplicateTask}
+                onReorderTasks={handleReorderTasks}
+                statuses={statuses}
+                showDetails={showTaskDetails}
+                sortField={sortField}
+                sortAscending={sortAscending}
+                projectLeadMap={projectLeadMap}
+              />
+            )}
+          </>
+        )}
+      </div>
 
       {/* Project Management Panel (Sheet) */}
       <ProjectManagementPanel
